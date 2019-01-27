@@ -1,6 +1,6 @@
 # ArcticTracker-ESP32
 
-Arctic Tracker is an APRS tracker platform based on the ESP32
+Arctic Tracker (v.2) is an APRS tracker platform based on the ESP32
 MCU module, a GPS, a display and a VHF transceiver module. 
 It is also a IoT device capable of using WIFI and the 
 internet when this is available: For easy configuration, for
@@ -15,11 +15,10 @@ the PA to work properly). The design with ESP-8266 had some
 limitations and complicating factors, and as the ESP-32 arrived 
 on the scene it became clear that this would be a better platform. 
 
-##Firmware implementation
+## Firmware implementation
 
 It is implemented in C and based on the ESP-IDF which 
-again is based on FreeRTOS. Webserver is based on libesphhtpd: 
-
+again is based on FreeRTOS. Webserver is based on libesphttpd: 
 See https://github.com/chmorgan/libesphttpd
 
 Currently the following is implemented or ported: 
@@ -27,11 +26,11 @@ Currently the following is implemented or ported:
 * Command shell. 
 * Settings of various parameters, using persistent storage (flash). 
 * Internetworking using WIFI. Automatically connect to access points available. User can set up an ordered list of APs to try. It can also function as its own access point. 
-* Webserver. Used for easy setup. 
-* GPS. 
+* Webserver. Used for setup. 
+* Interface with GPS. 
 
-Code will be added soon.. 
-
+There is still some stuff to port or re-implement from the first version of the tracker: Display, radio, etc. 
+We also need some re-work of the hardware (mainly a re-design of the PCB). 
 
 
 
