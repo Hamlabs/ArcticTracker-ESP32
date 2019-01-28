@@ -1,0 +1,181 @@
+/*
+ * Misc. System related stuff
+ * By LA7ECA, ohanssen@acm.org
+ */
+
+#include <time.h>
+#include <sys/time.h>
+#include <string.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+#include "defines.h" 
+#include "esp_log.h"
+#include "esp_wifi.h"
+#include "networking.h"
+#include "config.h"
+#include "system.h"
+
+#include "apps/sntp/sntp.h"
+
+
+static void initialize_sntp(void);
+
+#define TAG "system"
+
+
+/******************************************************************************
+ * Get time from NTP
+ ******************************************************************************/
+
+static void initialize_sntp(void)
+{
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
+}
+
+
+
+/*******************************************************************************
+ * Set the real time clock if wifi is connected. 
+ *******************************************************************************/
+
+void time_init()
+{
+    struct tm timeinfo;
+    if (!time_getUTC(&timeinfo)) {
+        if (wifi_isConnected()) {
+            ESP_LOGI(TAG, "Time is not set yet. Getting time over SNTP.");
+            initialize_sntp();
+        }
+        // FIXME: Get time from GPS if available? 
+    } 
+    else
+        ESP_LOGI(TAG, "Time is already set.");
+}
+
+
+
+/*******************************************************************************
+ * Get UTC time. Return true if time is set
+ *******************************************************************************/
+
+bool time_getUTC(struct tm *timeinfo)
+{
+    time_t now;
+    time(&now);
+    localtime_r(&now, timeinfo);
+    // Is time set? If not, tm_year will be (1970 - 1900).
+    if (timeinfo->tm_year < (2016 - 1900)) 
+        return false; 
+    return true; 
+}
+
+
+
+/********************************************************************************
+ * Set loglevels from flash config
+ ********************************************************************************/
+
+void set_logLevels() {
+    esp_log_level_t default_level = get_byte_param("LOGLEVEL.ALL", ESP_LOG_WARN) ; 
+    esp_log_level_set("*", default_level);
+    esp_log_level_set("wifi", get_byte_param("LOGLEVEL.wifi", default_level));
+    esp_log_level_set("wifix", get_byte_param("LOGLEVEL.wifix", default_level));
+    esp_log_level_set("config", get_byte_param("LOGLEVEL.config", default_level));
+    esp_log_level_set("httpd", get_byte_param("LOGLEVEL.httpd", default_level));
+    esp_log_level_set("shell", get_byte_param("LOGLEVEL.shell", default_level));
+    esp_log_level_set("system", get_byte_param("LOGLEVEL.system", default_level));
+}
+
+
+
+/********************************************************************************
+ * Convert log level to string
+ *******************************************************************************/
+
+char* loglevel2str(esp_log_level_t lvl) {
+    switch (lvl) {
+        case ESP_LOG_NONE: return "NONE"; 
+        case ESP_LOG_ERROR: return "ERROR";     
+        case ESP_LOG_WARN: return "WARN";   
+        case ESP_LOG_INFO: return "INFO";     
+        case ESP_LOG_DEBUG: return "DEBUG";     
+        case ESP_LOG_VERBOSE: return "VERBOSE";
+    }
+    return "UNKNOWN";
+}
+
+
+
+/********************************************************************************
+ * Convert string to log level
+ ********************************************************************************/
+
+esp_log_level_t str2loglevel(char* str) 
+{
+    if (strcasecmp(str, "NONE")==0) return ESP_LOG_NONE; 
+    else if (strcasecmp(str, "ERROR")==0) return ESP_LOG_ERROR;
+    else if (strcasecmp(str, "WARN")==0) return ESP_LOG_WARN;
+    else if (strcasecmp(str, "INFO")==0) return ESP_LOG_INFO;
+    else if (strcasecmp(str, "DEBUG")==0) return ESP_LOG_DEBUG;
+    else if (strcasecmp(str, "VERBOSE")==0) return ESP_LOG_VERBOSE;    
+    ESP_LOGW(TAG, "No corresponding log level for string '%s'", str);
+    return ESP_LOG_NONE;
+}
+
+
+
+/****************************************************************************
+ * read line from serial input 
+ * Typing ctrl-C will immediately return false
+ ****************************************************************************/
+
+bool readline(uart_port_t cbp, char* buf, const uint16_t max) {
+  char x, xx;
+  uint16_t i=0; 
+  
+  for (i=0; i<max; i++) {
+    uart_read_bytes(cbp, (uint8_t*) &x, 1, portMAX_DELAY);     
+    if (x == 0x03)     /* CTRL-C */
+      return false;
+    if (x == '\r') {
+      /* Get LINEFEED */
+      uart_read_bytes(cbp, (uint8_t*) &xx, 1, portMAX_DELAY);
+      break; 
+    }
+    if (x == '\n')
+      break;
+    buf[i]=x;
+  }
+  buf[i] = '\0';
+  return true;
+}
+
+
+
+/****************************************************************************
+ * split input string into tokens - returns number of tokens found
+ *
+ * ARGUMENTS: 
+ *   buf       - text buffer to tokenize
+ *   tokens    - array in which to store pointers to tokens
+ *   maxtokens - maximum number of tokens to scan for
+ *   delim     - characters which can be used as delimiters between tokens
+ *   merge     - if true, merge empty tokens
+ ****************************************************************************/
+ 
+uint8_t tokenize(char* buf, char* tokens[], uint8_t maxtokens, char *delim, bool merge)
+{ 
+     register uint8_t ntokens = 0;
+     while (ntokens<maxtokens)
+     {    
+        tokens[ntokens] = strsep(&buf, delim);
+        if ( buf == NULL)
+            break;
+        if (!merge || *tokens[ntokens] != '\0') 
+            ntokens++;
+     }
+     return (merge && *tokens[ntokens] == '\0' ? ntokens : ntokens+1);
+}

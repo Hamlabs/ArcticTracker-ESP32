@@ -1,0 +1,42 @@
+
+ 
+ body {background: #cfd5cc; } 
+ 
+ fieldset{ 
+   background: #f0f5ec;
+   padding-top: 0.7em;
+   margin-top: 0.7em; margin-bottom: 0.7em; 
+   width:40em;
+ }
+ 
+ h2 {
+   font-size: 140%; 
+   font-family: arial;
+   margin-left: 5px; 
+   margin-bottom: 10px
+ }
+ 
+ div.trblock, label {display: block; overflow: hidden; }
+ 
+ 
+ label, input, select, textarea { 
+   padding: 0px;   
+   padding-top: 1px;margin-bottom: 3px;
+   vertical-align: middle;
+ }
+ 
+ input {height: 1.6em; border: 1px inset #666;  margin-left: 5px; padding: 0px 3px 0px 3px;}
+ button {background: #cdc; font-size: smaller; margin-left: 5px;}
+ 
+ label.leftlab, label.lleftlab {
+   float: left;
+   width: 14em;
+   text-align: right;
+   padding-right: 7px;
+   color: #353;
+ }
+ 
+ br { clear: left; }
+ 
+ .error {color: #900 }
+ .ok {color: #080 }

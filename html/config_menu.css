@@ -1,0 +1,46 @@
+  
+body {background: #cfd5cc; } 
+ 
+ div#config_menu {
+   float: left;
+   width: 9.3em;
+   margin-right:1em;
+   padding-top:35px;  
+   background-position: 4px 10px
+ } 
+ 
+ #config_menu img {margin-left: 10px}
+ 
+ div#config_main {overflow: hidden; height: 43em}
+ iframe#config_main {width: 100%; height: 100%; border: none }
+ 
+ ul.menu li {
+   list-style-type: none;
+   list-style-position: inside; 
+   padding: 0.1em 0px 0.1em 9px;
+   font-family: helvetica, sans-serif; 
+ }
+ 
+ ul.menu {
+   padding: 0.6em 0 0.6em 0; 
+   border-top: 3px dotted #272;
+   border-bottom: 3px dotted #272
+ }
+ 
+ ul.menu a {text-decoration: none}
+ ul.menu ul {padding-left: 1em;}
+ ul.menu ul li {font-size: smaller}
+ ul.menu li:hover {background: #fff}
+ 
+ 
+ .status {
+   margin-top: 1em; 
+   padding: 2px; 
+   border: dotted 1px red; 
+   background: #ddd; 
+   color: #800; 
+   font-size: 90%
+ }
+ 
+ button {background: #cdc; font-size: smaller; margin-left: 5px;}
+ 
