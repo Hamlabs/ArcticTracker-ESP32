@@ -20,6 +20,7 @@
 #include "defines.h"
 #include "fbuf.h"
 #include "gps.h"
+#include "ui.h"
 
 static const char* TAG = "example";
 
@@ -200,6 +201,7 @@ void app_main()
     register_aprs();
     wifi_init();
     gps_init(GPS_UART);
+    ui_init();
     run_console();     
     
     FBUF b; 

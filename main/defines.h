@@ -22,9 +22,24 @@
 #define HDLC_DECODER_QUEUE_SIZE  16
 #define HDLC_ENCODER_QUEUE_SIZE  16
 
-#define GPS_UART    UART_NUM_2
-#define GPS_TXD_PIN 17
-#define GPS_RXD_PIN 16
+
+/* GPS */
+#define GPS_UART    UART_NUM_1
+#define GPS_TXD_PIN -1
+// 17
+#define GPS_RXD_PIN -1
+// 16
+
+/* SPI and Display */
+#define LCD_PIN_CS   5
+#define LCD_PIN_BL   4
+#define LCD_PIN_DC   16
+#define LCD_PIN_RST  17
+#define SPI_PIN_MISO 19
+#define SPI_PIN_MOSI 23
+#define SPI_PIN_CLK  18
+
+#define LED_STATUS_PIN 21
 
 #define BLINK_NORMAL ; // FIXME
 #define BLINK_GPS_SEARCHING ; // FIXME
@@ -41,6 +56,7 @@
 #define STACK_HDLC_TEST 2000
 #define STACK_HDLC_TXENCODER 2000
 #define STACK_NMEALISTENER 2000
+#define STACK_LEDBLINKER 1000
 
 #define FBUF_SLOTSIZE 32
 #define FBUF_SLOTS 1024
