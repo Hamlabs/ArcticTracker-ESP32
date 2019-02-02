@@ -1,3 +1,8 @@
+/*
+ * User interface setup. 
+ * By LA7ECA, ohanssen@acm.org
+ */
+
 
 #include "defines.h"
 #include "esp_log.h"
@@ -13,7 +18,7 @@ static void clickhandler(void* p);
 
 #define TAG "ui"
 
-static void blipUp() {} // Dummy
+static void blipUp() {} // Dummy, TBD
 
  
  /*********************************************************************
@@ -27,8 +32,6 @@ static void blipUp() {} // Dummy
  {
    (void)arg;
    int cnt = 0;
-   ESP_LOGI(TAG, "LED blinker starts..");
-   
    blipUp();
    sleepMs(300);
    
@@ -51,7 +54,10 @@ static void blipUp() {} // Dummy
  void ui_init()
  {   
    lcd_init();
+   sleepMs(100);
+   lcd_backlight();
    gui_welcome();
+   
     gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
     xTaskCreate(&ui_thread, "LED blinker", 
         STACK_LEDBLINKER, NULL, NORMALPRIO, NULL);

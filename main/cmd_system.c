@@ -24,6 +24,8 @@
 #include "system.h"
 #include "fbuf.h"
 #include "gps.h"
+#include "lcd.h"
+#include "gui.h"
 
 
 
@@ -187,6 +189,13 @@ static int do_nmea(int argc, char** argv)
 }
 
 
+static int do_disp(int argc, char** argv)  
+{
+    printf("Trying to show something on display\n");
+    lcd_backlight();
+    gui_welcome2();
+    return 0;
+}
 
 
 /********************************************************************************
@@ -203,4 +212,5 @@ void register_system()
     ADD_CMD("time",    &do_time,     "Get date and time", NULL);
     ADD_CMD("regex",   &do_regmatch, "Regex match", NULL);
     ADD_CMD("nmea",    &do_nmea,     "Monitor GPS NMEA datastream", "[raw]");
+    ADD_CMD("disp",    &do_disp,     "display test", "");
 }

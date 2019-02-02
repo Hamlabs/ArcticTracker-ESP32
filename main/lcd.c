@@ -1,16 +1,27 @@
+/* 
+ * Routines for controling a Nokia LCD display, 
+ * using the SPI bus. 
+ * By LA7ECA, ohanssen@acm.org
+ */ 
+
 #include <inttypes.h>
 #include <string.h>
 #include "defines.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/timers.h" 
 #include "lcd.h"
 
 
-
 static spi_device_handle_t _spip;
- 
- 
- 
+static TimerHandle_t bltimer;
+static void blhandler(TimerHandle_t timer);
+
+
+/************************************************************
+ * SPI initialization
+ ************************************************************/
+
 static void spi_init() {   
     esp_err_t ret;
     
@@ -30,7 +41,6 @@ static void spi_init() {
         .mode=0,                       
         .spics_io_num=LCD_PIN_CS,  
         .queue_size=7,                         
-//        .pre_cb=lcd_spi_pre_transfer_callback,  // can we just remove this? 
     };
     
     //Initialize the SPI bus
@@ -43,34 +53,46 @@ static void spi_init() {
 
 
 
+/************************************************************
+ * LCD display initialization
+ ************************************************************/
+
 void lcd_init() {
-   spi_init();
+    spi_init();
     
-   /* GPIO direction */
-   gpio_set_direction(LCD_PIN_DC,  GPIO_MODE_OUTPUT);
-   gpio_set_direction(LCD_PIN_RST, GPIO_MODE_OUTPUT);
-   gpio_set_direction(LCD_PIN_BL,  GPIO_MODE_OUTPUT);
+    /* GPIO direction */
+    gpio_set_direction(LCD_PIN_DC,  GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_PIN_RST, GPIO_MODE_OUTPUT);
+    gpio_set_direction(LCD_PIN_BL,  GPIO_MODE_OUTPUT);
     
-   /* Reset LCD */
-   gpio_set_level(LCD_PIN_BL, 1);
-   gpio_set_level(LCD_PIN_RST, 0);
-   sleepMs(15);
-   gpio_set_level(LCD_PIN_RST, 1);
-   sleepMs(15);
+    /* Reset LCD */
+    gpio_set_level(LCD_PIN_BL, 1);
+    gpio_set_level(LCD_PIN_RST, 0);
+    sleepMs(15);
+    gpio_set_level(LCD_PIN_RST, 1);
+    sleepMs(15);
    
-   /* Send configuration commands to LCD */
-   lcd_writeByte(0x21, LCD_SEND_CMD);  /* LCD extended commands */
-   lcd_writeByte(0xC8, LCD_SEND_CMD);  /* Set LCD Vop (Contrast) */
-   lcd_writeByte(0x05, LCD_SEND_CMD);  /* Set start line S6 to 1 TLS8204 */
-   lcd_writeByte(0x40, LCD_SEND_CMD);  /* Set start line S[5:0] to 0x00 TLS8204 */
-   lcd_writeByte(0x12, LCD_SEND_CMD);  /* LCD bias mode 1:68. */
-   lcd_writeByte(0x20, LCD_SEND_CMD);  /* LCD standard Commands, horizontal addressing mode. */
-   lcd_writeByte(0x08, LCD_SEND_CMD);  /* LCD blank */
-   lcd_writeByte(0x0C, LCD_SEND_CMD);  /* LCD in normal mode. */
+    /* Send configuration commands to LCD */
+    lcd_writeByte(0x21, LCD_SEND_CMD);  /* LCD extended commands */
+    lcd_writeByte(0xC8, LCD_SEND_CMD);  /* Set LCD Vop (Contrast) */
+    lcd_writeByte(0x05, LCD_SEND_CMD);  /* Set start line S6 to 1 TLS8204 */
+    lcd_writeByte(0x40, LCD_SEND_CMD);  /* Set start line S[5:0] to 0x00 TLS8204 */
+    lcd_writeByte(0x12, LCD_SEND_CMD);  /* LCD bias mode 1:68. */
+    lcd_writeByte(0x20, LCD_SEND_CMD);  /* LCD standard Commands, horizontal addressing mode. */
+    lcd_writeByte(0x08, LCD_SEND_CMD);  /* LCD blank */
+    lcd_writeByte(0x0C, LCD_SEND_CMD);  /* LCD in normal mode. */
+    sleepMs(15);
    
-   lcd_clear(); /* Clear LCD */
-   lcd_setPosXY(1, 1);
+    lcd_clear(); /* Clear LCD */
+    lcd_setPosXY(1, 1);
+   
+    /* Software timer for backlight */
+    bltimer = xTimerCreate ( 
+        "BacklightTimer", pdMS_TO_TICKS(8000),  pdFALSE,
+        ( void * ) 0, blhandler
+    );
 }
+ 
  
  
  
@@ -78,25 +100,23 @@ void lcd_init() {
  * Turn on backlight and turn it off again after 10 seconds
  ************************************************************/
 
-// static virtual_timer_t vtbl; FIXME
-
-
-static void blhandler(void* p) {
-    (void) p;
+static void blhandler(TimerHandle_t timer) {
     gpio_set_level(LCD_PIN_BL, 1);
-//    chVTResetI(&vtbl);  FIXME
 }
  
  
 void lcd_backlight() { 
-//    chVTSet(&vtbl, S2ST(8), blhandler, NULL); FIXME
+    xTimerStart(bltimer, 0);
     gpio_set_level(LCD_PIN_BL, 0);
 }    
 
  
+  
  
- 
- 
+/************************************************************
+ * Send a single byte to the display. If cd is set, 
+ * it is a command. 
+ ************************************************************/
  
  void lcd_writeByte(uint8_t data, uint8_t cd) {
    if(cd == LCD_SEND_DATA) 
@@ -118,8 +138,11 @@ void lcd_backlight() {
  
  
 
- 
- void lcd_clear() { // ok
+/************************************************************
+ * Clear the display 
+ ************************************************************/
+
+void lcd_clear() { 
    uint32_t i, j;
    
    for (i = 0; i < LCD_Y_RES/LCD_FONT_Y_SIZE; i++) {
@@ -127,11 +150,13 @@ void lcd_backlight() {
      for (j = 0; j < LCD_X_RES; j++)
        lcd_writeByte(0x00, LCD_SEND_DATA);
    }
- }
+}
  
 
  
- 
+/************************************************************
+ * Set the position on display for writing the next character. 
+ ************************************************************/
  
  void lcd_setPosXY(uint8_t x, uint8_t y) {
    
@@ -145,12 +170,14 @@ void lcd_backlight() {
  
 
  
+/************************************************************
+ * Adjust the contrast 
+ ************************************************************/
  
- 
- void lcd_Contrast (uint8_t contrast) {
+ void lcd_contrast (uint8_t contrast) {
    
    lcd_writeByte(0x21, LCD_SEND_CMD);              /* LCD Extended Commands */
-   lcd_writeByte(0x80 | contrast, LCD_SEND_CMD);    /* Set LCD Vop (Contrast) */
+   lcd_writeByte(0x80 | contrast, LCD_SEND_CMD);   /* Set LCD Vop (Contrast) */
    lcd_writeByte(0x20, LCD_SEND_CMD);              /* LCD Standard Commands, horizontal addressing mode */
  }
  

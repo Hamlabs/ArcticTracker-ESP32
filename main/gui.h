@@ -1,9 +1,15 @@
+ /* 
+  * Graphical user interface using Nokia LCD display. 
+  * Routines for drawing text, lines and cicles on screen. 
+  * By LA7ECA, ohanssen@acm.org
+  */
  
  #define DISPLAY_WIDTH  84
  #define DISPLAY_HEIGHT 48
  
  
  void gui_welcome(void);
+ void gui_welcome2(void);
  void gui_writeText(int x, int y, const char * strp);
  void gui_flush(void);
  void gui_clear(void);
