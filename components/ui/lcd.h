@@ -1,5 +1,5 @@
 /* 
- * Routines for controling a Nokia LCD display, 
+ * Routines for controlling a Nokia LCD display, 
  * using the SPI bus. 
  * By LA7ECA, ohanssen@acm.org
  */ 

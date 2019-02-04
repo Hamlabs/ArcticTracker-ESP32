@@ -72,8 +72,6 @@ static void blipUp() {} // Dummy, TBD
 static bool buttval = 0;
 static bool pressed; 
 static TimerHandle_t bptimer, bhtimer;
- 
-static int led_on=0; 
 
 
 static void button_handler(void* x) 
@@ -117,13 +115,6 @@ static void holdhandler(void* p) {
 }
 
 
-static void bbbTest(void* p) {
-    led_on = (led_on? 0 : 1);
-    gpio_set_level(LED_STATUS_PIN, led_on);
-}
-static void bbbTest2(void* p) {
-    lcd_backlight();
-}
 
 static void button_init() {
          
@@ -140,8 +131,6 @@ static void button_init() {
     buttCond = cond_create();
     xTaskCreate(&ui_service_thread, "UI Service thd", 
         STACK_UI_SRV, NULL, NORMALPRIO, NULL);
-    
-    register_button_handlers(&bbbTest, &bbbTest2);
     
     /* Button pin. Pin interrupt */
     gpio_set_intr_type(BUTTON_PIN, GPIO_INTR_ANYEDGE);
@@ -166,7 +155,6 @@ static void button_init() {
  static void ui_thread(void* arg)
  {
    (void)arg;
-   int cnt = 0;
    blipUp();
    sleepMs(300);
    
@@ -199,7 +187,7 @@ static void button_init() {
    
    /* LED blinker thread */
     gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
-//    xTaskCreate(&ui_thread, "LED blinker", 
-//        STACK_LEDBLINKER, NULL, NORMALPRIO, NULL);
+    xTaskCreate(&ui_thread, "LED blinker", 
+        STACK_LEDBLINKER, NULL, NORMALPRIO, NULL);
  }
  
