@@ -28,9 +28,9 @@ Currently the following is implemented or ported:
 * Internetworking using WIFI. Automatically connect to access points available. User can set up an ordered list of APs to try. It can also function as its own access point. 
 * Webserver. Used for setup. 
 * Interface with GPS. 
+* LCD display, button handler, etc.. 
 
-There is still some stuff to port or re-implement from the first version of the tracker: Display, radio, etc. 
-We also need some re-work of the hardware (mainly a re-design of the PCB). 
+There is still some stuff to port or re-implement from the first version of the tracker like interfacing to radio, APRS stuff. etc. We also need some re-work of the hardware (mainly a re-design of the PCB). 
 
 
 
