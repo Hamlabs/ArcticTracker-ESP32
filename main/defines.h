@@ -40,6 +40,7 @@
 #define SPI_PIN_CLK  18
 
 #define LED_STATUS_PIN 21
+#define BUTTON_PIN 27
 
 #define BLINK_NORMAL ; // FIXME
 #define BLINK_GPS_SEARCHING ; // FIXME
@@ -52,11 +53,12 @@
 
 #define AUTOCONNECT_PERIOD 240
 
-#define STACK_AUTOCON 2300
-#define STACK_HDLC_TEST 2000
+#define STACK_AUTOCON        2100
+#define STACK_HDLC_TEST      2000
 #define STACK_HDLC_TXENCODER 2000
-#define STACK_NMEALISTENER 2000
-#define STACK_LEDBLINKER 1000
+#define STACK_NMEALISTENER   1200
+#define STACK_LEDBLINKER     800
+#define STACK_UI_SRV         800
 
 #define FBUF_SLOTSIZE 32
 #define FBUF_SLOTS 1024
@@ -82,11 +84,16 @@
 #define sleepMs(n)  vTaskDelay(pdMS_TO_TICKS(n))
 #define t_yield     taskYIELD
 
-/* Make event groups look like simple condition variables */
+/* Make event groups look like simpler condition variables */
 #define cond_t               EventGroupHandle_t
 #define cond_create          xEventGroupCreate
-#define cond_wait(cond)      xEventGroupWaitBits(cond, BIT_0, pdFALSE, pdTRUE,  portMAX_DELAY)
-#define cond_notifyAll(cond) xEventGroupSetBits(cond, BIT_0)
+#define cond_wait(cond)      xEventGroupWaitBits(cond, BIT_0, pdFALSE, pdFALSE,  portMAX_DELAY)
+#define cond_notify(cond)    xEventGroupSetBits(cond, BIT_0)
 #define cond_clear(cond)     xEventGroupClearBits(cond, BIT_0)
 
+#define cond_waitB(cond, bits)       xEventGroupWaitBits(cond, bits, pdFALSE, pdFALSE,  portMAX_DELAY)
+#define cond_notifyB(cond, bits)     xEventGroupSetBits(cond, bits)
+#define cond_notifyB_isr(cond, bits) xEventGroupSetBitsFromIsr(cond, bits)
+#define cond_test(cond, bits)        (xEventGroupGetBits(cond) & bits)
+#define cond_clearB(cond, bits)      xEventGroupClearBits(cond, bits)
 #endif

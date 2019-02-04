@@ -127,7 +127,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             apList = (wifi_ap_record_t *)malloc(sizeof(wifi_ap_record_t) * apCount);
             ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, apList));
         }
-        cond_notifyAll(scanDone);
+        cond_notify(scanDone);
         break;
         
     default:
