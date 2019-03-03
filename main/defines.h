@@ -24,23 +24,28 @@
 
 
 /* GPS */
-#define GPS_UART    UART_NUM_1
-#define GPS_TXD_PIN -1
-// 17
-#define GPS_RXD_PIN -1
-// 16
+#define GPS_UART        UART_NUM_1
+#define GPS_TXD_PIN     26
+#define GPS_RXD_PIN     35
+
 
 /* SPI and Display */
-#define LCD_PIN_CS   5
-#define LCD_PIN_BL   4
-#define LCD_PIN_DC   16
-#define LCD_PIN_RST  17
-#define SPI_PIN_MISO 19
-#define SPI_PIN_MOSI 23
-#define SPI_PIN_CLK  18
+#define LCD_PIN_CS      33
+#define LCD_PIN_BL      32
+#define LCD_PIN_DC      27
+#define LCD_PIN_RST     .1
+#define SPI_PIN_MISO    -1
+#define SPI_PIN_MOSI    14 
+#define SPI_PIN_CLK     12
 
-#define LED_STATUS_PIN 21
-#define BUTTON_PIN 27
+/* Buzzer */
+#define BUZZER_PIN      21
+#define BUZZER_TIMERGRP  0
+#define BUZZER_TIMERIDX  0
+
+#define LED_STATUS_PIN  22
+#define BUTTON_PIN      16
+
 
 #define BLINK_NORMAL ; // FIXME
 #define BLINK_GPS_SEARCHING ; // FIXME
@@ -56,8 +61,8 @@
 #define STACK_AUTOCON        2100
 #define STACK_HDLC_TEST      2000
 #define STACK_HDLC_TXENCODER 2000
-#define STACK_NMEALISTENER   1200
-#define STACK_LEDBLINKER     800
+#define STACK_NMEALISTENER   1600
+#define STACK_LEDBLINKER     1800
 #define STACK_UI_SRV         800
 
 #define FBUF_SLOTSIZE 32

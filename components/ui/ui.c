@@ -14,7 +14,7 @@
 #include "freertos/timers.h" 
 #include "freertos/event_groups.h"
 
-
+extern void buzzer_init();
 static void bphandler(void* p);
 static void holdhandler(void* p);
 static void clickhandler(void* p);
@@ -22,7 +22,6 @@ static void clickhandler(void* p);
 #define TAG "ui"
 #define ESP_INTR_FLAG_DEFAULT 0
 
-static void blipUp() {} // Dummy, TBD
 
   
 /*********************************************************************
@@ -44,12 +43,12 @@ static void blipUp() {} // Dummy, TBD
     while (true) {
        cond_waitB(buttCond, BUTT_EV_SHORT|BUTT_EV_LONG);
        if ( cond_test(buttCond, BUTT_EV_SHORT) ) {
-        //  beep(10); TBD
+          beep(10); 
           if (bhandler1) bhandler1(NULL);
           cond_clearB(buttCond, BUTT_EV_SHORT);
        }
        else {
-        //  beeps("-"); TBD
+          beeps("-");
           if (bhandler2) bhandler2(NULL);
           cond_clearB(buttCond, BUTT_EV_LONG);
        }
@@ -157,7 +156,7 @@ static void button_init() {
    (void)arg;
    blipUp();
    sleepMs(300);
-   
+   beeps("--.- .-. ...-");
    /* Blink LED */
    BLINK_NORMAL;
    while (1) {
@@ -170,6 +169,13 @@ static void button_init() {
  
  
  
+ 
+ static void disp(void* x) {
+     lcd_backlight();
+     gui_welcome2();
+ }
+ 
+ 
  /*****************************************
   * UI init
   *****************************************/
@@ -179,12 +185,20 @@ static void button_init() {
     /* Button */
     button_init();
         
+    /* Buzzer */
+    buzzer_init(); 
+    
     /* LCD display */  
     lcd_init();
     sleepMs(100);
     lcd_backlight();
-    gui_welcome();
+    gui_welcome(); 
+    
+    
+    register_button_handlers(NULL, disp);
    
+    
+    
    /* LED blinker thread */
     gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
     xTaskCreate(&ui_thread, "LED blinker", 
