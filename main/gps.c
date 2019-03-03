@@ -76,7 +76,6 @@ void gps_init(uart_port_t uart)
     uart_set_pin(uart, GPS_TXD_PIN, GPS_RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(uart, GPS_BUF_SIZE, 0, 0, NULL, 0);
     _uart = uart; 
-    // FIXME. We also need a buffer. 
 
     enc_idle = xSemaphoreCreateBinary();
     monitor_pos = monitor_raw = false; 
@@ -107,12 +106,12 @@ static void nmeaListener(void* arg)
     
     readline(_uart, buf, NMEA_BUFSIZE);
 
-    if (buf[0] != '$')
-      continue;
-    
     /* If requested, show raw NMEA packet on screen */
     if (monitor_raw) 
       printf("%s\n", buf);
+    
+    if (buf[0] != '$')
+      continue;
     
     /* Checksum (optional) */
     uint8_t i = 0;
