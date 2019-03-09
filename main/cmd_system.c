@@ -199,6 +199,24 @@ static int do_disp(int argc, char** argv)
 
 
 /********************************************************************************
+ * Tone generator testing
+ ********************************************************************************/
+
+static int do_tone(int argc, char** argv)
+{
+    printf("***** Tone generator (space to toggle) *****\n");
+    tone_init();
+    tone_start();
+    char c; 
+    while ((c=getchar()) == ' ') 
+        tone_toggle();
+    tone_stop();
+    return 0;
+}
+
+
+
+/********************************************************************************
  * Register commands for system
  ********************************************************************************/
 
@@ -213,4 +231,5 @@ void register_system()
     ADD_CMD("regex",   &do_regmatch, "Regex match", NULL);
     ADD_CMD("nmea",    &do_nmea,     "Monitor GPS NMEA datastream", "[raw]");
     ADD_CMD("disp",    &do_disp,     "display test", "");
+    ADD_CMD("tone",    &do_tone,     "tone generator test", "");
 }

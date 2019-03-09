@@ -46,6 +46,13 @@
 #define LED_STATUS_PIN  22
 #define BUTTON_PIN      16
 
+/* Tone generation (for AFSK) */
+#define TONE_DAC DAC_CHANNEL_1
+#define TONE_TIMERGRP 0
+#define TONE_TIMERIDX 1
+#define AFSK_MARK 1200
+#define AFSK_SPACE 2200
+
 
 #define BLINK_NORMAL ; // FIXME
 #define BLINK_GPS_SEARCHING ; // FIXME

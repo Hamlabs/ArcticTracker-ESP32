@@ -9,7 +9,7 @@
  * Timer setup
  ************************************************************************/
 
-void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *))
+void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *), bool iram)
 {
     /* Select and initialize basic parameters of the timer */
     timer_config_t config;
@@ -21,7 +21,7 @@ void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *))
     config.auto_reload = 1;
     timer_init(group, idx, &config);
     timer_set_counter_value(group, idx, 0x00000000ULL);
-    timer_isr_register(group, idx, isr, (void *) idx, ESP_INTR_FLAG_IRAM, NULL);
+    timer_isr_register(group, idx, isr, (void *) idx, (iram? ESP_INTR_FLAG_IRAM : 0), NULL);
     timer_enable_intr(group, idx);
 }
 
@@ -45,6 +45,24 @@ void clock_start(int group, int idx, double interval)
 void clock_stop(int group, int idx) {
     timer_pause(group, idx);
 }
+
+
+/************************************************************************
+ * Change interval of the timer without stopping it. 
+ * If the current count is greater than the new alarm value,
+ * interrupt will be triggered. 
+ ************************************************************************/
+
+// FIXME: This may be called from a timer ISR !!!
+void clock_changeInterval(int group, int idx, double interval)
+{
+    double counter;  
+    timer_get_counter_value(group, idx, &counter);
+    if (counter >= interval)
+        timer_set_counter_value(group, idx, interval-1);
+    timer_set_alarm_value(group, idx, interval);
+}
+
 
 
 /*************************************************************************

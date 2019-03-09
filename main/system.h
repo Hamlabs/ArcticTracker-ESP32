@@ -18,10 +18,19 @@ bool time_getUTC(struct tm *timeinfo);
 
 
 /* Hardware timer - as periodic clocks */
-void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *));
+void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *), bool iram);
 void clock_start(int group, int idx, double interval);
 void clock_stop(int group, int idx);
+void clock_changeInterval(int group, int idx, double interval);
 void IRAM_ATTR clock_clear_intr(int group, int index);
+
+
+/* Tone generator */
+void tone_init();
+void tone_start();
+void tone_setHigh(bool hi);
+void tone_toggle();
+void tone_stop();
 
  
 /* Logging */

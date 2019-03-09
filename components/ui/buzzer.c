@@ -10,7 +10,7 @@
 #include "ui.h"
 
 
-#define CLOCK_DIVIDER 160
+#define CLOCK_DIVIDER 16
 #define CLOCK_FREQ (TIMER_BASE_CLK / CLOCK_DIVIDER)
 #define FREQ(f)    (CLOCK_FREQ/(f*2))
 
@@ -30,11 +30,6 @@ static void IRAM_ATTR buzzer_isr(void* arg)
     clock_clear_intr(BUZZER_TIMERGRP, BUZZER_TIMERIDX);
     buzz_pin = (buzz_pin==1 ? 0 : 1);
     gpio_set_level(BUZZER_PIN, buzz_pin);    
-#if BUZZER_TIMERIDX==0
-    TIMERG0.hw_timer[BUZZER_TIMERIDX].config.alarm_en = TIMER_ALARM_EN;
-#else
-    TIMERG1.hw_timer[BUZZER_TIMERIDX].config.alarm_en = TIMER_ALARM_EN;
-#endif
 }
 
 
@@ -89,7 +84,7 @@ void beeps(char* s)
 
 void buzzer_init() {
     gpio_set_direction(BUZZER_PIN,  GPIO_MODE_OUTPUT);
-    clock_init(BUZZER_TIMERGRP, BUZZER_TIMERIDX, CLOCK_DIVIDER, buzzer_isr);
+    clock_init(BUZZER_TIMERGRP, BUZZER_TIMERIDX, CLOCK_DIVIDER, buzzer_isr, true);
 }
 
 
