@@ -10,7 +10,7 @@
 #include "driver/dac.h"
 #include "defines.h"
 #include "system.h"
-
+#include "afsk.h"
 
 
 #define STEPS 16

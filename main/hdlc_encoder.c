@@ -11,7 +11,7 @@
 //#include "radio.h"
 #include "config.h"
 
-RingbufHandle_t outqueue; 
+QueueHandle_t outqueue; 
 FBQ encoder_queue; 
 FBQ *mqueue = NULL;
 static FBUF buffer; 
@@ -19,7 +19,6 @@ static FBUF buffer;
 #define BUFFER_EMPTY (fbuf_eof(&buffer))            
 
 
-/* FIXME: Those should be parameters stored in EEPROM ! */
 #define PERSISTENCE 80 /* p = x/255 */
 #define SLOTTIME    10 /* Milliseconds/10 */
 
@@ -73,8 +72,7 @@ static void hdlc_testsignal(void* arg)
    hdlc_idle = false;
   
    while(test_active) 
-//     oqPut(outqueue, testbyte);
-     xRingbufferSend(outqueue, &testbyte, 1, portMAX_DELAY);
+   xQueueSend(outqueue, &testbyte, portMAX_DELAY);
    hdlc_idle = true;    
    vTaskDelete(NULL);
 }
@@ -138,7 +136,7 @@ static void hdlc_txencoder (void* arg)
  * Initialize hdlc encoder
  *************************************************************/
 
-FBQ* hdlc_init_encoder(RingbufHandle_t oq) 
+FBQ* hdlc_init_encoder(QueueHandle_t oq) 
 {
   outqueue = oq;
   enc_idle = xSemaphoreCreateBinary();
@@ -228,7 +226,7 @@ static void hdlc_encode_frames()
        }
      
        if (++outbits == 8) {
-          xRingbufferSend(outqueue, &outbyte, 1, portMAX_DELAY);
+          xQueueSend(outqueue, &outbyte, portMAX_DELAY);
           outbits = 0;
        }
        outbyte >>= 1;      

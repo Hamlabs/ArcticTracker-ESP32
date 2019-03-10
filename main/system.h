@@ -24,14 +24,6 @@ void clock_stop(int group, int idx);
 void clock_changeInterval(int group, int idx, double interval);
 void IRAM_ATTR clock_clear_intr(int group, int index);
 
-
-/* Tone generator */
-void tone_init();
-void tone_start();
-void tone_setHigh(bool hi);
-void tone_toggle();
-void tone_stop();
-
  
 /* Logging */
 void set_logLevels(void);

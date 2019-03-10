@@ -22,6 +22,7 @@
 #include "sdkconfig.h"
 #include "config.h"
 #include "system.h"
+#include "afsk.h"
 #include "fbuf.h"
 #include "gps.h"
 #include "lcd.h"
