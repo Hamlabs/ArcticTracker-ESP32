@@ -3,6 +3,7 @@
  * By LA7ECA, ohanssen@acm.org
  */
 
+
 #include <stdio.h>
 #include <string.h>
 #include "esp_log.h"
@@ -10,12 +11,41 @@
 #include "argtable3/argtable3.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h" 
+#include "freertos/task.h"
 #include "defines.h"
 #include "config.h"
 #include "commands.h"
+#include "ax25.h"
+#include "afsk.h"
+#include "hdlc.h"
 
 void   register_aprs(void);
    
+
+
+
+/********************************************************************************
+ * AFSK generator testing
+ ********************************************************************************/
+
+static int do_teston(int argc, char** argv)
+{ 
+    
+    uint8_t ch;
+    sscanf(argv[1], "%hhx", &ch);
+    printf("***** AFSK generator (0x%hhX) *****\n", ch);
+    hdlc_test_on(ch);
+    afsk_tx_start();
+    getchar();
+    hdlc_test_off();
+    sleepMs(1000); 
+    afsk_tx_stop();
+    return 0;
+}
+
+
+
+
 CMD_USTR_SETTING (_param_mycall,     "MYCALL",      9,  "NOCALL",  REGEX_AXADDR);
 CMD_USTR_SETTING (_param_dest,       "DEST",        9,  "APAT20",  REGEX_AXADDR);
 CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",    50, "",        REGEX_DIGIPATH);
@@ -53,6 +83,8 @@ CMD_BOOL_SETTING (_param_digi_sar,   "DIGI.SAR.on",   NULL);
 
 void register_aprs()
 {
+    ADD_CMD("teston",    &do_teston,      "HDLC encoder test", "<byte>");
+    
     ADD_CMD("mycall",    &_param_mycall,   "My callsign", "[<callsign>]");
     ADD_CMD("dest",      &_param_dest,     "APRS destination address", "[<addr>]");
     ADD_CMD("digipath",  &_param_digipath, "APRS Digipeater path", "[<addr>, ...]");

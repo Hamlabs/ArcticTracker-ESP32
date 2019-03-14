@@ -21,6 +21,8 @@
 #include "fbuf.h"
 #include "gps.h"
 #include "ui.h"
+#include "afsk.h"
+#include "hdlc.h"
 
 static const char* TAG = "example";
 
@@ -201,11 +203,8 @@ void app_main()
     register_aprs();
     wifi_init();
     gps_init(GPS_UART);
+    hdlc_init_encoder(afsk_tx_init());
     ui_init();
     run_console();     
-    
-    FBUF b; 
-    fbuf_new(&b);
-    fbuf_putChar(&b, 'x');
     
 }

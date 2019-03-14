@@ -19,7 +19,7 @@
 #define FREQ(f)    (CLOCK_FREQ/(f))
 
 #define AFSK_TX_TIMERGRP 1
-#define AFSK_TX_TIMERIDX 0
+#define AFSK_TX_TIMERIDX 1
 
 static QueueHandle_t oq;
 static bool transmit = false; 
@@ -38,9 +38,9 @@ void afsk_PTT(bool on)
    transmit = on; 
 //   radio_PTT(on); // FIXME
    if (on) 
-      afsk_tx_start();
+      tone_start();
    else
-      afsk_tx_stop();
+      tone_stop();
 }
 
 
@@ -92,6 +92,7 @@ static void next_byte(void)
 
 static void afsk_txBitClock(void *arg) 
 {
+    clock_clear_intr(AFSK_TX_TIMERGRP, AFSK_TX_TIMERIDX);
     if (!transmit) {
         if (xQueueIsQueueEmptyFromISR(oq))   
             return;
@@ -120,6 +121,7 @@ static void afsk_txBitClock(void *arg)
 
 QueueHandle_t afsk_tx_init()
 {
+    tone_init();
     clock_init(AFSK_TX_TIMERGRP, AFSK_TX_TIMERIDX, CLOCK_DIVIDER, afsk_txBitClock, false);
     oq =  xQueueCreate(AFSK_TX_QUEUE_SIZE, 1);
     return oq;
@@ -131,7 +133,6 @@ QueueHandle_t afsk_tx_init()
  ***********************************************************/
  
 void afsk_tx_start() {
-    tone_start();
     clock_start(AFSK_TX_TIMERGRP, AFSK_TX_TIMERIDX, FREQ(AFSK_FREQ));
 }
  
@@ -142,8 +143,7 @@ void afsk_tx_start() {
  ***********************************************************/
  
  void afsk_tx_stop() {
-    clock_stop(AFSK_TX_TIMERGRP, AFSK_TX_TIMERIDX);
-    tone_stop(); 
+    clock_stop(AFSK_TX_TIMERGRP, AFSK_TX_TIMERIDX); 
  }
  
  

@@ -72,7 +72,7 @@ static void hdlc_testsignal(void* arg)
    hdlc_idle = false;
   
    while(test_active) 
-   xQueueSend(outqueue, &testbyte, portMAX_DELAY);
+        xQueueSend(outqueue, &testbyte, portMAX_DELAY);
    hdlc_idle = true;    
    vTaskDelete(NULL);
 }
@@ -82,7 +82,7 @@ void hdlc_test_on(uint8_t b)
 { 
    testbyte = b;
    test_active = true;
-   xTaskCreate(&hdlc_testsignal, "HDLC TX Test Signal", 
+   xTaskCreate(&hdlc_testsignal, "HDLC TX Testsignal", 
         STACK_HDLC_TEST, NULL, NORMALPRIO, &testt);
 }
 
