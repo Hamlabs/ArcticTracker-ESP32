@@ -6,6 +6,9 @@
 #if !defined __CONFIG_H__
 #define __CONFIG_H__
 
+#include <stdint.h>
+#include <stdbool.h>
+
 uint32_t chipId(); 
 void nvs_init();
 int  config_open();

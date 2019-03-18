@@ -7,7 +7,24 @@
 #define _DEFINES_H_
 
 
+#define VERSION_STRING "V0.1 alpha"
+
 #define BIT_0	( 1 << 0 )
+
+/* 
+ * If set to true, radio will be turned off even if tracking is active
+ * and will be turned on only when sending packets. Otherwise it will
+ * be on as long as tracking is on. 
+ */
+#define TRACKER_TRX_ONDEMAND false
+
+
+/* APRS tracking FIXME */
+#define TRACKER_SLEEP_TIME 10
+#define TIMER_RESOLUTION   1000 
+#define GPS_FIX_TIME       3
+#define COMMENT_PERIOD     4
+#define GPS_TIMEOUT        3 
 
 
 /* Conversions */
@@ -65,12 +82,15 @@
 
 #define AUTOCONNECT_PERIOD 240
 
+/* Stack sizes for tasks */
 #define STACK_AUTOCON        2100
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 2000
 #define STACK_NMEALISTENER   1600
 #define STACK_LEDBLINKER     1800
 #define STACK_UI_SRV         800
+#define STACK_TRACKER        2000
+
 
 #define FBUF_SLOTSIZE 32
 #define FBUF_SLOTS 1024
@@ -83,6 +103,11 @@
 #define REGEX_HOSTNAME "[0-9-a-zA-Z\\-\\_\\.]+"
 
 #define NORMALPRIO 5
+
+
+#define min(x,y) (x<y? x : y)
+#define max(x,y) (x>y? x : y)
+
 
 /* Simplified semaphore operations */
 #define semaphore_t     SemaphoreHandle_t

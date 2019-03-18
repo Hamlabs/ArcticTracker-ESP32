@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ax25.h"
-
+#include "system.h"
  
 /* Static functions */
 static void encode_addr(FBUF *, char*, uint8_t, uint8_t);
@@ -95,6 +95,20 @@ char* digis2str(char* string, uint8_t ndigis, addr_t digis[], bool trunc)
      }
   }
   return string;
+}
+
+
+
+/*********************************************************************
+ * Convert comma-separated list of digis into AX.25 digipeater path
+ *********************************************************************/
+
+uint8_t str2digis(addr_t* digis, char* str)
+{
+    char* tokens[8];
+    uint8_t ndigis = tokenize(str, tokens, 7, ",", false);
+    args2digis(digis, ndigis, tokens);
+    return ndigis;
 }
 
 

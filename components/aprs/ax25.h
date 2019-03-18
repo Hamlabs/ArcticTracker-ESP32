@@ -51,6 +51,7 @@ addr_t* addr(addr_t*, char*, uint8_t);
 char*   addr2str(char*, const addr_t*);
 void    str2addr(addr_t* a, const char* str, bool d);
 char*   digis2str(char*, uint8_t, addr_t[], bool);
+uint8_t str2digis(addr_t* digis, char* str);
 uint8_t args2digis(addr_t* digis, int argc, char *argv[]);
 bool    ax25_search_digis(addr_t* digis, int ndigis, char *argv[]);
 
