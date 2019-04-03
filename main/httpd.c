@@ -3,7 +3,7 @@
  * By LA7ECA, ohanssen@acm.org
  * Uses https://github.com/chmorgan/libesphttpd
  */
-
+#include "defines.h"
 #include <libesphttpd/esp.h>
 #include "libesphttpd/httpd.h"
 #include "libesphttpd/httpdespfs.h"
@@ -16,13 +16,14 @@
 #include "libesphttpd/cgiwebsocket.h"
 #include "libesphttpd/httpd-freertos.h"
 #include "libesphttpd/route.h"
-#include "defines.h"
 #include "networking.h"
 #include "config.h"
 #include "esp_log.h"
 
 #define LISTEN_PORT     80u
 #define MAX_CONNECTIONS 16u
+
+
 
 #define METHOD_GET(cd) ((cd)->requestType==HTTPD_METHOD_GET)
 #define METHOD_POST(cd) ((cd)->requestType==HTTPD_METHOD_POST)
@@ -56,11 +57,14 @@ CGIFUNC tpl_aprs(HttpdConnData *con, char *token, void **arg);
 CGIFUNC tpl_digi(HttpdConnData *con, char *token, void **arg);
 CGIFUNC tpl_sysInfo(HttpdConnData *con, char *token, void **arg); 
 CGIFUNC tpl_wifi(HttpdConnData *con, char *token, void **arg);
+CGIFUNC tpl_fw(HttpdConnData *con, char *token, void **arg);
 CGIFUNC cgi_updateWifi(HttpdConnData *cdata);
 CGIFUNC cgi_updateDigi(HttpdConnData *cdata);
 CGIFUNC cgi_updateAprs(HttpdConnData *cdata);
+CGIFUNC cgi_updateFw(HttpdConnData *cdata);
 
 #define TAG "httpd"
+
 
 
 int myPassFn(HttpdConnData *connData, int no, char *user, int userLen, char *pass, int passLen) {
@@ -89,6 +93,8 @@ HttpdBuiltInUrl builtInUrls[] = {
 	ROUTE_TPL_FILE("/digi", tpl_digi, "/digi.tpl"),
 	ROUTE_CGI("/digiupdate", cgi_updateDigi),
     ROUTE_CGI("/aprsupdate", cgi_updateAprs),
+    ROUTE_TPL_FILE("/fw", tpl_fw, "/firmware.tpl"),
+    ROUTE_CGI("/fwupdate", cgi_updateFw),
 	ROUTE_FILESYSTEM(),
 	ROUTE_END()
 };
@@ -117,6 +123,18 @@ static void updateStrField(HttpdConnData *cdata, const char* key, const char* pp
     POST_ARG(cdata, pparm, val, 64);
     int n = sprintf(buf, "Update %s: %s<br>", key, param_parseStr(key, val, strlen(val), pattern, msg));
     httpdSend(cdata, buf, n);
+}
+
+
+static void updateBigStrField(HttpdConnData *cdata, const char* key, const char* pparm, char* pattern) 
+{
+    char msg[64], buf[128];
+    char* bbuf = malloc(BBUF_SIZE+1);
+    POST_ARG(cdata, pparm, bbuf, BBUF_SIZE);
+    int bytes = strlen(bbuf);
+    int n = sprintf(buf, "Update %s: %s<br>", key, param_parseStr(key, bbuf, bytes, pattern, msg));
+    httpdSend(cdata, buf, n);
+    free(bbuf);
 }
 
 
@@ -276,6 +294,30 @@ CGIFUNC cgi_updateDigi(HttpdConnData *cdata) {
 
 
 
+/****************************************************** 
+ * CGI function for updating firmware update settings
+ ******************************************************/
+
+CGIFUNC cgi_updateFw(HttpdConnData *cdata) {
+    if (cdata->isConnectionClosed) 
+        /* Connection aborted. Clean up */
+		return HTTPD_CGI_DONE;
+
+	if (!METHOD_POST(cdata))
+		RESPOND_CODE(406);
+    
+    startResp(cdata, 200, "text/html");
+    httpdSend(cdata, "<html>", -1); 
+    head(cdata); 
+    httpdSend(cdata, "<body><h2>Update firmware update settings...</h2><fieldset>", -1);
+    updateStrField(cdata, "FW.URL",  "fw_url", ".*");
+    updateBigStrField(cdata, "FW.CERT", "fw_cert", ".*");
+    httpdSend(cdata, "</fieldset></body></html>", -1);
+    
+    return HTTPD_CGI_DONE;
+}
+
+
 /*****************************************************
  * Template replacer for APRS tracker
  *****************************************************/
@@ -428,8 +470,32 @@ CGIFUNC tpl_wifi(HttpdConnData *con, char *token, void **arg) {
 }
 
 
+
+/*****************************************************
+ * Template replacer for firmware update config
+ *****************************************************/
+typedef struct {
+	char *stringPos;
+} LongStringState;
+
+
+CGIFUNC tpl_fw(HttpdConnData *con, char *token, void **arg) {
+    char* bbuf = malloc(BBUF_SIZE+1);
+    if (token==NULL) return HTTPD_CGI_DONE;
+    TPL_HEAD(token, con); 
+    
+    if (strcmp(token, "fw_url")==0)
+        get_str_param("FW.URL", bbuf, 64, "");
+    else if (strcmp(token, "fw_cert")==0) 
+        get_str_param("FW.CERT", bbuf, BBUF_SIZE, "");
+  
+    httpdSend(con, bbuf, -1);
+    free(bbuf);
+    return HTTPD_CGI_DONE;
+}
     
 
+    
 /*****************************************************
  * Init and start webserver
  *****************************************************/

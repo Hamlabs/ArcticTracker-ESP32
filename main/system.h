@@ -11,6 +11,9 @@
 #if !defined __DEF_SYSTEM_H__
 #define __DEF_SYSTEM_H__
 
+/* Firmware upgrade */
+esp_err_t firmware_upgrade();
+
 
 /* Time */
 extern void time_init(); 
@@ -26,6 +29,7 @@ void IRAM_ATTR clock_clear_intr(int group, int index);
 
  
 /* Logging */
+bool hasTag(char*tag);
 void set_logLevels(void);
 char* loglevel2str(esp_log_level_t lvl);
 esp_log_level_t str2loglevel(char* str);

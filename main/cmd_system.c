@@ -117,11 +117,14 @@ static int do_log(int argc, char** argv)
     }
     else {
         char buf[24];
-        // FIXME: Sanitize input
-        sprintf(buf, "LOGLEVEL.%s", (strcmp(argv[1], "*")==0 ? "ALL" : argv[1]) );
+        if (strlen(argv[1]) > 10 || !hasTag(argv[1])) {
+            printf("Sorry, unknown tag: %s\n", argv[1]);
+            return 0;
+        }
+        sprintf(buf, "LGLV.%s", (strcmp(argv[1], "*")==0 ? "ALL" : argv[1]) );
         uint8_t lvl = get_byte_param(buf, (int) ESP_LOG_WARN);
         if (argc==2) 
-            printf("LOGLEVEL %s %s\n", argv[1], loglevel2str(lvl));
+            printf("LGLV %s %s\n", argv[1], loglevel2str(lvl));
         else {
             if (strcasecmp(argv[2], "delete")==0)
                 delete_param(buf); 
@@ -216,6 +219,14 @@ static int do_tone(int argc, char** argv)
 }
 
 
+static int do_fwupgrade(int argc, char** argv)
+{
+    printf("*** Attempting firmware upgrade ***\n");
+    ESP_ERROR_CHECK(firmware_upgrade());
+    return 0;
+}
+
+
 
 /********************************************************************************
  * Register commands for system
@@ -233,4 +244,5 @@ void register_system()
     ADD_CMD("nmea",    &do_nmea,     "Monitor GPS NMEA datastream", "[raw]");
     ADD_CMD("disp",    &do_disp,     "display test", "");
     ADD_CMD("tone",    &do_tone,     "tone generator test", "");
+    ADD_CMD("fw-upgrade", &do_fwupgrade, "Firmware upgrade", "");
 }

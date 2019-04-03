@@ -15,13 +15,46 @@
 #include "networking.h"
 #include "config.h"
 #include "system.h"
-
 #include "apps/sntp/sntp.h"
-
+#include "esp_ota_ops.h"
+#include "esp_http_client.h"
+#include "esp_https_ota.h"
 
 static void initialize_sntp(void);
 
+
 #define TAG "system"
+
+
+/******************************************************************************
+ * Upgrade firmware over HTTPS
+ ******************************************************************************/
+
+esp_err_t firmware_upgrade()
+{
+    char* fwurl = malloc(64);
+    char* fwcert = malloc(BBUF_SIZE);
+    GET_STR_PARAM("FW.URL", fwurl, 64);
+    GET_STR_PARAM("FW.CERT", fwcert, BBUF_SIZE);
+    
+    esp_http_client_config_t config = {
+        .url = fwurl,
+        .cert_pem = fwcert,
+    };
+    printf("*** URL=%s\n", config.url);
+    
+    esp_err_t ret = esp_https_ota(&config);
+    
+    free(fwurl);
+    free(fwcert);
+    if (ret == ESP_OK) {
+        esp_restart();
+    } else {
+        return ESP_FAIL;
+    }
+    return ESP_OK;
+}
+
 
 
 /******************************************************************************
@@ -79,15 +112,26 @@ bool time_getUTC(struct tm *timeinfo)
  ********************************************************************************/
 
 void set_logLevels() {
-    esp_log_level_t default_level = get_byte_param("LOGLEVEL.ALL", ESP_LOG_WARN) ; 
+    esp_log_level_t default_level = get_byte_param("LOGLV.ALL", ESP_LOG_WARN) ; 
     esp_log_level_set("*", default_level);
-    esp_log_level_set("wifi", get_byte_param("LOGLEVEL.wifi", default_level));
-    esp_log_level_set("wifix", get_byte_param("LOGLEVEL.wifix", default_level));
-    esp_log_level_set("config", get_byte_param("LOGLEVEL.config", default_level));
-    esp_log_level_set("httpd", get_byte_param("LOGLEVEL.httpd", default_level));
-    esp_log_level_set("shell", get_byte_param("LOGLEVEL.shell", default_level));
-    esp_log_level_set("system", get_byte_param("LOGLEVEL.system", default_level));
+    esp_log_level_set("wifi", get_byte_param("LGLV.wifi", default_level));
+    esp_log_level_set("wifix", get_byte_param("LGLV.wifix", default_level));
+    esp_log_level_set("config", get_byte_param("LGLV.config", default_level));
+    esp_log_level_set("httpd", get_byte_param("LGLV.httpd", default_level));
+    esp_log_level_set("shell", get_byte_param("LGLV.shell", default_level));
+    esp_log_level_set("system", get_byte_param("LGLV.system", default_level));
+    esp_log_level_set("tracker", get_byte_param("LGLV.tracker", default_level));
+    esp_log_level_set("esp-tls", get_byte_param("LGLV.esp-tls", default_level));
 }
+
+
+bool hasTag(char*tag) {
+    return strcmp(tag, "wifi")==0 || strcmp(tag, "wifix")==0 ||
+           strcmp(tag, "config")==0 || strcmp(tag, "httpd")==0 ||
+           strcmp(tag, "shell")==0 || strcmp(tag, "system")==0 ||
+           strcmp(tag, "tracker")==0 || strcmp(tag, "esp-tls")==0; 
+}
+
 
 
 

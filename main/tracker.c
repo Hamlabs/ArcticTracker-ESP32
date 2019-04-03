@@ -18,14 +18,14 @@
 #define radio_release() {}
 #define adc_read_batt() 1
 
-
+#define TAG "tracker"
 
 posdata_t prev_pos; 
 posdata_t prev_pos_gps;
 int16_t course=-1, prev_course=-1, prev_gps_course=-1;
 
-extern fbq_t* outframes;  // FIXME? Extern? 
-static fbq_t* gate; 
+static fbq_t* outframes = NULL;   
+static fbq_t* gate = NULL; 
 
 static bool maxpause_reached = false;
 static uint8_t pause_count = 0;
@@ -197,7 +197,7 @@ static void tracker(void* arg)
 {
     uint8_t t;
     uint8_t st_count = GET_BYTE_PARAM("STATUSTIME"); 
-
+    ESP_LOGI(TAG, "Starting tracker task");
     gps_on();    
     if (!TRACKER_TRX_ONDEMAND)
        radio_require();
@@ -260,8 +260,9 @@ static TaskHandle_t trackert = NULL;
  * Init tracker. gps_init should be called first.
  ***************************************************************/
  
-void tracker_init()
+void tracker_init(FBQ *q)
 {
+    outframes = q; 
     prev_pos.timestamp=0;
     prev_pos_gps.timestamp=0;
     if (GET_BYTE_PARAM("TRACKER.on"))

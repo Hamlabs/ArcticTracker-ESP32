@@ -98,7 +98,7 @@ void commit_param() {
 int param_setting_str (int argc, char** argv,
                 const char* key, const int size, char* dfl, const char* pattern )
 {
-    char data[size+1];
+    char* data = malloc(size+1);
     char buf[64];
     if (argc < 2) {
         get_str_param(key, data, size, dfl);
@@ -114,6 +114,7 @@ int param_setting_str (int argc, char** argv,
             printf("%s\n", param_parseStr(key, argv[1], size, pattern, buf));
     }
     commit_param();
+    free(data);
     return 0;
 }
 
@@ -448,7 +449,7 @@ int get_str_param(const char* key, char* buf, size_t size, const char* dfl) {
     }
     else
         ESP_ERROR_CHECK(err);
-    return strlen(buf);
+    return len;
 }
 
 

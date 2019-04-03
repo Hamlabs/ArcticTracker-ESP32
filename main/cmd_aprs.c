@@ -50,7 +50,7 @@ static int do_teston(int argc, char** argv)
 
 CMD_USTR_SETTING (_param_mycall,     "MYCALL",      9,  "NOCALL",  REGEX_AXADDR);
 CMD_USTR_SETTING (_param_dest,       "DEST",        9,  "APAT20",  REGEX_AXADDR);
-CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",    50, "",        REGEX_DIGIPATH);
+CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",    70, "",        REGEX_DIGIPATH);
 CMD_STR_SETTING  (_param_symbol,     "SYMBOL",      3,  "/]",      REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_osym,       "OBJ.SYMBOL",  3,  "/]",      REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_oid,        "OBJ.ID",      10, "MARK-",   REGEX_AXADDR);

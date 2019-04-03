@@ -39,6 +39,11 @@
 #define HDLC_DECODER_QUEUE_SIZE  16
 #define HDLC_ENCODER_QUEUE_SIZE  16
 
+/* Radio */
+#define RADIO_PIN_PTT       17
+#define RADIO_PIN_TXP        5
+#define RADIO_PIN_PD        18
+#define RADIO_PIN_SQUELCH   16
 
 /* GPS */
 #define GPS_UART        UART_NUM_1
@@ -83,14 +88,16 @@
 #define AUTOCONNECT_PERIOD 240
 
 /* Stack sizes for tasks */
-#define STACK_AUTOCON        2100
+#define STACK_AUTOCON        2800
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 2000
 #define STACK_NMEALISTENER   1600
-#define STACK_LEDBLINKER     1800
+#define STACK_LEDBLINKER     1500
 #define STACK_UI_SRV         800
 #define STACK_TRACKER        2000
 
+
+#define BBUF_SIZE 3000
 
 #define FBUF_SLOTSIZE 32
 #define FBUF_SLOTS 1024
@@ -116,6 +123,10 @@
 #define sem_up(x)       xSemaphoreGive(x)
 #define sem_down(x)     xSemaphoreTake(x, portMAX_DELAY)
 #define sem_getCount(x) uxSemaphoreGetCount(x)
+
+#define mutex_t SemaphoreHandle_t
+#define mutex_lock(x)    xSemaphoreTake((x), portMAX_DELAY)
+#define mutex_unlock(x)  xSemaphoreGive((x))
 
 
 #define sleepMs(n)  vTaskDelay(pdMS_TO_TICKS(n))

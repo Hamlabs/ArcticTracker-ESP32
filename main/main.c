@@ -23,6 +23,8 @@
 #include "ui.h"
 #include "afsk.h"
 #include "hdlc.h"
+#include "tracker.h"
+
 
 static const char* TAG = "example";
 
@@ -194,6 +196,14 @@ void app_main()
     initialize_filesystem();
 #endif
 
+    /* Move these to radio impl */
+    gpio_set_direction(RADIO_PIN_PD,   GPIO_MODE_OUTPUT);
+    gpio_set_direction(RADIO_PIN_PTT,  GPIO_MODE_OUTPUT);
+    gpio_set_direction(RADIO_PIN_TXP,  GPIO_MODE_OUTPUT);
+    gpio_set_direction(RADIO_PIN_SQUELCH,  GPIO_MODE_INPUT);
+    gpio_set_level(RADIO_PIN_PTT, 1);
+    gpio_set_level(RADIO_PIN_TXP, 0);
+    
     initialize_console();
 
     /* Register commands */
@@ -203,7 +213,8 @@ void app_main()
     register_aprs();
     wifi_init();
     gps_init(GPS_UART);
-    hdlc_init_encoder(afsk_tx_init());
+    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
+    tracker_init(oq);
     ui_init();
     run_console();     
     

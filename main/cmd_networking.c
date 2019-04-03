@@ -213,7 +213,8 @@ CMD_STR_SETTING (_param_httpd_pwd, "HTTPD.PWD",   64, HTTPD_DEFAULT_PWD, NULL);
 CMD_STR_SETTING (_param_ap_ssid,   "WIFIAP.SSID", 32, default_ssid, NULL); 
 CMD_STR_SETTING (_param_ap_auth,   "WIFIAP.AUTH", 64, AP_DEFAULT_PASSWD, NULL);
 CMD_STR_SETTING (_param_ap_ip,     "WIFIAP.IP",   17, AP_DEFAULT_IP, REGEX_IPADDR);
-
+CMD_STR_SETTING (_param_fwurl,     "FW.URL",      64, "", NULL);
+CMD_STR_SETTING (_param_fwcert,    "FW.CERT",   BBUF_SIZE, "", NULL);
 
 
 /********************************************************************************
@@ -248,6 +249,8 @@ void register_wifi()
     ADD_CMD("httpd",      &_param_httpd,     "HTTPD On/Off setting", "[on|off]");
     ADD_CMD("httpd-user", &_param_httpd_usr, "HTTPD User name", "[<user>]");
     ADD_CMD("httpd-pass", &_param_httpd_pwd, "HTTPD Password",  "[<passwd>]");
+    ADD_CMD("fw-url",     &_param_fwurl,     "URL for firmware update", "<url>");
+    ADD_CMD("fw-cert",    &_param_fwcert,     "Certificate for firmware update", "");
 }
 
 
