@@ -29,8 +29,10 @@ Currently the following is implemented or ported:
 * Webserver. Used for setup. 
 * Interface with GPS. 
 * LCD display, button handler, etc.. 
+* Firmware upgrades over the air (OTA). 
 
-There is still some stuff to port or re-implement from the first version of the tracker like interfacing to radio, APRS stuff. etc. We also need some re-work of the hardware (mainly a re-design of the PCB). 
+A updated PCB layout is produced and is currently being tested. 
+There is still some stuff to port or re-implement from the first version of the tracker like interfacing to radio, APRS stuff. etc.
 
 
 
