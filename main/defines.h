@@ -88,11 +88,11 @@
 #define AUTOCONNECT_PERIOD 240
 
 /* Stack sizes for tasks */
-#define STACK_AUTOCON        2800
+#define STACK_AUTOCON        2500
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 2000
 #define STACK_NMEALISTENER   1600
-#define STACK_LEDBLINKER     1500
+#define STACK_LEDBLINKER     1100
 #define STACK_UI_SRV         800
 #define STACK_TRACKER        2000
 
@@ -100,7 +100,7 @@
 #define BBUF_SIZE 3000
 
 #define FBUF_SLOTSIZE 32
-#define FBUF_SLOTS 1024
+#define FBUF_SLOTS 512
 
 /* Regular expressions defining various input formats */
 #define REGEX_AXADDR   "\\w{3,6}(-\\d{1,2})?"

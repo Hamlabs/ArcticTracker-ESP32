@@ -474,16 +474,12 @@ CGIFUNC tpl_wifi(HttpdConnData *con, char *token, void **arg) {
 /*****************************************************
  * Template replacer for firmware update config
  *****************************************************/
-typedef struct {
-	char *stringPos;
-} LongStringState;
-
 
 CGIFUNC tpl_fw(HttpdConnData *con, char *token, void **arg) {
-    char* bbuf = malloc(BBUF_SIZE+1);
     if (token==NULL) return HTTPD_CGI_DONE;
     TPL_HEAD(token, con); 
     
+    char* bbuf = malloc(BBUF_SIZE+1);
     if (strcmp(token, "fw_url")==0)
         get_str_param("FW.URL", bbuf, 64, "");
     else if (strcmp(token, "fw_cert")==0) 

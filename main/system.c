@@ -45,8 +45,8 @@ esp_err_t firmware_upgrade()
     
     esp_err_t ret = esp_https_ota(&config);
     
-    free(fwurl);
     free(fwcert);
+    free(fwurl);
     if (ret == ESP_OK) {
         esp_restart();
     } else {
