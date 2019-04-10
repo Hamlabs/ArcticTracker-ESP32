@@ -122,6 +122,7 @@ void set_logLevels() {
     esp_log_level_set("system", get_byte_param("LGLV.system", default_level));
     esp_log_level_set("tracker", get_byte_param("LGLV.tracker", default_level));
     esp_log_level_set("esp-tls", get_byte_param("LGLV.esp-tls", default_level));
+    esp_log_level_set("radio", get_byte_param("LGLV.radio", default_level));
 }
 
 
@@ -129,7 +130,8 @@ bool hasTag(char*tag) {
     return strcmp(tag, "wifi")==0 || strcmp(tag, "wifix")==0 ||
            strcmp(tag, "config")==0 || strcmp(tag, "httpd")==0 ||
            strcmp(tag, "shell")==0 || strcmp(tag, "system")==0 ||
-           strcmp(tag, "tracker")==0 || strcmp(tag, "esp-tls")==0; 
+           strcmp(tag, "tracker")==0 || strcmp(tag, "esp-tls")==0 ||
+           strcmp(tag, "radio")==0; 
 }
 
 

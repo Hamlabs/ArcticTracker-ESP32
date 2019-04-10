@@ -13,6 +13,9 @@ void register_button_handlers(butthandler_t h1, butthandler_t h2);
 #define beep(t) _beep(BEEP_FREQ, (t))
 #define hbeep(t) _beep(BEEP_ALT_FREQ, (t))
 
+#define tx_led_on()  gpio_set_level(LED_TX_PIN, 1)
+#define tx_led_off() gpio_set_level(LED_TX_PIN, 0)
+
 void _beep(uint16_t freq, uint16_t time);
 void blipUp();
 void blipDown();

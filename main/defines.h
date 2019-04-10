@@ -40,10 +40,15 @@
 #define HDLC_ENCODER_QUEUE_SIZE  16
 
 /* Radio */
+#define RADIO_UART          UART_NUM_2
+#define RADIO_PIN_TXD       15
+#define RADIO_PIN_RXD        2
 #define RADIO_PIN_PTT       17
 #define RADIO_PIN_TXP        5
 #define RADIO_PIN_PD        18
 #define RADIO_PIN_SQUELCH   16
+#define RADIO_BUF_SIZE      32
+
 
 /* GPS */
 #define GPS_UART        UART_NUM_1
@@ -66,6 +71,7 @@
 #define BUZZER_TIMERIDX  0
 
 #define LED_STATUS_PIN  22
+#define LED_TX_PIN     23
 #define BUTTON_PIN      16
 
 /* Tone generation (for AFSK) */
@@ -119,12 +125,14 @@
 /* Simplified semaphore operations */
 #define semaphore_t     SemaphoreHandle_t
 #define sem_create(cnt) xSemaphoreCreateCounting(65000, cnt)
+#define sem_createBin() xSemaphoreCreateBinary()
 #define sem_delete(sem) vSemaphoreDelete(sem)
 #define sem_up(x)       xSemaphoreGive(x)
 #define sem_down(x)     xSemaphoreTake(x, portMAX_DELAY)
 #define sem_getCount(x) uxSemaphoreGetCount(x)
 
-#define mutex_t SemaphoreHandle_t
+#define mutex_t		 SemaphoreHandle_t
+#define mutex_create()   xSemaphoreCreateMutex()
 #define mutex_lock(x)    xSemaphoreTake((x), portMAX_DELAY)
 #define mutex_unlock(x)  xSemaphoreGive((x))
 
@@ -136,12 +144,16 @@
 #define cond_t               EventGroupHandle_t
 #define cond_create          xEventGroupCreate
 #define cond_wait(cond)      xEventGroupWaitBits(cond, BIT_0, pdFALSE, pdFALSE,  portMAX_DELAY)
-#define cond_notify(cond)    xEventGroupSetBits(cond, BIT_0)
+#define cond_set(cond)       xEventGroupSetBits(cond, BIT_0)
+#define cond_setI(cond)      xEventGroupSetBitsFromISR(cond, BIT_0, pdFALSE)
 #define cond_clear(cond)     xEventGroupClearBits(cond, BIT_0)
+#define cond_clearI(cond)    xEventGroupClearBitsFromISR(cond, BIT_0)
+#define cond_isSet(cond)     (xEventGroupGetBits(cond) & BIT_0)
+#define cond_isSetI(cond)    (xEventGroupGetBitsFromISR(cond) & BIT_0)
 
-#define cond_waitB(cond, bits)       xEventGroupWaitBits(cond, bits, pdFALSE, pdFALSE,  portMAX_DELAY)
-#define cond_notifyB(cond, bits)     xEventGroupSetBits(cond, bits)
-#define cond_notifyB_isr(cond, bits) xEventGroupSetBitsFromIsr(cond, bits)
-#define cond_test(cond, bits)        (xEventGroupGetBits(cond) & bits)
-#define cond_clearB(cond, bits)      xEventGroupClearBits(cond, bits)
+#define cond_waitBits(cond, bits)       xEventGroupWaitBits(cond, bits, pdFALSE, pdFALSE,  portMAX_DELAY)
+#define cond_setBits(cond, bits)        xEventGroupSetBits(cond, bits)
+#define cond_setBitsI(cond, bits)       xEventGroupSetBitsFromISR(cond, bits)
+#define cond_testBits(cond, bits)       (xEventGroupGetBits(cond) & bits)
+#define cond_clearBits(cond, bits)      xEventGroupClearBits(cond, bits)
 #endif

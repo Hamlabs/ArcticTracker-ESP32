@@ -66,6 +66,7 @@ CMD_BYTE_SETTING (_param_maxpause,   "MAXPAUSE",   120, 0, 250);
 CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",    20, 0, 250);
 CMD_BYTE_SETTING (_param_mindist,    "MINDIST",    100, 0, 250);
 CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",  30, 1, 250);
+CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  1, 1, 8);
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",   35, 0, 360);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",  14580, 1, 65535);
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",     1448000, 1440000, 1460000);
@@ -112,6 +113,7 @@ void register_aprs()
     ADD_CMD("turnlimit",  &_param_turnlimit,   "Threshold for change of direction", "[<val>]");
     ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
+    ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
     
     ADD_CMD("timestamp",  &_param_timestamp,   "Timestamp setting",  "[on|off]");
     ADD_CMD("compress",   &_param_compress,    "Compress setting",  "[on|off]");

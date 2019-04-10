@@ -27,8 +27,7 @@
 // QueueHandle_t afsk_rx_init(void);
 // void afsk_rx_enable(void); 
 // void afsk_rx_disable(void);
- 
-// void trx_sq_handler(EXTDriver *extp, expchannel_t channel);
-
+#define afsk_rx_disable() /* FIXME */
+#define afsk_rx_enable() /* FIXME */
  
 #endif

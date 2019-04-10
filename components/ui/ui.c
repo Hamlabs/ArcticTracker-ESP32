@@ -41,16 +41,16 @@ static void clickhandler(void* p);
     (void)arg;
    
     while (true) {
-       cond_waitB(buttCond, BUTT_EV_SHORT|BUTT_EV_LONG);
-       if ( cond_test(buttCond, BUTT_EV_SHORT) ) {
+       cond_waitBits(buttCond, BUTT_EV_SHORT|BUTT_EV_LONG);
+       if ( cond_testBits(buttCond, BUTT_EV_SHORT) ) {
           beep(10); 
           if (bhandler1) bhandler1(NULL);
-          cond_clearB(buttCond, BUTT_EV_SHORT);
+          cond_clearBits(buttCond, BUTT_EV_SHORT);
        }
        else {
           beeps("-");
           if (bhandler2) bhandler2(NULL);
-          cond_clearB(buttCond, BUTT_EV_LONG);
+          cond_clearBits(buttCond, BUTT_EV_LONG);
        }
     }
  }  
@@ -103,14 +103,14 @@ static void bphandler(void* p)
  
 static void clickhandler(void* p) {
     (void) p; 
-    cond_notifyB(buttCond, BUTT_EV_SHORT);
+    cond_setBits(buttCond, BUTT_EV_SHORT);
 }
 
 
 static void holdhandler(void* p) {
     (void)p;
     pressed = false;
-    cond_notifyB(buttCond, BUTT_EV_LONG);
+    cond_setBits(buttCond, BUTT_EV_LONG);
 }
 
 
@@ -193,11 +193,9 @@ static void button_init() {
     sleepMs(100);
     lcd_backlight();
     gui_welcome(); 
-    
-    
+        
     register_button_handlers(NULL, disp);
-   
-    
+
     
    /* LED blinker thread */
     gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
