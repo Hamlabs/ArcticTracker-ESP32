@@ -67,10 +67,10 @@ void lcd_init() {
     
     /* Reset LCD */
     gpio_set_level(LCD_PIN_BL, 1);
-    gpio_set_level(LCD_PIN_RST, 0);
-    sleepMs(15);
-    gpio_set_level(LCD_PIN_RST, 1);
-    sleepMs(15);
+ //   gpio_set_level(LCD_PIN_RST, 0);
+ //   sleepMs(15);
+ //   gpio_set_level(LCD_PIN_RST, 1);
+ //   sleepMs(15);
    
     /* Send configuration commands to LCD */
     lcd_writeByte(0x21, LCD_SEND_CMD);  /* LCD extended commands */
