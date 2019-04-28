@@ -19,6 +19,7 @@
 #include "esp_ota_ops.h"
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
+#include "ui.h"
 
 static void initialize_sntp(void);
 
@@ -42,7 +43,7 @@ esp_err_t firmware_upgrade()
         .cert_pem = fwcert,
     };
     printf("*** URL=%s\n", config.url);
-    
+    BLINK_FWUPGRADE;
     esp_err_t ret = esp_https_ota(&config);
     
     free(fwcert);
@@ -123,6 +124,8 @@ void set_logLevels() {
     esp_log_level_set("tracker", get_byte_param("LGLV.tracker", default_level));
     esp_log_level_set("esp-tls", get_byte_param("LGLV.esp-tls", default_level));
     esp_log_level_set("radio", get_byte_param("LGLV.radio", default_level));
+    esp_log_level_set("ui", get_byte_param("LGLV.ui", default_level));
+    esp_log_level_set("hdlc-enc", get_byte_param("LGLV.hdlc-enc", default_level));
 }
 
 
@@ -131,7 +134,8 @@ bool hasTag(char*tag) {
            strcmp(tag, "config")==0 || strcmp(tag, "httpd")==0 ||
            strcmp(tag, "shell")==0 || strcmp(tag, "system")==0 ||
            strcmp(tag, "tracker")==0 || strcmp(tag, "esp-tls")==0 ||
-           strcmp(tag, "radio")==0; 
+           strcmp(tag, "radio")==0 || strcmp(tag, "ui")==0 ||
+           strcmp(tag, "hdlc-enc")==0; 
 }
 
 

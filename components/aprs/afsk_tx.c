@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "afsk.h"
+#include "radio.h"
 #include "defines.h"
 #include "system.h"
 
@@ -16,7 +17,7 @@
 #define AFSK_FREQ 1200
 #define CLOCK_DIVIDER 16
 #define CLOCK_FREQ (TIMER_BASE_CLK / CLOCK_DIVIDER)
-#define FREQ(f)    (CLOCK_FREQ/(f))
+#define FREQ(f) (CLOCK_FREQ/(f))
 
 #define AFSK_TX_TIMERGRP 1
 #define AFSK_TX_TIMERIDX 1
@@ -26,17 +27,14 @@ static bool transmit = false;
 
 
 
-
-
-
 /*********************************************************************
  * Turn on/off transmitter and tone generator
  *********************************************************************/
-// FIXME: Can this be safely called from the ISR? 
-void afsk_PTT(bool on) 
+
+static void afsk_PTT(bool on) 
 {
    transmit = on; 
-//   radio_PTT(on); // FIXME
+   radio_PTT_I(on);
    if (on) 
       tone_start();
    else

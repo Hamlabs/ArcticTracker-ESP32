@@ -22,7 +22,6 @@
  QueueHandle_t afsk_tx_init(void);
  void afsk_tx_start(void);
  void afsk_tx_stop(void);
- void afsk_PTT(bool on);
  
 // QueueHandle_t afsk_rx_init(void);
 // void afsk_rx_enable(void); 

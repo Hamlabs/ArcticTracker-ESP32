@@ -53,7 +53,7 @@ bool regexMatch(char* str, const char* pattern);
 
 
 typedef void (*BoolHandler)(bool val);
-
+typedef void (*ByteHandler)(uint8_t val);
 
 #define GET_BYTE_PARAM(key) get_byte_param(key, 0)
 #define GET_U16_PARAM(key)  get_u16_param(key, 0)
@@ -72,9 +72,13 @@ typedef void (*BoolHandler)(bool val);
         return r; \
     } 
 
-#define CMD_BYTE_SETTING(f, key, dfl, llimit, ulimit) \
+#define CMD_BYTE_SETTING(f, key, dfl, llimit, ulimit, bh) \
     inline static int f(int argc, char** argv) { \
-        return param_setting_byte(argc, argv, key, dfl, llimit, ulimit); \
+        int r = param_setting_byte(argc, argv, key, dfl, llimit, ulimit); \
+        ByteHandler bhh = bh; \
+        if (bhh != NULL) \
+            (*bhh)(GET_BYTE_PARAM(key)); \
+        return r; \
     }
 
 #define CMD_U16_SETTING(f, key, dfl, llimit, ulimit) \

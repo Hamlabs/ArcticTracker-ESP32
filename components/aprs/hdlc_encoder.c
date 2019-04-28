@@ -8,8 +8,13 @@
 #include <stdlib.h>
 #include "hdlc.h"
 #include "freertos/task.h"
-//#include "radio.h"
+#include "radio.h"
 #include "config.h"
+#include "esp_log.h"
+#include "ax25.h"
+
+
+#define TAG "hdlc-enc"
 
 QueueHandle_t outqueue; 
 FBQ encoder_queue; 
@@ -109,14 +114,15 @@ static void hdlc_txencoder (void* arg)
       * This is a blocking call.
       */  
      buffer = fbq_get(&encoder_queue); 
+     ESP_LOGI(TAG, "Got frame..");
 
      /* Wait until channel is free 
       * P-persistence algorithm 
       */
-//     radio_wait_enabled();  FIXME
+     radio_wait_enabled(); 
      hdlc_idle = false;
      for (;;) {
-//        wait_channel_ready(); FIXME
+        wait_channel_ready(); 
         uint8_t r  = rand_u8();    
         if (r > PERSISTENCE)
            sleepMs(SLOTTIME*10); 
@@ -157,50 +163,56 @@ FBQ* hdlc_init_encoder(QueueHandle_t oq)
 
 static void hdlc_encode_frames()
 {
-   uint16_t crc = 0xffff;
-   uint8_t txbyte, i; 
-   uint8_t txdelay = GET_BYTE_PARAM("TXDELAY");
-   uint8_t txtail  = GET_BYTE_PARAM("TXTAIL");
-   uint8_t maxfr   = GET_BYTE_PARAM("MAXFRAME");
-  
-   /* Preamble of TXDELAY flags */
-   for (i=0; i<txdelay; i++)
-      hdlc_encode_byte(HDLC_FLAG, true);
+    uint16_t crc = 0xffff;
+    uint8_t txbyte, i; 
+    uint8_t txdelay = get_byte_param("TXDELAY", 10);
+    uint8_t txtail  = get_byte_param("TXTAIL", 10);
+    uint8_t maxfr   = get_byte_param("MAXFRAME", 2);
 
-   for (i=0;i<maxfr;i++) 
-   { 
-      fbuf_reset(&buffer);
-      crc = 0xffff;
+    ESP_LOGI(TAG, "Encode frame(s)..");
+   
+    /* Preamble of TXDELAY flags */
+    for (i=0; i<txdelay; i++)
+        hdlc_encode_byte(HDLC_FLAG, true);
 
-      while(!BUFFER_EMPTY)
-      {
-         txbyte = fbuf_getChar(&buffer);
-         crc = _crc_ccitt_update (crc, txbyte);
-         hdlc_encode_byte(txbyte, false);
-      }
-      if (mqueue != NULL) {
-         /* 
-          * Put packet on monitor queue, if active
-          */
-          fbq_put(mqueue, buffer);
-      }
-      else 
-          fbuf_release(&buffer);   
+    for (i=0;i<maxfr;i++) 
+    { 
+        fbuf_reset(&buffer);
+        crc = 0xffff;
+
+        while(!BUFFER_EMPTY)
+        {
+            txbyte = fbuf_getChar(&buffer);
+            crc = _crc_ccitt_update (crc, txbyte);
+            hdlc_encode_byte(txbyte, false);
+        }
+            
+        if (mqueue != NULL) {
+            /* 
+             * Put packet on monitor queue, if active
+             */
+            fbq_put(mqueue, buffer);
+        }
+        else 
+            fbuf_release(&buffer);   
     
-      hdlc_encode_byte(crc^0xFF, false);       // Send FCS, LSB first
-      hdlc_encode_byte((crc>>8)^0xFF, false);  // MSB
+        hdlc_encode_byte(crc^0xFF, false);       // Send FCS, LSB first
+        hdlc_encode_byte((crc>>8)^0xFF, false);  // MSB
+        
+        break;
     
-      if (!fbq_eof(&encoder_queue) && i < maxfr) {
-         hdlc_encode_byte(HDLC_FLAG, true);
-         buffer = fbq_get(&encoder_queue); 
-      }
-      else
-         break;
-   }
+        if (!fbq_eof(&encoder_queue) && i < maxfr) {
+            hdlc_encode_byte(HDLC_FLAG, true);
+            buffer = fbq_get(&encoder_queue); 
+            ESP_LOGI(TAG, "Add frame to transmission..");
+        }
+        else
+            break;
+    }
 
-   /* Postamble of TXTAIL flags */  
-   for (i=0; i<txtail; i++)
-      hdlc_encode_byte(HDLC_FLAG, true);
+    /* Postamble of TXTAIL flags */  
+    for (i=0; i<txtail; i++)
+        hdlc_encode_byte(HDLC_FLAG, true);
 }
 
 

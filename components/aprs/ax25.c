@@ -106,6 +106,8 @@ char* digis2str(char* string, uint8_t ndigis, addr_t digis[], bool trunc)
 uint8_t str2digis(addr_t* digis, char* str)
 {
     char* tokens[8];
+    if (strlen(str) <2)
+        return 0;
     uint8_t ndigis = tokenize(str, tokens, 7, ",", false);
     args2digis(digis, ndigis, tokens);
     return ndigis;
@@ -146,6 +148,24 @@ bool ax25_search_digis(addr_t* digis, int ndigis, char *argv[])
    }
    return false;
 }
+
+
+
+/**********************************************************************
+ * Generate an APRS header
+ **********************************************************************/
+
+void ax25_aprs_header(FBUF* b, char* fromb, char* tob, char* digib) 
+{
+    addr_t from, to; 
+    addr_t digis[7];
+    
+    str2addr(&from, fromb, false);
+    str2addr(&to, tob, false);
+    int ndigis = str2digis(&digis, digib); 
+    ax25_encode_header(b, &from, &to, digis, ndigis, FTYPE_UI, PID_NO_L3); 
+}
+
 
 
 /**********************************************************************

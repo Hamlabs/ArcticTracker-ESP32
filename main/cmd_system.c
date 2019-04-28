@@ -23,6 +23,7 @@
 #include "config.h"
 #include "system.h"
 #include "afsk.h"
+#include "radio.h"
 #include "fbuf.h"
 #include "gps.h"
 #include "lcd.h"
@@ -47,6 +48,7 @@ static int do_restart(int argc, char** argv)
 {
     ESP_LOGI(TAG, "Restarting system..");
     esp_restart();
+    return 0;
 }
 
 
@@ -209,15 +211,41 @@ static int do_disp(int argc, char** argv)
 static int do_tone(int argc, char** argv)
 {
     printf("***** Tone generator (space to toggle) *****\n");
+    radio_require(); 
+    radio_PTT(true);
     tone_init();
     tone_start();
     char c; 
     while ((c=getchar()) == ' ') 
         tone_toggle();
     tone_stop();
+    radio_PTT(false);
+    radio_release();
     return 0;
 }
 
+
+
+/********************************************************************************
+ * PTT on
+ ********************************************************************************/
+
+static int do_ptt(int argc, char** argv)
+{
+    printf("*** Transmitter on (any key to turn off) ***\n");
+    radio_require();
+    radio_PTT(true);
+    getchar();
+    radio_PTT(false);
+    radio_release();
+    return 0;
+}
+
+
+
+/********************************************************************************
+ * OTA Firmware upgrade
+ ********************************************************************************/
 
 static int do_fwupgrade(int argc, char** argv)
 {
@@ -244,5 +272,6 @@ void register_system()
     ADD_CMD("nmea",    &do_nmea,     "Monitor GPS NMEA datastream", "[raw]");
     ADD_CMD("disp",    &do_disp,     "display test", "");
     ADD_CMD("tone",    &do_tone,     "tone generator test", "");
+    ADD_CMD("ptt",     &do_ptt,      "Transmitter on", "");
     ADD_CMD("fw-upgrade", &do_fwupgrade, "Firmware upgrade", "");
 }

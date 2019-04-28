@@ -24,9 +24,10 @@
 #include "afsk.h"
 #include "hdlc.h"
 #include "tracker.h"
+#include "radio.h"
 
 
-static const char* TAG = "example";
+static const char* TAG = "main";
 
 /* Console command history can be stored to and loaded from a file.
  * The easiest way to do this is to use FATFS filesystem on top of
@@ -36,9 +37,12 @@ static const char* TAG = "example";
 
 #define MOUNT_PATH "/data"
 #define HISTORY_PATH MOUNT_PATH "/history.txt"
+#define ESP_INTR_FLAG_DEFAULT 0
+
+
 
 /********************************************************************************
- * Initialize filesystem
+ * Initialize FAT filesystem
  ********************************************************************************/
 
 static void initialize_filesystem()
@@ -188,7 +192,8 @@ void register_aprs();
  ********************************************************************************/
 
 void app_main()
-{    
+{       
+    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
     set_logLevels();
         
@@ -196,14 +201,6 @@ void app_main()
     initialize_filesystem();
 #endif
 
-    /* Move these to radio impl */
-    gpio_set_direction(RADIO_PIN_PD,   GPIO_MODE_OUTPUT);
-    gpio_set_direction(RADIO_PIN_PTT,  GPIO_MODE_OUTPUT);
-    gpio_set_direction(RADIO_PIN_TXP,  GPIO_MODE_OUTPUT);
-    gpio_set_direction(RADIO_PIN_SQUELCH,  GPIO_MODE_INPUT);
-    gpio_set_level(RADIO_PIN_PTT, 1);
-    gpio_set_level(RADIO_PIN_TXP, 0);
-    
     initialize_console();
 
     /* Register commands */
@@ -211,11 +208,13 @@ void app_main()
     register_system();
     register_wifi();
     register_aprs();
+    
     wifi_init();
+    radio_init(RADIO_UART);
     gps_init(GPS_UART);
     FBQ* oq = hdlc_init_encoder(afsk_tx_init());
     tracker_init(oq);
-    ui_init();
-    run_console();     
     
+    ui_init();
+    run_console();
 }

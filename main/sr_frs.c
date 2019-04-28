@@ -21,8 +21,8 @@ static bool     _on = false;
 static bool     _sq_on = false; 
 static uint8_t  _widebw; 
 static uint8_t  _flags;        
-static uint32_t _txfreq;       // TX frequency in 100 Hz units
-static uint32_t _rxfreq;       // RX frequency in 100 Hz units
+static int32_t  _txfreq;       // TX frequency in 100 Hz units
+static int32_t  _rxfreq;       // RX frequency in 100 Hz units
 static uint8_t  _squelch;      // Squelch level (0-8 where 0 is open)
 
 static int count = 0; 
@@ -49,16 +49,13 @@ static uart_port_t _serial;
 static mutex_t radio_mutex;
 static mutex_t ptt_mutex;
 
-// FIXME: Should it be a condition variable? 
-static semaphore_t tx_off;
-#define WAIT_TX_OFF   sem_down(tx_off)
-#define SIGNAL_TX_OFF sem_up(tx_off);
-#define CLEAR_TX_OFF 
+// Binary semaphore. Should it be a condition variable?? 
+static cond_t tx_off;
   
 static cond_t radio_rdy;
-#define WAIT_RADIO_READY cond_wait(radio_rdy)
+#define WAIT_RADIO_READY   cond_wait(radio_rdy)
 #define SIGNAL_RADIO_READY cond_set(radio_rdy)
-#define CLEAR_RADIO_READY cond_clear(radio_rdy);
+#define CLEAR_RADIO_READY  cond_clear(radio_rdy);
 
 static cond_t chan_rdy;
 #define WAIT_CHANNEL_READY cond_wait(chan_rdy)
@@ -79,40 +76,57 @@ void radio_init(uart_port_t uart)
     
     gpio_set_direction(RADIO_PIN_PTT,  GPIO_MODE_OUTPUT); 
     gpio_set_direction(RADIO_PIN_TXP,  GPIO_MODE_OUTPUT); 
-
+    gpio_set_direction(RADIO_PIN_PD,   GPIO_MODE_OUTPUT);
+    gpio_set_direction(RADIO_PIN_SQUELCH,  GPIO_MODE_INPUT);
+    
+    gpio_set_level(RADIO_PIN_PTT, 1);
+    gpio_set_level(RADIO_PIN_TXP, 0); 
+    tx_led_off();
+        
     radio_mutex = mutex_create();
     ptt_mutex = mutex_create();
-    tx_off = sem_createBin();
+    tx_off = cond_create();
     radio_rdy = cond_create();
     chan_rdy = cond_create();
     radio_setLowTxPower(true);
-    radio_PTT(false);
     
     /* Squelch input. Pin interrupt */
     gpio_set_intr_type(RADIO_PIN_SQUELCH, GPIO_INTR_ANYEDGE);
     gpio_isr_handler_add(RADIO_PIN_SQUELCH, squelch_handler, NULL);
     gpio_set_direction(RADIO_PIN_SQUELCH, GPIO_MODE_INPUT);
     gpio_intr_enable(RADIO_PIN_SQUELCH);
+    
+    sleepMs(50);
+    if (GET_BYTE_PARAM("RADIO.on"))
+        radio_require();
 }
   
  
  
 static void _initialize()
 {  
-   radio_PTT(false);
-   sleepMs(600);
-   _handshake();
-   sleepMs(100);
+    sleepMs(500);
+    _handshake();
+    sleepMs(50);
   
-   /* Get parameters from EEPROM */
-   _txfreq = GET_I32_PARAM("TXFREQ");
-   _rxfreq = GET_I32_PARAM("RXFREQ");
-   _squelch = GET_BYTE_PARAM("TRX_SQUELCH");
-   _flags = 0x00;
-   _widebw = 0;
-   _setGroupParm();  
-   sleepMs(100);
-   ESP_LOGI(TAG, "_initialize: txfreq=%u, rxfreq=%u", _txfreq, _rxfreq);
+    /* Get parameters from NVS flash */
+    _txfreq = get_i32_param("TXFREQ", 1448000);
+    _rxfreq = get_i32_param("RXFREQ", 1448000);
+    _squelch = GET_BYTE_PARAM("TRX_SQUELCH");
+    ESP_LOGI(TAG, "_initialize: txfreq=%d, rxfreq=%d", _txfreq, _rxfreq);
+    _flags = 0x00;
+    _widebw = 0;
+    radio_setMicLevel(8);
+    _setGroupParm();
+    cond_set(tx_off);
+   
+    if (gpio_get_level(RADIO_PIN_SQUELCH))
+        cond_set(chan_rdy);
+    else
+        cond_clear(chan_rdy);
+    
+    sleepMs(50);
+    ESP_LOGI(TAG, "_initialize: ok");
 }
   
  
@@ -127,16 +141,26 @@ static void squelch_handler(void* arg)
     if (!_sq_on && cond_isSetI(radio_rdy) && !gpio_get_level(RADIO_PIN_SQUELCH)) {
         _sq_on = true;
         afsk_rx_enable();
-        cond_clearI(radio_rdy);
+        cond_clearI(chan_rdy);       
+        tx_led_on();
     }
     else if (_sq_on) {
         _sq_on = false; 
         afsk_rx_disable();
-        cond_setI(radio_rdy);
+        cond_setI(chan_rdy);
+        tx_led_off();
     }
 }
 
 
+
+/******************************************************
+ * Return true if radio is on
+ ******************************************************/
+
+bool radio_is_on(void) {
+    return (count >= 1); 
+}
 
 
 /******************************************************
@@ -145,10 +169,12 @@ static void squelch_handler(void* arg)
  
 void radio_require(void)
 {
-   mutex_lock(radio_mutex);
-   if (++count == 1) 
-     radio_on(true);
-   mutex_unlock(radio_mutex);
+    mutex_lock(radio_mutex);
+    if (++count == 1) {
+        radio_on(true);    
+        ESP_LOGI(TAG, "Radio is turned ON");
+    }
+    mutex_unlock(radio_mutex);
 }
 
 
@@ -168,8 +194,9 @@ void radio_release(void)
         */
        sleepMs(60);
        hdlc_wait_idle();
-       WAIT_TX_OFF;
+       cond_wait(tx_off);
        radio_on(false);
+       ESP_LOGI(TAG, "Radio is turned OFF");
     }
     if (count < 0) count = 0;
     mutex_unlock(radio_mutex);
@@ -183,9 +210,7 @@ void radio_release(void)
 
 void radio_wait_enabled() 
 {
-  mutex_lock(radio_mutex);
-  WAIT_RADIO_READY;
-  mutex_unlock(radio_mutex);
+    WAIT_RADIO_READY;
 }
 
 
@@ -195,8 +220,8 @@ void radio_wait_enabled()
  ************************************************/
 void wait_channel_ready()
 {
-  /* Wait to radio is on and squelch is closed */
-  WAIT_CHANNEL_READY;
+    /* Wait to radio is on and squelch is closed */
+    WAIT_CHANNEL_READY;
 }
 
 
@@ -207,20 +232,20 @@ void wait_channel_ready()
 
 void radio_on(bool on)
 {
-   if (on == _on)
-      return; 
+    if (on == _on)
+        return; 
    
-   ESP_LOGI(TAG, "radio_on: %s", (on? "true":"false"));
-   _on = on;
-   if (on) {
-      gpio_set_level(RADIO_PIN_PD, 1);
-      _initialize();
-      SIGNAL_RADIO_READY;
-   }
-   else {
-      gpio_set_level(RADIO_PIN_PD, 0);
-      CLEAR_RADIO_READY;
-   }
+    ESP_LOGI(TAG, "radio_on: %s", (on? "true":"false"));
+    _on = on;
+    if (on) {
+        gpio_set_level(RADIO_PIN_PD, 1);
+        _initialize();
+        SIGNAL_RADIO_READY;
+    }
+    else {
+        gpio_set_level(RADIO_PIN_PD, 0);
+        CLEAR_RADIO_READY;
+    }
 }
 
 
@@ -236,24 +261,43 @@ void radio_PTT(bool on)
     
     ESP_LOGI(TAG, "radio_PTT: %s", (on? "true":"false"));
     if (on) {
-        WAIT_TX_OFF;
         mutex_lock(ptt_mutex);
         gpio_set_level(RADIO_PIN_PTT, 0);
         gpio_set_level(RADIO_PIN_TXP, 1); 
         tx_led_on();
-        CLEAR_TX_OFF;
+        cond_set(tx_off);
         mutex_unlock(ptt_mutex);
     }
     else {
         mutex_lock(ptt_mutex);
-        gpio_set_level(RADIO_PIN_PTT, 0);
-        gpio_set_level(RADIO_PIN_TXP, 1); 
+        gpio_set_level(RADIO_PIN_PTT, 1);
+        gpio_set_level(RADIO_PIN_TXP, 0); 
         tx_led_off();
-        SIGNAL_TX_OFF;
+        cond_set(tx_off);
         mutex_unlock(ptt_mutex);
     }
 }
 
+
+
+void radio_PTT_I(bool on)
+{
+    if (!_on)
+       return;
+    
+    if (on) {
+        gpio_set_level(RADIO_PIN_PTT, 0);
+        gpio_set_level(RADIO_PIN_TXP, 1); 
+        tx_led_on();
+        cond_clearI(tx_off);
+    }
+    else {
+        gpio_set_level(RADIO_PIN_PTT, 1);
+        gpio_set_level(RADIO_PIN_TXP, 0); 
+        tx_led_off();
+        cond_setI(tx_off);
+    }
+}
  
   
 /***********************************************
@@ -376,6 +420,7 @@ static bool _handshake()
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
     readline(_serial, reply, 16);
+    ESP_LOGD(TAG, "%s", reply);
     return (reply[14] == '0');
 }
 
@@ -387,7 +432,7 @@ static bool _handshake()
 
 static bool _setGroupParm()
 {
-    char buf[32];
+    char buf[48];
     if (!_on)
         return true;
     char txbuf[16], rxbuf[16], reply[16];
@@ -399,5 +444,6 @@ static bool _setGroupParm()
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
     readline(_serial, reply, 16);
+    ESP_LOGD(TAG, "%s", reply);
     return (reply[15] == '0');
 }

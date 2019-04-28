@@ -15,6 +15,7 @@
 #include "ax25.h"
 #include "config.h"
 #include "system.h"
+#include "ui.h"
 #include "gps.h"
 
 

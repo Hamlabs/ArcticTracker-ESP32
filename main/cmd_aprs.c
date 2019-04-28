@@ -18,6 +18,8 @@
 #include "ax25.h"
 #include "afsk.h"
 #include "hdlc.h"
+#include "radio.h"
+
 
 void   register_aprs(void);
    
@@ -44,6 +46,55 @@ static int do_teston(int argc, char** argv)
 }
 
 
+/********************************************************************************
+ * Send test aprs packet
+ ********************************************************************************/
+
+static int do_testpacket(int argc, char** argv)
+{
+    static FBUF packet;    
+    fbq_t* outframes = hdlc_get_encoder_queue();
+    char from[10], to[10];
+    char *dbuf = malloc(70); 
+  
+    radio_require();    
+    afsk_tx_start();
+    sleepMs(100);
+    get_str_param("MYCALL", from, 10, "NOCALL");
+    get_str_param("DEST", to, 10, "APAT20");       
+    get_str_param("DIGIPATH", dbuf, 70, "");
+
+    fbuf_new(&packet);
+    ax25_aprs_header(&packet, from, to, dbuf);
+    fbuf_putstr(&packet, "The lazy brown dog jumps over the quick fox 1234567890");                      
+    printf("*** Sending (AX25 UI) test packet ***\r\n");       
+    fbq_put(outframes, packet); 
+    ax25_display_frame(&packet);
+    printf("\n");
+    sleepMs(10);
+    radio_release();
+    free(dbuf);
+    return 0;
+}
+
+inline void hdl_squelch(uint8_t sq) {
+    radio_setSquelch(sq);
+}
+
+
+
+inline void hdl_radio(bool on) {
+    if ((radio_is_on() && on) || (!radio_is_on() && !on))
+        return;
+    if (on) { 
+        printf("*** Radio on ***\n");
+        radio_require();
+    }
+    else {
+        printf("*** Radio off ***\n");
+        radio_release();
+    }
+}
 
 
 // Radio and APRS settings
@@ -59,19 +110,20 @@ CMD_STR_SETTING  (_param_igate_host, "IGATE.HOST",  64, "aprs.no", REGEX_HOSTNAM
 CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",  9,  "NOCALL",  REGEX_AXADDR);
 CMD_STR_SETTING  (_param_igate_pass, "IGATE.PASS",  6,  NULL,   "[0-9]{2,5}");
 
-CMD_BYTE_SETTING (_param_txdelay,    "TXDELAY",     10, 0, 100);
-CMD_BYTE_SETTING (_param_txtail,     "TXTAIL",      10, 0, 100);
-CMD_BYTE_SETTING (_param_maxframe,   "MAXFRAME",     2, 1, 7);
-CMD_BYTE_SETTING (_param_maxpause,   "MAXPAUSE",   120, 0, 250);
-CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",    20, 0, 250);
-CMD_BYTE_SETTING (_param_mindist,    "MINDIST",    100, 0, 250);
-CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",  30, 1, 250);
-CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  1, 1, 8);
+CMD_BYTE_SETTING (_param_txdelay,    "TXDELAY",     10, 0, 250, NULL);
+CMD_BYTE_SETTING (_param_txtail,     "TXTAIL",      10, 0, 250, NULL);
+CMD_BYTE_SETTING (_param_maxframe,   "MAXFRAME",     2, 1, 7,   NULL);
+CMD_BYTE_SETTING (_param_maxpause,   "MAXPAUSE",   120, 0, 250, NULL);
+CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",    20, 0, 250, NULL);
+CMD_BYTE_SETTING (_param_mindist,    "MINDIST",    100, 0, 250, NULL);
+CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",  30, 1, 250, NULL);
+CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  1, 1, 8,   hdl_squelch);
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",   35, 0, 360);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",  14580, 1, 65535);
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",     1448000, 1440000, 1460000);
 CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",     1448000, 1440000, 1460000);
 
+CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
 CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     NULL);
 CMD_BOOL_SETTING (_param_timestamp,  "TIMESTAMP.on",   NULL);
 CMD_BOOL_SETTING (_param_compress,   "COMPRESS.on",    NULL);
@@ -94,6 +146,7 @@ CMD_BOOL_SETTING (_param_igtrack_on, "IGATE.TRACK.on", NULL);
 void register_aprs()
 {
     ADD_CMD("teston",     &do_teston,          "HDLC encoder test", "<byte>");
+    ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
          
     ADD_CMD("mycall",     &_param_mycall,      "My callsign", "[<callsign>]");
     ADD_CMD("dest",       &_param_dest,        "APRS destination address", "[<addr>]");
@@ -128,6 +181,7 @@ void register_aprs()
     ADD_CMD("igate-user", &_param_igate_user,  "Igate server user",  "[<callsign>]");
     ADD_CMD("igate-pass", &_param_igate_pass,  "Igate server passcode",  "[<code>]");
     
+    ADD_CMD("radio",      &_param_radio_on,    "Radio module power", "[on|off]");
     ADD_CMD("tracker",    &_param_tracker_on,  "APRS tracker setting", "[on|off]");
     ADD_CMD("reportbeep", &_param_rbeep_on,    "Beep when report is sent", "[on|off]");
     ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport in turns", "[on|off]");

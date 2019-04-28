@@ -7,6 +7,9 @@
 #define _DEFINES_H_
 
 
+#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
+
+
 #define VERSION_STRING "V0.1 alpha"
 
 #define BIT_0	( 1 << 0 )
@@ -30,7 +33,7 @@
 /* Conversions */
 #define KNOTS2KMH 1.853
 #define KNOTS2MPS 0.5148
-#define FEET2M 3.2898
+#define FEET2M    3.2898
 
 
 /* Queues for AFSK encoder/decoder */
@@ -41,13 +44,13 @@
 
 /* Radio */
 #define RADIO_UART          UART_NUM_2
-#define RADIO_PIN_TXD       15
-#define RADIO_PIN_RXD        2
+#define RADIO_PIN_TXD        2
+#define RADIO_PIN_RXD       15
 #define RADIO_PIN_PTT       17
 #define RADIO_PIN_TXP        5
 #define RADIO_PIN_PD        18
 #define RADIO_PIN_SQUELCH   16
-#define RADIO_BUF_SIZE      32
+#define RADIO_BUF_SIZE      256
 
 
 /* GPS */
@@ -60,7 +63,7 @@
 #define LCD_PIN_CS      33
 #define LCD_PIN_BL      32
 #define LCD_PIN_DC      27
-#define LCD_PIN_RST     .1
+#define LCD_PIN_RST     -1
 #define SPI_PIN_MISO    -1
 #define SPI_PIN_MOSI    14 
 #define SPI_PIN_CLK     12
@@ -70,9 +73,9 @@
 #define BUZZER_TIMERGRP  0
 #define BUZZER_TIMERIDX  0
 
-#define LED_STATUS_PIN  22
-#define LED_TX_PIN     23
-#define BUTTON_PIN      16
+#define LED_STATUS_PIN  23
+#define LED_TX_PIN      22
+#define BUTTON_PIN      13
 
 /* Tone generation (for AFSK) */
 #define TONE_DAC DAC_CHANNEL_1
@@ -80,10 +83,6 @@
 #define TONE_TIMERIDX 1
 #define AFSK_MARK 1200
 #define AFSK_SPACE 2200
-
-
-#define BLINK_NORMAL ; // FIXME
-#define BLINK_GPS_SEARCHING ; // FIXME
 
 #define HTTPD_DEFAULT_USR "arctic"
 #define HTTPD_DEFAULT_PWD "hacker"
@@ -94,12 +93,12 @@
 #define AUTOCONNECT_PERIOD 240
 
 /* Stack sizes for tasks */
-#define STACK_AUTOCON        2500
+#define STACK_AUTOCON        2200
 #define STACK_HDLC_TEST      1000
-#define STACK_HDLC_TXENCODER 2000
-#define STACK_NMEALISTENER   1600
+#define STACK_HDLC_TXENCODER 3000
+#define STACK_NMEALISTENER   1500
 #define STACK_LEDBLINKER     1100
-#define STACK_UI_SRV         800
+#define STACK_UI_SRV          900
 #define STACK_TRACKER        2000
 
 
@@ -122,23 +121,24 @@
 #define max(x,y) (x>y? x : y)
 
 
-/* Simplified semaphore operations */
-#define semaphore_t     SemaphoreHandle_t
-#define sem_create(cnt) xSemaphoreCreateCounting(65000, cnt)
-#define sem_createBin() xSemaphoreCreateBinary()
-#define sem_delete(sem) vSemaphoreDelete(sem)
-#define sem_up(x)       xSemaphoreGive(x)
-#define sem_down(x)     xSemaphoreTake(x, portMAX_DELAY)
-#define sem_getCount(x) uxSemaphoreGetCount(x)
+#define sleepMs(n)  vTaskDelay(pdMS_TO_TICKS(n))
+#define t_yield     taskYIELD
 
-#define mutex_t		 SemaphoreHandle_t
+/* Simplified semaphore operations */
+#define semaphore_t      SemaphoreHandle_t
+#define sem_create(cnt)  xSemaphoreCreateCounting(65000, cnt)
+#define sem_createBin()  xSemaphoreCreateBinary()
+#define sem_delete(sem)  vSemaphoreDelete(sem)
+#define sem_up(x)        xSemaphoreGive(x)
+#define sem_upI(x)       xSemaphoreGiveFromISR(x, pdFALSE)
+#define sem_down(x)      xSemaphoreTake(x, portMAX_DELAY)
+#define sem_getCount(x)  uxSemaphoreGetCount(x)
+
+#define mutex_t  		 SemaphoreHandle_t
 #define mutex_create()   xSemaphoreCreateMutex()
 #define mutex_lock(x)    xSemaphoreTake((x), portMAX_DELAY)
 #define mutex_unlock(x)  xSemaphoreGive((x))
 
-
-#define sleepMs(n)  vTaskDelay(pdMS_TO_TICKS(n))
-#define t_yield     taskYIELD
 
 /* Make event groups look like simpler condition variables */
 #define cond_t               EventGroupHandle_t

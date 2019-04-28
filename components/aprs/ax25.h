@@ -56,6 +56,7 @@ uint8_t args2digis(addr_t* digis, int argc, char *argv[]);
 bool    ax25_search_digis(addr_t* digis, int ndigis, char *argv[]);
 
 /* Encode or decode header */
+void ax25_aprs_header(FBUF* b, char* fromb, char* tob, char* digib);
 void ax25_encode_header( FBUF*, addr_t*, addr_t*, addr_t[], uint8_t, 
                         uint8_t, uint8_t );
 uint8_t ax25_decode_header(FBUF*, addr_t*, addr_t*, addr_t[],
