@@ -20,7 +20,6 @@ static void holdhandler(void* p);
 static void clickhandler(void* p);
 
 #define TAG "ui"
-#define ESP_INTR_FLAG_DEFAULT 0
 
 
   
@@ -43,11 +42,13 @@ static void clickhandler(void* p);
     while (true) {
        cond_waitBits(buttCond, BUTT_EV_SHORT|BUTT_EV_LONG);
        if ( cond_testBits(buttCond, BUTT_EV_SHORT) ) {
+          ESP_LOGI(TAG, "Butt ev short");
           beep(10); 
           if (bhandler1) bhandler1(NULL);
           cond_clearBits(buttCond, BUTT_EV_SHORT);
        }
        else {
+          ESP_LOGI(TAG, "Butt ev long");
           beeps("-");
           if (bhandler2) bhandler2(NULL);
           cond_clearBits(buttCond, BUTT_EV_LONG);
@@ -133,7 +134,6 @@ static void button_init() {
     
     /* Button pin. Pin interrupt */
     gpio_set_intr_type(BUTTON_PIN, GPIO_INTR_ANYEDGE);
-    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     gpio_isr_handler_add(BUTTON_PIN, button_handler, NULL);
     gpio_set_direction(BUTTON_PIN,  GPIO_MODE_INPUT);
     gpio_set_pull_mode(BUTTON_PIN, GPIO_PULLUP_ONLY);
@@ -149,6 +149,7 @@ static void button_init() {
   *********************************************************************/
  
  uint16_t blink_length=500, blink_interval=500;
+ bool blink_both=false;
 
  
  static void ui_thread(void* arg)
@@ -161,8 +162,12 @@ static void button_init() {
    BLINK_NORMAL;
    while (1) {
      gpio_set_level(LED_STATUS_PIN, 1);
+     if (blink_both)
+         gpio_set_level(LED_TX_PIN, 0);
      sleepMs(blink_length);
      gpio_set_level(LED_STATUS_PIN, 0);
+     if (blink_both)
+        gpio_set_level(LED_TX_PIN, 1);
      sleepMs(blink_interval);
    }
  }
@@ -199,6 +204,10 @@ static void button_init() {
     
    /* LED blinker thread */
     gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
+    gpio_set_direction(LED_TX_PIN,  GPIO_MODE_OUTPUT);
+    gpio_set_level(LED_STATUS_PIN, 0);
+    gpio_set_level(LED_TX_PIN, 0);
+    
     xTaskCreate(&ui_thread, "LED blinker", 
         STACK_LEDBLINKER, NULL, NORMALPRIO, NULL);
  }
