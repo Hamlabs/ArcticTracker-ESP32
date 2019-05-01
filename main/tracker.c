@@ -10,12 +10,11 @@
 #include "hdlc.h"
 #include "system.h"
 #include "ui.h"
+#include "radio.h"
 #include "tracker.h"
 
 
 // FIXME
-#define radio_require() {}
-#define radio_release() {}
 #define adc_read_batt() 1
 
 #define TAG "tracker"
@@ -189,6 +188,10 @@ static void report_objects(bool keep)
 }
 
 
+
+
+static TaskHandle_t trackert = NULL; 
+
 /***************************************************************
  * main thread for tracking
  ***************************************************************/
@@ -201,7 +204,7 @@ static void tracker(void* arg)
     gps_on();    
     if (!TRACKER_TRX_ONDEMAND)
        radio_require();
-    while (GET_BYTE_PARAM("TRACKER_ON"))
+    while (GET_BYTE_PARAM("TRACKER.on"))
     {
        /*
         * Wait for a fix on position. But with timeout to allow status and 
@@ -251,10 +254,10 @@ static void tracker(void* arg)
     if (!TRACKER_TRX_ONDEMAND)
         radio_release();
     vTaskDelete(NULL);
+    trackert = NULL;
 }
 
 
-static TaskHandle_t trackert = NULL; 
 
 /***************************************************************
  * Init tracker. gps_init should be called first.
@@ -266,8 +269,7 @@ void tracker_init(FBQ *q)
     prev_pos.timestamp=0;
     prev_pos_gps.timestamp=0;
     if (GET_BYTE_PARAM("TRACKER.on"))
-        xTaskCreate(&tracker, "APRS Tracker", 
-            STACK_TRACKER, NULL, NORMALPRIO, &trackert);
+        tracker_on();
 }
 
 
@@ -278,11 +280,9 @@ void tracker_init(FBQ *q)
 
 void tracker_on() 
 {
-    if (GET_BYTE_PARAM("TRACKER.on"))
-        return; 
-    set_byte_param("TRACKER.on", 1);
-    xTaskCreate(&tracker, "APRS Tracker", 
-        STACK_TRACKER, NULL, NORMALPRIO, &trackert);
+    if (trackert == NULL)
+        xTaskCreate(&tracker, "APRS Tracker", 
+            STACK_TRACKER, NULL, NORMALPRIO, &trackert);
 }
 
 
@@ -292,7 +292,6 @@ void tracker_on()
 
 void tracker_off()
 {     
-    set_byte_param("TRACKER.on", 0);
 } 
 
 

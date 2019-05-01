@@ -99,7 +99,7 @@
 #define STACK_NMEALISTENER   1500
 #define STACK_LEDBLINKER     1100
 #define STACK_UI_SRV          900
-#define STACK_TRACKER        2000
+#define STACK_TRACKER        2800
 
 
 #define BBUF_SIZE 3000

@@ -171,7 +171,8 @@ void radio_require(void)
 {
     mutex_lock(radio_mutex);
     if (++count == 1) {
-        radio_on(true);    
+        radio_on(true);   
+        afsk_tx_start();
         ESP_LOGI(TAG, "Radio is turned ON");
     }
     mutex_unlock(radio_mutex);
@@ -195,6 +196,7 @@ void radio_release(void)
        sleepMs(60);
        hdlc_wait_idle();
        cond_wait(tx_off);
+       afsk_tx_stop();
        radio_on(false);
        ESP_LOGI(TAG, "Radio is turned OFF");
     }

@@ -19,6 +19,7 @@
 #include "afsk.h"
 #include "hdlc.h"
 #include "radio.h"
+#include "tracker.h"
 
 
 void   register_aprs(void);
@@ -58,7 +59,6 @@ static int do_testpacket(int argc, char** argv)
     char *dbuf = malloc(70); 
   
     radio_require();    
-    afsk_tx_start();
     sleepMs(100);
     get_str_param("MYCALL", from, 10, "NOCALL");
     get_str_param("DEST", to, 10, "APAT20");       
@@ -77,13 +77,19 @@ static int do_testpacket(int argc, char** argv)
     return 0;
 }
 
-inline void hdl_squelch(uint8_t sq) {
+
+
+/*****************************************************************
+ * Handlers for making actions after changing after some 
+ * setting changes. 
+ *****************************************************************/
+
+void hdl_squelch(uint8_t sq) {
     radio_setSquelch(sq);
 }
 
 
-
-inline void hdl_radio(bool on) {
+void hdl_radio(bool on) {
     if ((radio_is_on() && on) || (!radio_is_on() && !on))
         return;
     if (on) { 
@@ -95,6 +101,15 @@ inline void hdl_radio(bool on) {
         radio_release();
     }
 }
+
+
+void hdl_tracker(bool on) {
+    if (on) 
+        tracker_on();
+    else
+        tracker_off();
+}
+
 
 
 // Radio and APRS settings
@@ -124,7 +139,7 @@ CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",     1448000, 1440000, 1460000);
 CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",     1448000, 1440000, 1460000);
 
 CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
-CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     NULL);
+CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     hdl_tracker);
 CMD_BOOL_SETTING (_param_timestamp,  "TIMESTAMP.on",   NULL);
 CMD_BOOL_SETTING (_param_compress,   "COMPRESS.on",    NULL);
 CMD_BOOL_SETTING (_param_altitude,   "ALTITUDE.on",    NULL);
