@@ -79,6 +79,26 @@ static int do_testpacket(int argc, char** argv)
 
 
 
+/****************************************************************************
+ * Monitor radio communications
+ ****************************************************************************/
+
+static int do_listen(int argc, char* argv[])
+{
+  (void) argv;
+  (void) argc; 
+  
+  printf("**** MONITOR RADIO CHANNEL ****\n");
+  radio_require();
+  mon_activate(true);
+  getchar();
+  sleepMs(1000);
+  mon_activate(false);
+  radio_release();
+  sleepMs(100);
+  return 0;
+}
+
 /*****************************************************************
  * Handlers for making actions after changing after some 
  * setting changes. 
@@ -152,6 +172,7 @@ CMD_BOOL_SETTING (_param_rbeep_on,   "REPORT.BEEP.on", NULL);
 CMD_BOOL_SETTING (_param_xturn_on,   "EXTRATURN.on",   NULL);
 CMD_BOOL_SETTING (_param_repeat_on,  "REPEAT.on",      NULL);
 CMD_BOOL_SETTING (_param_igtrack_on, "IGATE.TRACK.on", NULL);
+CMD_BOOL_SETTING (_param_txmon_on,   "TXMON.on",       NULL);
 
 
 
@@ -163,6 +184,7 @@ void register_aprs()
 {
     ADD_CMD("teston",     &do_teston,          "HDLC encoder test", "<byte>");
     ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
+    ADD_CMD("listen",     &do_listen,          "Monitor radio channel", "");
          
     ADD_CMD("mycall",     &_param_mycall,      "My callsign", "[<callsign>]");
     ADD_CMD("dest",       &_param_dest,        "APRS destination address", "[<addr>]");
@@ -202,7 +224,8 @@ void register_aprs()
     ADD_CMD("reportbeep", &_param_rbeep_on,    "Beep when report is sent", "[on|off]");
     ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport in turns", "[on|off]");
     ADD_CMD("repeat",     &_param_repeat_on,   "Repeat posreports (piggyback on later transmissions)", "[on|off]");
-    ADD_CMD("igtrack",    &_param_igtrack_on,  "Send posreports directly to APRS/IS when available", "[on|off]");    
+    ADD_CMD("igtrack",    &_param_igtrack_on,  "Send posreports directly to APRS/IS when available", "[on|off]");   
+    ADD_CMD("txmon",      &_param_txmon_on,    "Tx monitor", "[on|off]");
 }
 
 

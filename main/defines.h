@@ -99,11 +99,12 @@
 /* Stack sizes for tasks */
 #define STACK_AUTOCON        2200
 #define STACK_HDLC_TEST      1000
-#define STACK_HDLC_TXENCODER 2800
+#define STACK_HDLC_TXENCODER 2500
 #define STACK_NMEALISTENER   2000
 #define STACK_LEDBLINKER     1100
 #define STACK_UI_SRV          900
 #define STACK_TRACKER        3000
+#define STACK_MONITOR         900
 
 
 #define BBUF_SIZE 3000
@@ -119,6 +120,7 @@
 #define REGEX_HOSTNAME "[0-9-a-zA-Z\\-\\_\\.]+"
 
 #define NORMALPRIO 5
+
 
 
 #define min(x,y) (x<y? x : y)

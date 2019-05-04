@@ -370,14 +370,14 @@ void fbuf_cleanFront(FBUF* b)
 /********************************************************
     Print a buffer chain to a stream.
  ********************************************************/ 
-/*
-void fbuf_print(Stream *chp, FBUF* b) 
+
+void fbuf_print(FBUF* b) 
 {
     fbuf_reset(b);
     for (int i=0; i < b->length; i++)
-        streamPut(chp, fbuf_getChar(b));
+        putchar(fbuf_getChar(b));
 }
-*/  
+  
   
 /********************************************************
    Read from a stream into a buffer chain.
@@ -513,7 +513,6 @@ void fbq_put(FBQ* q, FBUF b)
     q->cnt++;
     uint8_t i = (q->index + q->cnt) % q->size; 
     q->buf[i] = b; 
-
     sem_up(q->length);
     
 //    chSchRescheduleS();

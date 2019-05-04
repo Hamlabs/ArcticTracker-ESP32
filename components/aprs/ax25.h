@@ -67,5 +67,9 @@ uint8_t ax25_decode_header(FBUF*, addr_t*, addr_t*, addr_t[],
 void ax25_display_frame(FBUF *);
 void ax25_display_addr(addr_t*);
 
+/* Monitor */
+void mon_init();
+void mon_activate(bool m);
+FBQ* mon_text_activate(bool m);
                          
 #endif /* __AX25_H__ */

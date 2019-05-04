@@ -48,7 +48,7 @@ char     fbuf_getChar   (FBUF* b);
 //void     fbuf_streamRead(Stream *chp, FBUF* b);
 uint16_t fbuf_read      (FBUF* b, uint16_t size, char *buf);
 void     fbuf_cleanFront(FBUF* b);
-//void     fbuf_print     (Stream *chp, FBUF* b); 
+void     fbuf_print     (FBUF* b); 
 void     fbuf_insert    (FBUF* b, FBUF* x, uint16_t pos);
 void     fbuf_connect   (FBUF* b, FBUF* x, uint16_t pos);
 void     fbuf_removeLast(FBUF* b);
