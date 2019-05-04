@@ -6,7 +6,7 @@
 #include "driver/uart.h"
 #include "esp_log.h"
 #include "driver/timer.h"
-
+#include "driver/adc.h"
 
 #if !defined __DEF_SYSTEM_H__
 #define __DEF_SYSTEM_H__
@@ -41,5 +41,16 @@ bool readline(uart_port_t port, char* buf, const uint16_t max);
 
 /* Text utilities */
 uint8_t tokenize(char*, char*[], uint8_t, char*, bool);
+
+
+/* ADC */
+void adc_print_char();
+void adc_init();
+uint16_t adc_read(uint8_t chan);
+uint16_t adc_toVoltage(uint16_t val);
+uint16_t adc_batt();
+void adc_start_sampling();
+void adc_stop_sampling();
+
 
 #endif

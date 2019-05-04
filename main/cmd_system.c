@@ -256,22 +256,43 @@ static int do_fwupgrade(int argc, char** argv)
 
 
 
+static int do_adcinfo(int argc, char** argv)
+{
+    adc_print_char(); 
+    printf("\n");
+    
+    uint32_t val = adc_read(RADIO_INPUT);
+    printf("Radio input: %d, %d mV\n", val, adc_toVoltage(val));
+    val = adc_read(BATT_ADC_INPUT);
+    printf(" BATT input: %d, %d mV\n", val, adc_toVoltage(val));
+    val = adc_read(X1_ADC_INPUT);
+    printf("   X1 input: %d, %d mV\n", val, adc_toVoltage(val));
+    return 0;
+}
+
+
+CMD_U16_SETTING  (_param_adcref,  "ADC.REF",   1100, 0, 2000);
+
+
+
 /********************************************************************************
  * Register commands for system
  ********************************************************************************/
 
 void register_system()
 {
-    ADD_CMD("free",    &do_free,     "Get the total size of heap memory available", NULL);
-    ADD_CMD("sysinfo", &do_sysinfo,  "System info", NULL);    
-    ADD_CMD("restart", &do_restart,  "Restart the program", NULL);
-    ADD_CMD("tasks",   &do_tasks,    "Get information about running tasks", NULL);
-    ADD_CMD("log",     &do_log,      "Set loglevel (tags: wifi, wifix, http, config, shell)", "<tag> | * [<level>|delete]");
-    ADD_CMD("time",    &do_time,     "Get date and time", NULL);
-    ADD_CMD("regex",   &do_regmatch, "Regex match", NULL);
-    ADD_CMD("nmea",    &do_nmea,     "Monitor GPS NMEA datastream", "[raw]");
-    ADD_CMD("disp",    &do_disp,     "display test", "");
-    ADD_CMD("tone",    &do_tone,     "tone generator test", "");
-    ADD_CMD("ptt",     &do_ptt,      "Transmitter on", "");
+    ADD_CMD("free",    &do_free,       "Get the total size of heap memory available", NULL);
+    ADD_CMD("sysinfo", &do_sysinfo,    "System info", NULL);    
+    ADD_CMD("restart", &do_restart,    "Restart the program", NULL);
+    ADD_CMD("tasks",   &do_tasks,      "Get information about running tasks", NULL);
+    ADD_CMD("log",     &do_log,        "Set loglevel (tags: wifi, wifix, http, config, shell)", "<tag> | * [<level>|delete]");
+    ADD_CMD("time",    &do_time,       "Get date and time", NULL);
+    ADD_CMD("regex",   &do_regmatch,   "Regex match", NULL);
+    ADD_CMD("nmea",    &do_nmea,       "Monitor GPS NMEA datastream", "[raw]");
+    ADD_CMD("disp",    &do_disp,       "display test", "");
+    ADD_CMD("tone",    &do_tone,       "tone generator test", "");
+    ADD_CMD("ptt",     &do_ptt,        "Transmitter on", "");
     ADD_CMD("fw-upgrade", &do_fwupgrade, "Firmware upgrade", "");
+    ADD_CMD("adc",     &do_adcinfo,    "Read ADC", "");
+    ADD_CMD("adcref",  &_param_adcref, "ADC reference value (millivolts)", "[<val>]");
 }
