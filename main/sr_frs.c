@@ -16,6 +16,9 @@
 #define FLAG_LO_POWER   0x04
 #define TAG "radio"
 
+#define rx_led_on(x) /* Placeholder */
+#define rx_led_off(x) 
+
 
 static bool     _on = false;
 static bool     _sq_on = false; 
@@ -65,7 +68,6 @@ static cond_t chan_rdy;
 /***********************************************
  * Initialize
  ***********************************************/
-
 
 void radio_init(uart_port_t uart)
 {  
@@ -142,13 +144,11 @@ static void squelch_handler(void* arg)
         _sq_on = true;
         afsk_rx_enable();
         cond_clearI(chan_rdy);       
-        tx_led_on();
     }
     else if (_sq_on) {
         _sq_on = false; 
         afsk_rx_disable();
         cond_setI(chan_rdy);
-        tx_led_off();
     }
 }
 
@@ -179,7 +179,7 @@ void radio_require(void)
 }
 
 
-
+ 
 /*******************************************************
  * Radio not needed any more - turn it off if no others
  * need it
@@ -188,7 +188,7 @@ void radio_require(void)
 void radio_release(void)
 {
     mutex_lock(radio_mutex);
-    if (--count == 0) {
+    if (--count <= 0) {
        /* 
         * Before turning off transceiver, wait until
         * Packet is sent and transmitter is turned off. 

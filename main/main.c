@@ -187,6 +187,20 @@ void run_console()
 
 void register_aprs(); 
 
+
+static void startup(void* arg) 
+{
+    sleepMs(2000); 
+    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
+    tracker_init(oq);
+    radio_init(RADIO_UART);
+    sleepMs(100);
+    vTaskDelete(NULL);
+}
+
+
+
+
 /********************************************************************************
  * Main function
  ********************************************************************************/
@@ -201,6 +215,7 @@ void app_main()
     initialize_filesystem();
 #endif
 
+    adc_init(); 
     initialize_console();
 
     /* Register commands */
@@ -208,13 +223,11 @@ void app_main()
     register_system();
     register_wifi();
     register_aprs();
-    
     wifi_init();
-    radio_init(RADIO_UART);
-    gps_init(GPS_UART);
-    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
-    tracker_init(oq);
     
+    gps_init(GPS_UART);
     ui_init();
-    run_console();
+    xTaskCreate(&startup, "Startup thread", 
+        3000, NULL, NORMALPRIO+1, NULL);
+    run_console();   
 }

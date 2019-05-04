@@ -51,7 +51,11 @@
 #define RADIO_PIN_PD        18
 #define RADIO_PIN_SQUELCH   16
 #define RADIO_BUF_SIZE      256
+#define RADIO_INPUT         ADC1_CHANNEL_0
 
+/* Misc. ADC inputs */
+#define X1_ADC_INPUT        ADC1_CHANNEL_6
+#define BATT_ADC_INPUT      ADC1_CHANNEL_3
 
 /* GPS */
 #define GPS_UART        UART_NUM_1
@@ -78,11 +82,11 @@
 #define BUTTON_PIN      13
 
 /* Tone generation (for AFSK) */
-#define TONE_DAC DAC_CHANNEL_1
-#define TONE_TIMERGRP 0
-#define TONE_TIMERIDX 1
-#define AFSK_MARK 1200
-#define AFSK_SPACE 2200
+#define TONE_DAC        DAC_CHANNEL_1
+#define TONE_TIMERGRP      0
+#define TONE_TIMERIDX      1
+#define AFSK_MARK       1200
+#define AFSK_SPACE      2200
 
 #define HTTPD_DEFAULT_USR "arctic"
 #define HTTPD_DEFAULT_PWD "hacker"
@@ -95,11 +99,11 @@
 /* Stack sizes for tasks */
 #define STACK_AUTOCON        2200
 #define STACK_HDLC_TEST      1000
-#define STACK_HDLC_TXENCODER 3000
-#define STACK_NMEALISTENER   1500
+#define STACK_HDLC_TXENCODER 2800
+#define STACK_NMEALISTENER   2000
 #define STACK_LEDBLINKER     1100
 #define STACK_UI_SRV          900
-#define STACK_TRACKER        2800
+#define STACK_TRACKER        3000
 
 
 #define BBUF_SIZE 3000

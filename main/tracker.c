@@ -198,9 +198,10 @@ static TaskHandle_t trackert = NULL;
 
 static void tracker(void* arg) 
 {
-    uint8_t t;
-    uint8_t st_count = GET_BYTE_PARAM("STATUSTIME"); 
+    uint8_t t;    
+    sleepMs(2000);
     ESP_LOGI(TAG, "Starting tracker task");
+    uint8_t st_count = GET_BYTE_PARAM("STATUSTIME"); 
     gps_on();    
     if (!TRACKER_TRX_ONDEMAND)
        radio_require();
@@ -406,6 +407,7 @@ static void report_status(posdata_t* pos)
 {
     FBUF packet;   
     fbuf_new(&packet);
+    ESP_LOGI(TAG, "Report status");
     
     /* Create packet header */
     send_header(&packet, false);  
@@ -444,6 +446,7 @@ extern fbq_t *mqueue;
 
 static void report_station_position(posdata_t* pos, bool no_tx)
 {
+    ESP_LOGI(TAG, "Report position");
     char sym[3];
     GET_STR_PARAM("SYMBOL", sym, 2);
 
@@ -465,8 +468,8 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     send_pos_report(&packet, pos, sym[1], sym[0], 
        (GET_BYTE_PARAM("COMPRESS.on") != 0), false ); 
        
-    /* Add extra reports from buffer 
-     * FIXME: Max number of reports - configurable 
+    /* 
+     * Add extra reports from buffer 
      */
     int i=0;
     if (!no_tx) 
@@ -493,10 +496,10 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     }
     
     /* Send packet.
-     *   send it on radio if no_tx flag is not set
+     *   send it on radio if no_tx flag is set
      *   put it on igate-queue (if igate is active)
      */
-    bool igtrack = GET_BYTE_PARAM("IGATE.TRACK.on"); 
+    uint8_t igtrack = GET_BYTE_PARAM("IGATE.TRACK.on"); 
     
     if (!no_tx) 
        fbq_put(outframes, fbuf_newRef(&packet));

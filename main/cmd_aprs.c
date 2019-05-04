@@ -37,12 +37,12 @@ static int do_teston(int argc, char** argv)
     uint8_t ch;
     sscanf(argv[1], "%hhx", &ch);
     printf("***** AFSK generator (0x%hhX) *****\n", ch);
+    radio_require();
     hdlc_test_on(ch);
-    afsk_tx_start();
     getchar();
     hdlc_test_off();
     sleepMs(1000); 
-    afsk_tx_stop();
+    radio_release();
     return 0;
 }
 
@@ -87,6 +87,7 @@ static int do_testpacket(int argc, char** argv)
 void hdl_squelch(uint8_t sq) {
     radio_setSquelch(sq);
 }
+
 
 
 void hdl_radio(bool on) {
