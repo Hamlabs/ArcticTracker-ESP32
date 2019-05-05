@@ -126,6 +126,7 @@ void set_logLevels() {
     esp_log_level_set("radio", get_byte_param("LGLV.radio", default_level));
     esp_log_level_set("ui", get_byte_param("LGLV.ui", default_level));
     esp_log_level_set("hdlc-enc", get_byte_param("LGLV.hdlc-enc", default_level));
+    esp_log_level_set("gps", get_byte_param("LGLV.gps", default_level));
 }
 
 
@@ -135,7 +136,7 @@ bool hasTag(char*tag) {
            strcmp(tag, "shell")==0 || strcmp(tag, "system")==0 ||
            strcmp(tag, "tracker")==0 || strcmp(tag, "esp-tls")==0 ||
            strcmp(tag, "radio")==0 || strcmp(tag, "ui")==0 ||
-           strcmp(tag, "hdlc-enc")==0; 
+           strcmp(tag, "hdlc-enc")==0 || strcmp(tag, "gps")==0; 
 }
 
 

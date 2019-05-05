@@ -164,7 +164,7 @@ static void report_object(int8_t pos, bool add)
 {
     uint8_t i = 0;
     char id[11];
-    GET_STR_PARAM("OBJ.ID", id, 10);
+    get_str_param("OBJ.ID", id, 10, DFL_OBJ_ID);
     uint8_t len = strlen( id );
     if (len>=8) 
        len=8; 
@@ -201,7 +201,7 @@ static void tracker(void* arg)
     uint8_t t;    
     sleepMs(2000);
     ESP_LOGI(TAG, "Starting tracker task");
-    uint8_t st_count = GET_BYTE_PARAM("STATUSTIME"); 
+    uint8_t st_count = get_byte_param("STATUSTIME", DFL_STATUSTIME); 
     gps_on();    
     if (!TRACKER_TRX_ONDEMAND)
        radio_require();
@@ -211,7 +211,7 @@ static void tracker(void* arg)
         * Wait for a fix on position. But with timeout to allow status and 
         * object reports to be sent. 
         */  
-        uint8_t statustime = GET_BYTE_PARAM("STATUSTIME"); 
+        uint8_t statustime = get_byte_param("STATUSTIME", DFL_STATUSTIME); 
         waited = gps_wait_fix( GPS_TIMEOUT * TRACKER_SLEEP_TIME * TIMER_RESOLUTION);
         if (!gps_is_fixed())
            st_count += GPS_TIMEOUT-1; 
@@ -324,9 +324,10 @@ static void activate_tx()
 
 static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* current)
 {
-    uint16_t turn_limit = GET_U16_PARAM("TURNLIMIT");
-    uint8_t  minpause   = GET_BYTE_PARAM("MINPAUSE");
-    uint8_t  mindist    = GET_BYTE_PARAM("MINDIST");
+    uint16_t turn_limit = get_u16_param("TURNLIMIT", DFL_TURNLIMIT);
+    uint8_t  minpause   = get_byte_param("MINPAUSE", DFL_MINPAUSE);
+    uint8_t  maxpause   = get_byte_param("MAXPAUSE", DFL_MAXPAUSE);
+    uint8_t  mindist    = get_byte_param("MINDIST",  DFL_MINDIST);
     uint32_t dist       = (prev->timestamp==0) ? 0 : gps_distance(prev, current);
     uint16_t tdist      = (current->timestamp < prev->timestamp)
                              ? current->timestamp
@@ -337,7 +338,7 @@ static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* curre
       * the speed field in  posdata_t is in knots
       */
         
-    maxpause_reached = ( ++pause_count >= GET_BYTE_PARAM("MAXPAUSE"));
+    maxpause_reached = ( ++pause_count * TRACKER_SLEEP_TIME >= maxpause);
     
     /* Send report if bearing has changed more than a certain threshold. 
      *
@@ -369,12 +370,12 @@ static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* curre
     if ( maxpause_reached || waited
                 
         /* Send report when starting or stopping */             
-         || ( pause_count >= minpause &&
+         || ( pause_count * TRACKER_SLEEP_TIME >= minpause &&
              (( current->speed < 3/KNOTS2KMH && prev->speed > 15/KNOTS2KMH ) ||
               ( prev->speed < 3/KNOTS2KMH && current->speed > 15/KNOTS2KMH )))
 
         /* Distance threshold on low speeds */
-         || ( pause_count >= minpause && est_speed <= 1 && dist >= mindist )
+         || ( pause_count * TRACKER_SLEEP_TIME >= minpause && est_speed <= 1 && dist >= mindist )
          
         /* Time period based on average speed */
          || ( est_speed>0 && pause_count >= (uint8_t)
@@ -446,9 +447,9 @@ extern fbq_t *mqueue;
 
 static void report_station_position(posdata_t* pos, bool no_tx)
 {
-    ESP_LOGI(TAG, "Report position");
+    ESP_LOGI(TAG, "Report position %s", (no_tx ? ": no_tx" : ""));
     char sym[3];
-    GET_STR_PARAM("SYMBOL", sym, 2);
+    get_str_param("SYMBOL", sym, 3, DFL_SYMBOL);
 
     static uint8_t ccount;
     FBUF packet;    
@@ -487,7 +488,7 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     /* Comment */
     if (ccount-- == 0) 
     {
-       GET_STR_PARAM("REP.COMMENT", comment, 40);
+       get_str_param("REP.COMMENT", comment, 40, DFL_REP_COMMENT);
        if (*comment != '\0') {
           fbuf_putChar (&packet, ' ');     /* Or should it be a slash ??*/
           fbuf_putstr (&packet, comment);
@@ -531,7 +532,7 @@ static void report_object_position(posdata_t* pos, char* id, bool add)
     fbuf_putstr(&packet, id);     /* NOTE: LENGTH OF ID MUST BE EXCACTLY 9 CHARACTERS */ 
     fbuf_putChar(&packet, (add ? '*' : '_')); 
     send_timestamp(&packet, pos);
-    GET_STR_PARAM("OBJ.SYMBOL", osym, 2); 
+    get_str_param("OBJ.SYMBOL", osym, 2, DFL_OBJ_SYMBOL); 
     send_pos_report(&packet, pos, osym[1], osym[0],
         (GET_BYTE_PARAM("COMPRESS.on") != 0), true);
     
@@ -550,7 +551,7 @@ static void report_object_position(posdata_t* pos, char* id, bool add)
 static void send_pos_report(FBUF* packet, posdata_t* pos, 
                             char sym, char symtab, bool compress, bool simple)
 {   
-    char pbuf[14];
+    char pbuf[16];
     if (compress)
     {  
        fbuf_putChar(packet, symtab);
@@ -657,9 +658,9 @@ static void send_header(FBUF* packet, bool no_tx)
     addr_t from, to; 
     char call[10];
     
-    GET_STR_PARAM("MYCALL", call, 9); 
+    get_str_param("MYCALL", call, 9, DFL_MYCALL); 
     str2addr(&from, call, false); 
-    GET_STR_PARAM("DEST", call, 9);
+    get_str_param("DEST", call, 9, DFL_DEST);
     str2addr(&to, call, false); 
 
     addr_t digis[7];
@@ -671,7 +672,7 @@ static void send_header(FBUF* packet, bool no_tx)
     else {
         /* Convert digi path to AX.25 addr list */
         char dpath[50]; 
-        GET_STR_PARAM("DIGIPATH", dpath, 50); 
+        get_str_param("DIGIPATH", dpath, 50, DFL_DEST); 
         ndigis = str2digis(digis, dpath); 
     }
     ax25_encode_header(packet, &from, &to, digis, ndigis, FTYPE_UI, PID_NO_L3);

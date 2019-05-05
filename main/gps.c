@@ -19,7 +19,7 @@
 #include "gps.h"
 
 
-#define NMEA_BUFSIZE   80
+#define NMEA_BUFSIZE  80
 #define NMEA_MAXTOKENS 16
 
 #define GPS_BUF_SIZE 256
@@ -46,7 +46,7 @@ static bool monitor_pos, monitor_raw;
 static bool is_fixed = true;
 
 
-#define WAIT_FIX(timeout) xSemaphoreTake(enc_idle, timeout)
+#define WAIT_FIX(timeout) xSemaphoreTake(enc_idle, (timeout) / portTICK_PERIOD_MS)
 #define SIGNAL_FIX xSemaphoreGive(enc_idle)
 
 static SemaphoreHandle_t enc_idle; // Binary semaphore
@@ -363,7 +363,7 @@ void notify_fix(bool lock)
 
 
 bool gps_is_fixed()
-   { return is_fixed && GET_BYTE_PARAM("TRACKER_ON"); }
+   { return is_fixed && GET_BYTE_PARAM("TRACKER.on"); }
    
   
 /* Return true if we waited */   

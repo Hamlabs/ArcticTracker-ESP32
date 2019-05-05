@@ -80,7 +80,7 @@ typedef struct _fbq
    Operations for queue of packet buffer chains
  ************************************************/
 
-void  _fbq_init (FBQ* q, FBUF* buf, const uint16_t size); 
+void  fbq_init (FBQ* q, const uint16_t size); 
 void  fbq_clear (FBQ* q);
 void  fbq_put   (FBQ* q, FBUF b); 
 FBUF  fbq_get   (FBQ* q);
@@ -89,9 +89,6 @@ void  fbq_signal(FBQ* q);
  
 #define fbq_eof(q)    ( sem_getCount(((q)->capacity)) >= (q)->size )
 #define fbq_full(q)   ( sem_getCount(((q)->capacity)) == 0 )
-
-#define FBQ_INIT(name,size)   static FBUF name##_fbqbuf[(size)];    \
-    _fbq_init(&(name), (name##_fbqbuf), (size));
 
 
 #endif /* __FBUF_H__ */

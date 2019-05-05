@@ -466,15 +466,15 @@ void fbuf_removeLast(FBUF* x)
  *    initialise a queue
  *******************************************************/
 
-void _fbq_init(FBQ* q, FBUF* buf, const uint16_t sz)
+void fbq_init(FBQ* q, const uint16_t sz)
 {
-  q->size = sz;
-  q->buf = buf;
-  q->index = 0;
-  q->cnt = 0;
+    q->buf = malloc(sz * sizeof(FBUF));
+    q->size = sz;
+    q->index = 0;
+    q->cnt = 0;
   
-  q->length = sem_create(0); 
-  q->capacity = sem_create(sz);
+    q->length = sem_create(0); 
+    q->capacity = sem_create(sz);
 }
 
 

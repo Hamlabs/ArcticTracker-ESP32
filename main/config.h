@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "default_param.h"
 
 uint32_t chipId(); 
 void nvs_init();
@@ -101,5 +102,5 @@ typedef void (*ByteHandler)(uint8_t val);
         return param_setting_ustr(argc, argv, key, size, dfl, pattern); \
     }
 
-
+    
 #endif

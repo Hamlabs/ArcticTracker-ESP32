@@ -112,9 +112,9 @@ static void _initialize()
     sleepMs(50);
   
     /* Get parameters from NVS flash */
-    _txfreq = get_i32_param("TXFREQ", 1448000);
-    _rxfreq = get_i32_param("RXFREQ", 1448000);
-    _squelch = GET_BYTE_PARAM("TRX_SQUELCH");
+    _txfreq = get_i32_param("TXFREQ", DFL_TXFREQ);
+    _rxfreq = get_i32_param("RXFREQ", DFL_RXFREQ);
+    _squelch = get_byte_param("TRX_SQUELCH", DFL_TRX_SQUELCH);
     ESP_LOGI(TAG, "_initialize: txfreq=%d, rxfreq=%d", _txfreq, _rxfreq);
     _flags = 0x00;
     _widebw = 0;

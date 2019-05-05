@@ -146,7 +146,7 @@ FBQ* hdlc_init_encoder(QueueHandle_t oq)
 {
   outqueue = oq;
   enc_idle = xSemaphoreCreateBinary();
-  FBQ_INIT(encoder_queue, HDLC_ENCODER_QUEUE_SIZE);
+  fbq_init(&encoder_queue, HDLC_ENCODER_QUEUE_SIZE);
   xTaskCreate(&hdlc_txencoder, "HDLC TX Encoder", 
         STACK_HDLC_TXENCODER, NULL, NORMALPRIO, NULL);
   return &encoder_queue; 
@@ -165,9 +165,9 @@ static void hdlc_encode_frames()
 {
     uint16_t crc = 0xffff;
     uint8_t txbyte, i; 
-    uint8_t txdelay = get_byte_param("TXDELAY", 10);
-    uint8_t txtail  = get_byte_param("TXTAIL", 10);
-    uint8_t maxfr   = get_byte_param("MAXFRAME", 2);
+    uint8_t txdelay = get_byte_param("TXDELAY", DFL_TXDELAY);
+    uint8_t txtail  = get_byte_param("TXTAIL", DFL_TXTAIL);
+    uint8_t maxfr   = get_byte_param("MAXFRAME", DFL_MAXFRAME);
 
     ESP_LOGI(TAG, "Encode frame(s)..");
    

@@ -329,25 +329,25 @@ CGIFUNC tpl_aprs(HttpdConnData *con, char *token, void **arg) {
     TPL_HEAD(token, con); 
     
     if (strcmp(token, "mycall")==0)
-        get_str_param("MYCALL", buf, 10, "NOCALL");
+        get_str_param("MYCALL", buf, 10, DFL_MYCALL);
     else if (strcmp(token, "symbol")==0)
-        get_str_param("SYMBOL", buf, 64, "/]");
+        get_str_param("SYMBOL", buf, 64, DFL_SYMBOL);
     else if (strcmp(token, "digipath")==0)
-        get_str_param("DIGIPATH", buf, 64, "WIDE1-1,WIDE2-2");
+        get_str_param("DIGIPATH", buf, 64, DFL_DIGIPATH);
     else if (strcmp(token, "comment")==0)
-        get_str_param("REP_COMMENT", buf, 64, "Arctic Tracker");
+        get_str_param("REP.COMMENT", buf, 64, DFL_REP_COMMENT);
     else if (strcmp(token, "maxpause")==0)
-        sprintf(buf, "%hu", get_byte_param("MAXPAUSE", 120));
+        sprintf(buf, "%hu", get_byte_param("MAXPAUSE", DFL_MAXPAUSE));
     else if (strcmp(token, "minpause")==0)
-        sprintf(buf, "%hu", get_byte_param("MINPAUSE", 30));
+        sprintf(buf, "%hu", get_byte_param("MINPAUSE", DFL_MINPAUSE));
     else if (strcmp(token, "mindist")==0)
-        sprintf(buf, "%hu", get_byte_param("MINDIST", 100));
+        sprintf(buf, "%hu", get_byte_param("MINDIST", DFL_MINDIST));
     else if (strcmp(token, "turnlimit")==0)
-        sprintf(buf, "%u",  get_u16_param("TURNLIMIT", 35));
+        sprintf(buf, "%u",  get_u16_param("TURNLIMIT", DFL_TURNLIMIT));
     else if (strcmp(token, "txfreq")==0)
-        sprintf(buf, "%d",  get_i32_param("TXFREQ", 1448000));
+        sprintf(buf, "%d",  get_i32_param("TXFREQ", DFL_TXFREQ));
     else if (strcmp(token, "rxfreq")==0)
-        sprintf(buf, "%d",  get_i32_param("RXFREQ", 1448000));
+        sprintf(buf, "%d",  get_i32_param("RXFREQ", DFL_RXFREQ));
     else if (strcmp(token, "timestamp_on")==0)
         TEST_CHECKED(buf, "TIMESTAMP.on");
     else if (strcmp(token, "compress_on")==0)
@@ -380,11 +380,11 @@ CGIFUNC tpl_digi(HttpdConnData *con, char *token, void **arg) {
     else if (strcmp(token, "sar_on")==0)
         TEST_CHECKED(buf, "DIGI.SAR.on");
     else if (strcmp(token, "igate_host")==0)
-        get_str_param("IGATE.HOST", buf, 64, "aprs.no");
+        get_str_param("IGATE.HOST", buf, 64, DFL_IGATE_HOST);
     else if (strcmp(token, "igate_port")==0)
-        sprintf(buf, "%u", get_u16_param("IGATE.PORT", 14580));
+        sprintf(buf, "%u", get_u16_param("IGATE.PORT", DFL_IGATE_PORT));
     else if (strcmp(token, "igate_user")==0)
-        get_str_param("IGATE.USER", buf, 32, "NOCALL");
+        get_str_param("IGATE.USER", buf, 32, DFL_IGATE_USER);
     else if (strcmp(token, "igate_pass")==0)
         get_str_param("IGATE.PASS", buf, 6, "");
     else sprintf(buf, "ERROR");
