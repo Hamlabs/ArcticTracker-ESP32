@@ -10,7 +10,7 @@
 #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 
-#define VERSION_STRING "V0.1 alpha"
+#define VERSION_STRING "V2.0 alpha"
 
 #define BIT_0	( 1 << 0 )
 
@@ -99,12 +99,12 @@
 /* Stack sizes for tasks */
 #define STACK_AUTOCON        2200
 #define STACK_HDLC_TEST      1000
-#define STACK_HDLC_TXENCODER 2500
-#define STACK_NMEALISTENER   2000
+#define STACK_HDLC_TXENCODER 1800
+#define STACK_NMEALISTENER   2900
 #define STACK_LEDBLINKER     1100
 #define STACK_UI_SRV          900
-#define STACK_TRACKER        3000
-#define STACK_MONITOR         900
+#define STACK_TRACKER        3100
+#define STACK_MONITOR        3100
 
 
 #define BBUF_SIZE 3000
