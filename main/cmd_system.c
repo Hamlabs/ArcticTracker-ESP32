@@ -256,6 +256,11 @@ static int do_fwupgrade(int argc, char** argv)
 
 
 
+
+/********************************************************************************
+ * Read ADC inputs
+ ********************************************************************************/
+
 static int do_adcinfo(int argc, char** argv)
 {
     adc_print_char(); 
@@ -271,7 +276,21 @@ static int do_adcinfo(int argc, char** argv)
 }
 
 
-CMD_U16_SETTING  (_param_adcref,  "ADC.REF",   1100, 0, 2000);
+
+/********************************************************************************
+ * Read battery voltage
+ ********************************************************************************/
+
+static int do_vbatt(int argc, char** argv)
+{
+    uint16_t batt = adc_batt();
+    printf("Battery voltage: %2.2f V\n", ((double) batt)/1000);
+    return 0;
+}
+
+
+
+CMD_U16_SETTING  (_param_adcref, "ADC.REF",  1100, 0, 3300);
 
 
 
@@ -295,4 +314,5 @@ void register_system()
     ADD_CMD("fw-upgrade", &do_fwupgrade, "Firmware upgrade", "");
     ADD_CMD("adc",     &do_adcinfo,    "Read ADC", "");
     ADD_CMD("adcref",  &_param_adcref, "ADC reference value (millivolts)", "[<val>]");
+    ADD_CMD("vbatt",   &do_vbatt,      "Read battery voltage", "");
 }

@@ -19,6 +19,7 @@
 #include "networking.h"
 #include "config.h"
 #include "esp_log.h"
+#include "system.h"
 
 #define LISTEN_PORT     80u
 #define MAX_CONNECTIONS 16u
@@ -422,6 +423,16 @@ CGIFUNC tpl_sysInfo(HttpdConnData *con, char *token, void **arg) {
 	else if (strcmp(token, "apSsid")==0) {
         wifi_getConnectedAp(buf);
     }
+    else if (strcmp(token, "vbatt")==0) {
+        sprintf(buf, "%2.2f", ((double) adc_batt()) / 1000);
+    }
+    else if (strcmp(token, "sbatt")==0) {
+        char st1[16], st2[16];
+        adc_batt_status(st1, st2);
+        sprintf(buf, "%s %s", st1, st2);
+    }
+    
+    
     else sprintf(buf, "ERROR");
         
 	httpdSend(con, buf, -1);

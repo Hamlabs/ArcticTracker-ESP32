@@ -49,6 +49,7 @@ void adc_init();
 uint16_t adc_read(uint8_t chan);
 uint16_t adc_toVoltage(uint16_t val);
 uint16_t adc_batt();
+uint16_t adc_batt_status(char* line1, char* line2);
 void adc_start_sampling();
 void adc_stop_sampling();
 
