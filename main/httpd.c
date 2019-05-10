@@ -47,7 +47,7 @@
         return HTTPD_CGI_DONE; \
     } 
     
-static void updateStrField(HttpdConnData *cdata, const char* key, const char* pparm, char* pattern);
+static void updateStrField(HttpdConnData *cdata, const char* key, const char* pparm, char* pattern, bool up);
 static void updateApAlt(HttpdConnData *cdata, const int index);
 static void startResp(HttpdConnData *cdata, int code, char* ctype);
 static void head(HttpdConnData *cdata);
@@ -118,10 +118,12 @@ inline static void head(HttpdConnData *cdata) {
 }
    
 
-static void updateStrField(HttpdConnData *cdata, const char* key, const char* pparm, char* pattern) 
+static void updateStrField(HttpdConnData *cdata, const char* key, const char* pparm, char* pattern, bool upper) 
 {
     char val[64], msg[64], buf[128];
     POST_ARG(cdata, pparm, val, 64);
+    if (upper)
+        strupr(val);
     int n = sprintf(buf, "Update %s: %s<br>", key, param_parseStr(key, val, strlen(val), pattern, msg));
     httpdSend(cdata, buf, n);
 }
@@ -216,9 +218,9 @@ CGIFUNC cgi_updateWifi(HttpdConnData *cdata) {
     head(cdata); 
     
     httpdSend(cdata, "<body><h2>Update WIFI settings...</h2><fieldset>", -1);
-    updateStrField(cdata, "WIFIAP.PASSWD", "appass", ".*");
-    updateStrField(cdata, "HTTPD.USR", "htuser", ".*");
-    updateStrField(cdata, "HTTPD.PWD", "htpass", ".*");
+    updateStrField(cdata, "WIFIAP.PASSWD", "appass", ".*", false);
+    updateStrField(cdata, "HTTPD.USR", "htuser", ".*", false);
+    updateStrField(cdata, "HTTPD.PWD", "htpass", ".*", false);
     
     for (int i=0; i<6; i++)
         updateApAlt(cdata, i);
@@ -255,10 +257,10 @@ CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
     updateByteField(cdata, "MINPAUSE",     "minpause",  0, 250);    
     updateByteField(cdata, "MINDIST",      "mindist",   0, 250);
      
-    updateStrField(cdata, "MYCALL",        "mycall",    REGEX_AXADDR);
-    updateStrField(cdata, "SYMBOL",        "symbol",    REGEX_APRSSYM);
-    updateStrField(cdata, "DIGIPATH",      "digis",     REGEX_DIGIPATH);    
-    updateStrField(cdata, "REP_COMMENT",   "rcomment",  ".*");  
+    updateStrField(cdata, "MYCALL",        "mycall",    REGEX_AXADDR, true);
+    updateStrField(cdata, "SYMBOL",        "symbol",    REGEX_APRSSYM, false);
+    updateStrField(cdata, "DIGIPATH",      "digis",     REGEX_DIGIPATH, true);    
+    updateStrField(cdata, "REP_COMMENT",   "rcomment",  ".*", false);  
     
     httpdSend(cdata, "</fieldset></body></html>", -1);
     return HTTPD_CGI_DONE;
@@ -285,9 +287,9 @@ CGIFUNC cgi_updateDigi(HttpdConnData *cdata) {
     updateBoolField(cdata,"IGATE.on",      "igate_on");
     updateBoolField(cdata,"DIGI.WIDE1.on", "wide1_on");
     updateBoolField(cdata,"DIGI.SAR.on",   "sar_on");
-    updateStrField(cdata, "IGATE.HOST",    "ig_host", REGEX_HOSTNAME);
-    updateStrField(cdata, "IGATE.USER",    "ig_user", REGEX_AXADDR);
-    updateStrField(cdata, "IGATE.PASS",    "ig_pass", "[0-9]{0,5}");
+    updateStrField(cdata, "IGATE.HOST",    "ig_host", REGEX_HOSTNAME, false);
+    updateStrField(cdata, "IGATE.USER",    "ig_user", REGEX_AXADDR, false);
+    updateStrField(cdata, "IGATE.PASS",    "ig_pass", "[0-9]{0,5}", false);
         
     httpdSend(cdata, "</fieldset></body></html>", -1);
     return HTTPD_CGI_DONE;
@@ -311,7 +313,7 @@ CGIFUNC cgi_updateFw(HttpdConnData *cdata) {
     httpdSend(cdata, "<html>", -1); 
     head(cdata); 
     httpdSend(cdata, "<body><h2>Update firmware update settings...</h2><fieldset>", -1);
-    updateStrField(cdata, "FW.URL",  "fw_url", ".*");
+    updateStrField(cdata, "FW.URL",  "fw_url", ".*", false);
     updateBigStrField(cdata, "FW.CERT", "fw_cert", ".*");
     httpdSend(cdata, "</fieldset></body></html>", -1);
     
@@ -411,9 +413,7 @@ CGIFUNC tpl_sysInfo(HttpdConnData *con, char *token, void **arg) {
 		sprintf(buf, "%d", spi_flash_get_chip_size());
 	}
     else if (strcmp(token, "ipAddr")==0) {
-        tcpip_adapter_ip_info_t ipinfo;
-        ipinfo = wifi_getIpInfo(); 
-		sprintf(buf, "%s", ip4addr_ntoa(&ipinfo.ip));
+        wifi_getIpAddr(buf);
 	}
     else if (strcmp(token, "macAddr")==0) {
         uint8_t mac[6];
@@ -424,7 +424,7 @@ CGIFUNC tpl_sysInfo(HttpdConnData *con, char *token, void **arg) {
         wifi_getConnectedAp(buf);
     }
     else if (strcmp(token, "vbatt")==0) {
-        sprintf(buf, "%2.2f", ((double) adc_batt()) / 1000);
+        sprintf(buf, "%1.02f", ((double) adc_batt()) / 1000);
     }
     else if (strcmp(token, "sbatt")==0) {
         char st1[16], st2[16];
