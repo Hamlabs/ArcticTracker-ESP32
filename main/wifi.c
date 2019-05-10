@@ -283,6 +283,14 @@ tcpip_adapter_ip_info_t wifi_getIpInfo(void) {
 }
 
 
+char* wifi_getIpAddr(char* buf) {
+    tcpip_adapter_ip_info_t ipinfo;
+    ipinfo = wifi_getIpInfo(); 
+    sprintf(buf, "%s", ip4addr_ntoa(&ipinfo.ip));
+    return buf;
+}
+
+
 
 /********************************************************************************
  * Get name (ssid) of the connected ap
@@ -297,6 +305,20 @@ char* wifi_getConnectedAp(char* buf) {
     return buf;
 }
         
+        
+/********************************************************************************
+ * Get name (ssid) or IP addr of softAP
+ ********************************************************************************/
+
+char* wifi_getApSsid(char* buf) {
+    get_str_param("WIFIAP.SSID", buf, 32, default_ssid);
+    return buf; 
+}
+
+char* wifi_getApIp(char* buf) {
+    get_str_param("WIFIAP.IP", buf, 16, AP_DEFAULT_IP);
+    return buf; 
+}
  
  
 /********************************************************************************

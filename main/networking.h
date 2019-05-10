@@ -38,6 +38,10 @@ bool   wifi_getApAlt(int n, wifiAp_t* res);
 void   wifi_setApAlt(int n, wifiAp_t* ap);
 void   wifi_deleteApAlt(int n);
 bool   wifi_inScanList(char* ssid);
+char*  wifi_getIpAddr(char* buf);
+char*  wifi_getApSsid(char* buf);
+char*  wifi_getApIp(char* buf);
+
 tcpip_adapter_ip_info_t wifi_getIpInfo(void);
 wifi_ap_record_t * wifi_getApList(void);
 

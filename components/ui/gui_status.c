@@ -13,6 +13,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "networking.h"
+#include "system.h"
 
 
 #define NSCREENS 6
@@ -32,7 +33,6 @@ static void status_screen3(void);
 static void status_screen4(void);
 static void status_screen5(void);
 
-#define adc_read_batt() 7300
 
 void status_init() {
     gui_mutex = xSemaphoreCreateMutex();
@@ -85,12 +85,12 @@ static void status_heading(char* label) {
     gui_flag(50,0, "d", GET_BYTE_PARAM("DIGIPEATER.on"));
 //    Next position is 59,0 
     
-    uint16_t batt = adc_read_batt(); 
+    uint16_t batt = adc_batt(); 
     uint8_t bi; 
     if (batt > 8000)      bi = 4;
     else if (batt > 7800) bi = 3; 
     else if (batt > 7400) bi = 2;  
-    else if (batt > 7200) bi = 1;  // Low
+    else if (batt > 7100) bi = 1;  // Low
     else bi = 0;
              
     gui_battery(70,3,bi);
@@ -157,10 +157,8 @@ static void status_screen3() {
     status_heading("WIFI");
     
     gui_writeText(0, LINE1, wifi_getStatus());
-        
-    wifi_getConnectedAp(buf);
-    gui_writeText(0, LINE2, buf);
- //   gui_writeText(0, LINE3, wifi_doCommand("IP", buf));    
+    gui_writeText(0, LINE2, wifi_getConnectedAp(buf));
+    gui_writeText(0, LINE3, wifi_getIpAddr(buf));    
     gui_flush();
 }
 
@@ -172,9 +170,9 @@ static void status_screen3() {
 static void status_screen4() {
     gui_clear();
     status_heading("W-AP");
-//    gui_writeText(0, LINE1, (wifi_is_enabled() ? "Enabled" : "Disabled"));
-//    gui_writeText(0, LINE2, wifi_doCommand("AP.SSID", buf));
-//    gui_writeText(0, LINE3, wifi_doCommand("AP.IP", buf));  
+    gui_writeText(0, LINE1, (wifi_isEnabled() ? "Enabled" : "Disabled"));
+    gui_writeText(0, LINE2, wifi_getApSsid(buf));
+    gui_writeText(0, LINE3, wifi_getApIp(buf));
     gui_flush();
 }
 
@@ -185,28 +183,15 @@ static void status_screen4() {
  ****************************************************************/
 
 static void status_screen5() {
+    char b1[16], b2[16];
+    b2[0] = '\0';
     gui_clear();
     status_heading("BATT");
-    uint16_t batt = adc_read_batt();
+ 
+    uint16_t batt = adc_batt_status(b1, b2);
     sprintf(buf, "%1.02f V%c", ((float)batt)/1000, '\0');
     gui_writeText(0, LINE1, buf);
-    if (batt > 8500) { 
-        gui_writeText(0, LINE2, "Ext power");
-        gui_writeText(0, LINE3, "Not charging.");
-    }
-    else if (batt > 8350)
-        gui_writeText(0, LINE2, "Max/Charging..");
-    else if (batt > 7800) 
-        gui_writeText(0, LINE2, "Full.");
-    else if (batt > 7400) 
-        gui_writeText(0, LINE2, "Ok.");
-    else if (batt > 7200) {
-        gui_writeText(0, LINE2, "Low.");  
-        gui_writeText(0, LINE3, "Need charging.");
-    }
-    else {
-        gui_writeText(0, LINE2, "Empty.");
-        gui_writeText(0, LINE3, "Charge ASAP!");
-    }    
+    gui_writeText(0, LINE2, b1);
+    gui_writeText(0, LINE2, b2);   
     gui_flush();
 }

@@ -32,5 +32,6 @@ void menu_increment(void);
 void menu_select(void);
 void menu_end(void);
 
+void status_init();
 void status_show(void);
 void status_next(void);

@@ -284,7 +284,7 @@ static int do_adcinfo(int argc, char** argv)
 static int do_vbatt(int argc, char** argv)
 {
     uint16_t batt = adc_batt();
-    printf("Battery voltage: %2.2f V\n", ((double) batt)/1000);
+    printf("Battery voltage: %1.02f V\n", ((double) batt)/1000);
     return 0;
 }
 

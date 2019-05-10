@@ -43,15 +43,15 @@ static void clickhandler(void* p);
        cond_waitBits(buttCond, BUTT_EV_SHORT|BUTT_EV_LONG);
        if ( cond_testBits(buttCond, BUTT_EV_SHORT) ) {
           ESP_LOGI(TAG, "Butt ev short");
-          beep(10); 
+          beep(20); 
           if (bhandler1) bhandler1(NULL);
-          cond_clearBits(buttCond, BUTT_EV_SHORT);
+          cond_clearBits(buttCond, BUTT_EV_LONG|BUTT_EV_SHORT);
        }
        else {
           ESP_LOGI(TAG, "Butt ev long");
           beeps("-");
           if (bhandler2) bhandler2(NULL);
-          cond_clearBits(buttCond, BUTT_EV_LONG);
+          cond_clearBits(buttCond, BUTT_EV_LONG|BUTT_EV_SHORT);
        }
     }
  }  
@@ -174,12 +174,28 @@ static void button_init() {
  
  
  
+ /******************************************
+  * Button event handlers. 
+  ******************************************/
  
- static void disp(void* x) {
-     lcd_backlight();
-     gui_welcome2();
+ static void push_handler(void* x) {
+    lcd_backlight();
+    if (menu_is_active())
+        menu_select();
+    else
+        menu_activate();
  }
+
  
+ 
+ static void click_handler(void* p) {
+    lcd_backlight();
+    if (menu_is_active())
+        menu_increment();
+    else
+        status_next();
+ }
+
  
  /*****************************************
   * UI init
@@ -198,8 +214,9 @@ static void button_init() {
     sleepMs(100);
     lcd_backlight();
     gui_welcome(); 
+    status_init();
         
-    register_button_handlers(NULL, disp);
+    register_button_handlers(click_handler, push_handler);
 
     
    /* LED blinker thread */
@@ -210,5 +227,7 @@ static void button_init() {
     
     xTaskCreate(&ui_thread, "LED blinker", 
         STACK_LEDBLINKER, NULL, NORMALPRIO, NULL);
+    
+    menu_init();
  }
  

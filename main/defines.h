@@ -102,9 +102,10 @@
 #define STACK_HDLC_TXENCODER 1800
 #define STACK_NMEALISTENER   2900
 #define STACK_LEDBLINKER     1100
-#define STACK_UI_SRV          900
+#define STACK_UI_SRV         2800
 #define STACK_TRACKER        3100
 #define STACK_MONITOR        3100
+#define STACK_GUI            2200
 
 
 #define BBUF_SIZE 3000
