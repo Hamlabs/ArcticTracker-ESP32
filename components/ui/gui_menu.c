@@ -42,7 +42,7 @@ static MenuCommand items[] =
     { "Digipeater +|-", mhandle_digi,  NULL },
     { "Blow up all",    NULL,          NULL },
 };
-int nitems = 5; 
+static int nitems = 5; 
 
 
 
@@ -54,12 +54,13 @@ int nitems = 5;
 #define MIN(x,y) (x<y ? x : y)
 #define MAX_VISIBLE 4
 
-static int start = 0, selection = 0;
+static uint8_t offset = 0;
+static uint8_t selection = 0;
 static bool menu_active;
 
  
-static void menu_show(int start, int sel) 
-{ 
+static void menu_show(int st, int sel) 
+{     
    gui_clear();
    gui_hLine(1,0,82);
    gui_hLine(1,44,83);
@@ -71,7 +72,7 @@ static void menu_show(int start, int sel)
    gui_box(0, sel*11, 83, 12, true);
    int i;
    for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) 
-     gui_writeText(4, 2+i*11, items[start+i].mc_name); 
+     gui_writeText(4, 2+i*11, items[st+i].mc_name); 
    gui_flush();
 }
 
@@ -84,30 +85,23 @@ bool menu_is_active()
 void menu_activate()
 {
     selection = 0;
-    start = 0;
+    offset = 0;
     menu_active = true;
-    menu_show(start, selection); 
+    menu_show(offset, selection); 
 }
 
 
 void menu_increment()
 {
-    if (start+selection >= nitems-1) {
+    if (offset+selection >= nitems-1) {
         menu_end();
-        return; // How do we end the menu?
+        return; 
     }
     if (selection >= MAX_VISIBLE-1)
-       start++;
+       offset++;
     else
        selection++;
-    menu_show(start, selection);
-}
-
-
-
-void menu_replaceText(char* txt)
-{
-    strcpy(items[start+selection].mc_name, txt);
+    menu_show(offset, selection);
 }
 
 
@@ -115,8 +109,8 @@ void menu_replaceText(char* txt)
 void menu_select()
 {
     menu_end();
-    if (items[start+selection].mc_func != NULL)
-        items[start+selection].mc_func(items[start+selection].mc_arg);
+    if (items[offset+selection].mc_func != NULL)
+        items[offset+selection].mc_func(items[offset+selection].mc_arg);
 }
 
 

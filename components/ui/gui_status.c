@@ -192,6 +192,6 @@ static void status_screen5() {
     sprintf(buf, "%1.02f V%c", ((float)batt)/1000, '\0');
     gui_writeText(0, LINE1, buf);
     gui_writeText(0, LINE2, b1);
-    gui_writeText(0, LINE2, b2);   
+    gui_writeText(0, LINE3, b2);   
     gui_flush();
 }
