@@ -54,9 +54,7 @@ void adc_init()
     adc1_config_channel_atten(RADIO_INPUT, ATTEN);
     adc1_config_channel_atten(X1_ADC_INPUT, ATTEN);
     adc1_config_channel_atten(BATT_ADC_INPUT, ATTEN);
-    
-    /* Calibrate radio channel input */
-    dcoffset = adc_read(RADIO_INPUT);
+    adc_calibrate(); 
 }
 
 
@@ -135,26 +133,21 @@ uint16_t adc_batt_status(char* line1, char* line2)
 
 
 
+
+
 /*************************************************************************
- * Start sampling of radio channel input using clock 
+ * Start sampling of radio channel - to be called from timer ISR 
  *************************************************************************/
 
-void adc_start_sampling() 
-{
-    /* TBD */
+
+void adc_calibrate() {
+    /* Calibrate radio channel input */
+    dcoffset = adc_read(RADIO_INPUT)-16;
 }
 
 
-void adc_stop_sampling() 
-{
-    /* TBD */
-}
-
-
-/* ISR function */
-
-static void adc_sample() 
+int16_t adc_sample() 
 {
     uint16_t sample = (uint16_t) adc1_get_raw((adc1_channel_t) RADIO_INPUT);
- //   afsk_process_sample(sample - dcoffset);
+    return ((int16_t) sample) - dcoffset; 
 }

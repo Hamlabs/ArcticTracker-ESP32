@@ -191,8 +191,10 @@ void register_aprs();
 static void startup(void* arg) 
 {
     sleepMs(2500); 
-    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
-    tracker_init(oq);
+    
+//    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
+//    tracker_init(oq);
+    hdlc_init_decoder(afsk_rx_init());
     radio_init(RADIO_UART);
     mon_init();
     sleepMs(100);

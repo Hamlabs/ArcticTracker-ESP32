@@ -73,7 +73,7 @@ void mon_activate(bool m)
    
     if (tstart) {
         FBQ* mq = (mon_on? &mon : NULL);
-//        hdlc_subscribe_rx(mq, 0);
+        hdlc_subscribe_rx(mq, 0);
         if ( GET_BYTE_PARAM("TXMON.on") )
             hdlc_monitor_tx(mq); 
         xTaskCreate(&monitor, "Packet monitor", 
@@ -82,7 +82,7 @@ void mon_activate(bool m)
     if (tstop) {
         fbq_signal(&mon);
         hdlc_monitor_tx(NULL);
- //       hdlc_subscribe_rx(NULL, 0);
+        hdlc_subscribe_rx(NULL, 0);
     }
 }
 

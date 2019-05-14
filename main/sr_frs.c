@@ -119,6 +119,7 @@ static void _initialize()
     _flags = 0x00;
     _widebw = 0;
     radio_setMicLevel(8);
+    radio_setVolume(7);
     _setGroupParm();
     cond_set(tx_off);
    
@@ -142,12 +143,12 @@ static void squelch_handler(void* arg)
 {
     if (!_sq_on && cond_isSetI(radio_rdy) && !gpio_get_level(RADIO_PIN_SQUELCH)) {
         _sq_on = true;
-        afsk_rx_enable();
+        afsk_rx_start();
         cond_clearI(chan_rdy);       
     }
     else if (_sq_on) {
         _sq_on = false; 
-        afsk_rx_disable();
+        afsk_rx_stop();
         cond_setI(chan_rdy);
     }
 }

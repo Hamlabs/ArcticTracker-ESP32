@@ -23,10 +23,8 @@
  void afsk_tx_start(void);
  void afsk_tx_stop(void);
  
-// QueueHandle_t afsk_rx_init(void);
-// void afsk_rx_enable(void); 
-// void afsk_rx_disable(void);
-#define afsk_rx_disable() /* FIXME */
-#define afsk_rx_enable() /* FIXME */
+ QueueHandle_t afsk_rx_init(void);
+ void afsk_rx_start(void); 
+ void afsk_rx_stop(void);
  
 #endif
