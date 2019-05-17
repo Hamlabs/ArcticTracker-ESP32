@@ -190,12 +190,15 @@ void register_aprs();
 
 static void startup(void* arg) 
 {
-    sleepMs(2500); 
+    sleepMs(2500);
     
-//    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
-//    tracker_init(oq);
+    afsk_init(); 
     hdlc_init_decoder(afsk_rx_init());
+ 
+    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
+    tracker_init(oq);
     radio_init(RADIO_UART);
+    
     mon_init();
     sleepMs(100);
     vTaskDelete(NULL);
@@ -231,6 +234,6 @@ void app_main()
     gps_init(GPS_UART);
     ui_init();
     xTaskCreate(&startup, "Startup thread", 
-        3000, NULL, NORMALPRIO+1, NULL);
+        3200, NULL, NORMALPRIO+1, NULL);
     run_console();   
 }

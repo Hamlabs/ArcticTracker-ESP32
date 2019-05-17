@@ -70,7 +70,6 @@ void tone_init() {
 
 void tone_start() {
    _on = true;
-   dac_output_enable(TONE_DAC);
    clock_start(TONE_TIMERGRP, TONE_TIMERIDX, 
         _toneHigh ? FREQ(AFSK_SPACE*STEPS) : FREQ(AFSK_MARK*STEPS));
 }

@@ -72,21 +72,29 @@
 #define SPI_PIN_MOSI    14 
 #define SPI_PIN_CLK     12
 
-/* Buzzer */
-#define BUZZER_PIN      21
-#define BUZZER_TIMERGRP  0
-#define BUZZER_TIMERIDX  0
 
 #define LED_STATUS_PIN  23
 #define LED_TX_PIN      22
 #define BUTTON_PIN      13
 
+/* Buzzer */
+#define BUZZER_PIN      21
+#define BUZZER_TIMERGRP  0
+#define BUZZER_TIMERIDX  0
+
 /* Tone generation (for AFSK) */
 #define TONE_DAC        DAC_CHANNEL_1
-#define TONE_TIMERGRP      0
-#define TONE_TIMERIDX      1
 #define AFSK_MARK       1200
 #define AFSK_SPACE      2200
+
+/* Shared timer for AFSK RX and TX */
+#define AFSK_TIMERGRP   1
+#define AFSK_TIMERIDX   0
+
+/* Timer for AFSK tone generation */
+#define TONE_TIMERGRP   0
+#define TONE_TIMERIDX   1
+
 
 #define HTTPD_DEFAULT_USR "arctic"
 #define HTTPD_DEFAULT_PWD "hacker"
@@ -164,4 +172,6 @@
 #define cond_setBitsI(cond, bits)       xEventGroupSetBitsFromISR(cond, bits)
 #define cond_testBits(cond, bits)       (xEventGroupGetBits(cond) & bits)
 #define cond_clearBits(cond, bits)      xEventGroupClearBits(cond, bits)
+
+
 #endif

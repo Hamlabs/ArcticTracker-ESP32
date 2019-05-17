@@ -16,27 +16,13 @@
 #include "system.h"
 
 
-#define SAMPLERATE 9600                             // The rate at which we are sampling 
-#define BITRATE    1200                             // The actual bitrate at baseband. This is the baudrate.
-#define SAMPLESPERBIT (SAMPLERATE / BITRATE)        // How many DAC/ADC samples constitute one bit (8).
-
-/* Important: Sample rate must be divisible by bitrate */
-
-/* Sampling clock setup */
-#define CLOCK_DIVIDER 16
-#define CLOCK_FREQ (TIMER_BASE_CLK / CLOCK_DIVIDER)
-#define FREQ(f) (CLOCK_FREQ/(f))
-
-#define AFSK_RX_TIMERGRP 1
-#define AFSK_RX_TIMERIDX 0
-
+#define SAMPLESPERBIT (AFSK_SAMPLERATE / AFSK_BITRATE)   // How many DAC/ADC samples constitute one bit (8).
 
 /* Phase sync constants */
 #define PHASE_BITS   8                              // How much to increment phase counter each sample
 #define PHASE_INC    1                              // Nudge by an eigth of a sample each adjustment
 #define PHASE_MAX    (SAMPLESPERBIT * PHASE_BITS)   // Resolution of our phase counter = 64
 #define PHASE_THRESHOLD  (PHASE_MAX / 2)            // Target transition point of our phase window
-
 
 /* Detect transition */
 #define BITS_DIFFER(bits1, bits2) (((bits1)^(bits2)) & 0x01)
@@ -88,10 +74,10 @@ static void afsk_process_sample(int8_t curr_sample);
 /*****************************
  * Sampler ISR 
  *****************************/
-static bool led = false; 
+
 uint32_t cp0_regs[18];
 
-static void IRAM_ATTR afsk_rxSampler(void *arg) 
+void afsk_rxSampler(void *arg) 
 {
     // get FPU state
     uint32_t cp_state = xthal_get_cpenable();
@@ -103,7 +89,7 @@ static void IRAM_ATTR afsk_rxSampler(void *arg)
         xthal_set_cpenable(1);
     
   
-    clock_clear_intr(AFSK_RX_TIMERGRP, AFSK_RX_TIMERIDX);
+    clock_clear_intr(AFSK_TIMERGRP, AFSK_TIMERIDX);
     afsk_process_sample((int8_t) (adc_sample()/14));
     
     /* Restore FPU registers and turn it back off */
@@ -121,12 +107,12 @@ static void IRAM_ATTR afsk_rxSampler(void *arg)
 
 QueueHandle_t afsk_rx_init() 
 { 
-  clock_init(AFSK_RX_TIMERGRP, AFSK_RX_TIMERIDX, CLOCK_DIVIDER, afsk_rxSampler, false);
+//  clock_init(AFSK_RX_TIMERGRP, AFSK_RX_TIMERIDX, CLOCK_DIVIDER, afsk_rxSampler, false);
   
   /* Allocate memory for struct */
   memset(&afsk, 0, sizeof(afsk));
   
-  fifo_init(&fifo, delay_buf, sizeof(delay_buf)); 
+  fifo_init(&fifo,  delay_buf,  sizeof(delay_buf)); 
   fifo_init(&fifo1, delay_buf1, sizeof(delay_buf1));  
   
   /* Fill sample FIFO with 0 */
@@ -140,22 +126,6 @@ QueueHandle_t afsk_rx_init()
 }
 
 
-
-/*********************************************
- * Turn receiving on and off
- * These are called from ISR handlers !!!
- *********************************************/
-
-void afsk_rx_start() {
-    clock_start(AFSK_RX_TIMERGRP, AFSK_RX_TIMERIDX, FREQ(SAMPLERATE));
-    tx_led_on(); 
-}
-
-   
-void afsk_rx_stop() {
-    clock_stop(AFSK_RX_TIMERGRP, AFSK_RX_TIMERIDX);  
-    tx_led_off(); 
-}
 
    
 
@@ -339,12 +309,7 @@ static void afsk_process_sample(int8_t curr_sample)
 static uint8_t bit_count = 0;
 
 static void add_bit(bool bit)
-{ 
-    if (bit)
-        tx_led_on(); 
-    else
-        tx_led_off();
-    
+{     
     static uint8_t octet;
     octet = (octet >> 1) | (bit ? 0x80 : 0x00);
     bit_count++;
