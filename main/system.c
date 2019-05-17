@@ -15,7 +15,7 @@
 #include "networking.h"
 #include "config.h"
 #include "system.h"
-#include "apps/sntp/sntp.h"
+#include "esp_sntp.h"
 #include "esp_ota_ops.h"
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
@@ -128,6 +128,7 @@ void set_logLevels() {
     esp_log_level_set("hdlc-enc", get_byte_param("LGLV.hdlc-enc", default_level));
     esp_log_level_set("hdlc-dec", get_byte_param("LGLV.hdlc-dec", default_level));
     esp_log_level_set("gps", get_byte_param("LGLV.gps", default_level));
+    esp_log_level_set("uart", get_byte_param("LGLV.uart", default_level));
 }
 
 
@@ -138,7 +139,7 @@ bool hasTag(char*tag) {
            strcmp(tag, "tracker")==0 || strcmp(tag, "esp-tls")==0 ||
            strcmp(tag, "radio")==0 || strcmp(tag, "ui")==0 ||
            strcmp(tag, "hdlc-enc")==0 || strcmp(tag, "gps")==0 ||
-           strcmp(tag, "hdlc-dec")==0; 
+           strcmp(tag, "hdlc-dec")==0 || strcmp(tag, "uart")==0;
 }
 
 

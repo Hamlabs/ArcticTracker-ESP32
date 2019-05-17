@@ -55,8 +55,8 @@ static int do_testpacket(int argc, char** argv)
 {
     static FBUF packet;    
     fbq_t* outframes = hdlc_get_encoder_queue();
-    char from[10], to[10];
-    char *dbuf = malloc(70); 
+    char from[11], to[11];
+    char *dbuf = malloc(71); 
   
     radio_require();    
     sleepMs(100);
