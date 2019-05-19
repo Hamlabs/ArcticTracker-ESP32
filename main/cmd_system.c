@@ -195,14 +195,6 @@ static int do_nmea(int argc, char** argv)
 }
 
 
-static int do_disp(int argc, char** argv)  
-{
-    printf("Trying to show something on display\n");
-    lcd_backlight();
-    gui_welcome2();
-    return 0;
-}
-
 
 /********************************************************************************
  * Tone generator testing
@@ -272,6 +264,16 @@ static int do_adcinfo(int argc, char** argv)
     printf(" BATT input: %d, %d mV\n", val, adc_toVoltage(val));
     val = adc_read(X1_ADC_INPUT);
     printf("   X1 input: %d, %d mV\n", val, adc_toVoltage(val));
+    
+    for (int i=1; i<800; i++) {
+        int16_t x = adc_sample();
+        x = x >> 3;
+        printf("%5d  ", x);
+        if (i> 19 && i % 20 == 0)
+            printf("\n");
+        sleepMs(50);
+    }
+    printf("\n");
     return 0;
 }
 
@@ -308,7 +310,6 @@ void register_system()
     ADD_CMD("time",    &do_time,       "Get date and time", NULL);
     ADD_CMD("regex",   &do_regmatch,   "Regex match", NULL);
     ADD_CMD("nmea",    &do_nmea,       "Monitor GPS NMEA datastream", "[raw]");
-    ADD_CMD("disp",    &do_disp,       "display test", "");
     ADD_CMD("tone",    &do_tone,       "tone generator test", "");
     ADD_CMD("ptt",     &do_ptt,        "Transmitter on", "");
     ADD_CMD("fw-upgrade", &do_fwupgrade, "Firmware upgrade", "");

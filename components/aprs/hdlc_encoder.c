@@ -87,8 +87,8 @@ void hdlc_test_on(uint8_t b)
 { 
    testbyte = b;
    test_active = true;
-   xTaskCreate(&hdlc_testsignal, "HDLC TX Testsignal", 
-        STACK_HDLC_TEST, NULL, NORMALPRIO, &testt);
+   xTaskCreatePinnedToCore(&hdlc_testsignal, "HDLC TX Testsignal", 
+        STACK_HDLC_TEST, NULL, NORMALPRIO, &testt, CORE_HDLC_TEST);
 }
 
 
@@ -147,8 +147,8 @@ FBQ* hdlc_init_encoder(QueueHandle_t oq)
   outqueue = oq;
   enc_idle = xSemaphoreCreateBinary();
   fbq_init(&encoder_queue, HDLC_ENCODER_QUEUE_SIZE);
-  xTaskCreate(&hdlc_txencoder, "HDLC TX Encoder", 
-        STACK_HDLC_TXENCODER, NULL, NORMALPRIO, NULL);
+  xTaskCreatePinnedToCore(&hdlc_txencoder, "HDLC TX Encoder", 
+        STACK_HDLC_TXENCODER, NULL, NORMALPRIO, NULL, CORE_HDLC_TXENCODER);
   return &encoder_queue; 
 }
 

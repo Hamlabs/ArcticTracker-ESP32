@@ -20,6 +20,10 @@
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
 #include "ui.h"
+#include "lcd.h"
+#include "gui.h"
+#include "afsk.h"
+#include "radio.h"
 
 static void initialize_sntp(void);
 
@@ -32,30 +36,44 @@ static void initialize_sntp(void);
  ******************************************************************************/
 
 esp_err_t firmware_upgrade()
-{
-    char* fwurl = malloc(64);
-    char* fwcert = malloc(BBUF_SIZE);
-    GET_STR_PARAM("FW.URL", fwurl, 64);
+{ 
+    if (!wifi_isConnected()) {
+        ESP_LOGW(TAG, "Wifi not connected - cannot update");
+        return ESP_OK; 
+    }
+    afsk_rx_stop(); 
+    afsk_tx_stop();
+    radio_on(false);
+    lcd_backlight();
+    gui_fwupgrade();
+    sleepMs(500);
+    beeps("..-. .--");
+    sleepMs(500);
+    
+    char* fwurl = malloc(80);
+    char* fwcert = malloc(BBUF_SIZE+1);
+    if (fwurl==NULL || fwcert==NULL) {
+        ESP_LOGW(TAG, "Cannot allocate buffer for certificate or url");
+        return ESP_FAIL;
+    }
+    
+    GET_STR_PARAM("FW.URL", fwurl, 79);
     GET_STR_PARAM("FW.CERT", fwcert, BBUF_SIZE);
     
     esp_http_client_config_t config = {
         .url = fwurl,
         .cert_pem = fwcert,
     };
-    printf("*** URL=%s\n", config.url);
-    BLINK_FWUPGRADE;
+    BLINK_FWUPGRADE;    
     esp_err_t ret = esp_https_ota(&config);
-    
-    free(fwcert);
-    free(fwurl);
+    ESP_LOGW(TAG, "Upgrade ok. Rebooting..\n");
     if (ret == ESP_OK) {
         esp_restart();
     } else {
         return ESP_FAIL;
     }
     return ESP_OK;
-}
-
+}             
 
 
 /******************************************************************************
@@ -222,7 +240,7 @@ bool readline(uart_port_t cbp, char* buf, const uint16_t max) {
  
 uint8_t tokenize(char* buf, char* tokens[], uint8_t maxtokens, char *delim, bool merge)
 { 
-     register uint8_t ntokens = 0;
+     uint8_t ntokens = 0;
      while (ntokens<maxtokens)
      {    
         tokens[ntokens] = strsep(&buf, delim);

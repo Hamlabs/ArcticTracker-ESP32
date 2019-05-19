@@ -21,7 +21,7 @@
 #include "networking.h"
 #include "system.h"
 
-#define AP_BEACON_INTERVAL 1000 // in milliseconds
+#define AP_BEACON_INTERVAL 5000 // in milliseconds
 #define AP_SSID_HIDDEN 0
 
 
@@ -205,8 +205,8 @@ void wifi_enable(bool en)
             httpd_enable(true);
         
         /* Start autoconnect task */
-        if ( xTaskCreate( task_autoConnect, "wifi-autocon", STACK_AUTOCON, 
-                NULL, tskIDLE_PRIORITY, &task_autocon ) == pdPASS)
+        if ( xTaskCreatePinnedToCore( task_autoConnect, "wifi-autocon", STACK_AUTOCON, 
+                NULL, tskIDLE_PRIORITY, &task_autocon, CORE_AUTOCON ) == pdPASS)
             ESP_LOGD(TAG, "WIFI autoconnect task created");
     }
     if (!en && enabled) {

@@ -16,7 +16,7 @@
 #include "system.h"
 
 
-#define NSCREENS 6
+#define NSCREENS 7
 #define LINE1 15
 #define LINE2 26
 #define LINE3 37
@@ -32,6 +32,8 @@ static void status_screen2(void);
 static void status_screen3(void);
 static void status_screen4(void);
 static void status_screen5(void);
+static void status_screen6(void);
+
 
 
 void status_init() {
@@ -57,7 +59,9 @@ void status_show() {
 	    case 4:  status_screen4(); 
                  break;    	
         case 5:  status_screen5(); 
-                 break;           
+                 break;  
+        case 6:  status_screen6(); 
+                 break;            
     }
     mutex_unlock(gui_mutex);
 }
@@ -193,5 +197,22 @@ static void status_screen5() {
     gui_writeText(0, LINE1, buf);
     gui_writeText(0, LINE2, b1);
     gui_writeText(0, LINE3, b2);   
+    gui_flush();
+}
+
+
+/****************************************************************
+ * 6. Firmware status
+ ****************************************************************/
+
+static void status_screen6() {
+    char b1[16], b2[16];
+    b2[0] = '\0';
+    gui_clear();
+    status_heading("F-W-");
+ 
+    gui_writeText(0, LINE1, FW_NAME);
+    gui_writeText(0, LINE2, VERSION_STRING);
+    gui_writeText(0, LINE3, FW_DATE);   
     gui_flush();
 }

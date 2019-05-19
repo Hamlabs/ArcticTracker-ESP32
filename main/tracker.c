@@ -282,8 +282,8 @@ void tracker_init(FBQ *q)
 void tracker_on() 
 {
     if (trackert == NULL)
-        xTaskCreate(&tracker, "APRS Tracker", 
-            STACK_TRACKER, NULL, NORMALPRIO, &trackert);
+        xTaskCreatePinnedToCore(&tracker, "APRS Tracker", 
+            STACK_TRACKER, NULL, NORMALPRIO, &trackert, CORE_TRACKER);
 }
 
 

@@ -129,8 +129,8 @@ static void button_init() {
     );
     
     buttCond = cond_create();
-    xTaskCreate(&ui_service_thread, "UI Service thd", 
-        STACK_UI_SRV, NULL, NORMALPRIO, NULL);
+    xTaskCreatePinnedToCore(&ui_service_thread, "UI Service thd", 
+        STACK_UI_SRV, NULL, NORMALPRIO, NULL, CORE_UI_SRV);
     
     /* Button pin. Pin interrupt */
     gpio_set_intr_type(BUTTON_PIN, GPIO_INTR_ANYEDGE);
@@ -157,7 +157,6 @@ static void button_init() {
    (void)arg;
    blipUp();
    sleepMs(300);
-   beeps("--.- .-. ...-");
    /* Blink LED */
    BLINK_NORMAL;
    while (1) {
@@ -225,8 +224,8 @@ static void button_init() {
     gpio_set_level(LED_STATUS_PIN, 0);
     gpio_set_level(LED_TX_PIN, 0);
     
-    xTaskCreate(&ui_thread, "LED blinker", 
-        STACK_LEDBLINKER, NULL, NORMALPRIO, NULL);
+    xTaskCreatePinnedToCore(&ui_thread, "LED blinker", 
+        STACK_LEDBLINKER, NULL, NORMALPRIO, NULL, CORE_LEDBLINKER);
     
     menu_init();
  }

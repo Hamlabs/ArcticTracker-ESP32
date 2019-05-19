@@ -31,7 +31,7 @@ static void mhandle_send(void*);
 static void mhandle_igate(void*); 
 static void mhandle_digi(void*); 
 static void mhandle_wifi(void*); 
-
+static void mhandle_fwupgrade(void*); 
 
 
 static MenuCommand items[] = 
@@ -40,6 +40,7 @@ static MenuCommand items[] =
     { "WIFI +|-",       mhandle_wifi,  NULL },
     { "Igate +|-",      mhandle_igate, NULL },
     { "Digipeater +|-", mhandle_digi,  NULL },
+    { "Firmware upgr.", mhandle_fwupgrade, NULL },
     { "Blow up all",    NULL,          NULL },
 };
 static int nitems = 5; 
@@ -59,15 +60,12 @@ static uint8_t selection = 0;
 static bool menu_active;
 
  
+
+
 static void menu_show(int st, int sel) 
 {     
    gui_clear();
-   gui_hLine(1,0,82);
-   gui_hLine(1,44,83);
-   gui_hLine(3,45,82);
-   gui_vLine(0,0,45);
-   gui_vLine(82,0,45);
-   gui_vLine(83,3,41);
+   gui_frame(); 
 
    gui_box(0, sel*11, 83, 12, true);
    int i;
@@ -134,7 +132,7 @@ void menu_end()
      while (true) {
          sleepMs(5000);
          
-         if (!menu_is_active())
+         if (!menu_is_active() && !gui_popupActive())
              status_show();
          
  //        igate_on(GET_BYTE_PARAM("IGATE.on"));
@@ -142,10 +140,11 @@ void menu_end()
      }
  }
  
+ 
 void menu_init()
 {
-    xTaskCreate(&gui_thread, "GUI/Menu Thd", 
-        STACK_GUI, NULL, NORMALPRIO, NULL);
+    xTaskCreatePinnedToCore(&gui_thread, "GUI/Menu Thd", 
+        STACK_GUI, NULL, NORMALPRIO, NULL, CORE_GUI);
 }
 
 
@@ -173,4 +172,6 @@ static void mhandle_wifi(void* x) {
     wifi_enable( !isOn ); 
 }
 
-
+static void mhandle_fwupgrade(void* x) {
+    firmware_upgrade(); 
+}

@@ -10,7 +10,9 @@
 #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 
-#define VERSION_STRING "V2.0 alpha"
+#define VERSION_STRING "v2.0 alpha"
+#define FW_NAME "Arctic esp32"
+#define FW_DATE "2019-05-19"
 
 #define BIT_0	( 1 << 0 )
 
@@ -111,15 +113,27 @@
 #define STACK_HDLC_RXDECODER 3000
 #define STACK_NMEALISTENER   2900
 #define STACK_LEDBLINKER     1100
-#define STACK_UI_SRV         2800
+#define STACK_UI_SRV         3600
 #define STACK_TRACKER        3100
 #define STACK_MONITOR        3100
 #define STACK_GUI            2500
 
+#define CORE_AUTOCON        0
+#define CORE_NMEALISTENER   1
+#define CORE_TRACKER        1
+#define CORE_LEDBLINKER     0
+#define CORE_UI_SRV         0
+#define CORE_GUI            1
+#define CORE_HDLC_RXDECODER 1
+#define CORE_HDLC_TXENCODER 1
+#define CORE_HDLC_TEST      1
+
+// FIXME: If ledblinker is run on CPU 1, system will crash! 
+// FIXME: Seems to be an issue with beep if it runs on CPU 1 ???
 
 #define BBUF_SIZE 3000
 
-#define FBUF_SLOTSIZE 32
+#define FBUF_SLOTSIZE 24
 #define FBUF_SLOTS 512
 
 /* Regular expressions defining various input formats */

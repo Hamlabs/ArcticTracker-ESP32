@@ -19,6 +19,7 @@ bool    changed [DISPLAY_HEIGHT/8];
 
 
 bool _inverse = false;
+bool _popup = false; 
 
 #define FONT_X_SIZE             5
 #define FONT_Y_SIZE             8
@@ -347,6 +348,36 @@ void gui_label(int x, int y, char* lbl)
 }
 
 
+/*************************************************
+ * Frame/popup
+ *************************************************/
+
+void gui_frame() 
+{
+   gui_hLine(1,0,82);
+   gui_hLine(1,44,83);
+   gui_hLine(3,45,82);
+   gui_vLine(0,0,45);
+   gui_vLine(82,0,45);
+   gui_vLine(83,3,41);
+}
+
+
+void gui_fwupgrade()
+{
+    _popup = true; 
+    gui_clear(); 
+    gui_frame(); 
+    gui_writeText(7,7, "Firmware");
+    gui_writeText(7,16, "Upgrade...");
+    gui_flush();
+}
+
+bool gui_popupActive()
+    {return _popup; }
+    
+    
+    
 
 /*************************************************
  * Welcome message

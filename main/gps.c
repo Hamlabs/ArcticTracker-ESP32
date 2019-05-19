@@ -80,8 +80,8 @@ void gps_init(uart_port_t uart)
 
     enc_idle = xSemaphoreCreateBinary();
     monitor_pos = monitor_raw = false; 
-    xTaskCreate(&nmeaListener, "NMEA Listener", 
-        STACK_NMEALISTENER, NULL, NORMALPRIO, NULL);
+    xTaskCreatePinnedToCore(&nmeaListener, "NMEA Listener", 
+        STACK_NMEALISTENER, NULL, NORMALPRIO, NULL, CORE_NMEALISTENER);
     
 }
 

@@ -24,6 +24,9 @@
  void gui_menu(const char* items[], int sel);
  void gui_flag(int x, int y, char *sign, bool on);
  void gui_label(int x, int y, char* lbl);
+ void gui_frame(); 
+ void gui_fwupgrade();
+ bool gui_popupActive();
  
 void menu_init(void);
 bool menu_is_active(void);

@@ -193,6 +193,6 @@ void hdlc_init_decoder (QueueHandle_t s)
   inq = s;
   mqueue[0] = mqueue[1] = mqueue[2] = NULL;
   fbuf_new(&fbuf);  
-  xTaskCreate(&hdlc_rxdecoder, "HDLC RX decoder", 
-        STACK_HDLC_RXDECODER, NULL, NORMALPRIO, NULL);
+  xTaskCreatePinnedToCore(&hdlc_rxdecoder, "HDLC RX decoder", 
+        STACK_HDLC_RXDECODER, NULL, NORMALPRIO, NULL, CORE_HDLC_RXDECODER);
 }
