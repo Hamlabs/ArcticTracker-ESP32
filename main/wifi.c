@@ -24,6 +24,9 @@
 #define AP_BEACON_INTERVAL 5000 // in milliseconds
 #define AP_SSID_HIDDEN 0
 
+#define DEFAULT_SSID "NO-SSID"
+#define DEFAULT_PWD "NO-PASSWORD"
+
 
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT           = BIT0;
@@ -44,6 +47,7 @@ char default_ssid[32];
 
 static esp_err_t event_handler(void *ctx, system_event_t *event);
 static void task_autoConnect( void * pvParms ); 
+void wifi_enable_softAp(bool en);
 
 #define TAG "wifix"
 
@@ -158,6 +162,23 @@ void wifi_init(void)
     
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on"));
+    esp_wifi_set_ps(WIFI_PS_MODEM);
+    scanDone = cond_create();
+
+    if (GET_BYTE_PARAM("WIFI.on"))
+        wifi_enable(true);
+    initialized = true;
+}
+
+
+
+/********************************************************************************
+ * Turn on or off softAP mode
+ ********************************************************************************/
+
+void wifi_enable_softAp(bool en)
+{    
     wifi_config_t apcnf = {
         .ap = {
             .max_connection = AP_MAX_CLIENTS,
@@ -166,6 +187,20 @@ void wifi_init(void)
             .authmode = WIFI_AUTH_WPA_WPA2_PSK
         },
     };
+    wifi_config_t stacnf = {        
+        .sta = {
+            .ssid = DEFAULT_SSID,
+            .password = DEFAULT_PWD,
+        },
+    };
+    
+    
+    if (!en) {
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &stacnf));
+        return;
+    }
+
     
     get_str_param("WIFIAP.SSID", (char*) apcnf.ap.ssid, 32, default_ssid);
     apcnf.ap.ssid_len = strlen((char*) apcnf.ap.ssid);
@@ -182,13 +217,8 @@ void wifi_init(void)
         ESP_LOGW(TAG, "Invalid SSID for softAP");
     else 
         ESP_ERROR_CHECK(err);
-
-    scanDone = cond_create();
-
-    if (GET_BYTE_PARAM("WIFI.on"))
-        wifi_enable(true);
-    initialized = true;
 }
+
 
    
 /********************************************************************************
@@ -396,11 +426,16 @@ bool wifi_join(const char* ssid, const char* pass, int timeout_ms)
     
     status = "Connecting...";
     ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
-    ESP_ERROR_CHECK( esp_wifi_connect() );
-
-    int bits = xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
+    connected = false;
+    esp_err_t res = esp_wifi_connect();
+    if (res == ESP_ERR_WIFI_SSID)
+        ESP_LOGW(TAG, "Invalid SSID '%s'", ssid);
+    else {
+        ESP_ERROR_CHECK(res);
+        int bits = xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
             1, 1, timeout_ms / portTICK_PERIOD_MS);
-    connected = ((bits & CONNECTED_BIT) != 0);
+        connected = ((bits & CONNECTED_BIT) != 0);
+    }
     if (!connected) 
         status = "Connection failed";
     return connected;
@@ -437,9 +472,10 @@ static void task_autoConnect( void * pvParms )
     while(true) {
         /* Wait until disconnected */
         xEventGroupWaitBits(wifi_event_group, DISCONNECTED_BIT, 1, 1, portMAX_DELAY  );
-        sleep(6); 
+        sleepMs(6000); 
         wifi_startScan(); 
-        wifi_waitScan(); 
+        wifi_waitScan();
+        
         for (i=0; i<AP_MAX_ALTERNATIVES; i++) {
             if (wifi_getApAlt(i, &alt)) 
                 if (wifi_inScanList(alt.ssid)) 
@@ -447,7 +483,8 @@ static void task_autoConnect( void * pvParms )
                         break;
         }
         if (!connected)
-            sleep(AUTOCONNECT_PERIOD);
+            sleepMs(AUTOCONNECT_PERIOD*1000);
+            // Turn off wifi to save power? 
     }
 }
 
@@ -464,7 +501,8 @@ static void task_autoConnect( void * pvParms )
 bool wifi_inScanList(char* ssid) 
 {
     int i;
-    
+    if (strlen(ssid) < 3)
+        return false;
     for (i=0; i<wifi_getApCount(); i++) {
         wifi_ap_record_t ap = wifi_getApList()[i]; 
         if (strcmp(ssid, (char*) ap.ssid)==0)

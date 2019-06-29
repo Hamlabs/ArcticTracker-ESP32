@@ -20,7 +20,7 @@ static uint8_t _nvs_init = 0;
 uint32_t chipId() {
     uint8_t chipid[6];
     esp_efuse_mac_get_default(chipid);
-    uint32_t cid = chipid[2] << 16 | chipid[1] << 8 | chipid[0]; 
+    uint32_t cid = chipid[3] << 16 | chipid[4] << 8 | chipid[5]; 
     return cid; 
 }
 

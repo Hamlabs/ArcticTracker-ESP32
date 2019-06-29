@@ -90,10 +90,12 @@ static int do_listen(int argc, char* argv[])
   
   printf("**** MONITOR RADIO CHANNEL ****\n");
   radio_require();
+  afsk_rx_enable();
   mon_activate(true);
   getchar();
   sleepMs(1000);
   mon_activate(false);
+  afsk_rx_disable(); 
   radio_release();
   sleepMs(100);
   return 0;

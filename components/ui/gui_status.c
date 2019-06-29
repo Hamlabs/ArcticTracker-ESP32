@@ -84,7 +84,7 @@ void status_next() {
 
 static void status_heading(char* label) {
     gui_label(0,0, label);
-    gui_flag(32,0, "i", GET_BYTE_PARAM("WIFI.on"));
+    gui_flag(32,0, "i", wifi_isEnabled() );
     gui_flag(41,0, "g", GET_BYTE_PARAM("IGATE.on")); 
     gui_flag(50,0, "d", GET_BYTE_PARAM("DIGIPEATER.on"));
 //    Next position is 59,0 

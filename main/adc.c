@@ -8,7 +8,7 @@
 #include "defines.h"
 #include "config.h"
 
-#define RADIO_ADC_SAMPLE_FREQ    9600 
+
 
 #define ATTEN         ADC_ATTEN_DB_11
 #define WIDTH         ADC_WIDTH_BIT_12
@@ -136,7 +136,7 @@ uint16_t adc_batt_status(char* line1, char* line2)
 
 
 /*************************************************************************
- * Start sampling of radio channel - to be called from timer ISR 
+ * Sampling of radio channel - to be called from timer ISR 
  *************************************************************************/
 
 
@@ -145,9 +145,16 @@ void adc_calibrate() {
     dcoffset = adc_read(RADIO_INPUT)-16;
 }
 
+int adc1_get_rawISR(adc1_channel_t channel);
 
 int16_t adc_sample() 
-{
-    uint16_t sample = (uint16_t) adc1_get_raw((adc1_channel_t) RADIO_INPUT);
-    return ((int16_t) sample) - dcoffset; 
+{  
+    /* Workaround: Disable interrupts during adc read. The implementation uses a 
+     * spinlock and interrupts may happen there interfering with the read. 
+     */
+    taskDISABLE_INTERRUPTS();
+    uint16_t sample = (uint16_t) adc1_get_rawISR((adc1_channel_t) RADIO_INPUT);
+    taskENABLE_INTERRUPTS();
+    int16_t res = ((int16_t) sample) - dcoffset;
+    return res;
 }

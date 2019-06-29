@@ -12,7 +12,7 @@
 
 #define VERSION_STRING "v2.0 alpha"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2019-05-19"
+#define FW_DATE "2019-06-29"
 
 #define BIT_0	( 1 << 0 )
 
@@ -107,7 +107,7 @@
 #define AUTOCONNECT_PERIOD 240
 
 /* Stack sizes for tasks */
-#define STACK_AUTOCON        2200
+#define STACK_AUTOCON        2700
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 1800
 #define STACK_HDLC_RXDECODER 3000
@@ -124,7 +124,7 @@
 #define CORE_LEDBLINKER     0
 #define CORE_UI_SRV         0
 #define CORE_GUI            1
-#define CORE_HDLC_RXDECODER 1
+#define CORE_HDLC_RXDECODER 0
 #define CORE_HDLC_TXENCODER 1
 #define CORE_HDLC_TEST      1
 

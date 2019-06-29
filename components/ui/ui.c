@@ -124,7 +124,7 @@ static void button_init() {
         ( void * ) 0, bphandler
     );  
     bhtimer = xTimerCreate ( 
-        "Button hold", pdMS_TO_TICKS(600),  pdFALSE,
+        "Button hold", pdMS_TO_TICKS(800),  pdFALSE,
         ( void * ) 0, holdhandler
     );
     

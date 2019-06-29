@@ -1,5 +1,4 @@
 /*
- * Adapted from Polaric Tracker code. 
  * By LA7ECA, ohanssen@acm.org
  */
 
@@ -34,4 +33,6 @@
  void afsk_rx_start(void); 
  void afsk_rx_stop(void);
  
+ void afsk_rx_enable(void); 
+ void afsk_rx_disable(void);
 #endif
