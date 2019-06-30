@@ -26,6 +26,7 @@
 #include "tracker.h"
 #include "radio.h"
 #include "ax25.h"
+#include "digipeater.h"
 
 static const char* TAG = "main";
 
@@ -198,6 +199,7 @@ static void startup(void* arg)
     FBQ* oq = hdlc_init_encoder(afsk_tx_init());
     tracker_init(oq);
     radio_init(RADIO_UART);
+    digipeater_init(oq);
     
     mon_init();
     sleepMs(100);

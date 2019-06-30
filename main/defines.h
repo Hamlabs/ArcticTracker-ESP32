@@ -12,7 +12,7 @@
 
 #define VERSION_STRING "v2.0 alpha"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2019-06-29"
+#define FW_DATE "2019-06-30"
 
 #define BIT_0	( 1 << 0 )
 
@@ -117,6 +117,8 @@
 #define STACK_TRACKER        3100
 #define STACK_MONITOR        3100
 #define STACK_GUI            2500
+#define STACK_HLIST           800
+#define STACK_DIGI           2000
 
 #define CORE_AUTOCON        0
 #define CORE_NMEALISTENER   1
@@ -127,6 +129,8 @@
 #define CORE_HDLC_RXDECODER 0
 #define CORE_HDLC_TXENCODER 1
 #define CORE_HDLC_TEST      1
+#define CORE_HLIST          0
+#define CORE_DIGI           0
 
 // FIXME: If ledblinker is run on CPU 1, system will crash! 
 // FIXME: Seems to be an issue with beep if it runs on CPU 1 ???

@@ -20,6 +20,7 @@
 #include "config.h"
 #include "esp_log.h"
 #include "system.h"
+#include "digipeater.h"
 
 #define LISTEN_PORT     80u
 #define MAX_CONNECTIONS 16u
@@ -141,12 +142,14 @@ static void updateBigStrField(HttpdConnData *cdata, const char* key, const char*
 }
 
 
-static void updateBoolField(HttpdConnData *cdata, const char* key, const char* pparm)
+static void updateBoolField(HttpdConnData *cdata, const char* key, const char* pparm, BoolHandler bh)
 {
     char val[32], msg[64], buf[128];
     strcpy(val, "false");
     POST_ARG(cdata, pparm, val, 32);
     int n = sprintf(buf, "Update %s: %s<br>", key, param_parseBool(key, val, msg));
+    if (bh != NULL)
+        (*bh)(GET_BYTE_PARAM(key));
     httpdSend(cdata, buf, n);
 }
 
@@ -200,6 +203,9 @@ static void updateApAlt(HttpdConnData *cdata, const int index)
 }
 
 
+static void hdl_digipeater(bool on) {
+    digipeater_activate(on); 
+}
 
 
 /**************************************************** 
@@ -247,9 +253,9 @@ CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
     httpdSend(cdata, "<html>", -1); 
     head(cdata); 
     httpdSend(cdata, "<body><h2>Update APRS settings...</h2><fieldset>", -1);
-    updateBoolField(cdata, "TIMESTAMP.on", "timestamp_on");
-    updateBoolField(cdata ,"COMPRESS.on",  "compress_on");
-    updateBoolField(cdata, "ALTITUDE.on",  "altitude_on");
+    updateBoolField(cdata, "TIMESTAMP.on", "timestamp_on", NULL);
+    updateBoolField(cdata ,"COMPRESS.on",  "compress_on", NULL);
+    updateBoolField(cdata, "ALTITUDE.on",  "altitude_on", NULL);
     updateI32Field (cdata, "TXFREQ",       "tx_freq",   1440000, 1460000);
     updateI32Field (cdata, "RXFREQ",       "rx_freq",   1440000, 1460000);    
     updateU16Field (cdata, "TURNLIMIT",    "turnlimit", 0, 360);
@@ -283,10 +289,10 @@ CGIFUNC cgi_updateDigi(HttpdConnData *cdata) {
     httpdSend(cdata, "<html>", -1); 
     head(cdata); 
     httpdSend(cdata, "<body><h2>Update digi/igate settings...</h2><fieldset>", -1);
-    updateBoolField(cdata,"DIGIPEATER.on", "digi_on");
-    updateBoolField(cdata,"IGATE.on",      "igate_on");
-    updateBoolField(cdata,"DIGI.WIDE1.on", "wide1_on");
-    updateBoolField(cdata,"DIGI.SAR.on",   "sar_on");
+    updateBoolField(cdata,"DIGIPEATER.on", "digi_on",  hdl_digipeater);
+    updateBoolField(cdata,"IGATE.on",      "igate_on", NULL);
+    updateBoolField(cdata,"DIGI.WIDE1.on", "wide1_on", NULL);
+    updateBoolField(cdata,"DIGI.SAR.on",   "sar_on",   NULL);
     updateStrField(cdata, "IGATE.HOST",    "ig_host", REGEX_HOSTNAME, false);
     updateStrField(cdata, "IGATE.USER",    "ig_user", REGEX_AXADDR, false);
     updateStrField(cdata, "IGATE.PASS",    "ig_pass", "[0-9]{0,5}", false);

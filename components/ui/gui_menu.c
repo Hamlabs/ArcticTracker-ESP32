@@ -9,7 +9,7 @@
 #include "defines.h"
 #include "config.h"
 // #include "igate.h"
-// #include "digipeater.h"
+#include "digipeater.h"
 #include "ui.h"
 #include "gui.h"
 #include "fbuf.h"
@@ -163,8 +163,9 @@ static void mhandle_igate(void* x) {
 }
 
 static void mhandle_digi(void* x) {
-//    bool isOn = GET_BYTE_PARAM(DIGIPEATER_ON); 
-//    digipeater_on( !isOn ); 
+    bool isOn = get_byte_param("DIGIPEATER.on", 0); 
+    set_byte_param("DIGIPEATER.on", !isOn); 
+    digipeater_activate( !isOn ); 
 }
 
 static void mhandle_wifi(void* x) {

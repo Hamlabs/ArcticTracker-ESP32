@@ -14,7 +14,7 @@
 /* Common stuff for afsk-RX and afsk-TX. */
 static bool    rxMode = false; 
 static bool    txOn = false; 
-static bool    rxEnable = false;
+static int     rxEnable = 0;
 static mutex_t afskmx; 
 
 void afsk_rxSampler(void *arg);
@@ -52,10 +52,11 @@ void afsk_init()
  **********************************************************/
 
 void afsk_rx_enable() {
-    rxEnable = true; 
+    rxEnable++; 
 }
 void afsk_rx_disable() {
-    rxEnable = false; 
+    if (rxEnable > 0)
+       rxEnable--; 
 }
 
 

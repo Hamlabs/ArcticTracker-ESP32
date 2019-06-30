@@ -20,6 +20,7 @@
 #include "hdlc.h"
 #include "radio.h"
 #include "tracker.h"
+#include "digipeater.h"
 
 
 void   register_aprs(void);
@@ -133,6 +134,10 @@ void hdl_tracker(bool on) {
         tracker_off();
 }
 
+void hdl_digipeater(bool on) {
+    digipeater_activate(on); 
+}
+
 
 
 // Radio and APRS settings
@@ -166,7 +171,7 @@ CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     hdl_tracker);
 CMD_BOOL_SETTING (_param_timestamp,  "TIMESTAMP.on",   NULL);
 CMD_BOOL_SETTING (_param_compress,   "COMPRESS.on",    NULL);
 CMD_BOOL_SETTING (_param_altitude,   "ALTITUDE.on",    NULL);
-CMD_BOOL_SETTING (_param_digipeater, "DIGIPEATER.on",  NULL); 
+CMD_BOOL_SETTING (_param_digipeater, "DIGIPEATER.on",  hdl_digipeater); 
 CMD_BOOL_SETTING (_param_igate,      "IGATE.on",       NULL);
 CMD_BOOL_SETTING (_param_digi_wide1, "DIGI.WIDE1.on",  NULL);
 CMD_BOOL_SETTING (_param_digi_sar,   "DIGI.SAR.on",    NULL);
