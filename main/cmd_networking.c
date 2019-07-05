@@ -108,6 +108,8 @@ static void showScan(void)
 
 int do_apSta(int argc, char** argv)
 {
+    if (!wifi_isEnabled())
+        printf("Wifi is not enabled\n");
     wifi_sta_list_t  stations;
     ESP_ERROR_CHECK(esp_wifi_ap_get_sta_list(&stations));
     tcpip_adapter_sta_list_t infoList;

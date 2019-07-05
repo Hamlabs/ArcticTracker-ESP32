@@ -110,15 +110,15 @@
 #define STACK_AUTOCON        2700
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 1800
-#define STACK_HDLC_RXDECODER 3000
+#define STACK_HDLC_RXDECODER 3200
 #define STACK_NMEALISTENER   2900
 #define STACK_LEDBLINKER     1100
 #define STACK_UI_SRV         3600
 #define STACK_TRACKER        3100
 #define STACK_MONITOR        3100
 #define STACK_GUI            2500
-#define STACK_HLIST           800
-#define STACK_DIGI           2000
+#define STACK_HLIST           900
+#define STACK_DIGI           3300
 
 #define CORE_AUTOCON        0
 #define CORE_NMEALISTENER   1

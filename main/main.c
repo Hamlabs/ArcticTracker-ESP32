@@ -235,7 +235,7 @@ void app_main()
     
     gps_init(GPS_UART);
     ui_init();
-    xTaskCreate(&startup, "Startup thread", 
-        3200, NULL, NORMALPRIO+1, NULL);
+    xTaskCreatePinnedToCore(&startup, "Startup thread", 
+        3200, NULL, NORMALPRIO+1, NULL, 0);
     run_console();   
 }

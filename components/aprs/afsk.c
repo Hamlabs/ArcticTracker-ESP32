@@ -25,6 +25,8 @@ void afsk_txBitClock(void *arg);
  * ISR for clock
  *********************************************************/
 
+
+
 static void afsk_sampler(void *arg) 
 {
     if (rxMode)
@@ -66,7 +68,6 @@ void afsk_rx_disable() {
  **********************************************************/
  
 void afsk_rx_start() {
-    
     if (!rxEnable) 
         return;
     mutex_lock(afskmx);
@@ -78,6 +79,8 @@ void afsk_rx_start() {
 
    
 void afsk_rx_stop() {
+    if (!rxEnable)
+        return;
     mutex_lock(afskmx);
     clock_stop(AFSK_TIMERGRP, AFSK_TIMERIDX);  
     rxMode=false; 

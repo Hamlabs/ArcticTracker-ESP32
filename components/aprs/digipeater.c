@@ -45,26 +45,28 @@ static void check_frame(FBUF *f);
 
 static void digipeater(void* arg)
 {
-    sleepMs(4000);
-    beeps("-.. "); blipUp();
+    sleepMs(5000);
+    beeps("-..  "); blipUp();
     while (digi_on)
     {
         /* Wait for frame. 
         */
         FBUF frame = fbq_get(&rxqueue);
         if (fbuf_empty(&frame)) {
+            ESP_LOGW(TAG, "Got empty frame"); 
             fbuf_release(&frame); 
             continue;    
         }
     
-        /* Do something about it */
+        /* Do something about it */       
+        ESP_LOGI(TAG, "Got frame"); 
         check_frame(&frame);
     
         /* And dispose it */
         fbuf_release(&frame);
     }
     sleepMs(500);
-    beeps("-.. "); blipDown();
+    beeps("-..  "); blipDown();
     sleepMs(100);
     vTaskDelete(NULL);
 }
@@ -105,14 +107,14 @@ void digipeater_activate(bool m)
             STACK_DIGI, NULL, NORMALPRIO, &digithr, CORE_DIGI);
         hlist_start();
       
-        /* Turn on radio */
+        /* Turn on radio and enable RX */
         radio_require();
         afsk_rx_enable();
     } 
     if (tstop) {
         ESP_LOGI(TAG, "stopping..");
         
-        /* Turn off radio */
+        /* Turn off radio and disable RX */
         afsk_rx_disable();
         radio_release();
       
@@ -158,14 +160,14 @@ static void check_frame(FBUF *f)
        return;
 
    /* Check if the WIDE1-1 alias is next in the list */
-   if (get_byte_param("DIGI_WIDE1.on", 0) 
+   if (get_byte_param("DIGI.WIDE1.on", 0) 
            && strncasecmp("WIDE1", digis[i].callsign, 5) == 0 && digis[i].ssid == 1)
        widedigi = true; 
   
    /* Look for SAR alias in the rest of the path 
     * NOTE: Don't use SAR-preemption if packet has been digipeated by others first 
     */    
-   if (get_byte_param("DIGI_SAR.on", 0) && i<=0)
+   if (get_byte_param("DIGI.SAR.on", 0) && i<=0)
      for (j=i; j<ndigis; j++)
        if (strncasecmp("SAR", digis[j].callsign, 3) == 0) 
           { sar_pos = j; break; } 
@@ -205,8 +207,9 @@ static void check_frame(FBUF *f)
    fbuf_connect(&newHdr, f, AX25_HDR_LEN(ndigis) );
 
    /* Send packet */
-   beeps("- ");
-   fbq_put(outframes, newHdr);  
+    ESP_LOGI(TAG, "Resend (digipeat) frame"); 
+    beeps(". ");
+    fbq_put(outframes, newHdr);  
 }
 
 
