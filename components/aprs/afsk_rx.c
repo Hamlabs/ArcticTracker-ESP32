@@ -87,9 +87,7 @@ void afsk_rxSampler(void *arg)
         xthal_save_cp0(cp0_regs);
     else 
         xthal_set_cpenable(1);
-    
-  
-    clock_clear_intr(AFSK_TIMERGRP, AFSK_TIMERIDX);
+
     afsk_process_sample((int8_t) (adc_sample()/14));
     
     /* Restore FPU registers and turn it back off */
@@ -107,8 +105,6 @@ void afsk_rxSampler(void *arg)
 
 QueueHandle_t afsk_rx_init() 
 { 
-//  clock_init(AFSK_RX_TIMERGRP, AFSK_RX_TIMERIDX, CLOCK_DIVIDER, afsk_rxSampler, false);
-  
   /* Allocate memory for struct */
   memset(&afsk, 0, sizeof(afsk));
   

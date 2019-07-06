@@ -12,7 +12,8 @@
 #include "radio.h"
 #include "defines.h"
 #include "system.h"
-
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 static QueueHandle_t oq;
 static bool transmit = false; 
@@ -21,16 +22,18 @@ static bool transmit = false;
 
 /*********************************************************************
  * Turn on/off transmitter and tone generator
+ * To be called from ISR
  *********************************************************************/
 
-static void afsk_PTT(bool on) 
+void afsk_PTT(bool on) 
 {
-   transmit = on; 
-   radio_PTT_I(on);
-   if (on) 
-      tone_start();
-   else
-      tone_stop();
+    transmit = on; 
+    radio_PTT_I(on);
+    
+    if (on) 
+        tone_start();
+    else
+        tone_stop();
 }
 
 
@@ -82,7 +85,6 @@ static void next_byte(void)
 
 void afsk_txBitClock(void *arg) 
 {
-    clock_clear_intr(AFSK_TIMERGRP, AFSK_TIMERIDX);
     if (!transmit) {
         if (xQueueIsQueueEmptyFromISR(oq))   
             return;

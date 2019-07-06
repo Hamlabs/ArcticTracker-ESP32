@@ -28,7 +28,8 @@ void afsk_txBitClock(void *arg);
 
 
 static void afsk_sampler(void *arg) 
-{
+{   
+    clock_clear_intr(AFSK_TIMERGRP, AFSK_TIMERIDX);
     if (rxMode)
         afsk_rxSampler(arg); 
     else
@@ -70,23 +71,20 @@ void afsk_rx_disable() {
 void afsk_rx_start() {
     if (!rxEnable) 
         return;
-    mutex_lock(afskmx);
+    afsk_PTT(false); 
     clock_stop(AFSK_TIMERGRP, AFSK_TIMERIDX);     
     rxMode = true; 
     clock_start(AFSK_TIMERGRP, AFSK_TIMERIDX, FREQ(AFSK_SAMPLERATE));
-    mutex_unlock(afskmx);
 }
 
    
 void afsk_rx_stop() {
     if (!rxEnable)
         return;
-    mutex_lock(afskmx);
     clock_stop(AFSK_TIMERGRP, AFSK_TIMERIDX);  
     rxMode=false; 
     if (txOn)
         clock_start(AFSK_TIMERGRP, AFSK_TIMERIDX, FREQ(AFSK_BITRATE));
-    mutex_unlock(afskmx);
 }
 
 
@@ -112,6 +110,7 @@ void afsk_tx_start() {
  void afsk_tx_stop() {
     mutex_lock(afskmx);
     clock_stop(AFSK_TIMERGRP, AFSK_TIMERIDX); 
+    afsk_PTT(false); 
     txOn = false; 
     if (rxMode)
         clock_start(AFSK_TIMERGRP, AFSK_TIMERIDX, FREQ(AFSK_SAMPLERATE));

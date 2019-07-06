@@ -209,7 +209,9 @@ static void check_frame(FBUF *f)
    /* Send packet */
     ESP_LOGI(TAG, "Resend (digipeat) frame"); 
     beeps(". ");
+    sleepMs(60);
     fbq_put(outframes, newHdr);  
+    sleepMs(200);
 }
 
 

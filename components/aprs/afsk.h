@@ -35,4 +35,6 @@
  
  void afsk_rx_enable(void); 
  void afsk_rx_disable(void);
+ 
+ void afsk_PTT(bool on);
 #endif
