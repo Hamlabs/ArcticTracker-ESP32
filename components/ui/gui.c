@@ -363,6 +363,27 @@ void gui_frame()
 }
 
 
+
+/*************************************************
+ * Sleep mode
+ *************************************************/
+
+void gui_sleepmode()
+{
+    _popup = true; 
+    gui_clear(); 
+    gui_frame(); 
+    gui_writeText(7,7,  "  -- OFF --");
+    gui_writeText(7,16, "(sleep mode)");
+    gui_flush();
+}
+
+
+
+/*************************************************
+ * Firmware upgrade
+ *************************************************/
+
 void gui_fwupgrade()
 {
     _popup = true; 

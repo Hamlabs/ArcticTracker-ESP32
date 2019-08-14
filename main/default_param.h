@@ -1,14 +1,15 @@
  
 
-#define DFL_MYCALL      "NOCALL"
-#define DFL_DEST        "APAT20"
-#define DFL_DIGIPATH    ""
-#define DFL_SYMBOL      "/]"
-#define DFL_OBJ_SYMBOL  "/]"
-#define DFL_OBJ_ID      "MARK-"
-#define DFL_REP_COMMENT "Arctic Tracker"
-#define DFL_IGATE_HOST  "aprs.no"
-#define DFL_IGATE_USER  "NOCALL"
+#define DFL_MYCALL       "NOCALL"
+#define DFL_DEST         "APAT20"
+#define DFL_DIGIPATH     ""
+#define DFL_SYMBOL       "/]"
+#define DFL_OBJ_SYMBOL   "/]"
+#define DFL_OBJ_ID       "MARK-"
+#define DFL_REP_COMMENT  "Arctic Tracker"
+#define DFL_IGATE_HOST   "aprs.no"
+#define DFL_IGATE_USER   "NOCALL"
+#define DFL_IGATE_FILTER ""
          
 #define DFL_ADC_REF       1100
 #define DFL_TXDELAY         10

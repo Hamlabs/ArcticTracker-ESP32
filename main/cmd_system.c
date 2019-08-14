@@ -291,6 +291,13 @@ static int do_vbatt(int argc, char** argv)
 }
 
 
+static int do_shutdown(int argc, char** argv) {
+    systemShutdown(); 
+    return 0;
+}
+
+
+
 
 CMD_U16_SETTING  (_param_adcref, "ADC.REF",  1100, 0, 3300);
 
@@ -302,18 +309,19 @@ CMD_U16_SETTING  (_param_adcref, "ADC.REF",  1100, 0, 3300);
 
 void register_system()
 {
-    ADD_CMD("free",    &do_free,       "Get the total size of heap memory available", NULL);
-    ADD_CMD("sysinfo", &do_sysinfo,    "System info", NULL);    
-    ADD_CMD("restart", &do_restart,    "Restart the program", NULL);
-    ADD_CMD("tasks",   &do_tasks,      "Get information about running tasks", NULL);
-    ADD_CMD("log",     &do_log,        "Set loglevel (tags: wifi, wifix, http, config, shell)", "<tag> | * [<level>|delete]");
-    ADD_CMD("time",    &do_time,       "Get date and time", NULL);
-    ADD_CMD("regex",   &do_regmatch,   "Regex match", NULL);
-    ADD_CMD("nmea",    &do_nmea,       "Monitor GPS NMEA datastream", "[raw]");
-    ADD_CMD("tone",    &do_tone,       "tone generator test", "");
-    ADD_CMD("ptt",     &do_ptt,        "Transmitter on", "");
+    ADD_CMD("free",     &do_free,       "Get the total size of heap memory available", NULL);
+    ADD_CMD("sysinfo",  &do_sysinfo,    "System info", NULL);    
+    ADD_CMD("restart",  &do_restart,    "Restart the program", NULL);
+    ADD_CMD("tasks",    &do_tasks,      "Get information about running tasks", NULL);
+    ADD_CMD("log",      &do_log,        "Set loglevel (tags: wifi, wifix, http, config, shell)", "<tag> | * [<level>|delete]");
+    ADD_CMD("time",     &do_time,       "Get date and time", NULL);
+    ADD_CMD("regex",    &do_regmatch,   "Regex match", NULL);
+    ADD_CMD("nmea",     &do_nmea,       "Monitor GPS NMEA datastream", "[raw]");
+    ADD_CMD("tone",     &do_tone,       "tone generator test", "");
+    ADD_CMD("ptt",      &do_ptt,         "Transmitter on", "");
     ADD_CMD("fw-upgrade", &do_fwupgrade, "Firmware upgrade", "");
-    ADD_CMD("adc",     &do_adcinfo,    "Read ADC", "");
-    ADD_CMD("adcref",  &_param_adcref, "ADC reference value (millivolts)", "[<val>]");
-    ADD_CMD("vbatt",   &do_vbatt,      "Read battery voltage", "");
+    ADD_CMD("adc",      &do_adcinfo,     "Read ADC", "");
+    ADD_CMD("adcref",   &_param_adcref,  "ADC reference value (millivolts)", "[<val>]");
+    ADD_CMD("vbatt",    &do_vbatt,       "Read battery voltage", "");
+    ADD_CMD("shutdown", &do_shutdown,    "Shut down system (put in deep sleep)", "");
 }

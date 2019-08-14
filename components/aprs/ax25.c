@@ -162,7 +162,7 @@ void ax25_aprs_header(FBUF* b, char* fromb, char* tob, char* digib)
     
     str2addr(&from, fromb, false);
     str2addr(&to, tob, false);
-    int ndigis = str2digis(&digis, digib); 
+    int ndigis = str2digis(digis, digib); 
     ax25_encode_header(b, &from, &to, digis, ndigis, FTYPE_UI, PID_NO_L3); 
 }
 

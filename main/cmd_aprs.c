@@ -21,6 +21,7 @@
 #include "radio.h"
 #include "tracker.h"
 #include "digipeater.h"
+#include "igate.h"
 
 
 void   register_aprs(void);
@@ -138,20 +139,22 @@ void hdl_digipeater(bool on) {
     digipeater_activate(on); 
 }
 
-
+void hdl_igate(bool on) {
+    igate_activate(on); 
+}
 
 // Radio and APRS settings
 
-CMD_USTR_SETTING (_param_mycall,     "MYCALL",      9,  DFL_MYCALL,       REGEX_AXADDR);
-CMD_USTR_SETTING (_param_dest,       "DEST",        9,  DFL_DEST,         REGEX_AXADDR);
-CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",    70, DFL_DIGIPATH,     REGEX_DIGIPATH);
-CMD_STR_SETTING  (_param_symbol,     "SYMBOL",      3,  DFL_SYMBOL,       REGEX_APRSSYM);
-CMD_STR_SETTING  (_param_osym,       "OBJ.SYMBOL",  3,  DFL_OBJ_SYMBOL,   REGEX_APRSSYM);
-CMD_STR_SETTING  (_param_oid,        "OBJ.ID",      10, DFL_OBJ_ID,       REGEX_AXADDR);
-CMD_STR_SETTING  (_param_comment,    "REP.COMMENT", 40, DFL_REP_COMMENT,  NULL);
-CMD_STR_SETTING  (_param_igate_host, "IGATE.HOST",  64, DFL_IGATE_HOST,   REGEX_HOSTNAME);
-CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",  9,  DFL_IGATE_USER,   REGEX_AXADDR);
-CMD_STR_SETTING  (_param_igate_pass, "IGATE.PASS",  6,  NULL,   "[0-9]{2,5}");
+CMD_USTR_SETTING (_param_mycall,     "MYCALL",       9,  DFL_MYCALL,       REGEX_AXADDR);
+CMD_USTR_SETTING (_param_dest,       "DEST",         9,  DFL_DEST,         REGEX_AXADDR);
+CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",     70, DFL_DIGIPATH,     REGEX_DIGIPATH);
+CMD_STR_SETTING  (_param_symbol,     "SYMBOL",       3,  DFL_SYMBOL,       REGEX_APRSSYM);
+CMD_STR_SETTING  (_param_osym,       "OBJ.SYMBOL",   3,  DFL_OBJ_SYMBOL,   REGEX_APRSSYM);
+CMD_STR_SETTING  (_param_oid,        "OBJ.ID",       10, DFL_OBJ_ID,       REGEX_AXADDR);
+CMD_STR_SETTING  (_param_comment,    "REP.COMMENT",  40, DFL_REP_COMMENT,  NULL);
+CMD_STR_SETTING  (_param_igate_host, "IGATE.HOST",   64, DFL_IGATE_HOST,   REGEX_HOSTNAME);
+CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",   9,  DFL_IGATE_USER,   REGEX_AXADDR);
+CMD_STR_SETTING  (_param_igate_filt, "IGATE.FILTER", 32, DFL_IGATE_FILTER, ".*");
 
 CMD_BYTE_SETTING (_param_txdelay,    "TXDELAY",     DFL_TXDELAY,     0, 250, NULL);
 CMD_BYTE_SETTING (_param_txtail,     "TXTAIL",      DFL_TXTAIL,      0, 250, NULL);
@@ -163,6 +166,7 @@ CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",  DFL_STATUSTIME,  1, 250, NUL
 CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH", DFL_TRX_SQUELCH, 1, 8,   hdl_squelch);
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",   DFL_TURNLIMIT,   0, 360);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",  DFL_IGATE_PORT,  1, 65535);
+CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",  0,               0, 65535);
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",      DFL_TXFREQ,      1440000, 1460000);
 CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",      DFL_RXFREQ,      1440000, 1460000);
 
@@ -172,7 +176,7 @@ CMD_BOOL_SETTING (_param_timestamp,  "TIMESTAMP.on",   NULL);
 CMD_BOOL_SETTING (_param_compress,   "COMPRESS.on",    NULL);
 CMD_BOOL_SETTING (_param_altitude,   "ALTITUDE.on",    NULL);
 CMD_BOOL_SETTING (_param_digipeater, "DIGIPEATER.on",  hdl_digipeater); 
-CMD_BOOL_SETTING (_param_igate,      "IGATE.on",       NULL);
+CMD_BOOL_SETTING (_param_igate,      "IGATE.on",       hdl_igate);
 CMD_BOOL_SETTING (_param_digi_wide1, "DIGI.WIDE1.on",  NULL);
 CMD_BOOL_SETTING (_param_digi_sar,   "DIGI.SAR.on",    NULL);
 CMD_BOOL_SETTING (_param_rbeep_on,   "REPORT.BEEP.on", NULL);

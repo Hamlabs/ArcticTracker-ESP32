@@ -11,9 +11,9 @@
 #if !defined __DEF_SYSTEM_H__
 #define __DEF_SYSTEM_H__
 
-/* Firmware upgrade */
+/* Firmware upgrade and shutdown */
 esp_err_t firmware_upgrade();
-
+void systemShutdown(void);
 
 /* Time */
 extern void time_init(); 
@@ -35,9 +35,9 @@ char* loglevel2str(esp_log_level_t lvl);
 esp_log_level_t str2loglevel(char* str);
 
 
-/* Serial communication */
+/* Read text line from serial or other.. */
 bool readline(uart_port_t port, char* buf, const uint16_t max); 
-
+bool freadline(FILE* f, char* buf, const uint16_t max); 
 
 /* Text utilities */
 uint8_t tokenize(char*, char*[], uint8_t, char*, bool);

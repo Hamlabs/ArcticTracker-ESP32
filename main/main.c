@@ -27,6 +27,7 @@
 #include "radio.h"
 #include "ax25.h"
 #include "digipeater.h"
+#include "igate.h"
 
 static const char* TAG = "main";
 
@@ -200,6 +201,7 @@ static void startup(void* arg)
     tracker_init(oq);
     radio_init(RADIO_UART);
     digipeater_init(oq);
+    igate_init(); 
     
     mon_init();
     sleepMs(100);

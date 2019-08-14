@@ -8,8 +8,8 @@
 #include "system.h"
 #include "defines.h"
 #include "config.h"
-// #include "igate.h"
 #include "digipeater.h"
+#include "igate.h"
 #include "ui.h"
 #include "gui.h"
 #include "fbuf.h"
@@ -32,18 +32,18 @@ static void mhandle_igate(void*);
 static void mhandle_digi(void*); 
 static void mhandle_wifi(void*); 
 static void mhandle_fwupgrade(void*); 
-
+static void mhandle_shutdown(void*);
 
 static MenuCommand items[] = 
 {
-    { "Send report",    mhandle_send,  NULL },
-    { "WIFI +|-",       mhandle_wifi,  NULL },
-    { "Igate +|-",      mhandle_igate, NULL },
-    { "Digipeater +|-", mhandle_digi,  NULL },
+    { "Send report",    mhandle_send,      NULL },
+    { "WIFI +|-",       mhandle_wifi,      NULL },
+    { "Igate +|-",      mhandle_igate,     NULL },
+    { "Digipeater +|-", mhandle_digi,      NULL },
     { "Firmware upgr.", mhandle_fwupgrade, NULL },
-    { "Blow up all",    NULL,          NULL },
+    { "Shut down..",    mhandle_shutdown,  NULL },
 };
-static int nitems = 5; 
+static int nitems = 6; 
 
 
 
@@ -158,8 +158,9 @@ static void mhandle_send(void* x) {
 }
 
 static void mhandle_igate(void* x) {
-//    bool isOn = GET_BYTE_PARAM(IGATE_ON); 
-//    igate_on( !isOn ); 
+    bool isOn = get_byte_param("IGATE.on", 0);
+    set_byte_param("IGATE.on", !isOn);
+    igate_activate( !isOn ); 
 }
 
 static void mhandle_digi(void* x) {
@@ -175,4 +176,8 @@ static void mhandle_wifi(void* x) {
 
 static void mhandle_fwupgrade(void* x) {
     firmware_upgrade(); 
+}
+
+static void mhandle_shutdown(void* x) {
+    systemShutdown(); 
 }

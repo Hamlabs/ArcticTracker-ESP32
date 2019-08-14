@@ -19,6 +19,7 @@
 #include "esp_ota_ops.h"
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
+#include "esp_sleep.h"
 #include "ui.h"
 #include "lcd.h"
 #include "gui.h"
@@ -74,6 +75,27 @@ esp_err_t firmware_upgrade()
     }
     return ESP_OK;
 }             
+
+
+
+
+/******************************************************************************
+ * Shutdown - go to deep sleep mode and turn off radio, etc.
+ * to use as little battery as possible. 
+ ******************************************************************************/
+
+void systemShutdown(void)
+{   
+    sleepMs(500);
+    gui_sleepmode();
+    sleepMs(1500);
+    blipDown();
+    sleepMs(200);
+    radio_on(false); 
+    esp_deep_sleep_start();
+}
+
+
 
 
 /******************************************************************************
@@ -148,18 +170,21 @@ void set_logLevels() {
     esp_log_level_set("gps", get_byte_param("LGLV.gps", default_level));
     esp_log_level_set("uart", get_byte_param("LGLV.uart", default_level));
     esp_log_level_set("digi", get_byte_param("LGLV.digi", default_level));
+    esp_log_level_set("igate", get_byte_param("LGLV.igate", default_level));
+    esp_log_level_set("tcp-cli", get_byte_param("LGLV.tcp-cli", default_level));
 }
 
 
 bool hasTag(char*tag) {
-    return strcmp(tag, "wifi")==0 || strcmp(tag, "wifix")==0 ||
-           strcmp(tag, "config")==0 || strcmp(tag, "httpd")==0 ||
-           strcmp(tag, "shell")==0 || strcmp(tag, "system")==0 ||
-           strcmp(tag, "tracker")==0 || strcmp(tag, "esp-tls")==0 ||
-           strcmp(tag, "radio")==0 || strcmp(tag, "ui")==0 ||
-           strcmp(tag, "hdlc-enc")==0 || strcmp(tag, "gps")==0 ||
-           strcmp(tag, "hdlc-dec")==0 || strcmp(tag, "uart")==0 ||
-           strcmp(tag, "digi")==0;
+    return strcmp(tag, "wifi")==0     || strcmp(tag, "wifix")==0   ||
+           strcmp(tag, "config")==0   || strcmp(tag, "httpd")==0   ||
+           strcmp(tag, "shell")==0    || strcmp(tag, "system")==0  ||
+           strcmp(tag, "tracker")==0  || strcmp(tag, "esp-tls")==0 ||
+           strcmp(tag, "radio")==0    || strcmp(tag, "ui")==0      ||
+           strcmp(tag, "hdlc-enc")==0 || strcmp(tag, "gps")==0     ||
+           strcmp(tag, "hdlc-dec")==0 || strcmp(tag, "uart")==0    ||
+           strcmp(tag, "digi")==0     || strcmp(tag, "igate")==0   || 
+           strcmp(tag, "tcp-cli")==0  || strcmp(tag, "*")==0;
 }
 
 
@@ -206,7 +231,8 @@ esp_log_level_t str2loglevel(char* str)
  * Typing ctrl-C will immediately return false
  ****************************************************************************/
 
-bool readline(uart_port_t cbp, char* buf, const uint16_t max) {
+bool readline(uart_port_t cbp, char* buf, const uint16_t max) 
+{
   char x, xx;
   uint16_t i=0; 
   
@@ -226,6 +252,31 @@ bool readline(uart_port_t cbp, char* buf, const uint16_t max) {
   buf[i] = '\0';
   return true;
 }
+
+
+
+bool freadline(FILE* f, char* buf, const uint16_t max) 
+{
+  char x, xx;
+  uint16_t i=0; 
+  
+  for (i=0; i<max; i++) {
+    x = fgetc(f);     
+    if (x == 0x03)     /* CTRL-C */
+      return false;
+    if (x == '\r') {
+      /* Get LINEFEED */
+      fgetc(f);
+      break; 
+    }
+    if (x == '\n')
+      break;
+    buf[i]=x;
+  }
+  buf[i] = '\0';
+  return true;
+}
+
 
 
 

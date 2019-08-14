@@ -74,8 +74,8 @@ void fbuf_errorHandler( void(*f)(void) )
  
 static fbindex_t _fbuf_newslot ()
 {
-   register fbindex_t i; 
-   for (i=0; i<FBUF_SLOTS; i++)
+    fbindex_t i; 
+    for (i=0; i<FBUF_SLOTS; i++)
        if (_pool[i].refcnt == 0) 
        {
            _pool[i].refcnt = 1;
@@ -84,7 +84,7 @@ static fbindex_t _fbuf_newslot ()
            _free_slots--;
            return i; 
        }
-   return NILPTR; 
+    return NILPTR; 
 }
 
 
@@ -378,25 +378,7 @@ void fbuf_print(FBUF* b)
         putchar(fbuf_getChar(b));
 }
   
-  
-/********************************************************
-   Read from a stream into a buffer chain.
-********************************************************/   
-/*
-void fbuf_streamRead(Stream *chp, FBUF* b)
-{
-   while (true) {
-     char c = streamGet(chp);
-     if (c=='\r') {
-       streamGet(chp);
-       break;
-     }
-     if (c=='\n')
-       break;
-     fbuf_putChar(b, c);
-   }
-}
-*/  
+   
   
 /**************************************************************
   Read up to size bytes from buffer chain into a string. 

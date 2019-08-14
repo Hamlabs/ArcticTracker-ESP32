@@ -15,6 +15,8 @@
 #include "commands.h"
 #include "esp_wifi.h"
 #include "networking.h"
+#include "system.h"
+#include "linenoise/linenoise.h"
 
 
 static void   showScan(void);
@@ -29,7 +31,7 @@ void   register_wifi(void);
 
 
 /********************************************************************************
- * Connect - command handler
+ * Join an access point
  ********************************************************************************/
 
 /** Arguments used by 'connect' function */
@@ -41,7 +43,7 @@ static struct {
 } join_args;
 
 
-int do_connect(int argc, char** argv)
+int do_join(int argc, char** argv)
 {
     int nerrors = arg_parse(argc, argv, (void**) &join_args);
     if (nerrors != 0) {
@@ -58,6 +60,60 @@ int do_connect(int argc, char** argv)
         printf("Connection failed\n");
     else
         printf("Ok\n");
+    return 0;
+}
+
+
+/********************************************************************************
+ * Connect to an internet server using tcp (like telnet command)
+ ********************************************************************************/
+
+static char buf[200];
+static bool trunning = true; 
+
+
+void tcprec(void* arg)
+{
+    while (trunning) {
+        int n = inet_read(buf, 199);
+        if (n>0)
+            printf("%s", buf);
+    }
+    vTaskDelete(NULL);
+}
+
+
+
+int do_connect(int argc, char** argv)
+{
+    if (argc<=2) {
+        printf("Connect command needs arguments\n");
+        return 0;
+    }
+    char* host = argv[1]; 
+    int port = atoi(argv[2]);
+    printf("Connecting..\n");
+    int err = inet_open(host, port);
+    if (err != 0) {
+        printf("Connection failed. errno=%d\n", err);
+        return 0;
+    }
+    printf("Connected to %s:%d. Ctrl-D to disconnect\n", host, port);
+    /* Start receiver thread */ 
+    trunning = true;
+    xTaskCreatePinnedToCore(&tcprec, "Data receiver", 
+        STACK_TCP_REC, NULL, NORMALPRIO, NULL, CORE_TCP_REC);
+
+    /* Loop reading text from console. Ctrl-D to disconnect */
+    char* line;  
+    while ((line = linenoise2()) != NULL) { 
+        inet_write(line, 64);
+        inet_write("\r\n", 3);
+        free(line);
+    }
+    trunning=false;
+    inet_close();
+    
     return 0;
 }
 
@@ -235,7 +291,7 @@ void register_wifi()
         .command = "wifi-join",
         .help = "Join WiFi AP as a station",
         .hint = NULL,
-        .func = &do_connect,
+        .func = &do_join,
         .argtable = &join_args
     };
 
@@ -253,6 +309,7 @@ void register_wifi()
     ADD_CMD("httpd-pass", &_param_httpd_pwd, "HTTPD Password",  "[<passwd>]");
     ADD_CMD("fw-url",     &_param_fwurl,     "URL for firmware update", "<url>");
     ADD_CMD("fw-cert",    &_param_fwcert,    "Certificate for firmware update", "");
+    ADD_CMD("connect",    &do_connect,       "Connect to internet server", "<host> <port>");
 }
 
 

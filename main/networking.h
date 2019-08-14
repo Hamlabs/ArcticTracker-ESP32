@@ -7,6 +7,7 @@
 #define _NETWORKING_H_
 
 #include "esp_wifi.h"
+#include "fbuf.h"
 #include "tcpip_adapter.h"
 
 #define AP_MAX_PASSWD_LEN 64
@@ -49,7 +50,16 @@ wifi_ap_record_t * wifi_getApList(void);
 void   httpd_enable(bool);
 
 /* Utilities */
-char*  mac2str(uint8_t *x);
-void str2ip(ip4_addr_t *ip, char* str);
+char* mac2str(uint8_t *x);
+void  str2ip(ip4_addr_t *ip, char* str);
+
+/* TCP client */
+int  inet_open(char* host, int port);
+void inet_close(void);
+int  inet_read(char* buf, int size);
+void inet_write(char* data, int len);
+bool inet_isConnected(void);
+
+
 
 #endif

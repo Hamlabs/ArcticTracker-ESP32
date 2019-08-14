@@ -21,6 +21,8 @@
 #include "esp_log.h"
 #include "system.h"
 #include "digipeater.h"
+#include "igate.h"
+
 
 #define LISTEN_PORT     80u
 #define MAX_CONNECTIONS 16u
@@ -207,6 +209,11 @@ static void hdl_digipeater(bool on) {
     digipeater_activate(on); 
 }
 
+static void hdl_igate(bool on) {
+    igate_activate(on); 
+}
+
+
 
 /**************************************************** 
  * CGI function for updating WIFI settings
@@ -290,7 +297,7 @@ CGIFUNC cgi_updateDigi(HttpdConnData *cdata) {
     head(cdata); 
     httpdSend(cdata, "<body><h2>Update digi/igate settings...</h2><fieldset>", -1);
     updateBoolField(cdata,"DIGIPEATER.on", "digi_on",  hdl_digipeater);
-    updateBoolField(cdata,"IGATE.on",      "igate_on", NULL);
+    updateBoolField(cdata,"IGATE.on",      "igate_on", hdl_igate);
     updateBoolField(cdata,"DIGI.WIDE1.on", "wide1_on", NULL);
     updateBoolField(cdata,"DIGI.SAR.on",   "sar_on",   NULL);
     updateStrField(cdata, "IGATE.HOST",    "ig_host", REGEX_HOSTNAME, false);
