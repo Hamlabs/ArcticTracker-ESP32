@@ -1,0 +1,6 @@
+[submodule "components/libesphttpd"]
+	path = components/libesphttpd
+	url = git@github.com:chmorgan/libesphttpd.git
+[submodule "components/espfs"]
+	path = components/espfs
+	url = git@github.com:jkent/esp32-espfs.git
