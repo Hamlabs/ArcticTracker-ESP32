@@ -163,7 +163,7 @@ void wifi_init(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on"));
-    esp_wifi_set_ps(WIFI_PS_MODEM);
+    esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
     scanDone = cond_create();
 
     if (GET_BYTE_PARAM("WIFI.on"))

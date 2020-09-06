@@ -57,7 +57,7 @@ void clock_stop(int group, int idx) {
 // FIXME: This may be called from a timer ISR !!!
 void clock_changeInterval(int group, int idx, double interval)
 {
-    double counter;  
+    uint64_t counter;  
     timer_get_counter_value(group, idx, &counter);
     if (counter >= interval)
         timer_set_counter_value(group, idx, interval-1);

@@ -206,8 +206,6 @@ static void status_screen5() {
  ****************************************************************/
 
 static void status_screen6() {
-    char b1[16], b2[16];
-    b2[0] = '\0';
     gui_clear();
     status_heading("F-W-");
  

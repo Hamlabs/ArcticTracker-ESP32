@@ -551,7 +551,7 @@ static void report_object_position(posdata_t* pos, char* id, bool add)
 static void send_pos_report(FBUF* packet, posdata_t* pos, 
                             char sym, char symtab, bool compress, bool simple)
 {   
-    char pbuf[16];
+    char pbuf[18];
     if (compress)
     {  
        fbuf_putChar(packet, symtab);
@@ -693,7 +693,7 @@ static void send_timestamp(FBUF* packet, posdata_t* pos)
 
 static void send_timestamp_z(FBUF* packet, posdata_t* pos)
 {
-    char ts[9];
+    char ts[10];
     sprintf(ts, "%02u%02u%02uz%c", 
        (uint8_t) (pos->timestamp / 86400)+1,
        (uint8_t) ((pos->timestamp / 3600) % 24), 

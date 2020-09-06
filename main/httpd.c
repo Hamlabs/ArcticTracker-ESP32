@@ -6,16 +6,17 @@
 #include "defines.h"
 #include <libesphttpd/esp.h>
 #include "libesphttpd/httpd.h"
-#include "libesphttpd/httpdespfs.h"
+#include "libesphttpd/httpd-espfs.h"
 #include "libesphttpd/cgiwifi.h"
 #include "libesphttpd/cgiflash.h"
 #include "libesphttpd/auth.h"
-#include "libesphttpd/espfs.h"
+// #include "libesphttpd/espfs.h"
 #include "libesphttpd/captdns.h"
-#include "libesphttpd/webpages-espfs.h"
+//#include "libesphttpd/webpages-espfs.h"
 #include "libesphttpd/cgiwebsocket.h"
 #include "libesphttpd/httpd-freertos.h"
 #include "libesphttpd/route.h"
+#include "espfs_image.h"
 #include "networking.h"
 #include "config.h"
 #include "esp_log.h"
@@ -231,7 +232,7 @@ CGIFUNC cgi_updateWifi(HttpdConnData *cdata) {
     head(cdata); 
     
     httpdSend(cdata, "<body><h2>Update WIFI settings...</h2><fieldset>", -1);
-    updateStrField(cdata, "WIFIAP.PASSWD", "appass", ".*", false);
+    updateStrField(cdata, "WIFIAP.AUTH", "appass", ".*", false);
     updateStrField(cdata, "HTTPD.USR", "htuser", ".*", false);
     updateStrField(cdata, "HTTPD.PWD", "htpass", ".*", false);
     
@@ -302,7 +303,7 @@ CGIFUNC cgi_updateDigi(HttpdConnData *cdata) {
     updateBoolField(cdata,"DIGI.SAR.on",   "sar_on",   NULL);
     updateStrField(cdata, "IGATE.HOST",    "ig_host", REGEX_HOSTNAME, false);
     updateStrField(cdata, "IGATE.USER",    "ig_user", REGEX_AXADDR, false);
-    updateStrField(cdata, "IGATE.PASS",    "ig_pass", "[0-9]{0,5}", false);
+    updateU16Field(cdata, "IGATE.PASS",    "ig_pass", 0, 65535);
         
     httpdSend(cdata, "</fieldset></body></html>", -1);
     return HTTPD_CGI_DONE;
@@ -459,7 +460,7 @@ CGIFUNC tpl_sysInfo(HttpdConnData *con, char *token, void **arg) {
  *****************************************************/
 
 CGIFUNC tpl_wifi(HttpdConnData *con, char *token, void **arg) {
-	char buf[32];
+	char buf[64];
 	if (token==NULL) return HTTPD_CGI_DONE;
     TPL_HEAD(token, con); 
     
@@ -519,12 +520,16 @@ CGIFUNC tpl_fw(HttpdConnData *con, char *token, void **arg) {
 /*****************************************************
  * Init and start webserver
  *****************************************************/
+EspFsConfig espfs_conf = {
+    .memAddr = espfs_image_bin,
+};
 
-static bool httpd_on = false; 
-
+static bool httpd_on = false;
 void httpd_enable(bool on) {
     if (on && !httpd_on) {
-        espFsInit((void*)(webpages_espfs_start));
+        EspFs* fs = espFsInit(&espfs_conf);
+        httpdRegisterEspfs(fs);
+        
         httpdFreertosInit(&httpdFreertosInstance,
             builtInUrls,
             LISTEN_PORT,

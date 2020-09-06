@@ -107,11 +107,11 @@ uint16_t adc_batt_status(char* line1, char* line2)
     uint16_t vbatt = adc_batt();
     if (line2)
         line2[0] = '\0'; 
-    if (vbatt > 8500) { 
+    if (vbatt > 8600) { 
         if (line1) sprintf(line1, "Ext power.");
         if (line2) sprintf(line2, "Not charging.");
     }
-    else if (vbatt > 8350) {
+    else if (vbatt > 8370) {
         if (line1) sprintf(line1, "Max/Charging..");
     }
     else if (vbatt > 7800) { 

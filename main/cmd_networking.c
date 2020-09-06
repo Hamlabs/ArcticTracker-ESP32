@@ -106,7 +106,7 @@ int do_connect(int argc, char** argv)
 
     /* Loop reading text from console. Ctrl-D to disconnect */
     char* line;  
-    while ((line = linenoise2()) != NULL) { 
+    while ((line = linenoise("")) != NULL) { 
         inet_write(line, 64);
         inet_write("\r\n", 3);
         free(line);
@@ -173,9 +173,10 @@ int do_apSta(int argc, char** argv)
     ESP_ERROR_CHECK(tcpip_adapter_get_sta_list(&stations, &infoList));
     for(int i = 0; i < infoList.num; i++) {
         tcpip_adapter_sta_info_t st = infoList.sta[i];
+        const ip4_addr_t * ipaddr = (const ip4_addr_t*) &(st.ip); 
         printf("MAC: %s IP: %s\n",
             mac2str(st.mac),
-            ip4addr_ntoa(&(st.ip)));
+            ip4addr_ntoa(ipaddr));
       }
     return 0;
 }

@@ -16,8 +16,9 @@ esp_err_t firmware_upgrade();
 void systemShutdown(void);
 
 /* Time */
+typedef struct tm tm_t; 
 extern void time_init(); 
-bool time_getUTC(struct tm *timeinfo);
+bool time_getUTC(tm_t *timeinfo);
 
 
 /* Hardware timer - as periodic clocks */

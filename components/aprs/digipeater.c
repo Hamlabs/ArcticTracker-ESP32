@@ -146,7 +146,7 @@ static void check_frame(FBUF *f)
    
    if (hlist_duplicate(&from, &to, f, ndigis))
        return;
-   get_str_param("MYCALL", &mycall_s, 10, DFL_MYCALL);
+   get_str_param("MYCALL", mycall_s, 10, DFL_MYCALL);
    str2addr(&mycall, mycall_s, false);
 
    /* Copy items in digi-path that has digipeated flag turned on, 

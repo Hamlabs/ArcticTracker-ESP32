@@ -435,7 +435,7 @@ static bool _handshake()
 
 static bool _setGroupParm()
 {
-    char buf[48];
+    char buf[67];
     if (!_on)
         return true;
     char txbuf[16], rxbuf[16], reply[16];

@@ -3,9 +3,12 @@
  * By LA7ECA, ohanssen@acm.org
  */ 
 
+
 #include "defines.h"
 #include "fbuf.h"
 #include <string.h>
+#include "esp_log.h"
+
 
 
 /********************************************************************
@@ -119,7 +122,7 @@ void fbuf_new (FBUF* bb)
 
 void fbuf_release(FBUF* bb)
 {
-    register fbindex_t b = bb->head;
+    fbindex_t b = bb->head;
     while (b != NILPTR) {
        _fbuf_releaseslot(b);
        b = _pool[b].next; 
@@ -135,18 +138,18 @@ void fbuf_release(FBUF* bb)
 
 FBUF fbuf_newRef(FBUF* bb)
 {
-  FBUF newb;
-  register fbindex_t b = bb->head;
-  while (b != NILPTR) 
-  {
-    _pool[b].refcnt++; 
-    b = _pool[b].next; 
-  } 
-  newb.head = bb->head; 
-  newb.length = bb->length; 
-  fbuf_reset(&newb);
-  newb.wslot = bb->wslot;
-  return newb;
+    FBUF newb;
+    fbindex_t b = bb->head;
+    while (b != NILPTR) 
+    {
+        _pool[b].refcnt++; 
+        b = _pool[b].next; 
+    } 
+    newb.head = bb->head; 
+    newb.length = bb->length; 
+    fbuf_reset(&newb);
+    newb.wslot = bb->wslot;
+    return newb;
 }
 
 
@@ -162,7 +165,7 @@ void fbuf_reset(FBUF* b)
 
 void fbuf_rseek(FBUF* b, const uint16_t pos)
 {
-   register uint16_t i=pos;
+   uint16_t i=pos;
    if (pos > b->length)
        return;
    fbuf_reset(b);
@@ -187,11 +190,11 @@ void fbuf_putChar (FBUF* b, const char c)
     if (b->wslot == NILPTR)
        return;
     
-    register uint8_t pos = _pool[b->wslot].length; 
+    uint8_t pos = _pool[b->wslot].length; 
     if (pos == FBUF_SLOTSIZE || b->head == NILPTR)
     {
         pos = 0; 
-        register fbindex_t newslot = _fbuf_newslot();
+        fbindex_t newslot = _fbuf_newslot();
         if (newslot == NILPTR) {
             if (memFullError != NULL)
                (*memFullError)();
@@ -220,7 +223,7 @@ void fbuf_putChar (FBUF* b, const char c)
  
 void fbuf_insert(FBUF* b, FBUF* x, uint16_t pos)
 {
-    register fbindex_t islot = b->head;    
+    fbindex_t islot = b->head;    
     while (pos >= FBUF_SLOTSIZE) {
         pos -= _pool[islot].length; 
         if (pos > 0) 
@@ -228,7 +231,7 @@ void fbuf_insert(FBUF* b, FBUF* x, uint16_t pos)
     }
     
     /* Find last slot in x chain and increment reference count*/
-    register fbindex_t xlast = x->head;
+    fbindex_t xlast = x->head;
     _pool[xlast].refcnt++;
     while (_pool[xlast].next != NILPTR) {
         xlast = _pool[xlast].next;
@@ -257,8 +260,8 @@ void fbuf_insert(FBUF* b, FBUF* x, uint16_t pos)
 
 void fbuf_connect(FBUF* b, FBUF* x, uint16_t pos)
 {
-    register fbindex_t islot = x->head;  
-    register uint16_t p = pos;
+    fbindex_t islot = x->head;  
+    uint16_t p = pos;
     while (p >= FBUF_SLOTSIZE) {
         p -= _pool[islot].length; 
         if (p > 0) 
@@ -266,7 +269,7 @@ void fbuf_connect(FBUF* b, FBUF* x, uint16_t pos)
     }
 
     /* Find last slot of b and connect it to rest of x */
-    register fbindex_t xlast = b->head;
+    fbindex_t xlast = b->head;
     while (_pool[xlast].next != NILPTR) 
         xlast = _pool[xlast].next;
 
@@ -288,7 +291,7 @@ static fbindex_t _split(fbindex_t islot, uint16_t pos)
 {
       if (pos == 0)
           return _pool[islot].next;
-      register fbindex_t newslot = _fbuf_newslot();
+      fbindex_t newslot = _fbuf_newslot();
       _pool[newslot].next = _pool[islot].next;
       _pool[islot].next = newslot;
       _pool[newslot].refcnt = _pool[islot].refcnt; 
@@ -311,7 +314,7 @@ static fbindex_t _split(fbindex_t islot, uint16_t pos)
  
 void fbuf_write (FBUF* b, const char* data, const uint16_t size)
 {
-    register uint16_t i; 
+    uint16_t i; 
     for (i=0; i<size; i++)
         fbuf_putChar(b, data[i]);
 }
@@ -338,7 +341,7 @@ void fbuf_putstr(FBUF* b, const char *data)
  
 char fbuf_getChar(FBUF* b)
 {
-    register char x = _pool[b->rslot].buf[b->rpos]; 
+    char x = _pool[b->rslot].buf[b->rpos]; 
     if (b->rpos == _pool[b->rslot].length-1)
     {
         b->rslot = _pool[b->rslot].next;
@@ -388,8 +391,8 @@ void fbuf_print(FBUF* b)
  
 uint16_t fbuf_read (FBUF* b, uint16_t size, char *buf)
 {
-    register uint16_t n; 
-    register fbindex_t bb, r=0;
+    uint16_t n; 
+    fbindex_t bb, r=0;
     
     if (b->length < size || size == 0)
        size = b->length; 
@@ -457,6 +460,7 @@ void fbq_init(FBQ* q, const uint16_t sz)
   
     q->length = sem_create(0); 
     q->capacity = sem_create(sz);
+    q->lock = cond_create();
 }
 
 
@@ -465,21 +469,22 @@ void fbq_init(FBQ* q, const uint16_t sz)
  * IMPORTANT: Be sure that no thread blocks on the queue when calling this.
  * TODO: Check that this is correct wrt thread behaviour.  
  ****************************************************************************/
-
+bool clr = false;
 void fbq_clear(FBQ* q)
 {
-//  chSysLock();
-  uint16_t i;
-  for (i = q->index;  i < q->index + sem_getCount(q->length);  i++)
-    fbuf_release(&q->buf[(uint8_t) (i % q->size)]);
+    cond_wait(q->lock);
+    clr=true;
+    uint16_t i;
+    for (i = q->index;  i < q->index + sem_getCount(q->length);  i++)
+        fbuf_release(&q->buf[(uint8_t) (i % q->size)]);
   
-  sem_delete(q->length); 
-  q->length = sem_create(0);
-  sem_delete(q->capacity); 
-  q->capacity = sem_create(q->size);
-  q->index = 0;
-  q->cnt = 0;
-//  chSysUnlock();
+    sem_delete(q->length); 
+    q->length = sem_create(0);
+    sem_delete(q->capacity); 
+    q->capacity = sem_create(q->size);
+    q->index = 0;
+    q->cnt = 0;
+    clr=false; 
 }
 
 
@@ -490,16 +495,16 @@ void fbq_clear(FBQ* q)
 
 void fbq_put(FBQ* q, FBUF b)
 {
-//  chSysLock();
-  if (sem_down(q->capacity) == pdTRUE) {
-    q->cnt++;
-    uint8_t i = (q->index + q->cnt) % q->size; 
-    q->buf[i] = b; 
-    sem_up(q->length);
-    
-//    chSchRescheduleS();
-  }
-//  chSysUnlock();
+    if (clr)
+        return;
+    cond_clear(q->lock);
+    if (sem_down(q->capacity) == pdTRUE) {
+        q->cnt++;
+        uint8_t i = (q->index + q->cnt) % q->size; 
+        q->buf[i] = b; 
+        sem_up(q->length);
+    }
+    cond_set(q->lock);
 }
 
 
@@ -510,18 +515,20 @@ void fbq_put(FBQ* q, FBUF b)
 
 FBUF fbq_get(FBQ* q)
 {
-  FBUF x; 
-//  chSysLock();
-  if (sem_down(q->length) == pdTRUE) {  
-    q->index = (q->index + 1) % q->size;
-    x = q->buf[q->index];
-    q->cnt--;
-  
-    sem_up(q->capacity);
-  }
-//  chSchRescheduleS();
-//  chSysUnlock();
-  return x;
+    FBUF x; 
+    if (clr) {
+        fbuf_new(&x);
+        return x;
+    }
+    cond_clear(q->lock);
+    if (sem_down(q->length) == pdTRUE) {  
+        q->index = (q->index + 1) % q->size;
+        x = q->buf[q->index];
+        q->cnt--;
+        sem_up(q->capacity);
+    }
+    cond_set(q->lock);
+    return x;
 }
 
 

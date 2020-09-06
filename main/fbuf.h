@@ -11,6 +11,7 @@
 #include "defines.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+#include "freertos/event_groups.h"
 
 #define NILPTR 0xFFFF
 
@@ -71,6 +72,7 @@ typedef struct _fbq
 {
   uint8_t size, index, cnt; 
   semaphore_t length, capacity; 
+  cond_t lock;
   FBUF *buf; 
 } FBQ;
 
