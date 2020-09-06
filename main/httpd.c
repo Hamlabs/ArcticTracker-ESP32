@@ -91,15 +91,26 @@ int myPassFn(HttpdConnData *connData, int no, char *user, int userLen, char *pas
 HttpdBuiltInUrl builtInUrls[] = {
     {"/*", authBasic, myPassFn}, 
 	ROUTE_REDIRECT("/", "/index.html"),
-	ROUTE_TPL_FILE("/sysinfo", tpl_sysInfo, "/sysinfo.tpl"),
-	ROUTE_TPL_FILE("/wifi", tpl_wifi, "/wifi.tpl"),
+	
+	ROUTE_TPL("/sysinfo.tpl", tpl_sysInfo),
+    ROUTE_REDIRECT("/sysinfo", "/sysinfo.tpl"),
+    
+	ROUTE_TPL("/wifi.tpl", tpl_wifi),
 	ROUTE_CGI("/wifiupdate", cgi_updateWifi),
-	ROUTE_TPL_FILE("/aprs", tpl_aprs, "/aprs.tpl"),
-	ROUTE_TPL_FILE("/digi", tpl_digi, "/digi.tpl"),
-	ROUTE_CGI("/digiupdate", cgi_updateDigi),
+	ROUTE_REDIRECT("/wifi", "/wifi.tpl"),
+    
+	ROUTE_TPL("/aprs.tpl", tpl_aprs),
     ROUTE_CGI("/aprsupdate", cgi_updateAprs),
-    ROUTE_TPL_FILE("/fw", tpl_fw, "/firmware.tpl"),
+	ROUTE_REDIRECT("/aprs", "/aprs.tpl"),
+	
+	ROUTE_TPL("/digi.tpl", tpl_digi),
+	ROUTE_CGI("/digiupdate", cgi_updateDigi),
+    ROUTE_REDIRECT("/digi", "/digi.tpl"),
+	
+    ROUTE_TPL("/firmware.tpl", tpl_fw),
     ROUTE_CGI("/fwupdate", cgi_updateFw),
+    ROUTE_REDIRECT("/fw", "/firmware.tpl"),
+    
 	ROUTE_FILESYSTEM(),
 	ROUTE_END()
 };
