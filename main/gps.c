@@ -8,13 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
-#include "esp_log.h"
+#include "system.h"
 #include "hdlc.h"
 #include "fbuf.h"
 #include "ax25.h"
 #include "config.h"
-#include "system.h"
 #include "ui.h"
 #include "gps.h"
 

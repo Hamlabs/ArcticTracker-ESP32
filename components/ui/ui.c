@@ -5,14 +5,11 @@
 
 
 #include "defines.h"
-#include "esp_log.h"
 #include "system.h"
 #include "ui.h"
 #include "lcd.h"
 #include "gui.h"
 #include "driver/gpio.h"
-#include "freertos/timers.h" 
-#include "freertos/event_groups.h"
 
 extern void buzzer_init();
 static void bphandler(void* p);

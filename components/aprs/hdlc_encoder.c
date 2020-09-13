@@ -10,7 +10,6 @@
 #include "system.h"
 #include "radio.h"
 #include "config.h"
-#include "esp_log.h"
 #include "ax25.h"
 
 

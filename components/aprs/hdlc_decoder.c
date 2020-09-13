@@ -10,7 +10,6 @@
 #include "system.h"
 #include "config.h"
 #include "hdlc.h"
-#include "esp_log.h"
 #include "ax25.h"
 #include "fbuf.h"
 #include "ui.h"

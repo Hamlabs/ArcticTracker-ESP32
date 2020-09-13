@@ -7,7 +7,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "defines.h"
-#include "esp_log.h"
 #include "esp_console.h"
 #include "esp_system.h"
 #include "esp_sleep.h"
@@ -15,11 +14,11 @@
 #include "driver/rtc_io.h"
 #include "nvs_flash.h"
 #include "argtable3/argtable3.h"
+#include "system.h"
 #include "commands.h"
 #include "soc/rtc_cntl_reg.h"
 #include "sdkconfig.h"
 #include "config.h"
-#include "system.h"
 #include "afsk.h"
 #include "radio.h"
 #include "fbuf.h"

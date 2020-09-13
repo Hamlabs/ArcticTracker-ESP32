@@ -28,6 +28,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "system.h"
 #include "defines.h"
 #include "config.h"
 #include "ui.h"
@@ -40,7 +41,6 @@
 #include "tracker.h"
 #include "igate.h"
 #include "networking.h"
-#include "esp_log.h"
 
 
 #define INET_NAME_LENGTH 64

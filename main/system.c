@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include "defines.h" 
-#include "esp_log.h"
 #include "esp_wifi.h"
 #include "networking.h"
 #include "config.h"
@@ -160,26 +159,35 @@ bool time_getUTC(struct tm *timeinfo)
  * Set loglevels from flash config
  ********************************************************************************/
 
+void set_logLevel(char* comp, char* param, esp_log_level_t dfl) {
+    esp_log_level_t lvl = get_byte_param(param, dfl);
+    ESP_LOGD(TAG, "Set log level for %s = %s", comp, loglevel2str(lvl));
+    
+    esp_log_level_set(comp, lvl);
+}
+
+
 void set_logLevels() {
-    esp_log_level_t default_level = get_byte_param("LOGLV.ALL", ESP_LOG_WARN) ; 
-    esp_log_level_set("*", default_level);
-    esp_log_level_set("wifi", get_byte_param("LGLV.wifi", default_level));
-    esp_log_level_set("wifix", get_byte_param("LGLV.wifix", default_level));
-    esp_log_level_set("config", get_byte_param("LGLV.config", default_level));
-    esp_log_level_set("httpd", get_byte_param("LGLV.httpd", default_level));
-    esp_log_level_set("shell", get_byte_param("LGLV.shell", default_level));
-    esp_log_level_set("system", get_byte_param("LGLV.system", default_level));
-    esp_log_level_set("tracker", get_byte_param("LGLV.tracker", default_level));
-    esp_log_level_set("esp-tls", get_byte_param("LGLV.esp-tls", default_level));
-    esp_log_level_set("radio", get_byte_param("LGLV.radio", default_level));
-    esp_log_level_set("ui", get_byte_param("LGLV.ui", default_level));
-    esp_log_level_set("hdlc-enc", get_byte_param("LGLV.hdlc-enc", default_level));
-    esp_log_level_set("hdlc-dec", get_byte_param("LGLV.hdlc-dec", default_level));
-    esp_log_level_set("gps", get_byte_param("LGLV.gps", default_level));
-    esp_log_level_set("uart", get_byte_param("LGLV.uart", default_level));
-    esp_log_level_set("digi", get_byte_param("LGLV.digi", default_level));
-    esp_log_level_set("igate", get_byte_param("LGLV.igate", default_level));
-    esp_log_level_set("tcp-cli", get_byte_param("LGLV.tcp-cli", default_level));
+    esp_log_level_t dfl = get_byte_param("LGLV.ALL", ESP_LOG_WARN) ; 
+    esp_log_level_set("*", dfl);
+        
+    set_logLevel("system", "LGLV.system", dfl);
+    set_logLevel("wifi", "LGLV.wifi", dfl);
+    set_logLevel("wifix", "LGLV.wifix", dfl);
+    set_logLevel("config", "LGLV.config", dfl);
+    set_logLevel("httpd", "LGLV.httpd", dfl);
+    set_logLevel("shell", "LGLV.shell", dfl);
+    set_logLevel("tracker", "LGLV.tracker", dfl);
+    set_logLevel("esp-tls", "LGLV.esp-tls", dfl);
+    set_logLevel("radio", "LGLV.radio", dfl);
+    set_logLevel("ui", "LGLV.ui", dfl);
+    set_logLevel("hdlc-enc", "LGLV.hdlc-enc", dfl);
+    set_logLevel("hdlc-dec", "LGLV.hdlc-dec", dfl);
+    set_logLevel("gps", "LGLV.gps", dfl);
+    set_logLevel("uart", "LGLV.uart", dfl);
+    set_logLevel("digi", "LGLV.digi", dfl);
+    set_logLevel("igate", "LGLV.igate", dfl);
+    set_logLevel("tcp-cli", "LGLV.tcp-cli", dfl);
 }
 
 

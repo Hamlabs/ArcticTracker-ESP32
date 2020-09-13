@@ -17,7 +17,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/param.h>
-#include "esp_log.h"
+#include "system.h"
 #include "esp_console.h"
 #include "linenoise/linenoise.h"
 #include "argtable3/argtable3.h"

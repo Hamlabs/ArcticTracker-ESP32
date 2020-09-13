@@ -19,7 +19,6 @@
 #include "espfs_image.h"
 #include "networking.h"
 #include "config.h"
-#include "esp_log.h"
 #include "system.h"
 #include "digipeater.h"
 #include "igate.h"
