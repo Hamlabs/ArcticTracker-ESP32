@@ -89,7 +89,7 @@ int myPassFn(HttpdConnData *connData, int no, char *user, int userLen, char *pas
  ****************************************************/
 
 HttpdBuiltInUrl builtInUrls[] = {
-    {"/*", authBasic, myPassFn}, 
+    {"/*", authBasic, myPassFn, NULL}, 
 	ROUTE_REDIRECT("/", "/index.html"),
 	
 	ROUTE_TPL("/sysinfo.tpl", tpl_sysInfo),

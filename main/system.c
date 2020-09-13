@@ -265,7 +265,7 @@ bool readline(uart_port_t cbp, char* buf, const uint16_t max)
 
 bool freadline(FILE* f, char* buf, const uint16_t max) 
 {
-  char x, xx;
+  char x;
   uint16_t i=0; 
   
   for (i=0; i<max; i++) {

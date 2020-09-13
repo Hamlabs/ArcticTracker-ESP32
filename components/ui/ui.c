@@ -45,13 +45,13 @@ static cond_t buttCond;
        if ( cond_testBits(buttCond, BUTT_EV_SHORT) ) {
         //  ESP_LOGI(TAG, "Butt ev short");
           beep(20); 
-          push_handler(NULL);
+          click_handler(NULL);
           cond_clearBits(buttCond, BUTT_EV_LONG|BUTT_EV_SHORT);
        }
        else {
         //  ESP_LOGI(TAG, "Butt ev long");
           beeps("-");
-          click_handler(NULL);
+          push_handler(NULL);
           cond_clearBits(buttCond, BUTT_EV_LONG|BUTT_EV_SHORT);
        }
     }

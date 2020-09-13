@@ -21,7 +21,7 @@
 #include "esp_console.h"
 #include "linenoise/linenoise.h"
 #include "argtable3/argtable3.h"
-#include "rom/queue.h"
+#include "sys/queue.h"
 #include "commands.h"
 
 #define ANSI_COLOR_DEFAULT      39      /** Default foreground color */
@@ -112,7 +112,6 @@ void cmd_register(const char* txt, esp_console_cmd_func_t func, const char* help
      const esp_console_cmd_t cmd = {
         .command = txt,
         .help = help,
-        .hint = NULL,
         .func = func,
         .hint = hnt
     };
