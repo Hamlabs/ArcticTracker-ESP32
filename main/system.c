@@ -7,8 +7,6 @@
 #include <sys/time.h>
 #include <string.h>
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/event_groups.h"
 #include "defines.h" 
 #include "esp_log.h"
 #include "esp_wifi.h"
@@ -31,6 +29,16 @@ static void initialize_sntp(void);
 
 #define TAG "system"
 
+
+
+ BaseType_t _cond_setBitsI(cond_t cond, BaseType_t bits) {
+     BaseType_t hptw = pdFALSE;
+     return xEventGroupSetBitsFromISR(cond, bits, &hptw);
+ }
+
+ 
+ 
+ 
 
 /******************************************************************************
  * Upgrade firmware over HTTPS

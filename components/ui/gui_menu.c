@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include "freertos/FreeRTOS.h" 
-#include "freertos/timers.h" 
 #include "system.h"
 #include "defines.h"
 #include "config.h"

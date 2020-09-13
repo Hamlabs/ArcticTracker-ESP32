@@ -7,9 +7,7 @@
 
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
+#include "system.h"
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "defines.h"

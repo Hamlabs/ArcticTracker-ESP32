@@ -7,8 +7,7 @@
 #include <stdlib.h>
 #include "crc16.h"
 #include "defines.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "system.h"
 #include "config.h"
 #include "hdlc.h"
 #include "esp_log.h"

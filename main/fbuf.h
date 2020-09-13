@@ -9,9 +9,7 @@
 // #include "defines.h"
 #include <inttypes.h>
 #include "defines.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
-#include "freertos/event_groups.h"
+#include "system.h"
 
 #define NILPTR 0xFFFF
 

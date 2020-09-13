@@ -7,9 +7,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include "defines.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/timers.h" 
+#include "system.h"
 #include "driver/gpio.h"
 #include "lcd.h"
 
@@ -63,7 +61,7 @@ void lcd_init() {
     
     /* GPIO direction */
     gpio_set_direction(LCD_PIN_DC,  GPIO_MODE_OUTPUT);
-    gpio_set_direction(LCD_PIN_RST, GPIO_MODE_OUTPUT);
+//   gpio_set_direction(LCD_PIN_RST, GPIO_MODE_OUTPUT);
     gpio_set_direction(LCD_PIN_BL,  GPIO_MODE_OUTPUT);
     
     /* Reset LCD */

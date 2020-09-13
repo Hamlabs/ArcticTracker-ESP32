@@ -5,7 +5,6 @@
 #include "defines.h"
 #include <stdint.h>
 #include "driver/gpio.h"
-#include "freertos/FreeRTOS.h"
 #include "system.h" 
 #include "ui.h"
 

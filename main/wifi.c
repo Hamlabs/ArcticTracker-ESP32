@@ -8,13 +8,10 @@
 #include "esp_log.h"
 #include "esp_console.h"
 #include "argtable3/argtable3.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/event_groups.h"
 #include "esp_wifi.h"
 #include "tcpip_adapter.h"
 #include "esp_event_loop.h"
 
-#include "freertos/semphr.h" 
 #include "defines.h"
 #include "config.h"
 #include "commands.h"
@@ -471,7 +468,7 @@ static void task_autoConnect( void * pvParms )
     
     while(true) {
         /* Wait until disconnected */
-        xEventGroupWaitBits(wifi_event_group, DISCONNECTED_BIT, 1, 1, portMAX_DELAY  );
+        xEventGroupWaitBits(wifi_event_group, DISCONNECTED_BIT, 1, 1, portMAX_DELAY );
         sleepMs(6000); 
         wifi_startScan(); 
         wifi_waitScan();

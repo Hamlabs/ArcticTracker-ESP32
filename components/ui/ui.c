@@ -21,17 +21,18 @@ static void clickhandler(void* p);
 
 #define TAG "ui"
 
-
+static void click_handler(void* p); 
+static void push_handler(void* p);
   
 /*********************************************************************
  * UI service thread to handle button events 
  *********************************************************************/
 
- cond_t buttCond;  
- static butthandler_t bhandler1 = NULL, bhandler2 = NULL; 
+static cond_t buttCond;  
  
- #define BUTT_EV_SHORT BIT0
- #define BUTT_EV_LONG  BIT1
+ 
+#define BUTT_EV_SHORT BIT0
+#define BUTT_EV_LONG  BIT1
  
  
  
@@ -42,27 +43,20 @@ static void clickhandler(void* p);
     while (true) {
        cond_waitBits(buttCond, BUTT_EV_SHORT|BUTT_EV_LONG);
        if ( cond_testBits(buttCond, BUTT_EV_SHORT) ) {
-          ESP_LOGI(TAG, "Butt ev short");
+        //  ESP_LOGI(TAG, "Butt ev short");
           beep(20); 
-          if (bhandler1) bhandler1(NULL);
+          push_handler(NULL);
           cond_clearBits(buttCond, BUTT_EV_LONG|BUTT_EV_SHORT);
        }
        else {
-          ESP_LOGI(TAG, "Butt ev long");
+        //  ESP_LOGI(TAG, "Butt ev long");
           beeps("-");
-          if (bhandler2) bhandler2(NULL);
+          click_handler(NULL);
           cond_clearBits(buttCond, BUTT_EV_LONG|BUTT_EV_SHORT);
        }
     }
  }  
-   
- 
- void register_button_handlers(butthandler_t h1, butthandler_t h2)
- {
-     bhandler1 = h1; 
-     bhandler2 = h2;
- }
- 
+
  
  
 /**************************************
@@ -101,9 +95,9 @@ static void bphandler(void* p)
        pressed = true;
 }
  
- 
+
 static void clickhandler(void* p) {
-    (void) p; 
+    (void) p;  
     cond_setBits(buttCond, BUTT_EV_SHORT);
 }
 
@@ -182,7 +176,7 @@ static void button_init() {
     if (menu_is_active())
         menu_select();
     else
-        menu_activate();
+        menu_activate(); 
  }
 
  
@@ -213,10 +207,8 @@ static void button_init() {
     sleepMs(100);
     lcd_backlight();
     gui_welcome(); 
-    status_init();
+    status_init(); 
         
-    register_button_handlers(click_handler, push_handler);
-
     
    /* LED blinker thread */
     gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);

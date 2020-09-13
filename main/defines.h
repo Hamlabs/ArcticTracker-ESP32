@@ -10,9 +10,9 @@
 // #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 
-#define VERSION_STRING "v2.0 alpha"
+#define VERSION_STRING "v2.0 alpha2"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2019-08-23"
+#define FW_DATE "2020-09-6"
 
 #define BIT_0	( 1 << 0 )
 
@@ -161,43 +161,6 @@
 
 #define min(x,y) (x<y? x : y)
 #define max(x,y) (x>y? x : y)
-
-
-#define sleepMs(n)  vTaskDelay(pdMS_TO_TICKS(n))
-#define t_yield     taskYIELD
-
-/* Simplified semaphore operations */
-#define semaphore_t      SemaphoreHandle_t
-#define sem_create(cnt)  xSemaphoreCreateCounting(65000, cnt)
-#define sem_createBin()  xSemaphoreCreateBinary()
-#define sem_delete(sem)  vSemaphoreDelete(sem)
-#define sem_up(x)        xSemaphoreGive(x)
-#define sem_upI(x)       xSemaphoreGiveFromISR(x, pdFALSE)
-#define sem_down(x)      xSemaphoreTake(x, portMAX_DELAY)
-#define sem_getCount(x)  uxSemaphoreGetCount(x)
-
-#define mutex_t  		 SemaphoreHandle_t
-#define mutex_create()   xSemaphoreCreateMutex()
-#define mutex_lock(x)    xSemaphoreTake((x), portMAX_DELAY)
-#define mutex_unlock(x)  xSemaphoreGive((x))
-
-
-/* Make event groups look like simpler condition variables */
-#define cond_t               EventGroupHandle_t
-#define cond_create          xEventGroupCreate
-#define cond_wait(cond)      xEventGroupWaitBits(cond, BIT_0, pdFALSE, pdFALSE,  portMAX_DELAY)
-#define cond_set(cond)       xEventGroupSetBits(cond, BIT_0)
-#define cond_setI(cond)      xEventGroupSetBitsFromISR(cond, BIT_0, pdFALSE)
-#define cond_clear(cond)     xEventGroupClearBits(cond, BIT_0)
-#define cond_clearI(cond)    xEventGroupClearBitsFromISR(cond, BIT_0)
-#define cond_isSet(cond)     (xEventGroupGetBits(cond) & BIT_0)
-#define cond_isSetI(cond)    (xEventGroupGetBitsFromISR(cond) & BIT_0)
-
-#define cond_waitBits(cond, bits)       xEventGroupWaitBits(cond, bits, pdFALSE, pdFALSE,  portMAX_DELAY)
-#define cond_setBits(cond, bits)        xEventGroupSetBits(cond, bits)
-#define cond_setBitsI(cond, bits)       xEventGroupSetBitsFromISR(cond, bits)
-#define cond_testBits(cond, bits)       (xEventGroupGetBits(cond) & bits)
-#define cond_clearBits(cond, bits)      xEventGroupClearBits(cond, bits)
 
 
 #endif

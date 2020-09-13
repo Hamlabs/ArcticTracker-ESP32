@@ -6,7 +6,6 @@
 //#include "afsk.h"
 #include <stdbool.h>
 #include <stdint.h>
-#include "freertos/FreeRTOS.h"
 #include "driver/dac.h"
 #include "defines.h"
 #include "system.h"

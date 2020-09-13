@@ -12,8 +12,7 @@
 #include "radio.h"
 #include "defines.h"
 #include "system.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+
 
 static QueueHandle_t oq;
 static bool transmit = false; 

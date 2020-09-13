@@ -23,7 +23,6 @@
 #include "hdlc.h"
 #include "ui.h"
 #include "radio.h"
-#include "freertos/task.h"
 #include "heardlist.h"
 #include "digipeater.h"
 #include <string.h>

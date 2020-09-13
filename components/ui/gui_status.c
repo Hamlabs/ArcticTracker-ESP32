@@ -10,8 +10,6 @@
 #include "gps.h"
 #include "ui.h"
 #include "gui.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "networking.h"
 #include "system.h"
 

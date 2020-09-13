@@ -7,7 +7,7 @@
 #include "defines.h"
 #include <stdlib.h>
 #include "hdlc.h"
-#include "freertos/task.h"
+#include "system.h"
 #include "radio.h"
 #include "config.h"
 #include "esp_log.h"

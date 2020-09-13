@@ -1,7 +1,5 @@
 
 #include <stdio.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/event_groups.h" 
 #include "defines.h"
 #include "config.h"
 #include "hdlc.h"
