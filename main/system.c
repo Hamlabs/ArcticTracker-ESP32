@@ -22,6 +22,7 @@
 #include "gui.h"
 #include "afsk.h"
 #include "radio.h"
+#include "gps.h"
 
 static void initialize_sntp(void);
 
@@ -124,8 +125,7 @@ static void initialize_sntp(void)
 
 void time_init()
 {
-    struct tm timeinfo;
-    if (!time_getUTC(&timeinfo)) {
+    if (getTime() <= 30000000) {
         if (wifi_isConnected()) {
             ESP_LOGI(TAG, "Time is not set yet. Getting time over SNTP.");
             initialize_sntp();
@@ -139,19 +139,78 @@ void time_init()
 
 
 /*******************************************************************************
+ * Get time. Return -1 if time is not set
+ *******************************************************************************/
+
+time_t getTime() {
+    time_t now;
+    if (gps_is_fixed())
+        now = gps_get_time();
+    else
+        time(&now);
+    return now;
+}
+
+
+/*******************************************************************************
  * Get UTC time. Return true if time is set
  *******************************************************************************/
 
-bool time_getUTC(struct tm *timeinfo)
+bool getUTC(struct tm *timeinfo)
 {
-    time_t now;
-    time(&now);
-    localtime_r(&now, timeinfo);
-    // Is time set? If not, tm_year will be (1970 - 1900).
-    if (timeinfo->tm_year < (2016 - 1900)) 
+    time_t now = getTime();
+    if (now < 30000000)
         return false; 
+    localtime_r(&now, timeinfo);
     return true; 
 }
+
+
+
+/********************************************************************************
+ * Time formatting
+ ********************************************************************************/
+
+char* datetime2str(char* buf, time_t time)
+{
+    struct tm *tm = gmtime(&time);
+    switch (tm->tm_mon+1) {
+        case  1: sprintf(buf, "Jan"); break;
+        case  2: sprintf(buf, "Feb"); break;
+        case  3: sprintf(buf, "Mar"); break;
+        case  4: sprintf(buf, "Apr"); break;
+        case  5: sprintf(buf, "May"); break;
+        case  6: sprintf(buf, "Jun"); break;
+        case  7: sprintf(buf, "Jul"); break;
+        case  8: sprintf(buf, "Aug"); break;
+        case  9: sprintf(buf, "Sep"); break;
+        case 10: sprintf(buf, "Oct"); break;
+        case 11: sprintf(buf, "Nov"); break;
+        case 12: sprintf(buf, "Dec"); break;
+        default:  sprintf(buf, "???"); ;
+    }
+    sprintf(buf+3, " %02u %02u:%02u UT", tm->tm_mday, 
+        (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min);
+    return buf;
+}
+
+
+char* time2str(char* buf, time_t time)
+{
+    struct tm *tm = gmtime(&time);
+    sprintf(buf, "%02u:%02u:%02u", 
+      (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min, (uint8_t) tm->tm_sec );
+    return buf;
+}
+ 
+ 
+char* date2str(char* buf, time_t time)
+{
+    struct tm *tm = gmtime(&time);
+    sprintf(buf, "%02hu-%02hu-%4hu", (uint8_t) tm->tm_mday, (uint8_t) tm->tm_mon+1, (uint16_t) tm->tm_year+1900);
+    return buf;
+}
+
 
 
 

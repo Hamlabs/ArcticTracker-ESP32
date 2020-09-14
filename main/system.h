@@ -28,8 +28,11 @@ void systemShutdown(void);
 /* Time */
 typedef struct tm tm_t; 
 extern void time_init(); 
-bool time_getUTC(tm_t *timeinfo);
-
+bool   getUTC(tm_t *timeinfo);
+time_t getTime();
+char*  datetime2str(char*, time_t);
+char*  time2str (char*, time_t);
+char*  date2str (char*, time_t);
 
 /* Hardware timer - as periodic clocks */
 void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *), bool iram);

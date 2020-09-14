@@ -76,7 +76,7 @@ void tracker_posReport()
 {
     if (!gps_is_fixed())
         return;
-    report_station_position(&current_pos, false);
+    report_station_position(&gps_current_pos, false);
     activate_tx();
 }
 
@@ -144,7 +144,7 @@ void tracker_addObject()
     else
        nObjects++;
     
-    object_pos[nextObj] = current_pos;
+    object_pos[nextObj] = gps_current_pos;
     report_object(nextObj, true);
     nextObj = (nextObj + 1) % MAX_OBJECTS;
     activate_tx();
@@ -220,7 +220,7 @@ static void tracker(void* arg)
          * Send status report and object reports.
          */
         if (++st_count >= statustime) {
-           report_status(&current_pos);
+           report_status(&gps_current_pos);
            st_count = 0;
            report_objects(true);
            activate_tx();
@@ -230,17 +230,17 @@ static void tracker(void* arg)
          * Send position report
          */  
         if (gps_is_fixed()) {
-           if (should_update(&prev_pos_gps, &prev_pos, &current_pos)) {
+           if (should_update(&prev_pos_gps, &prev_pos, &gps_current_pos)) {
               if (GET_BYTE_PARAM("REPORT.BEEP.on")) 
                  { beep(10); }
             
-              report_station_position(&current_pos, false);
-              prev_pos = current_pos;                      
+              report_station_position(&gps_current_pos, false);
+              prev_pos = gps_current_pos;                      
            }
            else
-              report_station_position(&current_pos, true);
+              report_station_position(&gps_current_pos, true);
         
-           prev_pos_gps = current_pos;
+           prev_pos_gps = gps_current_pos;
            activate_tx();
            t = TRACKER_SLEEP_TIME;
  
@@ -682,18 +682,18 @@ static void send_header(FBUF* packet, bool no_tx)
 
 static void send_timestamp(FBUF* packet, posdata_t* pos)
 {
-    char ts[9];
-    sprintf(ts, "%02u%02u%02uh%c", 
+    char ts[12];
+    sprintf(ts, "%02u%02u%02u%c%c", 
        (uint8_t) ((pos->timestamp / 3600) % 24), 
        (uint8_t) ((pos->timestamp / 60) % 60), 
-       (uint8_t) (pos->timestamp % 60), '\0' );
+       (uint8_t) (pos->timestamp % 60), 'h', '\0' );
     fbuf_putstr(packet, ts);   
 }
 
 
 static void send_timestamp_z(FBUF* packet, posdata_t* pos)
 {
-    char ts[10];
+    char ts[13];
     sprintf(ts, "%02u%02u%02uz%c", 
        (uint8_t) (pos->timestamp / 86400)+1,
        (uint8_t) ((pos->timestamp / 3600) % 24), 

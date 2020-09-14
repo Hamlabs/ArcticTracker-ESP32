@@ -144,7 +144,7 @@ static int do_log(int argc, char** argv)
 static int do_time(int argc, char** argv)
 {
     struct tm timeinfo;
-    if (time_getUTC(&timeinfo)) {
+    if (getUTC(&timeinfo)) {
         char strftime_buf[64];
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         printf("%s UTC\n", strftime_buf);
@@ -153,6 +153,7 @@ static int do_time(int argc, char** argv)
         printf("Time is not set\n");
     return 0;
 }
+
 
 
 /********************************************************************************

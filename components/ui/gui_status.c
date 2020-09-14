@@ -141,7 +141,7 @@ static void status_screen2() {
     if (gps_is_fixed()) {
        gui_writeText(0, LINE1, pos2str_lat(buf, gps_get_pos()));
        gui_writeText(0, LINE2, pos2str_long(buf, gps_get_pos()));
-       gui_writeText(0, LINE3, datetime2str(buf, gps_get_date(), gps_get_time()));
+       gui_writeText(0, LINE3, datetime2str(buf, gps_get_time()));
     }		     
     else
        gui_writeText(0, LINE1, "Searching...");

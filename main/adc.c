@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "system.h"
 #include "driver/gpio.h"
-#include "system.h"
 #include "esp_adc_cal.h"
 #include "defines.h"
 #include "config.h"

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <math.h>
 #include "system.h"
 #include "hdlc.h"
@@ -26,9 +27,8 @@
 
 
 /* Current position and time */
-posdata_t current_pos; 
-timestamp_t current_time = 0; 
-date_t current_date;
+posdata_t gps_current_pos; 
+time_t gps_current_time = 0; 
    
 static float altitude = -1;
 
@@ -141,11 +141,9 @@ static void nmeaListener(void* arg)
  ***********************************************************************/
 
 posdata_t*  gps_get_pos()
-   { return &current_pos; }
-timestamp_t gps_get_time()
-   { return current_time; } 
-date_t gps_get_date()
-   { return current_date; } 
+   { return &gps_current_pos; }
+time_t gps_get_time()
+   { return gps_current_time; } 
   
   
   
@@ -289,54 +287,23 @@ char* pos2str_long(char* buf, posdata_t *pos)
  * Convert date/time NMEA fields (timestamp + date)
  *****************************************************************/
  
-static void nmea2time( timestamp_t* t, date_t* d, const char* timestr, const char* datestr)
+static void nmea2time( time_t* t, const char* timestr, const char* datestr)
 {
     unsigned int hour, min, sec, day, month, year;
     sscanf(timestr, "%2u%2u%2u", &hour, &min, &sec);
     sscanf(datestr, "%2u%2u%2u", &day, &month, &year);
-    d->day = day; d->month = month; d->year = year; 
-    d->year += 2000;
-    *t = (uint32_t) 
-         ((uint32_t) d->day-1) * 86400 +  ((uint32_t)hour) * 3600 + ((uint32_t)min) * 60 + sec;
+    
+    struct tm tm; 
+    tm.tm_year = year + 2000 - 1900;
+    tm.tm_mon = month - 1; 
+    tm.tm_mday = day;
+    tm.tm_hour = hour;
+    tm.tm_min = min;
+    tm.tm_sec = sec; 
+    
+    *t = mktime(&tm);
 }
 
-
-char* datetime2str(char* buf, date_t d, timestamp_t time)
-{
-    switch (d.month) {
-        case  1: sprintf(buf, "Jan"); break;
-        case  2: sprintf(buf, "Feb"); break;
-        case  3: sprintf(buf, "Mar"); break;
-        case  4: sprintf(buf, "Apr"); break;
-        case  5: sprintf(buf, "May"); break;
-        case  6: sprintf(buf, "Jun"); break;
-        case  7: sprintf(buf, "Jul"); break;
-        case  8: sprintf(buf, "Aug"); break;
-        case  9: sprintf(buf, "Sep"); break;
-        case 10: sprintf(buf, "Oct"); break;
-        case 11: sprintf(buf, "Nov"); break;
-        case 12: sprintf(buf, "Dec"); break;
-        default:  sprintf(buf, "???"); ;
-    }
-    sprintf(buf+3, " %02u %02u:%02u UT", d.day, 
-      (uint8_t) ((time / 3600) % 24), (uint8_t) ((time / 60) % 60));
-    return buf;
-}
-
-
-char* time2str(char* buf, timestamp_t time)
-{
-    sprintf(buf, "%02u:%02u:%02u", 
-      (uint8_t) ((time / 3600) % 24), (uint8_t) ((time / 60) % 60), (uint8_t) (time % 60) );
-    return buf;
-}
- 
- 
-char* date2str(char* buf, date_t date)
-{
-   sprintf(buf, "%02hu-%02hu-%4hu", date.day, date.month, date.year);
-   return buf;
-}
 
 
  
@@ -390,7 +357,7 @@ static void do_rmc(uint8_t argc, char** argv)
        return;
     
     /* get timestamp */
-    nmea2time(&current_time, &current_date, argv[1], argv[9]);
+    nmea2time(&gps_current_time, argv[1], argv[9]);
     
     if (*argv[2] != 'A') { 
        notify_fix(false);          /* Ignore if receiver not in lock */
@@ -406,40 +373,40 @@ static void do_rmc(uint8_t argc, char** argv)
     lock_cnt = 1;
     notify_fix(true);
    
-    current_pos.timestamp = current_time; 
+    gps_current_pos.timestamp = gps_current_time; 
     
     /* get latitude [ddmm.mmmmm] */
-    str2coord(2, argv[3], &current_pos.latitude);  
+    str2coord(2, argv[3], &gps_current_pos.latitude);  
     if (*argv[4] == 'S')
-        current_pos.latitude = -current_pos.latitude;
+        gps_current_pos.latitude = -gps_current_pos.latitude;
         
      /* get longitude [dddmm.mmmmm] */
-    str2coord(3, argv[5], &current_pos.longitude);  
+    str2coord(3, argv[5], &gps_current_pos.longitude);  
     if (*argv[6] == 'W')
-        current_pos.longitude = -current_pos.longitude;
+        gps_current_pos.longitude = -gps_current_pos.longitude;
     
     /* get speed [nnn.nn] */
     if (*argv[7] != '\0')
-       sscanf(argv[7], "%f", &current_pos.speed);
+       sscanf(argv[7], "%f", &gps_current_pos.speed);
     else
-       current_pos.speed = 0;
+       gps_current_pos.speed = 0;
        
     /* get course [nnn.nn] */
     if (*argv[8] != '\0') {
        float x;
        sscanf(argv[8], "%f", &x);
-       current_pos.course = (uint16_t) x+0.5;
+       gps_current_pos.course = (uint16_t) x+0.5;
     }
     else
-       current_pos.course = 0;
-    current_pos.altitude = altitude;
+       gps_current_pos.course = 0;
+    gps_current_pos.altitude = altitude;
            
     /* If requested, show position on screen */    
     if (monitor_pos) {
       printf("TIME: %s, POS: lat=%f, long=%f, SPEED: %f km/h, COURSE: %u deg\r\n",  
-          time2str(tbuf, current_pos.timestamp), 
-          current_pos.latitude, current_pos.longitude, 
-          current_pos.speed*KNOTS2KMH, current_pos.course);
+          time2str(tbuf, gps_current_pos.timestamp), 
+          gps_current_pos.latitude, gps_current_pos.longitude, 
+          gps_current_pos.speed*KNOTS2KMH, gps_current_pos.course);
     }
 }
 
