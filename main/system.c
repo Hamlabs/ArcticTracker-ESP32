@@ -6,12 +6,11 @@
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
-
 #include "defines.h" 
 #include "esp_wifi.h"
+#include "system.h"
 #include "networking.h"
 #include "config.h"
-#include "system.h"
 #include "esp_sntp.h"
 #include "esp_ota_ops.h"
 #include "esp_http_client.h"
@@ -231,6 +230,7 @@ void set_logLevels() {
     esp_log_level_set("*", dfl);
         
     set_logLevel("system", "LGLV.system", dfl);
+    set_logLevel("main", "LGLV.main", dfl);
     set_logLevel("wifi", "LGLV.wifi", dfl);
     set_logLevel("wifix", "LGLV.wifix", dfl);
     set_logLevel("config", "LGLV.config", dfl);
@@ -259,7 +259,8 @@ bool hasTag(char*tag) {
            strcmp(tag, "hdlc-enc")==0 || strcmp(tag, "gps")==0     ||
            strcmp(tag, "hdlc-dec")==0 || strcmp(tag, "uart")==0    ||
            strcmp(tag, "digi")==0     || strcmp(tag, "igate")==0   || 
-           strcmp(tag, "tcp-cli")==0  || strcmp(tag, "*")==0;
+           strcmp(tag, "tcp-cli")==0  || strcmp(tag, "main")==0    ||
+           strcmp(tag, "*")==0;
 }
 
 

@@ -5,18 +5,16 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "esp_log.h"
 #include "esp_console.h"
 #include "argtable3/argtable3.h"
 #include "esp_wifi.h"
-#include "tcpip_adapter.h"
-#include "esp_event_loop.h"
-
+#include "esp_event.h"
+#include "system.h"
 #include "defines.h"
 #include "config.h"
 #include "commands.h"
 #include "networking.h"
-#include "system.h"
+
 
 #define AP_BEACON_INTERVAL 5000 // in milliseconds
 #define AP_SSID_HIDDEN 0
@@ -155,10 +153,10 @@ void wifi_init(void)
     tcpip_adapter_init();
     sprintf(default_ssid, "Arctic_%X", chipId());
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
-//    ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
     
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    
     wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on"));
     esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
     scanDone = cond_create();
