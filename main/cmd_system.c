@@ -11,6 +11,8 @@
 #include "esp_system.h"
 #include "esp_sleep.h"
 #include "esp_partition.h"
+#include "esp_vfs_dev.h"
+#include "esp_spiffs.h"
 #include "driver/rtc_io.h"
 #include "nvs_flash.h"
 #include "argtable3/argtable3.h"
@@ -35,8 +37,40 @@ static int do_tasks(int argc, char** argv);
 
 #define TAG "shell"
 
+    
+/********************************************************************************
+ * List files
+ ********************************************************************************/
+
+static int do_ls(int argc, char** argv) {
+    DIR *dp;
+    struct dirent *ep;   
+    struct stat sb;
+    dp = opendir ("/files");
+    char tpath[263];
+    char tstr[16];
+    
+    if (dp != NULL)
+    {
+        while ((ep = readdir (dp)) != NULL) {
+            sprintf(tpath, "/files/%s", ep->d_name); 
+            stat(tpath, &sb);
+            printf("mtime=%ld\n", sb.st_mtime);
+            if (sb.st_mtime <= 0)
+                sprintf(tstr, "?"); 
+            else 
+                datetime2str(tstr, sb.st_mtime);  
+            printf("%8d bytes  %sC  %s\n", (int) sb.st_size, tstr, ep->d_name);
+        }
+        (void) closedir (dp);
+    }
+    else
+        ESP_LOGW(TAG, "Couldn't open the directory");
+    return 0;
+}
 
 
+    
 /********************************************************************************
  * Restart the program
  ********************************************************************************/
@@ -148,6 +182,8 @@ static int do_time(int argc, char** argv)
         char strftime_buf[64];
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         printf("%s UTC\n", strftime_buf);
+        
+        printf("Seconds: %ld\n", getTime());
     }
     else
         printf("Time is not set\n");
@@ -307,6 +343,7 @@ CMD_U16_SETTING  (_param_adcref, "ADC.REF",  1100, 0, 3300);
 
 void register_system()
 {
+    ADD_CMD("ls",       &do_ls,         "List files", NULL);  
     ADD_CMD("free",     &do_free,       "Get the total size of heap memory available", NULL);
     ADD_CMD("sysinfo",  &do_sysinfo,    "System info", NULL);    
     ADD_CMD("restart",  &do_restart,    "Restart the program", NULL);

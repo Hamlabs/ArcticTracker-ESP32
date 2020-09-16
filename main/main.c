@@ -8,14 +8,13 @@
 #include "esp_system.h"
 #include "esp_console.h"
 #include "esp_vfs_dev.h"
+#include "esp_spiffs.h"
 #include "driver/uart.h"
 #include "linenoise/linenoise.h"
 #include "argtable3/argtable3.h"
 #include "commands.h"
-#include "esp_vfs_fat.h"
 #include "config.h"
 #include "networking.h"
-#include "system.h"
 #include "defines.h"
 #include "fbuf.h"
 #include "gps.h"
@@ -28,39 +27,12 @@
 #include "digipeater.h"
 #include "igate.h"
 
+
 static const char* TAG = "main";
 
-/* Console command history can be stored to and loaded from a file.
- * The easiest way to do this is to use FATFS filesystem on top of
- * wear_levelling library.
- */
-#if CONFIG_STORE_HISTORY
 
-#define MOUNT_PATH "/data"
-#define HISTORY_PATH MOUNT_PATH "/history.txt"
+#define MOUNT_PATH "/files"
 #define ESP_INTR_FLAG_DEFAULT 0
-
-
-
-/********************************************************************************
- * Initialize FAT filesystem
- ********************************************************************************/
-
-static void initialize_filesystem()
-{
-    static wl_handle_t wl_handle;
-    const esp_vfs_fat_mount_config_t mount_config = {
-            .max_files = 4,
-            .format_if_mount_failed = true
-    };
-    esp_err_t err = esp_vfs_fat_spiflash_mount(MOUNT_PATH, "storage", &mount_config, &wl_handle);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
-        return;
-    }
-}
-#endif // CONFIG_STORE_HISTORY
-
 
 
 
@@ -108,11 +80,6 @@ static void initialize_console()
 
     /* Set command history size */
     linenoiseHistorySetMaxLen(100);
-
-#if CONFIG_STORE_HISTORY
-    /* Load command history from filesystem */
-    linenoiseHistoryLoad(HISTORY_PATH);
-#endif
 }
 
 
@@ -163,10 +130,6 @@ void run_console()
         }
         /* Add the command to the history */
         linenoiseHistoryAdd(line);
-#if CONFIG_STORE_HISTORY
-        /* Save command history to filesystem */
-        linenoiseHistorySave(HISTORY_PATH);
-#endif
 
         /* Try to run the command */
         int ret;
@@ -208,6 +171,37 @@ static void startup(void* arg)
 }
 
 
+esp_vfs_spiffs_conf_t spconf = {
+      .base_path = "/files",
+      .partition_label = "storage",
+      .max_files = 5,
+      .format_if_mount_failed = true
+    };
+
+void spiffs_init() {
+    esp_err_t ret = esp_vfs_spiffs_register(&spconf);
+    if (ret != ESP_OK) {
+        if (ret == ESP_FAIL) 
+            ESP_LOGE(TAG, "Failed to mount or format filesystem");
+        else if (ret == ESP_ERR_NOT_FOUND) 
+            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
+        else 
+            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+    }
+ 
+    size_t total = 0, used = 0;
+    ret = esp_spiffs_info(spconf.partition_label, &total, &used);
+    if (ret != ESP_OK) 
+        ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
+    else 
+        ESP_LOGI(TAG, "SPIFFS partition size: total: %d, used: %d", total, used);
+    
+    if (esp_spiffs_mounted(spconf.partition_label)) 
+         ESP_LOGI(TAG, "SPIFFS partition mounted on %s\n", spconf.base_path);
+    
+}
+
+
 
 
 /********************************************************************************
@@ -219,10 +213,6 @@ void app_main()
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
     set_logLevels();
-        
-#if CONFIG_STORE_HISTORY
-    initialize_filesystem();
-#endif
 
     adc_init(); 
     initialize_console();
@@ -233,7 +223,7 @@ void app_main()
     register_wifi();
     register_aprs();
     wifi_init();
-    
+    spiffs_init();    
     gps_init(GPS_UART);
     ui_init();
     xTaskCreatePinnedToCore(&startup, "Startup thread", 
