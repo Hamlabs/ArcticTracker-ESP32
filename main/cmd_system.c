@@ -27,7 +27,7 @@
 #include "gps.h"
 #include "lcd.h"
 #include "gui.h"
-
+#include "linenoise/linenoise.h"
 
 
 static int do_sysinfo(int argc, char** argv);
@@ -55,17 +55,90 @@ static int do_ls(int argc, char** argv) {
         while ((ep = readdir (dp)) != NULL) {
             sprintf(tpath, "/files/%s", ep->d_name); 
             stat(tpath, &sb);
-            printf("mtime=%ld\n", sb.st_mtime);
-            if (sb.st_mtime <= 0)
-                sprintf(tstr, "?"); 
-            else 
-                datetime2str(tstr, sb.st_mtime);  
+            datetime2str(tstr, sb.st_mtime);  
             printf("%8d bytes  %sC  %s\n", (int) sb.st_size, tstr, ep->d_name);
         }
         (void) closedir (dp);
     }
     else
         ESP_LOGW(TAG, "Couldn't open the directory");
+    return 0;
+}
+
+
+/********************************************************************************
+ * Remove file
+ ********************************************************************************/
+
+static int do_rm(int argc, char** argv) {
+    if (argc<=1) {
+        printf("rm command needs a file name as argument\n");
+        return 0;
+    }
+    else {
+        char path[263];
+        sprintf(path, "/files/%s", argv[1]);
+        if ( unlink(path) == -1)
+            printf("Couldn't remove file: %s\n", path);
+        else
+            printf("Ok\n");
+    }
+    return 0;
+}
+
+
+
+/********************************************************************************
+ * Write file
+ ********************************************************************************/
+
+static int do_write(int argc, char** argv) {
+    if (argc<=1) {
+        printf("write command needs one argument (filename)\n");
+        return 0;
+    }
+    else {
+        char path[263];
+        sprintf(path, "/files/%s", argv[1]);
+        FILE *f = fopen(path, "a");
+        printf("Writing to %s. Ctrl-D to terminate\n", path);
+
+        /* Loop reading text from console. Ctrl-D to disconnect */
+        char* line;
+        while ((line = linenoise("")) != NULL) { 
+            fprintf(f, "%s\n", line);
+            free(line);
+        }
+        fclose(f);
+    }
+    return 0;
+}
+
+
+
+/********************************************************************************
+ * Read file
+ ********************************************************************************/
+
+static int do_read(int argc, char** argv) {
+    if (argc<=1) {
+        printf("read command needs one argument (filename)\n");
+        return 0;
+    }
+    else {
+        char buf[263];
+        sprintf(buf, "/files/%s", argv[1]);
+        FILE *f = fopen(buf, "r");
+        printf("\n");
+
+        while (true) { 
+            if (fgets(buf, 262, f)==NULL)
+                break;
+            printf("%s",buf);
+        }
+        printf("\n");
+        fclose(f);
+    }
     return 0;
 }
 
@@ -344,6 +417,9 @@ CMD_U16_SETTING  (_param_adcref, "ADC.REF",  1100, 0, 3300);
 void register_system()
 {
     ADD_CMD("ls",       &do_ls,         "List files", NULL);  
+    ADD_CMD("rm",       &do_rm,         "Remove file", "<file>");
+    ADD_CMD("write",    &do_write,      "Write to file", "<file>");
+    ADD_CMD("read",     &do_read,       "Read from file", "<file>");
     ADD_CMD("free",     &do_free,       "Get the total size of heap memory available", NULL);
     ADD_CMD("sysinfo",  &do_sysinfo,    "System info", NULL);    
     ADD_CMD("restart",  &do_restart,    "Restart the program", NULL);
