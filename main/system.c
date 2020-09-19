@@ -247,20 +247,21 @@ void set_logLevels() {
     set_logLevel("digi", "LGLV.digi", dfl);
     set_logLevel("igate", "LGLV.igate", dfl);
     set_logLevel("tcp-cli", "LGLV.tcp-cli", dfl);
+    set_logLevel("trackstore", "LGLV.trackstore", dfl);
 }
 
 
 bool hasTag(char*tag) {
-    return strcmp(tag, "wifi")==0     || strcmp(tag, "wifix")==0   ||
-           strcmp(tag, "config")==0   || strcmp(tag, "httpd")==0   ||
-           strcmp(tag, "shell")==0    || strcmp(tag, "system")==0  ||
-           strcmp(tag, "tracker")==0  || strcmp(tag, "esp-tls")==0 ||
-           strcmp(tag, "radio")==0    || strcmp(tag, "ui")==0      ||
-           strcmp(tag, "hdlc-enc")==0 || strcmp(tag, "gps")==0     ||
-           strcmp(tag, "hdlc-dec")==0 || strcmp(tag, "uart")==0    ||
-           strcmp(tag, "digi")==0     || strcmp(tag, "igate")==0   || 
-           strcmp(tag, "tcp-cli")==0  || strcmp(tag, "main")==0    ||
-           strcmp(tag, "*")==0;
+    return strcmp(tag, "wifi")==0       || strcmp(tag, "wifix")==0   ||
+           strcmp(tag, "config")==0     || strcmp(tag, "httpd")==0   ||
+           strcmp(tag, "shell")==0      || strcmp(tag, "system")==0  ||
+           strcmp(tag, "tracker")==0    || strcmp(tag, "esp-tls")==0 ||
+           strcmp(tag, "radio")==0      || strcmp(tag, "ui")==0      ||
+           strcmp(tag, "hdlc-enc")==0   || strcmp(tag, "gps")==0     ||
+           strcmp(tag, "hdlc-dec")==0   || strcmp(tag, "uart")==0    ||
+           strcmp(tag, "digi")==0       || strcmp(tag, "igate")==0   || 
+           strcmp(tag, "tcp-cli")==0    || strcmp(tag, "main")==0    ||
+           strcmp(tag, "trackstore")==0 || strcmp(tag, "*")==0;
 }
 
 

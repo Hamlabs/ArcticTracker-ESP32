@@ -26,6 +26,7 @@
 #include "ax25.h"
 #include "digipeater.h"
 #include "igate.h"
+#include "trackstore.h"
 
 
 static const char* TAG = "main";
@@ -224,6 +225,7 @@ void app_main()
     register_aprs();
     wifi_init();
     spiffs_init();    
+    trackstore_start();
     gps_init(GPS_UART);
     ui_init();
     xTaskCreatePinnedToCore(&startup, "Startup thread", 
