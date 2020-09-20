@@ -254,8 +254,8 @@ static void tracker(void* arg)
     gps_off();
     if (!TRACKER_TRX_ONDEMAND)
         radio_release();
-    vTaskDelete(NULL);
     trackert = NULL;
+    vTaskDelete(NULL);
 }
 
 

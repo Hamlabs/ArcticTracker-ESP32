@@ -122,6 +122,8 @@
 #define STACK_TCP_REC        3000
 #define STACK_IGATE          2600
 #define STACK_IGATE_RADIO    2300
+#define STACK_TRACKLOG       2700
+
     
 #define CORE_AUTOCON        0
 #define CORE_NMEALISTENER   1
@@ -137,6 +139,7 @@
 #define CORE_TCP_REC        1
 #define CORE_IGATE          1
 #define CORE_IGATE_RADIO    0
+#define CORE_TRACKLOG       1
 
 
 

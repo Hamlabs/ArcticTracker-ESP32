@@ -9,10 +9,10 @@
 
 static mutex_t mutex;
 static ts_meta_t meta;
-static uint32_t prev_lat=0, prev_lng=0;
+static posentry_t prev;
 static FILE *lastfile=NULL, *firstfile=NULL;
 
-
+static bool check_rblock();
 static FILE* open_block(blkno_t blk, char* perm);
 static void delete_block(blkno_t blk);
 static void write_entry(posentry_t* entr, FILE* f);
@@ -34,11 +34,12 @@ void trackstore_start() {
     meta.first = meta.last = 0; 
     meta.lastblk = meta.firstblk = 0;
     meta.nblocks = 1;
+    prev.time = prev.lat = prev.lng = prev.altitude = 0;
     
     /* Get metadata from nvs */
     get_bin_param("tracks.META", &meta, sizeof(ts_meta_t), NULL);
-    ESP_LOGI(TAG, "start: first=%d, last=%d, firstblk=%d, lastblk=%d", 
-             meta.first, meta.last, meta.firstblk, meta.lastblk);
+    ESP_LOGD(TAG, "start: first=%d, last=%d, firstblk=%d, lastblk=%d, nblocks=%d" , 
+             meta.first, meta.last, meta.firstblk, meta.lastblk, meta.nblocks);
     
     /* Open file(s) */
     firstfile = open_block(meta.firstblk, "a+");
@@ -68,6 +69,8 @@ void trackstore_reset() {
     /* Reset metainfo */
     meta.first = meta.last = 0; 
     meta.lastblk = meta.firstblk = 0;
+    meta.nblocks = 1;
+    lastfile = firstfile = open_block(meta.lastblk, "a+");
     set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
     mutex_unlock(mutex);
 }
@@ -94,8 +97,8 @@ void trackstore_stop() {
 
 void trackstore_put(posdata_t *x) {
     posentry_t entry; 
-    ESP_LOGD(TAG, "put - first=%d, last=%d, firstblk=%d, lastblk=%d ",
-             meta.first, meta.last, meta.firstblk, meta.lastblk );
+    ESP_LOGD(TAG, "put - first=%d, last=%d, firstblk=%d, lastblk=%d, nblocks=%d ",
+             meta.first, meta.last, meta.firstblk, meta.lastblk, meta.nblocks );
     /* 
      * How to be sure that the timestamp is correctly 
      * represented as a unsigned 32 bit number?
@@ -105,15 +108,20 @@ void trackstore_put(posdata_t *x) {
     entry.lng = x->longitude * POS_RESOLUTION;
     entry.altitude = x->altitude;
     
-    /* Drop it if no change in position */
-    if (entry.lat == prev_lat && entry.lng == prev.lng)
-        return; 
-    prev_lat = entry.lat; 
-    prev_lng = entry.lng;
+    /* Drop it if no change in position in the last 60 seconds */
+    if (entry.lat == prev.lat && entry.lng == prev.lng && 
+        entry.time < prev.time+60)
+            return; 
+    prev = entry;
     
+    /* If empty */
+    if (meta.firstblk == meta.lastblk &&
+        meta.first == meta.last ) 
+          reset_empty(); 
+           
     mutex_lock(mutex); 
-    if (++meta.last > BLOCK_SIZE) {
-        if (nblocks == MAX_BLOCKS) {
+    if (meta.last >= BLOCK_SIZE) {
+        if (meta.nblocks == MAX_BLOCKS) {
             ESP_LOGE(TAG, "put - store is full");
             mutex_unlock(mutex);
             return;
@@ -123,11 +131,13 @@ void trackstore_put(posdata_t *x) {
         if (meta.firstblk != meta.lastblk)
             fclose(lastfile);
         meta.lastblk = (meta.lastblk + 1) % MAX_UINT16;
+        meta.nblocks++;
         lastfile = open_block(meta.lastblk, "a+");
-        meta.last = 1;
+        meta.last = 0;
     } 
     
     /* Append the entry to the file */
+    meta.last++;
     write_entry(&entry, lastfile);
     set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
     mutex_unlock(mutex); 
@@ -150,31 +160,16 @@ posentry_t* trackstore_getEnt(posentry_t* pbuf) {
         {  reset_empty(); 
            mutex_unlock(mutex); return NULL; }
     
-    if (meta.first >= BLOCK_SIZE) {
-        if (meta.firstblk == meta.lastblk)
-            { reset_empty();
-              mutex_unlock(mutex); return NULL; }
+    if (!check_rblock()) 
+        { mutex_unlock(mutex); return NULL; }
         
-        /* Move to a newer block */
-        ESP_LOGD(TAG, "get - switch block");
-        delete_block(meta.firstblk);
-        meta.firstblk = (meta.firstblk + 1) % MAX_UINT16;
-        meta.first = 0;
-        fclose(firstfile);
-        
-        /* Open file or get already open file */
-        if (meta.firstblk == meta.lastblk && lastfile!=NULL)
-            firstfile=lastfile;
-        else
-            firstfile = open_block(meta.firstblk, "a+");
-    }
-    
     read_entry(pbuf, firstfile, meta.first);
     meta.first++;
     set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
     mutex_unlock(mutex); 
     return pbuf;
 }
+
 
 
 posdata_t* trackstore_get(posdata_t* pbuf) {
@@ -196,6 +191,49 @@ posdata_t* trackstore_get(posdata_t* pbuf) {
 
 
 
+posentry_t* trackstore_peek(posentry_t* pbuf) {    
+    mutex_lock(mutex);
+    
+    /* If empty */
+    if ((meta.firstblk == meta.lastblk &&
+         meta.first == meta.last ) || (!check_rblock())) 
+        { mutex_unlock(mutex); return NULL; }
+
+    read_entry(pbuf, firstfile, meta.first);
+    mutex_unlock(mutex);
+    return pbuf;
+}
+
+
+
+/******************************************************
+ * If we are at the end of the block reading, move
+ * to next block. Return false if empty.  
+ ******************************************************/
+
+static bool check_rblock() { 
+    if (meta.first >= BLOCK_SIZE) {
+        if (meta.firstblk == meta.lastblk)
+            { reset_empty(); return false; }
+        
+        /* Move to a newer block */
+        ESP_LOGD(TAG, "read - switch block");
+        delete_block(meta.firstblk);
+        meta.nblocks--;
+        meta.firstblk = (meta.firstblk + 1) % MAX_UINT16;
+        meta.first = 0;
+        fclose(firstfile);
+        
+        /* Open file or get already open file */
+        if (meta.firstblk == meta.lastblk && lastfile!=NULL)
+            firstfile=lastfile;
+        else
+            firstfile = open_block(meta.firstblk, "a+");
+        set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
+    }
+    return true; 
+}
+    
 
 /******************************************************
  * If store is empty, we can call this to reset the
@@ -209,7 +247,9 @@ static void reset_empty() {
         delete_block(meta.firstblk); 
         meta.first = meta.last = 0;
         meta.firstblk = meta.lastblk = 0;
+        meta.nblocks = 1;
         firstfile = lastfile = open_block(meta.firstblk, "a+");
+        set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
     }
 }
 
@@ -225,7 +265,6 @@ static FILE* open_block(blkno_t blk, char* perm) {
     FILE* f = fopen(fname, perm);
     if (f==NULL)
         ESP_LOGW(TAG, "Couldn't open file %s: %s", fname, strerror(errno));
-    nblocks++;
     return f;
 }
 

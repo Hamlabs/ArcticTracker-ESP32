@@ -3,6 +3,7 @@
 #define __DEF_TRACKER_H__
 
 #include "gps.h"
+#include "fbuf.h"
 
 
 void tracker_setGate(FBQ* gt);
@@ -14,5 +15,12 @@ void tracker_addObject(void);
 void tracker_clearObjects(void);
 
 void send_extra_report(FBUF*, posdata_t*, char, char);
+
+
+void tracklog_init();
+void tracklog_on();
+void tracklog_off();
+
+
 
 #endif

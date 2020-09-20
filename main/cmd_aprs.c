@@ -125,6 +125,12 @@ void hdl_radio(bool on) {
     }
 }
 
+void hdl_tracklog(bool on) {
+    if (on) 
+        tracklog_on();
+    else
+        tracklog_off();
+}
 
 void hdl_tracker(bool on) {
     if (on) 
@@ -141,6 +147,8 @@ void hdl_igate(bool on) {
     igate_activate(on); 
 }
 
+
+
 // Radio and APRS settings
 
 CMD_USTR_SETTING (_param_mycall,     "MYCALL",       9,  DFL_MYCALL,       REGEX_AXADDR);
@@ -154,21 +162,24 @@ CMD_STR_SETTING  (_param_igate_host, "IGATE.HOST",   64, DFL_IGATE_HOST,   REGEX
 CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",   9,  DFL_IGATE_USER,   REGEX_AXADDR);
 CMD_STR_SETTING  (_param_igate_filt, "IGATE.FILTER", 32, DFL_IGATE_FILTER, ".*");
 
-CMD_BYTE_SETTING (_param_txdelay,    "TXDELAY",     DFL_TXDELAY,     0, 250, NULL);
-CMD_BYTE_SETTING (_param_txtail,     "TXTAIL",      DFL_TXTAIL,      0, 250, NULL);
-CMD_BYTE_SETTING (_param_maxframe,   "MAXFRAME",    DFL_MAXFRAME,    1, 7,   NULL);
-CMD_BYTE_SETTING (_param_maxpause,   "MAXPAUSE",    DFL_MAXPAUSE,    0, 250, NULL);
-CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",    DFL_MINPAUSE,    0, 250, NULL);
-CMD_BYTE_SETTING (_param_mindist,    "MINDIST",     DFL_MINDIST,     0, 250, NULL);
-CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",  DFL_STATUSTIME,  1, 250, NULL);
-CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH", DFL_TRX_SQUELCH, 1, 8,   hdl_squelch);
-CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",   DFL_TURNLIMIT,   0, 360);
-CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",  DFL_IGATE_PORT,  1, 65535);
-CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",  0,               0, 65535);
-CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",      DFL_TXFREQ,      1440000, 1460000);
-CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",      DFL_RXFREQ,      1440000, 1460000);
+CMD_BYTE_SETTING (_param_trklogint,  "TRACKLOGINT",  DFL_TRACKLOGINT, 0, 250, NULL);
+CMD_BYTE_SETTING (_param_trklogttl,  "TRACKLOG.TTL", DFL_TRACKLOG_TTL,0, 250, NULL);
+CMD_BYTE_SETTING (_param_txdelay,    "TXDELAY",      DFL_TXDELAY,     0, 250, NULL);
+CMD_BYTE_SETTING (_param_txtail,     "TXTAIL",       DFL_TXTAIL,      0, 250, NULL);
+CMD_BYTE_SETTING (_param_maxframe,   "MAXFRAME",     DFL_MAXFRAME,    1, 7,   NULL);
+CMD_BYTE_SETTING (_param_maxpause,   "MAXPAUSE",     DFL_MAXPAUSE,    0, 250, NULL);
+CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",     DFL_MINPAUSE,    0, 250, NULL);
+CMD_BYTE_SETTING (_param_mindist,    "MINDIST",      DFL_MINDIST,     0, 250, NULL);
+CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",   DFL_STATUSTIME,  1, 250, NULL);
+CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 1, 8,   hdl_squelch);
+CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
+CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",   DFL_IGATE_PORT,  1, 65535);
+CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",   0,               0, 65535);
+CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000);
+CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      1440000, 1460000);
 
 CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
+CMD_BOOL_SETTING (_param_tracklog_on,"TRACKLOG.on",    hdl_tracklog);
 CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     hdl_tracker);
 CMD_BOOL_SETTING (_param_timestamp,  "TIMESTAMP.on",   NULL);
 CMD_BOOL_SETTING (_param_compress,   "COMPRESS.on",    NULL);
@@ -205,6 +216,8 @@ void register_aprs()
     ADD_CMD("txdelay",    &_param_txdelay,     "APRS TXDELAY setting", "[<val>]");
     ADD_CMD("txtail",     &_param_txtail,      "APRS TXTAIL setting", "[<val>]");
        
+    ADD_CMD("tracklogint",&_param_trklogint,   "Interval for track logging (seconds)", "[<val>]");
+    ADD_CMD("tracklogttl",&_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
     ADD_CMD("maxframe",   &_param_maxframe,    "APRS max frames in a transmission", "[<val>]");
     ADD_CMD("maxpause",   &_param_maxpause,    "Tracking max pause (10 sec units)", "[<val>]");
     ADD_CMD("minpause",   &_param_minpause,    "Tracking min pause (10 sec units)", "[<val>]");
@@ -227,7 +240,8 @@ void register_aprs()
     ADD_CMD("igate-port", &_param_igate_port,  "Igate server port",  "[<portnr>]");
     ADD_CMD("igate-user", &_param_igate_user,  "Igate server user",  "[<callsign>]");
     ADD_CMD("igate-pass", &_param_igate_pass,  "Igate server passcode",  "[<code>]");
-    
+        
+    ADD_CMD("tracklog",   &_param_tracklog_on, "Track logging", "[on|off]"); 
     ADD_CMD("radio",      &_param_radio_on,    "Radio module power", "[on|off]");
     ADD_CMD("tracker",    &_param_tracker_on,  "APRS tracker setting", "[on|off]");
     ADD_CMD("reportbeep", &_param_rbeep_on,    "Beep when report is sent", "[on|off]");
