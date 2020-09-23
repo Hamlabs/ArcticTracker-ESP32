@@ -156,7 +156,8 @@
 #define REGEX_DIGIPATH "\\w{3,6}(-\\d{1,2})?(\\,\\w{3,6}(-\\d{1,2})?)*"
 #define REGEX_IPADDR   "(\\d{1,3}\\.){3}\\d{1,3}"
 #define REGEX_APRSSYM  "[0-9A-Z\\/\\\\&]."
-#define REGEX_HOSTNAME "[0-9-a-zA-Z\\-\\_\\.]+"
+#define REGEX_HOSTNAME "[0-9a-zA-Z\\-\\_\\.]+"
+#define REGEX_FPATH    "[0-9a-zA-Z\\-\\_\\.\\/]+"
 
 #define NORMALPRIO 5
 

@@ -154,6 +154,9 @@ void hdl_igate(bool on) {
 CMD_USTR_SETTING (_param_mycall,     "MYCALL",       9,  DFL_MYCALL,       REGEX_AXADDR);
 CMD_USTR_SETTING (_param_dest,       "DEST",         9,  DFL_DEST,         REGEX_AXADDR);
 CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",     70, DFL_DIGIPATH,     REGEX_DIGIPATH);
+
+CMD_STR_SETTING  (_param_trkloghost, "TRKLOG.HOST",  64, DFL_TRKLOG_HOST,  REGEX_HOSTNAME);
+CMD_STR_SETTING  (_param_trklogpath, "TRKLOG.PATH" , 32, DFL_TRKLOG_PATH,  REGEX_FPATH);
 CMD_STR_SETTING  (_param_symbol,     "SYMBOL",       3,  DFL_SYMBOL,       REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_osym,       "OBJ.SYMBOL",   3,  DFL_OBJ_SYMBOL,   REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_oid,        "OBJ.ID",       10, DFL_OBJ_ID,       REGEX_AXADDR);
@@ -162,8 +165,8 @@ CMD_STR_SETTING  (_param_igate_host, "IGATE.HOST",   64, DFL_IGATE_HOST,   REGEX
 CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",   9,  DFL_IGATE_USER,   REGEX_AXADDR);
 CMD_STR_SETTING  (_param_igate_filt, "IGATE.FILTER", 32, DFL_IGATE_FILTER, ".*");
 
-CMD_BYTE_SETTING (_param_trklogint,  "TRACKLOGINT",  DFL_TRACKLOGINT, 0, 250, NULL);
-CMD_BYTE_SETTING (_param_trklogttl,  "TRACKLOG.TTL", DFL_TRACKLOG_TTL,0, 250, NULL);
+CMD_BYTE_SETTING (_param_trklogint,  "TRKLOG.INT",   DFL_TRKLOG_INT,  0, 60,  NULL);
+CMD_BYTE_SETTING (_param_trklogttl,  "TRKLOG.TTL",   DFL_TRKLOG_TTL,  0, 250, NULL);
 CMD_BYTE_SETTING (_param_txdelay,    "TXDELAY",      DFL_TXDELAY,     0, 250, NULL);
 CMD_BYTE_SETTING (_param_txtail,     "TXTAIL",       DFL_TXTAIL,      0, 250, NULL);
 CMD_BYTE_SETTING (_param_maxframe,   "MAXFRAME",     DFL_MAXFRAME,    1, 7,   NULL);
@@ -172,14 +175,16 @@ CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",     DFL_MINPAUSE,    0, 250, NU
 CMD_BYTE_SETTING (_param_mindist,    "MINDIST",      DFL_MINDIST,     0, 250, NULL);
 CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",   DFL_STATUSTIME,  1, 250, NULL);
 CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 1, 8,   hdl_squelch);
+
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
+CMD_U16_SETTING  (_param_trklog_port,"TRKLOG.PORT",  DFL_TRKLOG_PORT, 1, 65535);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",   DFL_IGATE_PORT,  1, 65535);
 CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",   0,               0, 65535);
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000);
 CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      1440000, 1460000);
 
 CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
-CMD_BOOL_SETTING (_param_tracklog_on,"TRACKLOG.on",    hdl_tracklog);
+CMD_BOOL_SETTING (_param_tracklog_on,"TRKLOG.on",      hdl_tracklog);
 CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     hdl_tracker);
 CMD_BOOL_SETTING (_param_timestamp,  "TIMESTAMP.on",   NULL);
 CMD_BOOL_SETTING (_param_compress,   "COMPRESS.on",    NULL);

@@ -8,7 +8,8 @@
 
 #include "esp_wifi.h"
 #include "fbuf.h"
-#include "tcpip_adapter.h"
+// #include "tcpip_adapter.h"
+#include "esp_netif.h"
 
 #define AP_MAX_PASSWD_LEN 64
 #define AP_MAX_ALTERNATIVES 6
@@ -59,7 +60,7 @@ void inet_close(void);
 int  inet_read(char* buf, int size);
 void inet_write(char* data, int len);
 bool inet_isConnected(void);
-
+int  http_post(char* host, uint16_t port, char* uri, char* ctype, char* data, int dlen);
 
 
 #endif

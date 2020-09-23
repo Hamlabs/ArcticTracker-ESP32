@@ -3,6 +3,7 @@
 #include "gps.h"
 #include "trackstore.h"
 #include "tracker.h"
+#include "networking.h"
 
 #define TAG "tracklog"
 
@@ -19,7 +20,7 @@ static void remove_old();
 
 void tracklog_init()
 {
-    if (GET_BYTE_PARAM("TRACKLOG.on"))
+    if (GET_BYTE_PARAM("TRKLOG.on"))
         tracklog_on();
 }
 
@@ -55,8 +56,8 @@ static void tracklog(void* arg) {
     sleepMs(3000);    
     ESP_LOGI(TAG, "Starting tracklog task");
     gps_on();  
-    while (GET_BYTE_PARAM("TRACKLOG.on")) {
-        uint8_t interv = GET_BYTE_PARAM("TRACKLOGINT"); 
+    while (GET_BYTE_PARAM("TRKLOG.on")) {
+        uint8_t interv = GET_BYTE_PARAM("TRKLOG.INT"); 
         if (interv==0) interv=10;
         sleepMs(interv * 1000);
         if (gps_is_fixed())
@@ -79,9 +80,61 @@ static void tracklog(void* arg) {
 static void remove_old() {
     posentry_t entry; 
     uint32_t now = (uint32_t) getTime();
-    uint32_t tdiff = GET_BYTE_PARAM("TRACKLOG.TTL") * 60 * 60;
+    uint32_t tdiff = GET_BYTE_PARAM("TRKLOG.TTL") * 60 * 60;
     
     if (trackstore_peek(&entry) != NULL)
         if (entry.time + tdiff < now)
             trackstore_getEnt(&entry);
 }
+
+
+
+
+#define JS_CHUNK_SIZE 128
+#define JS_RECORD_SIZE 64
+#define JS_HEAD 28
+
+/********************************************************
+ *  Send positions to server using a HTTP POST call
+ *  and JSON.
+ ********************************************************/
+
+static void post_server() {
+    char call[10];
+    char* buf = malloc(JS_CHUNK_SIZE * JS_RECORD_SIZE + JS_HEAD +1);
+    char host[48], path[48];
+    uint16_t port; 
+    int len = 0, i=0;
+    posentry_t pd; 
+    
+    /* If empty, just return */
+    if (trackstore_getEnt(&pd) == NULL)
+        return;
+    
+    /* Get settings */
+    GET_STR_PARAM("MYCALL", call, 10);
+    GET_STR_PARAM("TRKLOG.HOST", host, 48);
+    GET_STR_PARAM("TRKLOG.PATH", path, 48);
+    
+    /* Serialise as JSON */
+    len += sprintf(buf, "{\"call\":\"%s\", \"pos\":[", call);
+    for (;;) {
+        len += sprintf(buf, "{\"time\":%u, \"lat\":%u, \"lng\":%u}", pd.time, pd.lat, pd.lng);
+        if (trackstore_getEnt(&pd) == NULL || ++i >= JS_CHUNK_SIZE)
+            break;
+        len += sprintf(buf, ",");
+    }
+    len += sprintf(buf, "]}");
+    
+    /* Post it */
+    if (http_post(host, port, "text/json", path, buf, len) == 200)
+        ESP_LOGI(TAG, "Posted track-log (%d bytes/%d entries) to %s:%d", len, i, host);
+    else
+        ESP_LOGE(TAG, "Couldn't post track-log");
+    free(buf);
+}
+
+
+
+
+
