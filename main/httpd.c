@@ -10,9 +10,7 @@
 #include "libesphttpd/cgiwifi.h"
 #include "libesphttpd/cgiflash.h"
 #include "libesphttpd/auth.h"
-// #include "libesphttpd/espfs.h"
 #include "libesphttpd/captdns.h"
-//#include "libesphttpd/webpages-espfs.h"
 #include "libesphttpd/cgiwebsocket.h"
 #include "libesphttpd/httpd-freertos.h"
 #include "libesphttpd/route.h"
@@ -59,11 +57,13 @@ static HttpdFreertosInstance httpdFreertosInstance;
 
 CGIFUNC tpl_aprs(HttpdConnData *con, char *token, void **arg);
 CGIFUNC tpl_digi(HttpdConnData *con, char *token, void **arg);
+CGIFUNC tpl_trklog(HttpdConnData *con, char *token, void **arg);
 CGIFUNC tpl_sysInfo(HttpdConnData *con, char *token, void **arg); 
 CGIFUNC tpl_wifi(HttpdConnData *con, char *token, void **arg);
 CGIFUNC tpl_fw(HttpdConnData *con, char *token, void **arg);
 CGIFUNC cgi_updateWifi(HttpdConnData *cdata);
 CGIFUNC cgi_updateDigi(HttpdConnData *cdata);
+CGIFUNC cgi_updateTrklog(HttpdConnData *cdata);
 CGIFUNC cgi_updateAprs(HttpdConnData *cdata);
 CGIFUNC cgi_updateFw(HttpdConnData *cdata);
 
@@ -105,7 +105,11 @@ HttpdBuiltInUrl builtInUrls[] = {
 	ROUTE_TPL("/digi.tpl", tpl_digi),
 	ROUTE_CGI("/digiupdate", cgi_updateDigi),
     ROUTE_REDIRECT("/digi", "/digi.tpl"),
-	
+		
+    ROUTE_TPL("/trklog.tpl", tpl_trklog),
+	ROUTE_CGI("/trklogupdate", cgi_updateTrklog),
+    ROUTE_REDIRECT("/trklog", "/trklog.tpl"),
+    
     ROUTE_TPL("/firmware.tpl", tpl_fw),
     ROUTE_CGI("/fwupdate", cgi_updateFw),
     ROUTE_REDIRECT("/fw", "/firmware.tpl"),
@@ -321,6 +325,12 @@ CGIFUNC cgi_updateDigi(HttpdConnData *cdata) {
 
 
 
+CGIFUNC cgi_updateTrklog(HttpdConnData *cdata) {
+    return HTTPD_CGI_DONE;
+}
+
+
+
 /****************************************************** 
  * CGI function for updating firmware update settings
  ******************************************************/
@@ -415,6 +425,30 @@ CGIFUNC tpl_digi(HttpdConnData *con, char *token, void **arg) {
     else if (strcmp(token, "igate_pass")==0)
         get_str_param("IGATE.PASS", buf, 6, "");
     else sprintf(buf, "ERROR");
+    httpdSend(con, buf, -1);
+	return HTTPD_CGI_DONE;
+}
+
+
+CGIFUNC tpl_trklog(HttpdConnData *con, char *token, void **arg) {
+	char buf[64];
+	if (token==NULL) 
+        return HTTPD_CGI_DONE;
+    TPL_HEAD(token, con); 
+        
+    if (strcmp(token, "tlog_int")==0)
+        sprintf(buf, "%u", get_byte_param("TRKLOG.INT", DFL_TRKLOG_INT));
+    else if (strcmp(token, "tlog_ttl")==0)
+        sprintf(buf, "%u", get_byte_param("TRKLOG.TTL", DFL_TRKLOG_TTL));
+    else if (strcmp(token, "trklog_on")==0)
+        TEST_CHECKED(buf, "TRKLOG.on");
+    else if (strcmp(token, "tlog_host")==0)
+        get_str_param("TRKLOG.HOST", buf, 64, DFL_TRKLOG_HOST);
+    else if (strcmp(token, "tlog_port")==0)
+        sprintf(buf, "%u", get_u16_param("TRKLOG.PORT", DFL_TRKLOG_PORT));
+    else if (strcmp(token, "tlog_path")==0)
+        get_str_param("TRKLOG.PATH", buf, 32, DFL_TRKLOG_PATH);
+    
     httpdSend(con, buf, -1);
 	return HTTPD_CGI_DONE;
 }
