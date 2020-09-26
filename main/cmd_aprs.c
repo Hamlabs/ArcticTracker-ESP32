@@ -177,7 +177,7 @@ CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",   DFL_STATUSTIME,  1, 250, NU
 CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 1, 8,   hdl_squelch);
 
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
-CMD_U16_SETTING  (_param_trklog_port,"TRKLOG.PORT",  DFL_TRKLOG_PORT, 1, 65535);
+CMD_U16_SETTING  (_param_trklogport, "TRKLOG.PORT",  DFL_TRKLOG_PORT, 1, 65535);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",   DFL_IGATE_PORT,  1, 65535);
 CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",   0,               0, 65535);
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000);
@@ -221,8 +221,11 @@ void register_aprs()
     ADD_CMD("txdelay",    &_param_txdelay,     "APRS TXDELAY setting", "[<val>]");
     ADD_CMD("txtail",     &_param_txtail,      "APRS TXTAIL setting", "[<val>]");
        
-    ADD_CMD("tracklogint",&_param_trklogint,   "Interval for track logging (seconds)", "[<val>]");
-    ADD_CMD("tracklogttl",&_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
+    ADD_CMD("trklog-int", &_param_trklogint,   "Interval for track logging (seconds)", "[<val>]");
+    ADD_CMD("trklog-ttl", &_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
+    ADD_CMD("trklog-host",&_param_trkloghost,  "Server host for track logging", "[<val>]");
+    ADD_CMD("trklog-port",&_param_trklogport,  "Server port for track logging", "[<val>]");
+    ADD_CMD("trklog-path",&_param_trklogpath,  "Server path for track logging", "[<val>]");
     ADD_CMD("maxframe",   &_param_maxframe,    "APRS max frames in a transmission", "[<val>]");
     ADD_CMD("maxpause",   &_param_maxpause,    "Tracking max pause (10 sec units)", "[<val>]");
     ADD_CMD("minpause",   &_param_minpause,    "Tracking min pause (10 sec units)", "[<val>]");

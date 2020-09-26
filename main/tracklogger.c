@@ -128,7 +128,7 @@ static void post_server() {
     
     /* Post it */
     if (http_post(host, port, "text/json", path, buf, len) == 200)
-        ESP_LOGI(TAG, "Posted track-log (%d bytes/%d entries) to %s:%d", len, i, host);
+        ESP_LOGI(TAG, "Posted track-log (%d bytes/%d entries) to %s:%d", len, i, host, port);
     else
         ESP_LOGE(TAG, "Couldn't post track-log");
     free(buf);
