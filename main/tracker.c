@@ -46,10 +46,6 @@ static void send_timestamp_compressed(FBUF* packet, posdata_t* pos);
 static void send_latlong_compressed(FBUF*, double, bool);
 static void send_csT_compressed(FBUF*, posdata_t*);
 
-static void putPos(posdata_t);
-static posdata_t getPos(void);
-static bool posBuf_empty(void);
-
 
 
 double fabs(double); 
@@ -78,44 +74,6 @@ void tracker_posReport()
         return;
     report_station_position(&gps_current_pos, false);
     activate_tx();
-}
-
-
-
-
-/*******************************************************
- * Posreport buffer - a queue of positions. 
- *  
- *   - putPos - add a position and remove the 
- *     oldest if necessary.
- *   - getPos - remove and return the oldest position
- *   - posBuf_empty - return true if empty
- *******************************************************/
-
-#define MAX_BUFFERPOS 5
-static posdata_t pos_buf[MAX_BUFFERPOS];
-static int8_t nPos = 0, nextPos = 0;
-
-
-static void putPos(posdata_t p)
-{
-   if (nPos < MAX_BUFFERPOS)
-      nPos++;
-   pos_buf[nextPos] = p;
-   nextPos = (nextPos + 1) % MAX_BUFFERPOS;
-}
-
-static posdata_t getPos()
-{
-    int8_t i = nPos <= nextPos ? 
-        nextPos - nPos : MAX_BUFFERPOS+(nextPos-nPos);
-    nPos--;
-    return pos_buf[i];
-}
-
-static bool posBuf_empty()
-{
-   return (nPos == 0);
 }
 
 
@@ -266,6 +224,7 @@ static void tracker(void* arg)
  
 void tracker_init(FBQ *q)
 {
+    xreport_init();
     outframes = q; 
     prev_pos.timestamp=0;
     prev_pos_gps.timestamp=0;
@@ -353,7 +312,8 @@ static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* curre
     if ( est_speed > 0.8 && course >= 0 && prev_course >= 0 && 
           course_change(course, prev_course, turn_limit))
     {
-        /* If previous gps-pos hasn't been reported already and most of the course change
+        /* 
+         * If previous gps-pos hasn't been reported already and most of the course change
          * has happened the last period, we may add it to the transmission 
 	     */
         if ( GET_BYTE_PARAM("EXTRATURN.on") != 0 &&
@@ -361,7 +321,7 @@ static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* curre
                 prev_gps_course >= 0 &&
                 course_change(course, prev_gps_course, turn_limit*0.5)
             )
-            putPos(*prev_gps);
+            xreport_queue(*prev_gps, 1);
 	 
         prev_course = course;
         pause_count = 0;
@@ -473,17 +433,16 @@ static void report_station_position(posdata_t* pos, bool no_tx)
      * Add extra reports from buffer 
      */
     int i=0;
-    if (!no_tx) 
-       while (!posBuf_empty() && i++ <= 3) {
-          posdata_t p = getPos();
-          fbuf_putstr(&packet, "/#\0");
-          send_extra_report(&packet, &p, sym[1], sym[0]);
-       }
+    if (!no_tx) {
+        fbuf_putstr(&packet, "/+\0");
+        xreport_send(&packet, pos);
+    }
        
-    /* Re-send report in next transmission */
-    if (!no_tx && GET_BYTE_PARAM("REPEAT.on") != 0)
-          putPos(*pos);
-          /* FIXME: symbol may change? */
+    /* Re-send report in laters transmissions */
+    if (!no_tx && GET_BYTE_PARAM("REPEAT.on") != 0) {
+        xreport_queue(*pos, 1);
+        xreport_queue(*pos, 3);
+    }
 
     /* Comment */
     if (ccount-- == 0) 
