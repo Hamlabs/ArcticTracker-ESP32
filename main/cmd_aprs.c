@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "esp_log.h"
 #include "esp_console.h"
 #include "argtable3/argtable3.h"
 #include "system.h"
@@ -175,6 +174,7 @@ CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",     DFL_MINPAUSE,    0, 250, NU
 CMD_BYTE_SETTING (_param_mindist,    "MINDIST",      DFL_MINDIST,     0, 250, NULL);
 CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",   DFL_STATUSTIME,  1, 250, NULL);
 CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 1, 8,   hdl_squelch);
+CMD_BYTE_SETTING (_param_repeat,     "REPEAT",       DFL_REPEAT,      0, 3, NULL);
 
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
 CMD_U16_SETTING  (_param_trklogport, "TRKLOG.PORT",  DFL_TRKLOG_PORT, 1, 65535);
@@ -195,7 +195,6 @@ CMD_BOOL_SETTING (_param_digi_wide1, "DIGI.WIDE1.on",  NULL);
 CMD_BOOL_SETTING (_param_digi_sar,   "DIGI.SAR.on",    NULL);
 CMD_BOOL_SETTING (_param_rbeep_on,   "REPORT.BEEP.on", NULL);
 CMD_BOOL_SETTING (_param_xturn_on,   "EXTRATURN.on",   NULL);
-CMD_BOOL_SETTING (_param_repeat_on,  "REPEAT.on",      NULL);
 CMD_BOOL_SETTING (_param_igtrack_on, "IGATE.TRACK.on", NULL);
 CMD_BOOL_SETTING (_param_txmon_on,   "TXMON.on",       NULL);
 
@@ -220,7 +219,8 @@ void register_aprs()
     ADD_CMD("comment",    &_param_comment,     "APRS posreport comment", "[<text>]");
     ADD_CMD("txdelay",    &_param_txdelay,     "APRS TXDELAY setting", "[<val>]");
     ADD_CMD("txtail",     &_param_txtail,      "APRS TXTAIL setting", "[<val>]");
-       
+    ADD_CMD("repeat",     &_param_repeat,      "# Times to repeat posreports (0-3)", "[val]");
+           
     ADD_CMD("trklog-int", &_param_trklogint,   "Interval for track logging (seconds)", "[<val>]");
     ADD_CMD("trklog-ttl", &_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
     ADD_CMD("trklog-host",&_param_trkloghost,  "Server host for track logging", "[<val>]");
@@ -254,7 +254,6 @@ void register_aprs()
     ADD_CMD("tracker",    &_param_tracker_on,  "APRS tracker setting", "[on|off]");
     ADD_CMD("reportbeep", &_param_rbeep_on,    "Beep when report is sent", "[on|off]");
     ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport in turns", "[on|off]");
-    ADD_CMD("repeat",     &_param_repeat_on,   "Repeat posreports (piggyback on later transmissions)", "[on|off]");
     ADD_CMD("igtrack",    &_param_igtrack_on,  "Send posreports directly to APRS/IS when available", "[on|off]");   
     ADD_CMD("txmon",      &_param_txmon_on,    "Tx monitor", "[on|off]");
 }

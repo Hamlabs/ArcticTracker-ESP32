@@ -432,16 +432,17 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     /* 
      * Add extra reports from buffer 
      */
-    int i=0;
-    if (!no_tx) {
-        fbuf_putstr(&packet, "/+\0");
+    if (!no_tx) 
         xreport_send(&packet, pos);
-    }
        
     /* Re-send report in laters transmissions */
-    if (!no_tx && GET_BYTE_PARAM("REPEAT.on") != 0) {
+    uint8_t repeat = GET_BYTE_PARAM("REPEAT"); 
+    if (!no_tx && repeat > 0) {
         xreport_queue(*pos, 1);
-        xreport_queue(*pos, 3);
+        if (repeat>1)
+            xreport_queue(*pos, 3);
+        if (repeat>2)
+            xreport_queue(*pos, 5);
     }
 
     /* Comment */

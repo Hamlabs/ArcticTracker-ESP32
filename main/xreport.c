@@ -3,7 +3,7 @@
 #include "fbuf.h"
 #include "tracker.h"
 
-
+#define TAG "tracker"
 
 static const char b64tab[65] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -27,8 +27,8 @@ typedef struct {
     int8_t nextPos;
 } posbuf_t; 
 
-posbuf_t buffers[NBUFFERS];
-int8_t firstbuf = 0;
+static posbuf_t buffers[NBUFFERS];
+static int8_t firstbuf = 0;
 
 
 
@@ -50,21 +50,19 @@ static posdata_t getPos(posbuf_t *pb) {
 }
 
 
-inline int8_t nPos(posbuf_t *pb) {
+static int8_t nPos(posbuf_t *pb) {
     return pb->nPos;
 }
 
-inline bool posBuf_empty(posbuf_t *pb) {
+static bool posBuf_empty(posbuf_t *pb) {
    return (pb->nPos == 0);
 }
 
-static
-
-void rotateBuf() {
+static void rotateBuf() {
     firstbuf = (firstbuf+1) % NBUFFERS;
 }
 
-inline posbuf_t* getBuf(int8_t i) {
+static posbuf_t* getBuf(int8_t i) {
     return &buffers[ (i+firstbuf) % NBUFFERS ];
 }
 
@@ -95,16 +93,20 @@ void xreport_queue(posdata_t pos, int n) {
 
 void xreport_send(FBUF* packet, posdata_t* prev) {
     posbuf_t *buf = getBuf(0);
+
     /* 
      * Use deltas for timestamp (12 bit unsigned), latitude and longitude 
      * (18 bit signed number). Base64 encode these numbers. 
      * This generates 8 characters per record. 
      */
+    ESP_LOGI(TAG, "Adding repeated pos reports: %d", nPos(buf) );
+    if(!posBuf_empty(buf))
+        fbuf_putstr(packet, "/*\0");
     while(!posBuf_empty(buf)) {
         posdata_t pos = getPos(buf);
         uint32_t ts_delta  = (uint32_t) pos.timestamp - (uint32_t) prev->timestamp;
-        uint32_t lat_delta = (uint32_t) (pos.latitude - prev->latitude) * 100000; 
-        uint32_t lng_delta = (uint32_t) (pos.longitude - prev->longitude) * 100000;
+        uint32_t lat_delta = (uint32_t) ((pos.latitude - prev->latitude) * 100000); 
+        uint32_t lng_delta = (uint32_t) ((pos.longitude - prev->longitude) * 100000);
         b64from12bit(packet, ts_delta); 
         b64from18bit(packet, signed18bit(lat_delta));
         b64from18bit(packet, signed18bit(lng_delta));
