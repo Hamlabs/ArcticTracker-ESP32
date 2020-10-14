@@ -230,6 +230,7 @@ void set_logLevels() {
     esp_log_level_set("*", dfl);
         
     set_logLevel("system", "LGLV.system", dfl);
+    set_logLevel("uart", "LGLV.uart", dfl);
     set_logLevel("main", "LGLV.main", dfl);
     set_logLevel("wifi", "LGLV.wifi", dfl);
     set_logLevel("wifix", "LGLV.wifix", dfl);
@@ -253,7 +254,7 @@ void set_logLevels() {
 
 
 bool hasTag(char*tag) {
-    return strcmp(tag, "wifi")==0       || strcmp(tag, "wifix")==0    ||
+    return strcmp(tag, "wifi")==0       || strcmp(tag, "wifix")==0    || strcmp(tag, "uart")==0    || 
            strcmp(tag, "config")==0     || strcmp(tag, "httpd")==0    ||
            strcmp(tag, "shell")==0      || strcmp(tag, "system")==0   ||
            strcmp(tag, "tracker")==0    || strcmp(tag, "esp-tls")==0  ||

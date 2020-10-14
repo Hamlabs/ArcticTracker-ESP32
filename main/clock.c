@@ -4,6 +4,10 @@
   */
 
 #include "system.h"
+#include "driver/timer.h"
+#include "hal/timer_hal.h"
+
+
 
 /************************************************************************
  * Timer setup
@@ -54,14 +58,13 @@ void clock_stop(int group, int idx) {
  * interrupt will be triggered. 
  ************************************************************************/
 
-// FIXME: This may be called from a timer ISR !!!
 void clock_changeInterval(int group, int idx, double interval)
 {
-    uint64_t counter;  
-    timer_get_counter_value(group, idx, &counter);
+    uint64_t counter = 
+    timer_group_get_counter_value_in_isr(group, idx);
     if (counter >= interval)
-        timer_set_counter_value(group, idx, interval-1);
-    timer_set_alarm_value(group, idx, interval);
+        timer_group_set_alarm_value_in_isr(group, idx, counter + 2);
+    timer_group_set_alarm_value_in_isr(group, idx, interval);
 }
 
 

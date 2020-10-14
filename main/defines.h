@@ -10,9 +10,9 @@
 // #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 
-#define VERSION_STRING "v2.0 alpha2"
+#define VERSION_STRING "v2.0 alpha3"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2020-09-6"
+#define FW_DATE "2020-10-1"
 
 #define BIT_0	( 1 << 0 )
 
@@ -111,16 +111,16 @@
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 2200
 #define STACK_HDLC_RXDECODER 2200
-#define STACK_NMEALISTENER   2300
+#define STACK_NMEALISTENER   2900
 #define STACK_LEDBLINKER     1100
 #define STACK_UI_SRV         3600
-#define STACK_TRACKER        2500
-#define STACK_MONITOR        2500
+#define STACK_TRACKER        3700
+#define STACK_MONITOR        2700
 #define STACK_GUI            2600
 #define STACK_HLIST           900
 #define STACK_DIGI           2800
 #define STACK_TCP_REC        3000
-#define STACK_IGATE          2600
+#define STACK_IGATE          3000
 #define STACK_IGATE_RADIO    2300
 #define STACK_TRACKLOG       2700
 

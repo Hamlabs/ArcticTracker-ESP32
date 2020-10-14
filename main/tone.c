@@ -56,10 +56,13 @@ static void IRAM_ATTR sinewave(void *arg)
 /**************************************************************************
  * Init tone generator
  **************************************************************************/
-
+static bool _inited = false; 
 void tone_init() {
-    dac_output_enable(TONE_DAC);
-    clock_init(TONE_TIMERGRP, TONE_TIMERIDX, CLOCK_DIVIDER, sinewave, false);
+    if (!_inited) {
+        dac_output_enable(TONE_DAC);
+        clock_init(TONE_TIMERGRP, TONE_TIMERIDX, CLOCK_DIVIDER, sinewave, false);
+        _inited = true;
+    }
 }
 
 

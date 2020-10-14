@@ -51,7 +51,7 @@ static SemaphoreHandle_t enc_idle; // Binary semaphore
   // Should we 'give' initially? 
 
 
-static uart_config_t _serialConfig = {
+static uart_config_t _serialConfigGps = {
     .baud_rate = 9600,
     .data_bits = UART_DATA_8_BITS,
     .parity    = UART_PARITY_DISABLE,
@@ -71,16 +71,16 @@ static uart_port_t _uart;
 
 void gps_init(uart_port_t uart)
 {
-    uart_param_config(uart, &_serialConfig);
-    uart_set_pin(uart, GPS_TXD_PIN, GPS_RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(uart, GPS_BUF_SIZE, 0, 0, NULL, 0);
+    ESP_LOGD(TAG, "gps_init, uart=%d", uart);
+    ESP_ERROR_CHECK(uart_param_config(uart, &_serialConfigGps));
+    ESP_ERROR_CHECK(uart_set_pin(uart, GPS_TXD_PIN, GPS_RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_driver_install(uart, GPS_BUF_SIZE, 0, 0, NULL, 0));
     _uart = uart; 
 
     enc_idle = xSemaphoreCreateBinary();
     monitor_pos = monitor_raw = false; 
     xTaskCreatePinnedToCore(&nmeaListener, "NMEA Listener", 
-        STACK_NMEALISTENER, NULL, NORMALPRIO, NULL, CORE_NMEALISTENER);
-    
+        STACK_NMEALISTENER, NULL, NORMALPRIO, NULL, CORE_NMEALISTENER);    
 }
 
 

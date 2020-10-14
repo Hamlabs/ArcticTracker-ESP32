@@ -11,9 +11,9 @@
 #include "driver/gpio.h"
 #include "lcd.h"
 
-
 static spi_device_handle_t _spip;
 static TimerHandle_t bltimer;
+
 static void blhandler(TimerHandle_t timer);
 
 
@@ -69,7 +69,7 @@ void lcd_init() {
  //   gpio_set_level(LCD_PIN_RST, 0);
  //   sleepMs(15);
  //   gpio_set_level(LCD_PIN_RST, 1);
- //   sleepMs(15);
+    sleepMs(15);
    
     /* Send configuration commands to LCD */
     lcd_writeByte(0x21, LCD_SEND_CMD);  /* LCD extended commands */
@@ -84,12 +84,13 @@ void lcd_init() {
    
     lcd_clear(); /* Clear LCD */
     lcd_setPosXY(1, 1);
+    uint32_t cnt = 0;
    
     /* Software timer for backlight */
     bltimer = xTimerCreate ( 
         "BacklightTimer", pdMS_TO_TICKS(8000),  pdFALSE,
-        ( void * ) 0, blhandler
-    );
+        ( void * ) &cnt, blhandler
+    ); 
 }
  
  
@@ -102,11 +103,15 @@ void lcd_init() {
 static void blhandler(TimerHandle_t timer) {
     gpio_set_level(LCD_PIN_BL, 1);
 }
- 
- 
+
+
+
+BaseType_t hpw = pdFALSE;     
 void lcd_backlight() { 
-    xTimerStart(bltimer, 0);
-    gpio_set_level(LCD_PIN_BL, 0);
+    if (bltimer != NULL) {
+        gpio_set_level(LCD_PIN_BL, 0);
+        xTimerStartFromISR(bltimer, &hpw);
+    }
 }    
 
  
@@ -129,6 +134,7 @@ void lcd_backlight() {
     t.length=8;                    
     t.tx_buffer=&data;    
     t.user=(void*)1;  // FIXME: How does this work???? 
+    
     ret=spi_device_polling_transmit(_spip, &t);
     assert(ret==ESP_OK);
  }

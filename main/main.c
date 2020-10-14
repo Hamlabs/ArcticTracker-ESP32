@@ -157,12 +157,16 @@ static void startup(void* arg)
 {
     sleepMs(2500);
     
+    trackstore_start();
     afsk_init(); 
     hdlc_init_decoder(afsk_rx_init());
- 
     FBQ* oq = hdlc_init_encoder(afsk_tx_init());
-    tracker_init(oq);
+    
+    // Den andre av disse går til helvete, uansett rekkefølge
+    gps_init(GPS_UART);
     radio_init(RADIO_UART);
+    
+    tracker_init(oq);
     digipeater_init(oq);
     igate_init(); 
     
@@ -186,16 +190,7 @@ void spiffs_init() {
             ESP_LOGE(TAG, "Failed to mount or format filesystem");
         else if (ret == ESP_ERR_NOT_FOUND) 
             ESP_LOGE(TAG, "Failed to find SPIFFS partition");
-        else 
-            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
     }
- 
-    size_t total = 0, used = 0;
-    ret = esp_spiffs_info(spconf.partition_label, &total, &used);
-    if (ret != ESP_OK) 
-        ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
-    else 
-        ESP_LOGI(TAG, "SPIFFS partition size: total: %d, used: %d", total, used);
     
     if (esp_spiffs_mounted(spconf.partition_label)) 
          ESP_LOGI(TAG, "SPIFFS partition mounted on %s\n", spconf.base_path);
@@ -225,10 +220,11 @@ void app_main()
     register_aprs();
     wifi_init();
     spiffs_init();    
-    trackstore_start();
-    gps_init(GPS_UART);
     ui_init();
+    
+    /* Put this on CPU #1 or we may run out of interrupts */
     xTaskCreatePinnedToCore(&startup, "Startup thread", 
-        3200, NULL, NORMALPRIO+1, NULL, 0);
+        3200, NULL, NORMALPRIO+1, NULL, 1);
+
     run_console();   
 }

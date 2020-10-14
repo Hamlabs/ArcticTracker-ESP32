@@ -69,9 +69,10 @@ static cond_t chan_rdy;
 
 void radio_init(uart_port_t uart)
 {  
-    uart_param_config(uart, &_serialConfig);
-    uart_set_pin(uart, RADIO_PIN_TXD, RADIO_PIN_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(uart, RADIO_BUF_SIZE, RADIO_BUF_SIZE, 0, NULL, 0);
+    ESP_LOGD(TAG, "radio_init, uart=%d", uart);
+    ESP_ERROR_CHECK(uart_param_config(uart, &_serialConfig));
+    ESP_ERROR_CHECK(uart_set_pin(uart, RADIO_PIN_TXD, RADIO_PIN_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_driver_install(uart, RADIO_BUF_SIZE, RADIO_BUF_SIZE, 0, NULL, 0));
     _serial = uart;
     
     gpio_set_direction(RADIO_PIN_PTT,  GPIO_MODE_OUTPUT); 
