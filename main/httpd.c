@@ -276,15 +276,18 @@ CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
     head(cdata); 
     httpdSend(cdata, "<body><h2>Update APRS settings...</h2><fieldset>", -1);
     updateBoolField(cdata, "TIMESTAMP.on", "timestamp_on", NULL);
-    updateBoolField(cdata ,"COMPRESS.on",  "compress_on", NULL);
-    updateBoolField(cdata, "ALTITUDE.on",  "altitude_on", NULL);
-    updateI32Field (cdata, "TXFREQ",       "tx_freq",   1440000, 1460000);
-    updateI32Field (cdata, "RXFREQ",       "rx_freq",   1440000, 1460000);    
-    updateU16Field (cdata, "TURNLIMIT",    "turnlimit", 0, 360);
-    updateByteField(cdata, "MAXPAUSE",     "maxpause",  0, 250);
-    updateByteField(cdata, "MINPAUSE",     "minpause",  0, 250);    
-    updateByteField(cdata, "MINDIST",      "mindist",   0, 250);
-     
+    updateBoolField(cdata ,"COMPRESS.on",  "compress_on",  NULL);
+    updateBoolField(cdata, "ALTITUDE.on",  "altitude_on",  NULL);
+    updateBoolField(cdata, "EXTRATURN.on", "extraturn_on", NULL);
+    
+    updateI32Field (cdata, "TXFREQ",       "tx_freq",     1440000, 1460000);
+    updateI32Field (cdata, "RXFREQ",       "rx_freq",     1440000, 1460000);    
+    updateU16Field (cdata, "TURNLIMIT",    "turnlimit",   0, 360);
+    updateByteField(cdata, "MAXPAUSE",     "maxpause",    0, 250);
+    updateByteField(cdata, "MINPAUSE",     "minpause",    0, 250);    
+    updateByteField(cdata, "MINDIST",      "mindist",     0, 250);
+    updateByteField(cdata, "REPEAT",       "redundancy",  0, 4);
+   
     updateStrField(cdata, "MYCALL",        "mycall",    REGEX_AXADDR, true);
     updateStrField(cdata, "SYMBOL",        "symbol",    REGEX_APRSSYM, false);
     updateStrField(cdata, "DIGIPATH",      "digis",     REGEX_DIGIPATH, true);    
@@ -379,6 +382,8 @@ CGIFUNC tpl_aprs(HttpdConnData *con, char *token, void **arg) {
         sprintf(buf, "%hu", get_byte_param("MINPAUSE", DFL_MINPAUSE));
     else if (strcmp(token, "mindist")==0)
         sprintf(buf, "%hu", get_byte_param("MINDIST", DFL_MINDIST));
+    else if (strcmp(token, "redundancy")==0)
+        sprintf(buf, "%hu", get_byte_param("REPEAT", DFL_REPEAT)); 
     else if (strcmp(token, "turnlimit")==0)
         sprintf(buf, "%u",  get_u16_param("TURNLIMIT", DFL_TURNLIMIT));
     else if (strcmp(token, "txfreq")==0)
@@ -391,6 +396,9 @@ CGIFUNC tpl_aprs(HttpdConnData *con, char *token, void **arg) {
         TEST_CHECKED(buf, "COMPRESS.on");
     else if (strcmp(token, "altitude_on")==0)
         TEST_CHECKED(buf, "ALTITUDE.on");
+    else if (strcmp(token, "xonturn_on")==0)
+        TEST_CHECKED(buf, "EXTRATURN.on");
+    
     else sprintf(buf, "ERROR");
     httpdSend(con, buf, -1);
 	return HTTPD_CGI_DONE;

@@ -34,18 +34,23 @@
 <input type="checkbox" id="altitude_on" name="altitude_on" value="true" %altitude_on%/>Altitude
 <br>
 
-<label class="leftlab">Turn limit (degrees):</label>
-<input type="text" id="turnlimit" name="turnlimit" size="5" pattern="[0-9]+" value="%turnlimit%" /> 
+<label class="leftlab">Turn limit:</label>
+<input type="text" id="turnlimit" name="turnlimit" size="5" pattern="[0-9]+" value="%turnlimit%" /> (degrees)
 <br>
-<label class="leftlab">Max pause (seconds):</label>
-<input type="text" id="maxpause" name="maxpause" size="5" pattern="[0-9]+" value="%maxpause%" /> 
+<label class="leftlab">Max pause:</label>
+<input type="text" id="maxpause" name="maxpause" size="5" pattern="[0-9]+" value="%maxpause%" /> (seconds)
 <br>
-<label class="leftlab">Min pause (seconds):</label>
-<input type="text" id="minpause" name="minpause" size="5" pattern="[0-9]+" value="%minpause%" /> 
+<label class="leftlab">Min pause:</label>
+<input type="text" id="minpause" name="minpause" size="5" pattern="[0-9]+" value="%minpause%" /> (seconds)
 <br>
-<label class="leftlab">Min distance (meters):</label>
-<input type="text" id="mindist" name="mindist" size="5" pattern="[0-9]+" value="%mindist%" /> 
+<label class="leftlab">Min distance:</label>
+<input type="text" id="mindist" name="mindist" size="5" pattern="[0-9]+" value="%mindist%" /> (meters)
+<br><br>
+<label class="leftlab"><b>Extra posreports:</b></label>
+<input type="checkbox" id="xonturn_on" name="xonturn_on" value="true" %xonturn_on%/> Add when turning
 <br>
+<label class="leftlab">Redundant reports (0-4):</label>
+<input type="text" id="redundancy" name="redundancy" size="5" pattern="[0-9]+" value="%redundancy%" /> 
 
 </fieldset>
 <button type="submit" name="update" id="update">Update</button>
