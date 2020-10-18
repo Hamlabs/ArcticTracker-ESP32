@@ -12,6 +12,7 @@
 #include "ui.h"
 #include "radio.h"
 #include "tracker.h"
+#include "math.h"
 
 
 // FIXME
@@ -32,6 +33,7 @@ static bool waited = false;
 
 static void activate_tx(void);
 static bool should_update(posdata_t*, posdata_t*, posdata_t*);
+static uint8_t smartbeacon(uint8_t mindist, float speed, uint8_t minpause);
 static bool course_change(uint16_t, uint16_t, uint16_t);
 static void report_status(posdata_t*);
 static void report_station_position(posdata_t*, bool);
@@ -287,6 +289,7 @@ static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* curre
     uint8_t  minpause   = get_byte_param("MINPAUSE", DFL_MINPAUSE);
     uint8_t  maxpause   = get_byte_param("MAXPAUSE", DFL_MAXPAUSE);
     uint8_t  mindist    = get_byte_param("MINDIST",  DFL_MINDIST);
+    
     uint32_t dist       = (prev->timestamp==0) ? 0 : gps_distance(prev, current);
     uint16_t tdist      = (current->timestamp < prev->timestamp)
                              ? current->timestamp
@@ -338,9 +341,9 @@ static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* curre
          || ( pause_count * TRACKER_SLEEP_TIME >= minpause && est_speed <= 1 && dist >= mindist )
          
         /* Time period based on average speed */
-         || ( est_speed>0 && pause_count >= (uint8_t)
-            ( (mindist / est_speed) / TRACKER_SLEEP_TIME + minpause*1.4 ))
-       )
+         || ( est_speed>0 && pause_count >= smartbeacon(mindist, est_speed, minpause ))
+        )
+       
     {
        pause_count = 0;
        prev_course = course;
@@ -348,6 +351,24 @@ static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* curre
     }
     return false;
 }
+
+
+
+
+static uint8_t smartbeacon(uint8_t mindist, float speed, uint8_t minpause) {
+    float k = 0.5;
+    if (minpause > 30)
+        k = 0.3;
+    
+    float x = mindist - log10f(speed*k) * (mindist-32); 
+    if (speed < 4)
+        x -= (5-speed)*4;
+    if (x < minpause)
+        x = minpause;
+    return (uint8_t) (x / TRACKER_SLEEP_TIME);
+}
+
+
 
 
 static bool course_change(uint16_t crs, uint16_t prev, uint16_t limit)
@@ -435,14 +456,14 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     if (!no_tx) 
         xreport_send(&packet, pos);
        
-    /* Re-send report in laters transmissions */
+    /* Re-send report in later transmissions */
     uint8_t repeat = GET_BYTE_PARAM("REPEAT"); 
     if (!no_tx && repeat > 0) {
         xreport_queue(*pos, 1);
         if (repeat>1)
             xreport_queue(*pos, 3);
         if (repeat>2)
-            xreport_queue(*pos, 5);
+            xreport_queue(*pos, 6);
     }
 
     /* Comment */
