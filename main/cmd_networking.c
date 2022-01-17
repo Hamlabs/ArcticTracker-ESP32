@@ -5,7 +5,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "esp_log.h"
 #include "esp_console.h"
 #include "argtable3/argtable3.h"
 #include "system.h" 
@@ -263,7 +262,7 @@ int do_post(int argc, char** argv) {
     char * data = "Hack And Crack"; 
     int dlen = 14; 
     
-    int res = http_post(host, port, uri, ctype, data, dlen);
+    http_post(host, port, uri, ctype, data, dlen);
     return 0;
 }
 

@@ -33,13 +33,14 @@ void tracklog_init()
 void tracklog_on() {
     if (tracklogt == NULL)
         xTaskCreatePinnedToCore(&tracklog, "Track logger", 
+                                
             STACK_TRACKLOG, NULL, NORMALPRIO, &tracklogt, CORE_TRACKLOG);
 }
 
 
 
 /********************************************************
- *  Main thread of tracklogger 
+ *  Turn off tracklogger 
  ********************************************************/
 
 void tracklog_off() {

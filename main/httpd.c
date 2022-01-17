@@ -278,7 +278,7 @@ CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
     updateBoolField(cdata, "TIMESTAMP.on", "timestamp_on", NULL);
     updateBoolField(cdata ,"COMPRESS.on",  "compress_on",  NULL);
     updateBoolField(cdata, "ALTITUDE.on",  "altitude_on",  NULL);
-    updateBoolField(cdata, "EXTRATURN.on", "extraturn_on", NULL);
+    updateBoolField(cdata, "EXTRATURN.on", "xonturn_on", NULL);
     
     updateI32Field (cdata, "TXFREQ",       "tx_freq",     1440000, 1460000);
     updateI32Field (cdata, "RXFREQ",       "rx_freq",     1440000, 1460000);    
