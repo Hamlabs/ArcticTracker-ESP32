@@ -10,10 +10,7 @@ It is based on the earlier Arctic Tracker (v.1) prototype which
 used a Teensy 3 MCU module and a ESP-8266 module (with NodeMCU). 
 
 See http://www.hamlabs.no for some blogging about this project. 
-A working prototype was built and demonstrated (except we didn't get 
-the PA to work properly). The design with ESP-8266 had some 
-limitations and complicating factors, and as the ESP-32 arrived 
-on the scene it became clear that this would be a better platform. 
+A working prototype was built and demonstrated. 
 
 ## Firmware implementation
 
@@ -30,8 +27,11 @@ Currently the following is implemented or ported:
 * Interface with GPS. 
 * LCD display, button handler, etc..
 * Controlling radio and PA module
-* Sending APRS packets
+* Sending APRS packets. Tracking. 
+* Digipeater and igate. 
 * Firmware upgrades over the air (OTA). 
+
+Work in progess: Storing position updates for later uploading. 
 
 A updated PCB layout has been produced and is currently being tested. It works! 
 
