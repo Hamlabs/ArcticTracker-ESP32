@@ -36,9 +36,9 @@
 
 #define POST_ARG(cd, arg, buf, siz) httpdFindArg(cd->post.buff, arg, buf, siz)
 
-#define RESPOND_CODE(code) { \
-   httpdStartResponse(cdata, (code)); \
-   httpdEndHeaders(cdata); \
+#define RESPOND_CODE(cdata, code) { \
+   httpdStartResponse((cdata), (code)); \
+   httpdEndHeaders((cdata)); \
    return HTTPD_CGI_DONE; \
 }
 
@@ -230,22 +230,44 @@ static void hdl_igate(bool on) {
 
 
 
+/***********************************************************************
+ * prefix for update CGI functions
+ *  return 0 of ok to continue.
+ ***********************************************************************/
+static CgiStatus begin_updateResp(HttpdConnData *cdata, char* text) {
+    if (cdata->isConnectionClosed) 
+		return HTTPD_CGI_DONE;
+
+	if (!METHOD_POST(cdata))
+		RESPOND_CODE(cdata, 406);
+	
+    startResp(cdata, 200, "text/html");
+    httpdSend(cdata, "<html>", -1); 
+    head(cdata); 
+    httpdSend(cdata, "<body><h2>", -1); 
+    httpdSend(cdata, text, -1); 
+    httpdSend(cdata, "</h2><fieldset>", -1);
+    return 0;
+}
+
+#define BEGIN_UPDATERESP(cdata, text) \
+    { CgiStatus st = begin_updateResp((cdata), (text)); \
+        if (st != 0) \
+            return st; \
+    }
+
+#define END_UPDATERESP(cdata) \
+       httpdSend((cdata), "</fieldset></body></html>", -1);
+
+       
+       
+       
 /**************************************************** 
  * CGI function for updating WIFI settings
  ****************************************************/
 
 CGIFUNC cgi_updateWifi(HttpdConnData *cdata) {
-    if (cdata->isConnectionClosed) 
-		return HTTPD_CGI_DONE;
-
-	if (!METHOD_POST(cdata))
-		RESPOND_CODE(406);
-	
-    startResp(cdata, 200, "text/html");
-    httpdSend(cdata, "<html>", -1); 
-    head(cdata); 
-    
-    httpdSend(cdata, "<body><h2>Update WIFI settings...</h2><fieldset>", -1);
+    BEGIN_UPDATERESP(cdata, "Update WIFI settings..."); 
     updateStrField(cdata, "WIFIAP.AUTH", "appass", ".*", false);
     updateStrField(cdata, "HTTPD.USR", "htuser", ".*", false);
     updateStrField(cdata, "HTTPD.PWD", "htpass", ".*", false);
@@ -254,7 +276,7 @@ CGIFUNC cgi_updateWifi(HttpdConnData *cdata) {
         updateApAlt(cdata, i);
      // FIXME: Sanitize input fields
     
-    httpdSend(cdata, "</fieldset></body></html>", -1);
+    END_UPDATERESP(cdata);
     return HTTPD_CGI_DONE;
 }
 
@@ -265,16 +287,8 @@ CGIFUNC cgi_updateWifi(HttpdConnData *cdata) {
  ****************************************************/
 
 CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
-    if (cdata->isConnectionClosed) 
-		return HTTPD_CGI_DONE;
-
-	if (!METHOD_POST(cdata))
-		RESPOND_CODE(406);
-	
-    startResp(cdata, 200, "text/html");
-    httpdSend(cdata, "<html>", -1); 
-    head(cdata); 
-    httpdSend(cdata, "<body><h2>Update APRS settings...</h2><fieldset>", -1);
+    BEGIN_UPDATERESP(cdata, "Update APRS settings...");
+   
     updateBoolField(cdata, "TIMESTAMP.on", "timestamp_on", NULL);
     updateBoolField(cdata ,"COMPRESS.on",  "compress_on",  NULL);
     updateBoolField(cdata, "ALTITUDE.on",  "altitude_on",  NULL);
@@ -293,7 +307,7 @@ CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
     updateStrField(cdata, "DIGIPATH",      "digis",     REGEX_DIGIPATH, true);    
     updateStrField(cdata, "REP_COMMENT",   "rcomment",  ".*", false);  
     
-    httpdSend(cdata, "</fieldset></body></html>", -1);
+    END_UPDATERESP(cdata);
     return HTTPD_CGI_DONE;
 }
 
@@ -304,16 +318,8 @@ CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
  ****************************************************/
 
 CGIFUNC cgi_updateDigi(HttpdConnData *cdata) {
-    if (cdata->isConnectionClosed) 
-		return HTTPD_CGI_DONE;
+    BEGIN_UPDATERESP(cdata, "Update digi/igate settings...");
 
-	if (!METHOD_POST(cdata))
-		RESPOND_CODE(406);
-	
-    startResp(cdata, 200, "text/html");
-    httpdSend(cdata, "<html>", -1); 
-    head(cdata); 
-    httpdSend(cdata, "<body><h2>Update digi/igate settings...</h2><fieldset>", -1);
     updateBoolField(cdata,"DIGIPEATER.on", "digi_on",  hdl_digipeater);
     updateBoolField(cdata,"IGATE.on",      "igate_on", hdl_igate);
     updateBoolField(cdata,"DIGI.WIDE1.on", "wide1_on", NULL);
@@ -322,13 +328,16 @@ CGIFUNC cgi_updateDigi(HttpdConnData *cdata) {
     updateStrField(cdata, "IGATE.USER",    "ig_user", REGEX_AXADDR, false);
     updateU16Field(cdata, "IGATE.PASS",    "ig_pass", 0, 65535);
         
-    httpdSend(cdata, "</fieldset></body></html>", -1);
+    END_UPDATERESP(cdata);
+
     return HTTPD_CGI_DONE;
 }
 
 
 
 CGIFUNC cgi_updateTrklog(HttpdConnData *cdata) {
+    BEGIN_UPDATERESP(cdata, "Update traclog settings...");
+    END_UPDATERESP(cdata);
     return HTTPD_CGI_DONE;
 }
 
@@ -339,21 +348,10 @@ CGIFUNC cgi_updateTrklog(HttpdConnData *cdata) {
  ******************************************************/
 
 CGIFUNC cgi_updateFw(HttpdConnData *cdata) {
-    if (cdata->isConnectionClosed) 
-        /* Connection aborted. Clean up */
-		return HTTPD_CGI_DONE;
-
-	if (!METHOD_POST(cdata))
-		RESPOND_CODE(406);
-    
-    startResp(cdata, 200, "text/html");
-    httpdSend(cdata, "<html>", -1); 
-    head(cdata); 
-    httpdSend(cdata, "<body><h2>Update firmware update settings...</h2><fieldset>", -1);
+    BEGIN_UPDATERESP(cdata, "Update firmware update settings...");
     updateStrField(cdata, "FW.URL",  "fw_url", ".*", false);
     updateBigStrField(cdata, "FW.CERT", "fw_cert", ".*");
-    httpdSend(cdata, "</fieldset></body></html>", -1);
-    
+    END_UPDATERESP(cdata);
     return HTTPD_CGI_DONE;
 }
 

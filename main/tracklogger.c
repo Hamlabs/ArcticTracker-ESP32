@@ -31,9 +31,9 @@ void tracklog_init()
  ********************************************************/
 
 void tracklog_on() {
+    set_byte_param("TRKLOG.on", 1);
     if (tracklogt == NULL)
         xTaskCreatePinnedToCore(&tracklog, "Track logger", 
-                                
             STACK_TRACKLOG, NULL, NORMALPRIO, &tracklogt, CORE_TRACKLOG);
 }
 
@@ -44,6 +44,7 @@ void tracklog_on() {
  ********************************************************/
 
 void tracklog_off() {
+    set_byte_param("TRKLOG.on", 0);
 }
 
 
@@ -90,7 +91,7 @@ static void remove_old() {
 
 
 
-
+/* 796 byte buffer */
 #define JS_CHUNK_SIZE 128
 #define JS_RECORD_SIZE 64
 #define JS_HEAD 28
@@ -117,7 +118,9 @@ static void post_server() {
     GET_STR_PARAM("TRKLOG.HOST", host, 48);
     GET_STR_PARAM("TRKLOG.PATH", path, 48);
     
-    /* Serialise as JSON */
+    /* Serialise as JSON: 
+     *    (call, list of (call, time, lat, lng))
+     */
     len += sprintf(buf, "{\"call\":\"%s\", \"pos\":[", call);
     for (;;) {
         len += sprintf(buf, "{\"time\":%u, \"lat\":%u, \"lng\":%u}", pd.time, pd.lat, pd.lng);

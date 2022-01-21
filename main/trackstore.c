@@ -171,6 +171,10 @@ posentry_t* trackstore_getEnt(posentry_t* pbuf) {
 }
 
 
+/****************************************************** 
+ * Get and remove a record from the store. 
+ * Convert it to a posdata_t datatype. 
+ ******************************************************/
 
 posdata_t* trackstore_get(posdata_t* pbuf) {
     posentry_t entry;
@@ -190,6 +194,10 @@ posdata_t* trackstore_get(posdata_t* pbuf) {
 }
 
 
+
+/************************************************************ 
+ * Get the next record from the store without removing it 
+ ************************************************************/
 
 posentry_t* trackstore_peek(posentry_t* pbuf) {    
     mutex_lock(mutex);
@@ -284,7 +292,7 @@ static void delete_block(blkno_t blk) {
 
 
 /******************************************************
- * Write new entry to the end of the file
+ * Write new entry to the end of a file
  ******************************************************/
 
 static void write_entry(posentry_t* entr, FILE* f) {
