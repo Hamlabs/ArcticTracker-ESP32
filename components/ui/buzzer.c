@@ -26,7 +26,8 @@ volatile int buzz_pin = 0;
 
 static void IRAM_ATTR buzzer_isr(void* arg) 
 {
-    clock_clear_intr(BUZZER_TIMERGRP, BUZZER_TIMERIDX);
+// FIXME
+//    clock_clear_intr(BUZZER_TIMERGRP, BUZZER_TIMERIDX);
     buzz_pin = (buzz_pin==1 ? 0 : 1);
     gpio_set_level(BUZZER_PIN, buzz_pin);    
 }

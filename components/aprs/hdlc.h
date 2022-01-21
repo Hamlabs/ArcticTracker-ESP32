@@ -16,12 +16,12 @@ void hdlc_wait_idle(void);
 void hdlc_monitor_tx(FBQ* m);
 void hdlc_test_on(uint8_t b);
 void hdlc_test_off(void);
-FBQ* hdlc_init_encoder(RingbufHandle_t oq);
+FBQ* hdlc_init_encoder(QueueHandle_t oq);
 fbq_t* hdlc_get_encoder_queue(void);
 bool hdlc_enc_packets_waiting(void);
 uint8_t rand_u8(void);
 
 void hdlc_subscribe_rx(fbq_t* q, uint8_t i);
-void hdlc_init_decoder (RingbufHandle_t s);
+void hdlc_init_decoder (QueueHandle_t s);
 
 #endif

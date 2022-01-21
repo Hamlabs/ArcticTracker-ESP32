@@ -16,18 +16,19 @@
 void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *), bool iram)
 {
     /* Select and initialize basic parameters of the timer */
-    static timer_config_t config;
-    config.divider = divider;
-    config.counter_dir = TIMER_COUNT_UP;
-    config.counter_en = TIMER_PAUSE;
-    config.alarm_en = TIMER_ALARM_EN;
-    config.intr_type = TIMER_INTR_LEVEL;
-    config.auto_reload = 1;
+    timer_config_t config = {
+        .divider = divider,
+        .counter_dir = TIMER_COUNT_UP,
+        .counter_en = TIMER_PAUSE,
+        .alarm_en = TIMER_ALARM_EN,
+        .auto_reload = true,
+    }; // default clock source is APB
     timer_init(group, idx, &config);
-    timer_set_counter_value(group, idx, 0x00000000ULL);
-    timer_disable_intr(group, idx);
-    timer_isr_register(group, idx, isr, (void *) idx, (iram? ESP_INTR_FLAG_IRAM : 0), NULL);
-    timer_enable_intr(group, idx);
+
+    /* Timer's counter will initially start from value below.
+       Also, if auto_reload is set, this value will be automatically reload on alarm */
+    timer_set_counter_value(group, idx, 0);
+    timer_isr_callback_add(group, idx, isr, NULL, 0);
 }
 
 
@@ -37,8 +38,9 @@ void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *), bool
 
 void clock_start(int group, int idx, double interval) 
 {
-    timer_set_counter_value(group, idx, 0x00000000ULL);
+    timer_set_counter_value(group, idx, 0);
     timer_set_alarm_value(group, idx, interval);
+    timer_enable_intr(group, idx);
     timer_start(group, idx);
 }
 
@@ -68,28 +70,4 @@ void clock_changeInterval(int group, int idx, double interval)
 }
 
 
-
-/*************************************************************************
- * To be used in ISR: Clear interrupt and re-enable alarm 
- *************************************************************************/
-
-void IRAM_ATTR clock_clear_intr(int group, int index)
-{
-    if (group==0) {
-        TIMERG0.hw_timer[index].update = 1;
-        if (index==0) 
-            TIMERG0.int_clr_timers.t0 = 1;
-        else 
-            TIMERG0.int_clr_timers.t1 = 1;
-        TIMERG0.hw_timer[index].config.alarm_en = TIMER_ALARM_EN;
-    }
-    else {
-        TIMERG1.hw_timer[index].update = 1;
-        if (index==0) 
-            TIMERG1.int_clr_timers.t0 = 1;
-        else 
-            TIMERG1.int_clr_timers.t1 = 1;
-        TIMERG1.hw_timer[index].config.alarm_en = TIMER_ALARM_EN;
-    }
-}
 

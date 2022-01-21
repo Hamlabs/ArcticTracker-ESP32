@@ -5,7 +5,7 @@
 #include "esp_adc_cal.h"
 #include "defines.h"
 #include "config.h"
-
+#include "hal/adc_hal.h"
 
 
 #define ATTEN         ADC_ATTEN_DB_11
@@ -132,6 +132,17 @@ uint16_t adc_batt_status(char* line1, char* line2)
 
 
 
+int adc1_get_rawISR(adc1_channel_t channel)
+{
+    int adc_value;
+    
+    /* FIXME: Find out if we need to do some calibration, set attenuation before we convert */
+    
+    adc_hal_convert(ADC_NUM_1, channel, &adc_value);   //Start conversion, For ADC1, the data always valid.
+    return adc_value;
+}
+
+
 
 /*************************************************************************
  * Sampling of radio channel - to be called from timer ISR 
@@ -143,7 +154,7 @@ void adc_calibrate() {
     dcoffset = adc_read(RADIO_INPUT)-16;
 }
 
-int adc1_get_rawISR(adc1_channel_t channel);
+
 
 int16_t adc_sample() 
 {  

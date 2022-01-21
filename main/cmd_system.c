@@ -29,7 +29,8 @@
 #include "gui.h"
 #include "linenoise/linenoise.h"
 #include "trackstore.h"
-
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 static int do_sysinfo(int argc, char** argv);
 static int do_restart(int argc, char** argv);
@@ -164,15 +165,44 @@ static int do_restart(int argc, char** argv)
 
 static int do_sysinfo(int argc, char** argv)
 {
-    esp_chip_info_t chinfo; 
-    esp_chip_info(&chinfo); 
+    const char *model;
+    esp_chip_info_t info;
+    esp_chip_info(&info);
+
+    switch(info.model) {
+        case CHIP_ESP32:
+            model = "ESP32";
+            break;
+        case CHIP_ESP32S2:
+            model = "ESP32-S2";
+            break;
+        case CHIP_ESP32S3:
+            model = "ESP32-S3";
+            break;
+        case CHIP_ESP32C3:
+            model = "ESP32-C3";
+            break;
+        case CHIP_ESP32H2:
+            model = "ESP32-H2";
+            break;
+        default:
+            model = "Unknown";
+            break;
+    }
  
     printf("Free heap:       %d\n", esp_get_free_heap_size());
-    printf("IDF version:     %s\n",  esp_get_idf_version());
-    printf("Chip version:    %d\n", chinfo.revision);
-    printf("Chip cores:      %d\n", chinfo.cores);
-    printf("Flash chip size: %d\n", spi_flash_get_chip_size());
     printf("FBUF free mem:   %d\n", fbuf_freeMem());
+    printf("IDF version:     %s\n\n", esp_get_idf_version());
+    printf("Chip info:\n");
+    printf("  model:         %s\n", model);
+    printf("  cores:         %d\n", info.cores);
+    printf("  features:      %s%s%s%s%d%s\r\n",
+           info.features & CHIP_FEATURE_WIFI_BGN ? "802.11bgn" : "",
+           info.features & CHIP_FEATURE_BLE ? " / BLE" : "",
+           info.features & CHIP_FEATURE_BT ? " / BT" : "",
+           info.features & CHIP_FEATURE_EMB_FLASH ? " / Embedded-Flash:" : " / External-Flash:",
+           spi_flash_get_chip_size() / (1024 * 1024), " MB");
+    printf("  revision nr:   %d\n", info.revision);
     return 0;
 }
 
@@ -198,12 +228,16 @@ static int do_free(int argc, char** argv)
 static int do_tasks(int argc, char** argv)
 {
     const size_t bytes_per_task = 40; /* see vTaskList description */
-    char* task_list_buffer = malloc(uxTaskGetNumberOfTasks() * bytes_per_task);
+    char *task_list_buffer = malloc(uxTaskGetNumberOfTasks() * bytes_per_task);
     if (task_list_buffer == NULL) {
         ESP_LOGE(TAG, "failed to allocate buffer for vTaskList output");
         return 1;
     }
-    fputs("Task Name\tStatus\tPrio\tHWM\tTask Number\n", stdout);    
+    fputs("Task Name\tStatus\tPrio\tHWM\tTask#", stdout);
+#ifdef CONFIG_FREERTOS_VTASKLIST_INCLUDE_COREID
+    fputs("\tAffinity", stdout);
+#endif
+    fputs("\n", stdout);
     vTaskList(task_list_buffer);
     fputs(task_list_buffer, stdout);
     free(task_list_buffer);

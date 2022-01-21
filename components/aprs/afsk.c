@@ -29,7 +29,8 @@ void afsk_txBitClock(void *arg);
 
 static void afsk_sampler(void *arg) 
 {   
-    clock_clear_intr(AFSK_TIMERGRP, AFSK_TIMERIDX);
+// FIXME
+//    clock_clear_intr(AFSK_TIMERGRP, AFSK_TIMERIDX);
     if (rxMode)
         afsk_rxSampler(arg); 
     else

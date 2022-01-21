@@ -46,7 +46,8 @@ volatile uint8_t i = 0;
 
 static void IRAM_ATTR sinewave(void *arg) 
 {
-  clock_clear_intr(TONE_TIMERGRP, TONE_TIMERIDX);
+// FIXME
+//  clock_clear_intr(TONE_TIMERGRP, TONE_TIMERIDX);
   dac_output_voltage(TONE_DAC, sine[i++]);
   if (i >= STEPS) 
      i=0;
