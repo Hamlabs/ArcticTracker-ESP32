@@ -10,9 +10,9 @@
 // #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 
-#define VERSION_STRING "v2.0 alpha3"
+#define VERSION_STRING "v2.0 alpha4"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2020-10-1"
+#define FW_DATE "2021-01-22"
 
 #define BIT_0	( 1 << 0 )
 
