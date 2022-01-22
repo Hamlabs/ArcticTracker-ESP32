@@ -240,7 +240,10 @@ static int help_command(int argc, char **argv)
 {
     if (argc > 1) {
         const cmd_item_t *it = find_command_by_name(argv[1]);
-        print_item_help(it);
+        if (it == NULL)
+            printf("Unknown command: %s\n", argv[1]);
+        else
+            print_item_help(it);
     }
     else {
         cmd_item_t *it;

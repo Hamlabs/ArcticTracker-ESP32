@@ -164,10 +164,17 @@ int do_apSta(int argc, char** argv)
 {
     if (!wifi_isEnabled())
         printf("Wifi is not enabled\n");
+
     wifi_sta_list_t  stations;
-    ESP_ERROR_CHECK(esp_wifi_ap_get_sta_list(&stations));
+    esp_err_t err = esp_wifi_ap_get_sta_list(&stations);
+    if (err==ESP_ERR_WIFI_MODE) {
+         printf("Wifi adapter is not in AP mode\n");
+         return 0;
+    }
+    else
+        ESP_ERROR_CHECK(err);
+    
     tcpip_adapter_sta_list_t infoList;
-   
     ESP_ERROR_CHECK(tcpip_adapter_get_sta_list(&stations, &infoList));
     for(int i = 0; i < infoList.num; i++) {
         tcpip_adapter_sta_info_t st = infoList.sta[i];
@@ -254,6 +261,8 @@ int do_apAlt(int argc, char** argv)
     return 0;
 }
 
+
+
 int do_post(int argc, char** argv) {
     char* host = "10.0.1.10";
     uint16_t port = 8081; 
@@ -272,12 +281,16 @@ int do_post(int argc, char** argv) {
 inline static void _param_wifi_handler(bool x)
    { wifi_enable(x); }
    
+inline static void _param_softap_handler(bool x)
+   { wifi_enable_softAp(x); }
+   
 inline static void _param_httpd_handler(bool x) {
     if (wifi_isEnabled())
         httpd_enable(x);
 }
    
 CMD_BOOL_SETTING(_param_wifi,      "WIFI.on",     &_param_wifi_handler);
+CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",   &_param_softap_handler);
 CMD_BOOL_SETTING(_param_httpd,     "HTTPD.on",    &_param_httpd_handler); 
 CMD_STR_SETTING (_param_httpd_usr, "HTTPD.USR",   32, HTTPD_DEFAULT_USR, NULL);
 CMD_STR_SETTING (_param_httpd_pwd, "HTTPD.PWD",   64, HTTPD_DEFAULT_PWD, NULL);
@@ -314,6 +327,7 @@ void register_wifi()
     ADD_CMD("wifi-scan",  &do_scan,          "Scan for wifi access points", NULL);  
     ADD_CMD("wifi-info",  &do_info,          "Info about WIFI", NULL);
     ADD_CMD("wifi",       &_param_wifi,      "WIFI On/Off setting", "[on|off]");
+    ADD_CMD("softap",     &_param_softap,    "Soft AP On/Off setting", "[on|off]");
     ADD_CMD("ap",         &do_apAlt,         "List or change AP alternatives", "[<index> [delete | <ssid> [<password>]]]");
     ADD_CMD("ap-ssid",    &_param_ap_ssid,   "WIFI SoftAP SSID setting", "[<ssid>]");
     ADD_CMD("ap-auth",    &_param_ap_auth,   "WIFI SoftAP password", "[<password>]");

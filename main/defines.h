@@ -107,7 +107,7 @@
 #define AUTOCONNECT_PERIOD 240
 
 /* Stack sizes for tasks */
-#define STACK_AUTOCON        2700
+#define STACK_AUTOCON        3000
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 2200
 #define STACK_HDLC_RXDECODER 2200

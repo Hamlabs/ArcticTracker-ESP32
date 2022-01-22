@@ -146,12 +146,17 @@ void wifi_init(void)
 {
     if (initialized)
         return;
+    char ident[16];
+    get_str_param("MYCALL", ident, 16, DFL_MYCALL);
+    if (strcmp(ident, "") == 0 || strcmp(ident, "NOCALL") == 0)
+        sprintf(ident,"%X", chipId());
+    
     wifi_event_group = xEventGroupCreate();
     xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);        
     xEventGroupSetBits(wifi_event_group, DISCONNECTED_BIT);
     
     tcpip_adapter_init();
-    sprintf(default_ssid, "Arctic_%X", chipId());
+    sprintf(default_ssid, "Arctic_%s", ident);
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
     
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -205,6 +210,7 @@ void wifi_enable_softAp(bool en)
         apcnf.ap.authmode = WIFI_AUTH_OPEN;
     
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+    
     esp_err_t err = esp_wifi_set_config(ESP_IF_WIFI_AP, &apcnf);
     if (err == ESP_ERR_WIFI_PASSWORD)
         ESP_LOGW(TAG, "Invalid password for softAP");
