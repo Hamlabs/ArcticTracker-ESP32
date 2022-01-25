@@ -34,7 +34,7 @@ static bool _on = false;
 static uint8_t sine[STEPS] = 
    {0x80,0xa0,0xd0,0xe0,0xf0,0xe0,0xd0,0xa0,0x70,0x50,0x20,0x10,0,0x10,0x20,0x50};   
 
-static void sinewave(void* arg); 
+static bool sinewave(void* arg); 
     
  
     
@@ -44,13 +44,14 @@ static void sinewave(void* arg);
  *****************************************************************/
 volatile uint8_t i = 0;
 
-static void IRAM_ATTR sinewave(void *arg) 
+static bool sinewave(void *arg) 
 {
 // FIXME
 //  clock_clear_intr(TONE_TIMERGRP, TONE_TIMERIDX);
-  dac_output_voltage(TONE_DAC, sine[i++]);
-  if (i >= STEPS) 
-     i=0;
+    dac_output_voltage(TONE_DAC, sine[i++]);
+    if (i >= STEPS) 
+        i=0;
+    return true;
 }
 
 

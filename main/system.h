@@ -3,8 +3,6 @@
  * By LA7ECA, ohanssen@acm.org
  */
  
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
- 
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/semphr.h"
@@ -19,7 +17,7 @@
 #if !defined __DEF_SYSTEM_H__
 #define __DEF_SYSTEM_H__
 
-
+// #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 
 /* Firmware upgrade and shutdown */
 esp_err_t firmware_upgrade();
@@ -35,7 +33,7 @@ char*  time2str (char*, time_t);
 char*  date2str (char*, time_t);
 
 /* Hardware timer - as periodic clocks */
-void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *), bool iram);
+void clock_init(int group, int idx, uint16_t divider,   timer_isr_t isr, bool iram);
 void clock_start(int group, int idx, double interval);
 void clock_stop(int group, int idx);
 void clock_changeInterval(int group, int idx, double interval);

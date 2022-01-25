@@ -13,7 +13,7 @@
  * Timer setup
  ************************************************************************/
 
-void clock_init(int group, int idx, uint16_t divider,  void (*isr)(void *), bool iram)
+void clock_init(int group, int idx, uint16_t divider,   timer_isr_t isr, bool iram)
 {
     /* Select and initialize basic parameters of the timer */
     timer_config_t config = {

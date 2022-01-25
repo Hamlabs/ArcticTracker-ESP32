@@ -203,7 +203,8 @@ int do_info(int argc, char** argv)
             tcpip_adapter_ip_info_t ipinfo = wifi_getIpInfo();
             char buf[40];
             printf("  Connected to: %s\n", (char*) wifi_getConnectedAp(buf));
-            printf("    IP address: %s\n",  ip4addr_ntoa(&ipinfo.ip) );
+            printf("    IP address: %s\n", ip4addr_ntoa(&ipinfo.ip) );
+            printf(" mDNS hostname: %s\n", mdns_hostname(buf));
         }
         uint8_t mac[6];
         ESP_ERROR_CHECK(esp_wifi_get_mac(WIFI_IF_STA, mac));
@@ -325,7 +326,7 @@ void register_wifi()
     
     ADD_CMD("post",       &do_post,          "Test", NULL);
     ADD_CMD("wifi-scan",  &do_scan,          "Scan for wifi access points", NULL);  
-    ADD_CMD("wifi-info",  &do_info,          "Info about WIFI", NULL);
+    ADD_CMD("wifi-info",  &do_info,          "Info about WIFI connection", NULL);
     ADD_CMD("wifi",       &_param_wifi,      "WIFI On/Off setting", "[on|off]");
     ADD_CMD("softap",     &_param_softap,    "Soft AP On/Off setting", "[on|off]");
     ADD_CMD("ap",         &do_apAlt,         "List or change AP alternatives", "[<index> [delete | <ssid> [<password>]]]");

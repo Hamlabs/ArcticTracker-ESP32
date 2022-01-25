@@ -1,3 +1,5 @@
+
+
 /*
  * Misc. System related stuff
  * By LA7ECA, ohanssen@acm.org
@@ -67,17 +69,22 @@ esp_err_t firmware_upgrade()
     
     GET_STR_PARAM("FW.URL", fwurl, 79);
     GET_STR_PARAM("FW.CERT", fwcert, BBUF_SIZE);
+    ESP_LOGI(TAG, "URL=%s\n", fwurl);
+    ESP_LOGI(TAG, "CERT=%s\n", fwcert);
     
     esp_http_client_config_t config = {
         .url = fwurl,
         .cert_pem = fwcert,
+        .keep_alive_enable = true,
+        .skip_cert_common_name_check = true
     };
     BLINK_FWUPGRADE;    
     esp_err_t ret = esp_https_ota(&config);
-    ESP_LOGW(TAG, "Upgrade ok. Rebooting..\n");
     if (ret == ESP_OK) {
+         ESP_LOGW(TAG, "Upgrade ok. Rebooting..\n");
         esp_restart();
     } else {
+         ESP_LOGE(TAG, "Upgrade failed!\n");
         return ESP_FAIL;
     }
     return ESP_OK;
@@ -230,7 +237,6 @@ void set_logLevels() {
     esp_log_level_set("*", dfl);
         
     set_logLevel("system", "LGLV.system", dfl);
-    set_logLevel("uart", "LGLV.uart", dfl);
     set_logLevel("main", "LGLV.main", dfl);
     set_logLevel("wifi", "LGLV.wifi", dfl);
     set_logLevel("wifix", "LGLV.wifix", dfl);
@@ -250,6 +256,7 @@ void set_logLevels() {
     set_logLevel("tcp-cli", "LGLV.tcp-cli", dfl);
     set_logLevel("trackstore", "LGLV.trackstore", dfl); 
     set_logLevel("tracklog", "LGLV.tracklog", dfl);
+    set_logLevel("esp-tls-mbedtls", "LGLV.esp-tls-mbedtls", dfl);
 }
 
 
@@ -264,6 +271,7 @@ bool hasTag(char*tag) {
            strcmp(tag, "digi")==0       || strcmp(tag, "igate")==0    || 
            strcmp(tag, "tcp-cli")==0    || strcmp(tag, "main")==0     ||
            strcmp(tag, "trackstore")==0 || strcmp(tag, "tracklog")==0 ||
+           strcmp(tag, "esp-tls-mbedtls")==0  || 
            strcmp(tag, "*")==0;
 }
 

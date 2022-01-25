@@ -14,7 +14,7 @@
 #include "config.h"
 #include "commands.h"
 #include "networking.h"
-
+#include "mdns.h"
 
 #define AP_BEACON_INTERVAL 5000 // in milliseconds
 #define AP_SSID_HIDDEN 0
@@ -37,6 +37,7 @@ static bool initialized = false;
 static bool enabled = false;
 static bool connected = false;
 static char *status = "Off"; 
+static char hostname[32]; 
 static cond_t scanDone;
 char default_ssid[32];
 
@@ -81,6 +82,49 @@ static void dhcp_enable(bool on)
 
 
 
+/**********************************************************************************
+ * start mdns service 
+ **********************************************************************************/
+
+void mdns_start(char* ident) {
+    //initialize mDNS service
+    esp_err_t err = mdns_init();
+    if (err) {
+        printf("MDNS Init failed: %d\n", err);
+        return;
+    }
+
+    char buffer[32]; 
+    
+    /* Set hostname */
+    sprintf(hostname, "arctic-%s", ident);
+    mdns_hostname_set(hostname);
+    
+    /* Set default instance */
+    sprintf(buffer, "Arctic Tracker: %s", ident);
+    mdns_instance_name_set(buffer);
+    
+    /* Announce services */
+    mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
+    mdns_service_instance_name_set("_http", "_tcp", "Arctic Tracker Web Server");
+    
+    mdns_txt_item_t txtData[1] = {
+        {"ident", ident}
+    };
+    /* Set txt data for service (will free and replace current data) */
+    mdns_service_txt_set("_http", "_tcp", txtData, 1);
+}
+
+
+char* mdns_hostname(char* buf) {
+    sprintf(buf, "%s.local", hostname);
+    return buf;
+    
+}
+    
+    
+    
+    
 /********************************************************************************
  * Event handler
  ********************************************************************************/
@@ -168,6 +212,8 @@ void wifi_init(void)
 
     if (GET_BYTE_PARAM("WIFI.on"))
         wifi_enable(true);
+    
+    mdns_start(ident);
     initialized = true;
 }
 
@@ -468,29 +514,32 @@ void wifi_startScan(void)
 static void task_autoConnect( void * pvParms ) 
 {
     int i;
+    int n=0;
     wifiAp_t alt;
-    
+    sleepMs(3000);
     while(true) {
         /* Wait until disconnected */
         xEventGroupWaitBits(wifi_event_group, DISCONNECTED_BIT, 1, 1, portMAX_DELAY );
         sleepMs(6000); 
         wifi_startScan(); 
         wifi_waitScan();
-        
+        sleepMs(100);
+        /* Go through list of alternatives and if in scan-list, try to connect */
         for (i=0; i<AP_MAX_ALTERNATIVES; i++) {
             if (wifi_getApAlt(i, &alt)) 
-                if (wifi_inScanList(alt.ssid)) 
+                if (wifi_inScanList(alt.ssid)) {
                     if (wifi_join(alt.ssid, alt.passwd, 6000))
                         break;
+                    sleepMs(2000);
+                }
         }
         if (!connected)
-            sleepMs(AUTOCONNECT_PERIOD*1000);
-            // Turn off wifi to save power? 
+            if (n>0) sleepMs(AUTOCONNECT_PERIOD*1000);
+        
+        // Turn off wifi to save power?
+        n++;
     }
 }
-
-// FIXME: when to invalidate scan-results? Interference with others that initiates scans. 
-// FIXME: RSSI threshold. 
 
 
 

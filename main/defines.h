@@ -146,9 +146,9 @@
 // FIXME: If ledblinker is run on CPU 1, system will crash! 
 // FIXME: Seems to be an issue with beep if it runs on CPU 1 ???
 
-#define BBUF_SIZE 3000
+#define BBUF_SIZE 4096
 
-#define FBUF_SLOTSIZE 24
+#define FBUF_SLOTSIZE 32
 #define FBUF_SLOTS 512
 
 /* Regular expressions defining various input formats */

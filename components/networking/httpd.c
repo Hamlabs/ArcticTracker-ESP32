@@ -23,7 +23,7 @@
 
 
 #define LISTEN_PORT     80u
-#define MAX_CONNECTIONS 16u
+#define MAX_CONNECTIONS  4u
 
 
 
@@ -478,6 +478,9 @@ CGIFUNC tpl_sysInfo(HttpdConnData *con, char *token, void **arg) {
 	}
     else if (strcmp(token, "ipAddr")==0) {
         wifi_getIpAddr(buf);
+	}  
+	else if (strcmp(token, "hostName")==0) {
+        mdns_hostname(buf);
 	}
     else if (strcmp(token, "macAddr")==0) {
         uint8_t mac[6];
@@ -596,6 +599,6 @@ void httpd_enable(bool on) {
         httpd_on = false; 
         ESP_LOGI(TAG, "HTTP Server Shut down");
 #endif
-    }
+    } 
 }
 

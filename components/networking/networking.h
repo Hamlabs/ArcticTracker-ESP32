@@ -23,8 +23,11 @@ typedef struct {
 extern char default_ssid[];
 
 
+/* mdns functions */
+char* mdns_hostname(char*); 
+
 /* WIFI functions */
-bool   wifi_isEnabled(void);
+bool    wifi_isEnabled(void);
 bool   wifi_isConnected(void);
 void   wifi_waitConnected(void);
 bool   wifi_join(const char* ssid, const char* pass, int timeout_ms);
