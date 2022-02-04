@@ -38,6 +38,7 @@ typedef struct cmd_item_ {
     SLIST_ENTRY(cmd_item_) next;    //!< next command in the list
 } cmd_item_t;
 
+
 /** linked list of command structures */
 static SLIST_HEAD(cmd_list_, cmd_item_) s_cmd_list;
 
@@ -48,6 +49,9 @@ static esp_console_config_t s_config;
 static char *s_tmp_line_buf;
 
 static const cmd_item_t *find_command_by_name(const char *name);
+
+
+
 
 esp_err_t esp_console_init(const esp_console_config_t *config)
 {
@@ -126,18 +130,24 @@ esp_err_t esp_console_cmd_register(const esp_console_cmd_t *cmd)
     }
     item->argtable = cmd->argtable;
     item->func = cmd->func;
+    
+    /* Now, insert it into the ordered linked list */
     cmd_item_t *last = SLIST_FIRST(&s_cmd_list);
-    if (last == NULL) {
+    if (last == NULL || strcmp(item->command, last->command)<0) {
         SLIST_INSERT_HEAD(&s_cmd_list, item, next);
-    } else {
+    } else
+    {
         cmd_item_t *it;
         while ((it = SLIST_NEXT(last, next)) != NULL) {
+            if (strcmp(item->command, it->command)<0)
+                break;
             last = it;
         }
         SLIST_INSERT_AFTER(last, item, next);
     }
     return ESP_OK;
 }
+
 
 void esp_console_get_completion(const char *buf, linenoiseCompletions *lc)
 {
