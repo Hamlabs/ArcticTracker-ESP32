@@ -84,6 +84,20 @@ void gps_init(uart_port_t uart)
 }
 
 
+/* 
+ * Create a fake GPS position
+ */
+void gps_fake() 
+{
+    /* Just set the timestamp */
+    gps_current_pos.timestamp = getTime();
+    gps_current_pos.latitude = 66.0;
+    gps_current_pos.longitude = 15.0;
+}
+
+
+
+
 /**************************************************************************
  * Read and process NMEA sentences.
  *    Not thread safe. Use in at most one thread, use lock, or allocate

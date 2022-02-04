@@ -3,9 +3,9 @@
 #define __TRACKSTORE_H__
 
 
-#define MAX_UINT16     65000
-#define BLOCK_SIZE     10
-#define MAX_BLOCKS     3
+#define MAX_UINT16     65535
+#define BLOCK_SIZE     128
+#define MAX_BLOCKS     128
 #define POS_RESOLUTION 100000
 
 /* 
@@ -15,6 +15,9 @@
 
 /*
  * 16 byte position report entry. 
+ *   time - number of seconds since 1970-01-01 00:00:00 +0000 (UTC).
+ *   lat,lng - latitude and longitude in degrees * POS_RESOLUTION and converted to unsigned integer
+ *   altitude - height in meters
  */
 typedef struct _entry {
     uint32_t  time;

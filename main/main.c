@@ -167,6 +167,7 @@ static void startup(void* arg)
     radio_init(RADIO_UART);
     
     tracker_init(oq);
+    tracklog_init();
     digipeater_init(oq);
     igate_init(); 
     

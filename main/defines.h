@@ -10,9 +10,9 @@
 // #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 
-#define VERSION_STRING "v2.0 alpha4"
+#define VERSION_STRING "v2.0 alpha"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2021-01-22"
+#define FW_DATE "2022-02-04"
 
 #define BIT_0	( 1 << 0 )
 
@@ -122,7 +122,8 @@
 #define STACK_TCP_REC        3000
 #define STACK_IGATE          3000
 #define STACK_IGATE_RADIO    2300
-#define STACK_TRACKLOG       2700
+#define STACK_TRACKLOG       2900
+#define STACK_TRACKLOGPOST   3600
 
     
 #define CORE_AUTOCON        0
@@ -140,6 +141,7 @@
 #define CORE_IGATE          1
 #define CORE_IGATE_RADIO    0
 #define CORE_TRACKLOG       1
+#define CORE_TRACKLOGPOST   1
 
 
 

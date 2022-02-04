@@ -37,6 +37,7 @@ extern time_t    gps_current_time;
 
 /* GPS API */
 void        gps_init(uart_port_t uart);
+void        gps_fake(void);
 posdata_t*  gps_get_pos(void);
 time_t      gps_get_time(void);
 uint32_t    gps_distance(posdata_t*, posdata_t*);

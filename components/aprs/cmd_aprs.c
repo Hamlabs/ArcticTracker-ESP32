@@ -19,6 +19,8 @@
 #include "tracker.h"
 #include "digipeater.h"
 #include "igate.h"
+#include "trackstore.h"
+#include "tracklogger.h"
 
 
 void   register_aprs(void);
@@ -100,6 +102,26 @@ static int do_listen(int argc, char* argv[])
   return 0;
 }
 
+
+
+/****************************************************************************
+ * Get record from track log (for testing)
+ ****************************************************************************/
+
+static int do_trget(int argc, char* argv[])
+{
+   (void) argv;
+   (void) argc; 
+   posentry_t x;
+   if (trackstore_getEnt(&x)==NULL)
+       printf("*** Store is empty\n");
+   else
+       printf("Entry: time=%d\n", x.time);
+   return 0;
+}
+
+
+  
 /*****************************************************************
  * Handlers for making actions after changing after some 
  * setting changes. 
@@ -146,6 +168,11 @@ void hdl_igate(bool on) {
     igate_activate(on); 
 }
 
+void hdl_trkpost(bool on) {
+    if (on)
+        tracklog_post_start();
+}
+
 
 
 // Radio and APRS settings
@@ -185,6 +212,7 @@ CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      1440000, 1
 
 CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
 CMD_BOOL_SETTING (_param_tracklog_on,"TRKLOG.on",      hdl_tracklog);
+CMD_BOOL_SETTING (_param_trkpost_on, "TRKLOG.POST.on", hdl_trkpost);
 CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     hdl_tracker);
 CMD_BOOL_SETTING (_param_timestamp,  "TIMESTAMP.on",   NULL);
 CMD_BOOL_SETTING (_param_compress,   "COMPRESS.on",    NULL);
@@ -209,7 +237,8 @@ void register_aprs()
     ADD_CMD("teston",     &do_teston,          "HDLC encoder test", "<byte>");
     ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
     ADD_CMD("listen",     &do_listen,          "Monitor radio channel", "");
-         
+    ADD_CMD("trklog-get", &do_trget,           "Get track record", "");      
+    
     ADD_CMD("mycall",     &_param_mycall,      "My callsign", "[<callsign>]");
     ADD_CMD("dest",       &_param_dest,        "APRS destination address", "[<addr>]");
     ADD_CMD("digipath",   &_param_digipath,    "APRS Digipeater path", "[<addr>, ...]");
@@ -250,6 +279,7 @@ void register_aprs()
     ADD_CMD("igate-pass", &_param_igate_pass,  "Igate server passcode",  "[<code>]");
         
     ADD_CMD("tracklog",   &_param_tracklog_on, "Track logging", "[on|off]"); 
+    ADD_CMD("trklog-post",&_param_trkpost_on,  "Track log automatic post to server", "[on|off]");
     ADD_CMD("radio",      &_param_radio_on,    "Radio module power", "[on|off]");
     ADD_CMD("tracker",    &_param_tracker_on,  "APRS tracker setting", "[on|off]");
     ADD_CMD("reportbeep", &_param_rbeep_on,    "Beep when report is sent", "[on|off]");

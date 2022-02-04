@@ -1,0 +1,171 @@
+ 
+########################
+# System commands
+########################
+
+free        Get the total size of heap memory available     
+            FIXME change to 'mem'
+            
+sysinfo     System info
+            
+restart     Restart the program
+
+tasks       Get information about running tasks"
+     
+time        Current date and time 
+
+log         Console logging level
+            <tag>|* [<level>|delete]
+            
+regex	    Regex test				REMOVE
+
+nmea	    Monitor GPS NMEA datastream
+	    [raw]
+
+disp	    Test display			REMOVE
+
+tone	    Tone generator test
+
+ptt	    Key transmitter
+
+radio	    Radio on
+
+fw-upgrade  Firmware upgrade
+
+
+
+    
+########################### 
+# Wifi/internet commands
+###########################
+    
+wifi        WIFI on/off - WIFI.on                       
+
+wifi-join   Join WiFi AP as a station
+            
+wifi-scan   Scan for wifi access points 
+
+wifi-info   Info about WIFI
+
+ap-ssid     WIFI SoftAP SSID setting - WIFIAP.SSID                  
+            FIXME: If empty, show default!!!
+            
+ap-auth     WIFI SoftAP password - WIFIAP.AUTH  
+            
+ap-ip       WIFI_SoftAP IP address - WIFIAP.IP    
+
+
+ap          Edit list of access point alternatives. Index 1-6.
+            [<index> [<ssid>|delete [<password>]]] 
+
+httpd       Control webserver
+            on | off            
+            FIXME: Additional command for setting auth info
+            
+connect     Open internet connection (host,port)                    TODO   
+            <host> <port>
+     
+ipaddr      Get IP address from WIFI module		                    TODO        
+
+fw-url      URL for firmware upgrade
+
+fw-cert     Certificate for firmware upgrade
+
+
+
+
+
+
+    
+#########################
+# Misc TODO commands
+#########################
+                      
+
+freq        Set/get freguency of radio   
+	    <rxfreq> [<txfreq>]
+
+squelch     Set/get squelch level of receiver (1-8)     
+            <level>
+            
+volume      Set/get volume level of receiver       
+
+miclevel    Set/get mic sensitivity level (1-8)    
+	    <level>
+	    
+txpower     Set/get TX power (hi=1W, lo=0.5W)      
+            hi | lo
+
+txdelay     Set/get TX delay (flags before frame)  
+	    <n>
+	    
+txtail      Set/get TX tail (flags after frame)    
+	    <n>
+	    
+maxframe    Get/get max frames in one transmission 
+
+ptt        Turn on/off transmitter
+	   on | off
+    
+radio      Turn on/off radio    
+	   on | off
+    
+txtone     Send 1200Hz (lo) or 2200Hz (hi) tone
+	   hi | lo | off
+    
+testpacket Send test APRS packet                  
+
+teston     Generate test signal with data byte    
+
+listen     Listen to radio                       
+
+converse   Converse mode                          
+
+gps        Control GPS module     
+	   on | off | nmea | pos | test
+
+txmon      Monitor transmitted packets on/off     
+
+tracker    Tracker on/off        
+	   on | off
+
+mycall     Set/get tracker's APRS callsign        
+
+dest       Set/get APRS destination address      
+
+symbol     Set/get APRS symbol                    
+
+path       Set/get APRS digipeater path           
+
+timestamp  Timestamp on/off                       
+
+compress   Compressed positions on/off            
+
+altitude   Altidude in reports on/off            
+
+reportbeep Beep when reporting on/off            
+
+repeat     Repeat posisition report (piggybacked)
+
+extraturn  Extra report on turn (piggybacked)     
+
+turnlimit  Change in heading that trigger report  
+
+maxpause   Max pause (seconds/10) before report   
+
+minpause   Min pause (seconds/10) before report   
+
+mindist    Min moved distance (meters) before report
+
+digipeater Digipeater settings 
+	   info | on | off | wide1 | sar
+	   FIXME: rename, split
+	   
+igate      Igate settings 
+	   info | on | off | host | port | username | passcode | filter
+	   FIXME: rename, split
+	   
+igtrack    Tracking through internet gate on/off    
+
+statustime Time (seconds/10) between status messages
+           

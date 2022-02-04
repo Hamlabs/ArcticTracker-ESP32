@@ -1,3 +1,4 @@
+
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
@@ -97,8 +98,8 @@ void trackstore_stop() {
 
 void trackstore_put(posdata_t *x) {
     posentry_t entry; 
-    ESP_LOGD(TAG, "put - first=%d, last=%d, firstblk=%d, lastblk=%d, nblocks=%d ",
-             meta.first, meta.last, meta.firstblk, meta.lastblk, meta.nblocks );
+    posentry_t old;
+
     /* 
      * How to be sure that the timestamp is correctly 
      * represented as a unsigned 32 bit number?
@@ -109,10 +110,13 @@ void trackstore_put(posdata_t *x) {
     entry.altitude = x->altitude;
     
     /* Drop it if no change in position in the last 60 seconds */
-    if (entry.lat == prev.lat && entry.lng == prev.lng && 
-        entry.time < prev.time+60)
-            return; 
+  //  if (entry.lat == prev.lat && entry.lng == prev.lng && 
+  //      entry.time < prev.time+60)
+  //          return; 
     prev = entry;
+    
+    ESP_LOGD(TAG, "put - first=%d, last=%d, firstblk=%d, lastblk=%d, nblocks=%d ",
+             meta.first, meta.last, meta.firstblk, meta.lastblk, meta.nblocks );
     
     /* If empty */
     if (meta.firstblk == meta.lastblk &&
@@ -120,27 +124,33 @@ void trackstore_put(posdata_t *x) {
           reset_empty(); 
            
     mutex_lock(mutex); 
+    
+    /* if block is full, add a new one */
     if (meta.last >= BLOCK_SIZE) {
-        if (meta.nblocks == MAX_BLOCKS) {
-            ESP_LOGE(TAG, "put - store is full");
-            mutex_unlock(mutex);
-            return;
-        }
-        /* if block is full, add a new one */
         ESP_LOGD(TAG, "put - switch block");
         if (meta.firstblk != meta.lastblk)
             fclose(lastfile);
         meta.lastblk = (meta.lastblk + 1) % MAX_UINT16;
         meta.nblocks++;
         lastfile = open_block(meta.lastblk, "a+");
+        
+        
+        
         meta.last = 0;
     } 
     
     /* Append the entry to the file */
     meta.last++;
     write_entry(&entry, lastfile);
-    set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
-    mutex_unlock(mutex); 
+    set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));    
+    
+    if (meta.nblocks >= MAX_BLOCKS && meta.last >= 1) {
+        ESP_LOGW(TAG, "put - store is full, removing oldest");
+        mutex_unlock(mutex);
+        trackstore_getEnt(&old);
+    }
+    else
+        mutex_unlock(mutex); 
 }
 
 
@@ -226,11 +236,11 @@ static bool check_rblock() {
         
         /* Move to a newer block */
         ESP_LOGD(TAG, "read - switch block");
+        fclose(firstfile);
         delete_block(meta.firstblk);
         meta.nblocks--;
         meta.firstblk = (meta.firstblk + 1) % MAX_UINT16;
         meta.first = 0;
-        fclose(firstfile);
         
         /* Open file or get already open file */
         if (meta.firstblk == meta.lastblk && lastfile!=NULL)
@@ -285,8 +295,8 @@ static FILE* open_block(blkno_t blk, char* perm) {
 static void delete_block(blkno_t blk) {
     char fname[64];
     sprintf(fname, "/files/tracks_blk%u.bin", blk);
+    ESP_LOGI(TAG, "Deleting file: %s", fname);
     unlink(fname);
-    meta.nblocks--;
 }
 
 
