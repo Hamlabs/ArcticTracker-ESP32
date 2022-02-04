@@ -24,6 +24,9 @@
 #include "afsk.h"
 #include "radio.h"
 #include "gps.h"
+#include "esp_crt_bundle.h"
+
+
 
 static void initialize_sntp(void);
 
@@ -69,22 +72,27 @@ esp_err_t firmware_upgrade()
     
     GET_STR_PARAM("FW.URL", fwurl, 79);
     GET_STR_PARAM("FW.CERT", fwcert, BBUF_SIZE);
-    ESP_LOGI(TAG, "URL=%s\n", fwurl);
-    ESP_LOGI(TAG, "CERT=%s\n", fwcert);
+    ESP_LOGI(TAG, "Fw upgrade: URL=%s", fwurl);
     
     esp_http_client_config_t config = {
         .url = fwurl,
         .cert_pem = fwcert,
         .keep_alive_enable = true,
-        .skip_cert_common_name_check = true
+        .skip_cert_common_name_check = false
     };
+    if (fwcert == NULL || strlen(fwcert) < 10) {
+        config.cert_pem = NULL;
+        config.crt_bundle_attach = esp_crt_bundle_attach;
+    }
+        
+        
     BLINK_FWUPGRADE;    
     esp_err_t ret = esp_https_ota(&config);
     if (ret == ESP_OK) {
-         ESP_LOGW(TAG, "Upgrade ok. Rebooting..\n");
+        ESP_LOGW(TAG, "Fw upgrade ok. Rebooting..");
         esp_restart();
     } else {
-         ESP_LOGE(TAG, "Upgrade failed!\n");
+        ESP_LOGE(TAG, "Fw upgrade failed!");
         return ESP_FAIL;
     }
     return ESP_OK;
@@ -256,7 +264,7 @@ void set_logLevels() {
     set_logLevel("tcp-cli", "LGLV.tcp-cli", dfl);
     set_logLevel("trackstore", "LGLV.trackstore", dfl); 
     set_logLevel("tracklog", "LGLV.tracklog", dfl);
-    set_logLevel("esp-tls-mbedtls", "LGLV.esp-tls-mbedtls", dfl);
+    set_logLevel("mbedtls", "LGLV.mbedtls", dfl);
 }
 
 
@@ -271,7 +279,7 @@ bool hasTag(char*tag) {
            strcmp(tag, "digi")==0       || strcmp(tag, "igate")==0    || 
            strcmp(tag, "tcp-cli")==0    || strcmp(tag, "main")==0     ||
            strcmp(tag, "trackstore")==0 || strcmp(tag, "tracklog")==0 ||
-           strcmp(tag, "esp-tls-mbedtls")==0  || 
+           strcmp(tag, "mbedtls")==0  || 
            strcmp(tag, "*")==0;
 }
 

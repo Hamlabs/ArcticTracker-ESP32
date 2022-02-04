@@ -11,8 +11,10 @@
 
 <label>Download URL:</label>
 <input class="fwup" type="text" id="fw_url" name="fw_url" pattern=".*" value="%fw_url%" /> 
-<br><br>
-<label>Certificate:</label>
+<br><p class="expl">
+For security, server certificate will be verified. You may add the issuer (CA) certificate here (PEM format), or, if this field is left empty, the most common issuers will be checked.
+</p>
+<label>CA certificate:</label>
 <textarea class="fwup" id="fw_cert" name="fw_cert" pattern=".*">
 %fw_cert%
 </textarea>
