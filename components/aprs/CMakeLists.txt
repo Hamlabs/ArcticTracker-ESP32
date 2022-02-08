@@ -3,5 +3,5 @@ idf_component_register(
          "heardlist.c" "igate.c" "monitor.c" "tracker.c" "tracklogger.c" "trackstore.c" "xreport.c"
     
     INCLUDE_DIRS "." "../../main" 
-    REQUIRES console ui
+    REQUIRES mbedtls console ui
 )

@@ -9,6 +9,9 @@
 #include <lwip/netdb.h>
 #include "networking.h"
 
+#include "esp_http_client.h"
+#include "esp_crt_bundle.h"
+
 
 /* Return name/ip of connected host */
 char* inet_chost(void);
@@ -111,42 +114,34 @@ void inet_write(char* data, int len)
 
 /***************************************************************************
  * HTTP post 
- *  - host/ip, URI, content-type, data, length-of-data
+ *  - URL, content-type, data, length-of-data
  ***************************************************************************/
 
-int http_post(char* host, uint16_t port, char* uri, char* ctype, char* data, int dlen) {
-    
-    if (inet_open(host, port) != 0) {
-        // COULD-NOT-OPEN-CONNECTION
-        ESP_LOGW(TAG, "Could not open connection to: %s:%d", host, port);
-        return -1;
+int http_post(char* uri, char* ctype, char* data, int dlen) 
+{
+     esp_http_client_config_t config = {
+        .url = uri,
+        .method = HTTP_METHOD_POST, 
+        
+        /* We may configure this? See OTA */
+        .cert_pem = NULL,
+        .crt_bundle_attach = esp_crt_bundle_attach
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    esp_http_client_set_post_field(client, data, dlen);
+    esp_err_t err = esp_http_client_perform(client);
+
+    int status = esp_http_client_get_status_code(client);
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "Status = %d, content_length = %d",
+            status, esp_http_client_get_content_length(client));
     }
-    char buf[256];
-    char msg[40];
-    int len = 0;
-    int status; 
-    len = sprintf(buf,      "POST %s HTTP/1.0\r\n", uri);
-    len += sprintf(buf+len, "Host: %s\r\n", host);
-    len += sprintf(buf+len, "User-Agent: Arctic Tracker\r\n");
-    len += sprintf(buf+len, "Content-Type: %s\r\n", ctype);
-    len += sprintf(buf+len, "Content-Length: %d\r\n", dlen);
-    inet_write(buf, len);
-    inet_write("\r\n", 2);
-    
-    /* Send the content */
-    inet_write(data, dlen);
-    inet_write("\r\n", 2);
-    
-    /* Get the response */
-    inet_read(buf, 255);
-    sscanf(buf, "HTTP/1.1 %d %[^\n]\r\n", &status, msg);
-    if (status != 200)
-        ESP_LOGW(TAG, "http POST response=%d %s", status, msg);
     else
-        ESP_LOGI(TAG, "http POST ok");
+        ESP_LOGW(TAG,  "HTTP post failed. Status = %d", status);
+        
+    esp_http_client_cleanup(client);
     return status;
 }
-
 
 
 

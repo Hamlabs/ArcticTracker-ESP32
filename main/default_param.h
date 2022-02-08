@@ -1,8 +1,7 @@
  
 
 #define DFL_MYCALL       "NOCALL"
-#define DFL_TRKLOG_HOST  "aprs.no"
-#define DFL_TRKLOG_PATH  "/tracklog"
+#define DFL_TRKLOG_URL   "https://localhost/trklog"
 #define DFL_DEST         "APAT20"
 #define DFL_DIGIPATH     ""
 #define DFL_SYMBOL       "/]"
@@ -16,7 +15,6 @@
 #define DFL_REPEAT           0
 #define DFL_TRKLOG_INT       5
 #define DFL_TRKLOG_TTL      24
-#define DFL_TRKLOG_PORT     80
 #define DFL_ADC_REF       1100
 #define DFL_TXDELAY         10
 #define DFL_TXTAIL          10

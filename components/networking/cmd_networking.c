@@ -263,22 +263,6 @@ int do_apAlt(int argc, char** argv)
 }
 
 
-
-int do_post(int argc, char** argv) {
-    char* host = "10.0.1.10";
-    uint16_t port = 8081; 
-    char* uri = "/test";
-    char *ctype = "text/plain";
-    char * data = "Hack And Crack"; 
-    int dlen = 14; 
-    
-    http_post(host, port, uri, ctype, data, dlen);
-    return 0;
-}
-
-
-
-
 inline static void _param_wifi_handler(bool x)
    { wifi_enable(x); }
    
@@ -324,7 +308,6 @@ void register_wifi()
 
     ADD_CMD_X(&join_cmd);
     
-    ADD_CMD("post",       &do_post,          "Test", NULL);
     ADD_CMD("wifi-scan",  &do_scan,          "Scan for wifi access points", NULL);  
     ADD_CMD("wifi-info",  &do_info,          "Info about WIFI connection", NULL);
     ADD_CMD("wifi",       &_param_wifi,      "WIFI On/Off setting", "[on|off]");

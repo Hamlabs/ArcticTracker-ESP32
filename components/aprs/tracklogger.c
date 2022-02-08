@@ -6,6 +6,11 @@
 #include "networking.h"
 #include "tracklogger.h"
 
+#include "mbedtls/sha256.h"
+#include "mbedtls/base64.h"
+#include "mbedtls/md.h"
+#include "mbedtls/platform.h"
+
 
 #define TAG "tracklog"
 
@@ -62,7 +67,7 @@ void tracklog_off() {
 
 void tracklog_post_start() 
 {
-    if (!trackpost_running && wifi_isConnected())
+    if (GET_BYTE_PARAM("TRKLOG.POST.on") && !trackpost_running && wifi_isConnected())
         xTaskCreatePinnedToCore(&post_loop, "Trklog POSTer",
             STACK_TRACKLOGPOST, NULL, NORMALPRIO, &trackpostt, CORE_TRACKLOGPOST);
 }
@@ -117,7 +122,7 @@ static void remove_old() {
 }
 
 
-
+#define KEY_SIZE 128
 
 /********************************************************
  *  Send positions to server using a HTTP POST call
@@ -126,11 +131,14 @@ static void remove_old() {
 
 int tracklog_post() {
     char call[10];
-    char* buf = malloc(JS_CHUNK_SIZE * JS_RECORD_SIZE + JS_HEAD +1);
-    char host[48], path[48];
-    uint16_t port; 
+    char* buf = malloc(KEY_SIZE + JS_CHUNK_SIZE * JS_RECORD_SIZE + JS_HEAD +50);
+    char url[64]; 
+    char key[KEY_SIZE];
+    unsigned char hash[32];  
+    char b64hash[45];
     int len = 0, i=0;
     posentry_t pd; 
+    int keylen; 
     
     /* If empty, just return */
     if (trackstore_getEnt(&pd) == NULL)
@@ -138,14 +146,15 @@ int tracklog_post() {
     
     /* Get settings */
     GET_STR_PARAM("MYCALL", call, 10);
-    port = get_u16_param("TRKLOG.PORT", DFL_TRKLOG_PORT);
-    GET_STR_PARAM("TRKLOG.HOST", host, 48);
-    GET_STR_PARAM("TRKLOG.PATH", path, 48);
+    get_str_param("TRKLOG.URL", url, 64, DFL_TRKLOG_URL);
+    GET_STR_PARAM("TRKLOG.KEY", key, KEY_SIZE);
     
-    /* Serialise as JSON: 
-     *    (call, list of (call, time, lat, lng))
+    /* 
+     * Serialise as JSON: 
+     *   (call, list of (call, time, lat, lng))
      */
-    len = sprintf(buf, "{\"call\":\"%s\", \"pos\":[\n", call);
+    keylen = len = sprintf(buf, "%s", key);
+    len += sprintf(buf+len, "{\"call\":\"%s\", \"pos\":[\n", call);
     for (;;) {
         len += sprintf(buf+len, "{\"time\":%u, \"lat\":%u, \"lng\":%u}", pd.time, pd.lat, pd.lng);
         if (++i >= JS_CHUNK_SIZE)
@@ -154,14 +163,29 @@ int tracklog_post() {
             break;
         len += sprintf(buf+len, ",\n");
     }
-    len += sprintf(buf+len, "]}");
+    len += sprintf(buf+len, "]}"); 
+
+    
+    /* 
+     * Now, before we close the JSON structure we need to compute the SHA-256 hash
+     * and add it. At this stage the buffer contains the key and a complete JSON structure
+     * without the hash. The hash is converted to a base64 format and we use the 24 first 
+     * characters. 
+     */
+    mbedtls_sha256((unsigned char*) buf, len, hash, 0);
+    size_t olen;
+    mbedtls_base64_encode((unsigned char*) b64hash, 45, &olen, hash, 32 );
+    b64hash[24] = 0;
+    len += sprintf(buf+len-1, ",\n\"mac\":\"%s\"}", b64hash);
     
     /* Post it */
-    if (http_post(host, port, "text/json", path, buf, len) == 200)
-        ESP_LOGI(TAG, "Posted track-log (%d bytes/%d entries) to %s:%d", len, i, host, port);
-//        printf("POST:\n%s\n", buf);
+    printf("POST:\n%s\n", buf+keylen);
+    int status = http_post(url, "text/json", buf+keylen, len-keylen);
+    if (status == 200) {
+        ESP_LOGI(TAG, "Posted track-log (%d bytes/%d entries) to %s", len, i, url);
+    }
     else
-        ESP_LOGE(TAG, "Couldn't post track-log");
+        ESP_LOGW(TAG, "Post of track-log failed. Status=%d", status);
     free(buf);
     return i;
 }
@@ -170,7 +194,7 @@ int tracklog_post() {
 
 static void post_loop() 
 {       
-    sleepMs(3000);    
+    sleepMs(5000);    
     ESP_LOGI(TAG, "Starting trklog POST task");
     trackpost_running = true;
     while (wifi_isConnected() && GET_BYTE_PARAM("TRKLOG.POST.on")) {

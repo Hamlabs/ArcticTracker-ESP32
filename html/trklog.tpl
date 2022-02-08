@@ -10,8 +10,7 @@
 <fieldset>
 
 <label class="leftlab"><b>Track logging:</b></label>
-<input type="checkbox" id="trklog_on" name="trklog_on" value="false" %trklog_on%/>Activate
-<br>
+<input type="checkbox" id="trklog_on" name="trklog_on" value="true" %trklog_on%/>Activate
 <br>
 
 <label class="leftlab">Save interval:</label>
@@ -24,14 +23,15 @@
 <br>
 <br>
 
-<label class="leftlab"><b>Track log server:</b></label>
-<input type="text" id="tl_host" name="tl_host" size="30" pattern="[a-zA-Z0-9\-\.]+" value="%tlog_host%" /> 
+<label class="leftlab"><b>Auto upload:</b></label>
+<input type="checkbox" id="trkpost_on" name="trkpost_on" value="true" %trkpost_on%/>Activate
 <br>
-<label class="leftlab">Port number:</label>
-<input type="text" id="tl_port" name="tl_port" size="6" pattern="[0-9]+" value="%tlog_port%" />
+
+<label class="leftlab">Server URL:</label>
+<input type="text" id="tl_host" name="tl_url" size="40" pattern="(http|https):\/\/[a-zA-Z0-9\-\_\.\/]+" value="%tlog_url%" /> 
 <br>
-<label class="leftlab">Path:</label>
-<input type="text" id="tl_path" name="tl_path" size="20" pattern="[a-zA-Z0-9\-\.\/]+" value="%tlog_path%" />
+<label class="leftlab">Server Key:</label>
+<input type="text" id="tl_key" name="tl_key" size="40" pattern=".+" value="%tlog_key%" />
 <br>
 
 </fieldset>

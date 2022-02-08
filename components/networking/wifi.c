@@ -15,6 +15,7 @@
 #include "commands.h"
 #include "networking.h"
 #include "mdns.h"
+#include "tracklogger.h"
 
 #define AP_BEACON_INTERVAL 5000 // in milliseconds
 #define AP_SSID_HIDDEN 0
@@ -106,7 +107,7 @@ void mdns_start(char* ident) {
     
     /* Announce services */
     mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
-    mdns_service_instance_name_set("_http", "_tcp", "Arctic Tracker Web Server");
+    mdns_service_instance_name_set("_http", "_tcp", "Arctic Tracker HTTP Server");
     
     mdns_txt_item_t txtData[1] = {
         {"ident", ident}
@@ -533,11 +534,15 @@ static void task_autoConnect( void * pvParms )
                     sleepMs(2000);
                 }
         }
-        if (!connected)
-            if (n>0) sleepMs(AUTOCONNECT_PERIOD*1000);
-        
-        // Turn off wifi to save power?
-        n++;
+        if (connected) {
+            tracklog_post_start();  
+            n=0;
+        }
+        else if (n>0) { 
+            // Turn off wifi to save power?
+            sleepMs(AUTOCONNECT_PERIOD*1000);
+            n++;
+        }
     }
 }
 

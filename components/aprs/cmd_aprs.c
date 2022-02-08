@@ -181,8 +181,8 @@ CMD_USTR_SETTING (_param_mycall,     "MYCALL",       9,  DFL_MYCALL,       REGEX
 CMD_USTR_SETTING (_param_dest,       "DEST",         9,  DFL_DEST,         REGEX_AXADDR);
 CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",     70, DFL_DIGIPATH,     REGEX_DIGIPATH);
 
-CMD_STR_SETTING  (_param_trkloghost, "TRKLOG.HOST",  64, DFL_TRKLOG_HOST,  REGEX_HOSTNAME);
-CMD_STR_SETTING  (_param_trklogpath, "TRKLOG.PATH" , 32, DFL_TRKLOG_PATH,  REGEX_FPATH);
+CMD_STR_SETTING  (_param_trklogurl,  "TRKLOG.URL",   64, DFL_TRKLOG_URL,   REGEX_URL);
+CMD_STR_SETTING  (_param_serverkey,  "TRKLOG.KEY",   128, "",              NULL);
 CMD_STR_SETTING  (_param_symbol,     "SYMBOL",       3,  DFL_SYMBOL,       REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_osym,       "OBJ.SYMBOL",   3,  DFL_OBJ_SYMBOL,   REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_oid,        "OBJ.ID",       10, DFL_OBJ_ID,       REGEX_AXADDR);
@@ -204,7 +204,6 @@ CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 1, 8,   hd
 CMD_BYTE_SETTING (_param_repeat,     "REPEAT",       DFL_REPEAT,      0, 4,   NULL);
 
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
-CMD_U16_SETTING  (_param_trklogport, "TRKLOG.PORT",  DFL_TRKLOG_PORT, 1, 65535);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",   DFL_IGATE_PORT,  1, 65535);
 CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",   0,               0, 65535);
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000);
@@ -252,9 +251,8 @@ void register_aprs()
            
     ADD_CMD("trklog-int", &_param_trklogint,   "Interval for track logging (seconds)", "[<val>]");
     ADD_CMD("trklog-ttl", &_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
-    ADD_CMD("trklog-host",&_param_trkloghost,  "Server host for track logging", "[<val>]");
-    ADD_CMD("trklog-port",&_param_trklogport,  "Server port for track logging", "[<val>]");
-    ADD_CMD("trklog-path",&_param_trklogpath,  "Server path for track logging", "[<val>]");
+    ADD_CMD("trklog-key", &_param_serverkey,   "KEY for authenticating messages to Polaric Server", "[<key>]");
+    ADD_CMD("trklog-url", &_param_trklogurl,   "URL for posting tracklog updates to Polaric Server", "[<url>]");
     ADD_CMD("maxframe",   &_param_maxframe,    "APRS max frames in a transmission", "[<val>]");
     ADD_CMD("maxpause",   &_param_maxpause,    "Tracking max pause (10 sec units)", "[<val>]");
     ADD_CMD("minpause",   &_param_minpause,    "Tracking min pause (10 sec units)", "[<val>]");

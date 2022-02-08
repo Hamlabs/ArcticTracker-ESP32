@@ -27,7 +27,7 @@ extern char default_ssid[];
 char* mdns_hostname(char*); 
 
 /* WIFI functions */
-bool    wifi_isEnabled(void);
+bool   wifi_isEnabled(void);
 bool   wifi_isConnected(void);
 void   wifi_waitConnected(void);
 bool   wifi_join(const char* ssid, const char* pass, int timeout_ms);
@@ -64,7 +64,6 @@ void inet_close(void);
 int  inet_read(char* buf, int size);
 void inet_write(char* data, int len);
 bool inet_isConnected(void);
-int  http_post(char* host, uint16_t port, char* uri, char* ctype, char* data, int dlen);
-
+int  http_post(char* uri, char* ctype, char* data, int dlen);
 
 #endif

@@ -20,7 +20,7 @@
 #include "system.h"
 #include "digipeater.h"
 #include "igate.h"
-
+#include "tracklogger.h"
 
 #define LISTEN_PORT     80u
 #define MAX_CONNECTIONS  4u
@@ -141,7 +141,7 @@ static void updateStrField(HttpdConnData *cdata, const char* key, const char* pp
     char val[64], msg[64], buf[128];
     POST_ARG(cdata, pparm, val, 64);
     if (upper)
-        strupr(val);
+        strupr(val); 
     int n = sprintf(buf, "Update %s: %s<br>", key, param_parseStr(key, val, strlen(val), pattern, msg));
     httpdSend(cdata, buf, n);
 }
@@ -228,6 +228,17 @@ static void hdl_igate(bool on) {
     igate_activate(on); 
 }
 
+static void hdl_trkpost(bool on) {
+    if (on)
+        tracklog_post_start();
+}
+
+static void hdl_tracklog(bool on) {
+    if (on) 
+        tracklog_on();
+    else
+        tracklog_off();
+}
 
 
 /***********************************************************************
@@ -292,7 +303,7 @@ CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
     updateBoolField(cdata, "TIMESTAMP.on", "timestamp_on", NULL);
     updateBoolField(cdata ,"COMPRESS.on",  "compress_on",  NULL);
     updateBoolField(cdata, "ALTITUDE.on",  "altitude_on",  NULL);
-    updateBoolField(cdata, "EXTRATURN.on", "xonturn_on", NULL);
+    updateBoolField(cdata, "EXTRATURN.on", "xonturn_on",   NULL);
     
     updateI32Field (cdata, "TXFREQ",       "tx_freq",     1440000, 1460000);
     updateI32Field (cdata, "RXFREQ",       "rx_freq",     1440000, 1460000);    
@@ -319,24 +330,28 @@ CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
 
 CGIFUNC cgi_updateDigi(HttpdConnData *cdata) {
     BEGIN_UPDATERESP(cdata, "Update digi/igate settings...");
-
     updateBoolField(cdata,"DIGIPEATER.on", "digi_on",  hdl_digipeater);
     updateBoolField(cdata,"IGATE.on",      "igate_on", hdl_igate);
     updateBoolField(cdata,"DIGI.WIDE1.on", "wide1_on", NULL);
     updateBoolField(cdata,"DIGI.SAR.on",   "sar_on",   NULL);
     updateStrField(cdata, "IGATE.HOST",    "ig_host", REGEX_HOSTNAME, false);
     updateStrField(cdata, "IGATE.USER",    "ig_user", REGEX_AXADDR, false);
-    updateU16Field(cdata, "IGATE.PASS",    "ig_pass", 0, 65535);
-        
+    updateU16Field(cdata, "IGATE.PASS",    "ig_pass", 0, 65535); 
     END_UPDATERESP(cdata);
-
     return HTTPD_CGI_DONE;
 }
 
 
 
 CGIFUNC cgi_updateTrklog(HttpdConnData *cdata) {
-    BEGIN_UPDATERESP(cdata, "Update traclog settings...");
+    BEGIN_UPDATERESP(cdata, "Update tracklog settings...");
+    updateBoolField(cdata, "TRKLOG.on",  "trklog_on", hdl_tracklog);
+    updateByteField(cdata, "TRKLOG.INT", "tl_int", 0, 60);
+    updateByteField(cdata, "TRKLOG.TTL", "tl_ttl", 0, 250);
+    
+    updateBoolField(cdata, "TRKLOG.POST.on", "trkpost_on", hdl_trkpost);
+    updateStrField(cdata,  "TRKLOG.URL",  "tl_url", REGEX_URL, false);
+    updateStrField(cdata,  "TRKLOG.KEY",  "tl_key", ".*", false);
     END_UPDATERESP(cdata);
     return HTTPD_CGI_DONE;
 }
@@ -448,12 +463,12 @@ CGIFUNC tpl_trklog(HttpdConnData *con, char *token, void **arg) {
         sprintf(buf, "%u", get_byte_param("TRKLOG.TTL", DFL_TRKLOG_TTL));
     else if (strcmp(token, "trklog_on")==0)
         TEST_CHECKED(buf, "TRKLOG.on");
-    else if (strcmp(token, "tlog_host")==0)
-        get_str_param("TRKLOG.HOST", buf, 64, DFL_TRKLOG_HOST);
-    else if (strcmp(token, "tlog_port")==0)
-        sprintf(buf, "%u", get_u16_param("TRKLOG.PORT", DFL_TRKLOG_PORT));
-    else if (strcmp(token, "tlog_path")==0)
-        get_str_param("TRKLOG.PATH", buf, 32, DFL_TRKLOG_PATH);
+    else if (strcmp(token, "trkpost_on")==0)
+        TEST_CHECKED(buf, "TRKLOG.POST.on");
+    else if (strcmp(token, "tlog_url")==0)
+        get_str_param("TRKLOG.URL", buf, 64, DFL_TRKLOG_URL);
+    else if (strcmp(token, "tlog_key")==0)
+        get_str_param("TRKLOG.KEY", buf, 128, "");
     
     httpdSend(con, buf, -1);
 	return HTTPD_CGI_DONE;

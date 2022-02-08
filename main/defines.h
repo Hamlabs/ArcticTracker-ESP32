@@ -123,7 +123,7 @@
 #define STACK_IGATE          3000
 #define STACK_IGATE_RADIO    2300
 #define STACK_TRACKLOG       2900
-#define STACK_TRACKLOGPOST   3600
+#define STACK_TRACKLOGPOST   3700
 
     
 #define CORE_AUTOCON        0
@@ -159,6 +159,7 @@
 #define REGEX_IPADDR   "(\\d{1,3}\\.){3}\\d{1,3}"
 #define REGEX_APRSSYM  "[0-9A-Z\\/\\\\&]."
 #define REGEX_HOSTNAME "[0-9a-zA-Z\\-\\_\\.]+"
+#define REGEX_URL      "http(s?):\\/\\/[0-9a-zA-Z\\-\\_\\.\\/]+"
 #define REGEX_FPATH    "[0-9a-zA-Z\\-\\_\\.\\/]+"
 
 #define NORMALPRIO 5
