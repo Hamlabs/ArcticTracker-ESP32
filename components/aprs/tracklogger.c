@@ -88,8 +88,7 @@ static void tracklog(void* arg) {
         uint8_t interv = get_byte_param("TRKLOG.INT", DFL_TRKLOG_INT); 
         if (interv==0) interv=10;
         sleepMs(interv * 1000);
-        gps_fake();
-        if (true || gps_is_fixed())
+        if (gps_is_fixed())
             trackstore_put(&gps_current_pos);
         remove_old(); 
     }
