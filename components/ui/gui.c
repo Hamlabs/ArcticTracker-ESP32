@@ -349,6 +349,15 @@ void gui_label(int x, int y, char* lbl)
 
 
 /*************************************************
+ * Backlight
+ *************************************************/
+
+void gui_backlight() {
+    lcd_backlight();
+}
+
+
+/*************************************************
  * Frame/popup
  *************************************************/
 
@@ -362,65 +371,14 @@ void gui_frame()
    gui_vLine(83,3,41);
 }
 
+/* Set popup mode */ 
+void gui_setPopup() 
+    { _popup = true; } 
 
-
-void gui_backlight() {
-    lcd_backlight();
-}
-
- 
- 
- 
-/*************************************************
- * Sleep mode
- *************************************************/
-
-void gui_sleepmode()
-{
-    _popup = true; 
-    gui_clear(); 
-    gui_frame(); 
-    gui_writeText(7,7,  "  -- OFF --");
-    gui_writeText(7,16, "(sleep mode)");
-    gui_flush();
-}
-
-
-
-/*************************************************
- * Firmware upgrade
- *************************************************/
-
-void gui_fwupgrade()
-{
-    _popup = true; 
-    gui_clear(); 
-    gui_frame(); 
-    gui_writeText(7,7, "Firmware");
-    gui_writeText(7,16, "Upgrade...");
-    gui_flush();
-}
-
+/* return true if popup mode */
 bool gui_popupActive()
-    {return _popup; }
+    { return _popup; }
     
-    
-    
-
-/*************************************************
- * Welcome message
- *************************************************/
-
-void gui_welcome() 
-{
-  gui_clear();
-  gui_circle(40,24,10);
-  gui_line(40,2,40,55);
-  gui_line(14,24,66,24);
-  gui_writeText(2,7,"Arctic");
-  gui_writeText(43,36, "Tracker");
-  gui_flush();
-}
 
 
 

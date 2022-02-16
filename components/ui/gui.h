@@ -27,6 +27,7 @@
  void gui_label(int x, int y, char* lbl);
  void gui_frame(); 
  void gui_fwupgrade();
+ void gui_setPopup();
  bool gui_popupActive();
  void gui_sleepmode();
  

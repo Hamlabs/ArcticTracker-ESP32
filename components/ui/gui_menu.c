@@ -145,10 +145,62 @@ void menu_init()
         STACK_GUI, NULL, NORMALPRIO, NULL, CORE_GUI);
 }
 
+ 
+/* FIXME: use a function instead */
+extern bool _popup; 
+ 
+/*************************************************
+ * Sleep mode
+ *************************************************/
+
+void gui_sleepmode()
+{
+    _popup = true; 
+    gui_clear(); 
+    gui_frame(); 
+    gui_writeText(7,7,  "  -- OFF --");
+    gui_writeText(7,16, "(sleep mode)");
+    gui_flush();
+}
+
+
+
+/*************************************************
+ * Firmware upgrade
+ *************************************************/
+
+void gui_fwupgrade()
+{
+    _popup = true; 
+    gui_clear(); 
+    gui_frame(); 
+    gui_writeText(7,7, "Firmware");
+    gui_writeText(7,16, "Upgrade...");
+    gui_flush();
+}
+    
+    
+
+/*************************************************
+ * Welcome message
+ *************************************************/
+
+void gui_welcome() 
+{
+  gui_clear();
+  gui_circle(40,24,10);
+  gui_line(40,2,40,55);
+  gui_line(14,24,66,24);
+  gui_writeText(2,7,"Arctic");
+  gui_writeText(43,36, "Tracker");
+  gui_flush();
+}
+
+
 
 
 /**********************************************************
- * Menu commands
+ * Menu command handlers
  **********************************************************/
 
 static void mhandle_send(void* x) {
