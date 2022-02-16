@@ -8,6 +8,7 @@
  #define DISPLAY_HEIGHT 48
  
  
+ void gui_backlight(void);
  void gui_welcome(void);
  void gui_welcome2(void);
  void gui_writeText(int x, int y, const char * strp);

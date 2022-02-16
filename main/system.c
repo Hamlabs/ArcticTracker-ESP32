@@ -19,7 +19,6 @@
 #include "esp_https_ota.h"
 #include "esp_sleep.h"
 #include "ui.h"
-#include "lcd.h"
 #include "gui.h"
 #include "afsk.h"
 #include "radio.h"
@@ -57,7 +56,7 @@ esp_err_t firmware_upgrade()
     afsk_rx_stop(); 
     afsk_tx_stop();
     radio_on(false);
-    lcd_backlight();
+    gui_backlight();
     gui_fwupgrade();
     sleepMs(500);
     beeps("..-. .--");

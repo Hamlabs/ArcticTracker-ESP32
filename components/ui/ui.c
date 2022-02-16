@@ -7,7 +7,7 @@
 #include "defines.h"
 #include "system.h"
 #include "ui.h"
-#include "lcd.h"
+#include "disp_nokia.h"
 #include "gui.h"
 #include "driver/gpio.h"
 

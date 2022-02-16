@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "lcd.h"
+#include "disp_nokia.h"
 #include "gui.h"
 
 
@@ -364,6 +364,13 @@ void gui_frame()
 
 
 
+void gui_backlight() {
+    lcd_backlight();
+}
+
+ 
+ 
+ 
 /*************************************************
  * Sleep mode
  *************************************************/
@@ -416,17 +423,6 @@ void gui_welcome()
 }
 
 
-
-void gui_welcome2() 
-{
-  gui_clear();
-  gui_circle(40,24,10);
-  gui_line(40,2,40,55);
-  gui_line(14,24,66,24);
-  gui_writeText(4,7,"Arctic Tracker");
-  gui_writeText(4,36, "Hacker Cracker");
-  gui_flush();
-}
 
 
 

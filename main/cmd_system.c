@@ -25,7 +25,6 @@
 #include "radio.h"
 #include "fbuf.h"
 #include "gps.h"
-#include "lcd.h"
 #include "gui.h"
 #include "linenoise/linenoise.h"
 #include "trackstore.h"
