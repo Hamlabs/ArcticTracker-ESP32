@@ -56,7 +56,7 @@ esp_err_t firmware_upgrade()
     afsk_rx_stop(); 
     afsk_tx_stop();
     radio_on(false);
-    gui_backlight();
+    disp_backlight();
     gui_fwupgrade();
     sleepMs(500);
     beeps("..-. .--");
@@ -108,10 +108,10 @@ esp_err_t firmware_upgrade()
 void systemShutdown(void)
 {   
     sleepMs(500);
-    gui_sleepmode();
-    sleepMs(1500);
+    disp_sleepmode();
+    sleepMs(1000);
     blipDown();
-    sleepMs(200);
+    sleepMs(50);
     radio_on(false); 
     esp_deep_sleep_start();
 }

@@ -65,16 +65,30 @@
 #define GPS_RXD_PIN     35
 
 
-/* SPI and Display */
+/* DISPLAY CONFIG 
+ * DISPLAY_TYPE is either 0=NOKIA or 1=SSD1306 
+ * SSD1306_HEIGHT is either 64 or HALF 32 
+ */
+
+#define DISPLAY_TYPE 1
+#define SSD1306_HEIGHT 64
+
+/* These are for the Nokia display on SPI */
 #define LCD_PIN_CS      33
 #define LCD_PIN_BL      32
 #define LCD_PIN_DC      27
 #define LCD_PIN_RST     -1
+
+/* These are for the SSD1306 display on I2C */
+#define DISP_SDA_PIN    33
+#define DISP_SCL_PIN    32
+
+/* SPI pins */
 #define SPI_PIN_MISO    -1
 #define SPI_PIN_MOSI    14 
 #define SPI_PIN_CLK     12
 
-
+/* LEDs and button */
 #define LED_STATUS_PIN  23
 #define LED_TX_PIN      22
 #define BUTTON_PIN      13
@@ -143,10 +157,9 @@
 #define CORE_TRACKLOG       1
 #define CORE_TRACKLOGPOST   1
 
-
-
 // FIXME: If ledblinker is run on CPU 1, system will crash! 
 // FIXME: Seems to be an issue with beep if it runs on CPU 1 ???
+
 
 #define BBUF_SIZE 4096
 

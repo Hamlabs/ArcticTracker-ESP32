@@ -200,9 +200,9 @@ static void button_init() {
     buzzer_init(); 
     
     /* LCD display */  
-    lcd_init();
+    disp_init();
     sleepMs(100);
-    lcd_backlight();
+    disp_backlight();
     gui_welcome(); 
     status_init(); 
         

@@ -27,6 +27,7 @@
 #include "digipeater.h"
 #include "igate.h"
 #include "trackstore.h"
+#include "gui.h"
 
 
 static const char* TAG = "main";
@@ -162,7 +163,6 @@ static void startup(void* arg)
     hdlc_init_decoder(afsk_rx_init());
     FBQ* oq = hdlc_init_encoder(afsk_tx_init());
     
-    // Den andre av disse går til helvete, uansett rekkefølge
     gps_init(GPS_UART);
     radio_init(RADIO_UART);
     
@@ -213,7 +213,7 @@ void app_main()
 
     adc_init(); 
     initialize_console();
-
+    
     /* Register commands */
     esp_console_register_help_command();
     register_system();

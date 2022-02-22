@@ -32,14 +32,24 @@ static void mhandle_wifi(void*);
 static void mhandle_fwupgrade(void*); 
 static void mhandle_shutdown(void*);
 
-static MenuCommand items[] = 
+
+static const MenuCommand items[] = 
 {
-    { "Send report",    mhandle_send,      NULL },
-    { "WIFI +|-",       mhandle_wifi,      NULL },
-    { "Igate +|-",      mhandle_igate,     NULL },
-    { "Digipeater +|-", mhandle_digi,      NULL },
-    { "Firmware upgr.", mhandle_fwupgrade, NULL },
-    { "Shut down..",    mhandle_shutdown,  NULL },
+#if DISPLAY_TYPE == 0
+    { "Send report",     mhandle_send,      NULL },
+    { "WIFI +|-",        mhandle_wifi,      NULL },
+    { "Igate +|-",       mhandle_igate,     NULL },
+    { "Digipeater +|-",  mhandle_digi,      NULL },
+    { "Firmware upgr.",  mhandle_fwupgrade, NULL },
+    { "Shut down..",     mhandle_shutdown,  NULL },
+#else
+    { "Send pos report",   mhandle_send,      NULL },
+    { "WIFI (+|-)",        mhandle_wifi,      NULL },
+    { "Igate (+|-)",       mhandle_igate,     NULL },
+    { "Digipeater (+|-)",  mhandle_digi,      NULL },
+    { "Firmware upgrade",  mhandle_fwupgrade, NULL },
+    { "Shut down..",       mhandle_shutdown,  NULL },
+#endif
 };
 static int nitems = 6; 
 
@@ -51,7 +61,7 @@ static int nitems = 6;
  *********************************************************/
 
 #define MIN(x,y) (x<y ? x : y)
-#define MAX_VISIBLE 4
+#define MAX_VISIBLE 5
 
 static uint8_t offset = 0;
 static uint8_t selection = 0;
@@ -62,14 +72,22 @@ static bool menu_active;
 
 static void menu_show(int st, int sel) 
 {     
-   gui_clear();
-   gui_frame(); 
-
-   gui_box(0, sel*11, 83, 12, true);
-   int i;
-   for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) 
-     gui_writeText(4, 2+i*11, items[st+i].mc_name); 
-   gui_flush();
+    disp_clear();
+    disp_frame(); 
+   
+#if DISPLAY_TYPE == 0
+    disp_box(0, sel*11, 83, 12, true);
+    int i;
+    for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) 
+        disp_writeText(4, 2+i*11, items[st+i].mc_name); 
+#else
+    disp_box(2, sel*11+2, 97, 12, true);
+    int i;
+    for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) 
+        disp_writeText(5, 4+i*11, items[st+i].mc_name); 
+#endif
+    
+   disp_flush();
 }
 
 
@@ -113,7 +131,7 @@ void menu_select()
 void menu_end()
 {
     menu_active = false; 
-    gui_clear();
+    disp_clear();
     status_show();
 }
 
@@ -130,7 +148,7 @@ void menu_end()
      while (true) {
          sleepMs(5000);
          
-         if (!menu_is_active() && !gui_popupActive())
+         if (!menu_is_active() && !disp_popupActive())
              status_show();
          
  //        igate_on(GET_BYTE_PARAM("IGATE.on"));
@@ -149,20 +167,6 @@ void menu_init()
 /* FIXME: use a function instead */
 extern bool _popup; 
  
-/*************************************************
- * Sleep mode
- *************************************************/
-
-void gui_sleepmode()
-{
-    _popup = true; 
-    gui_clear(); 
-    gui_frame(); 
-    gui_writeText(7,7,  "  -- OFF --");
-    gui_writeText(7,16, "(sleep mode)");
-    gui_flush();
-}
-
 
 
 /*************************************************
@@ -172,11 +176,13 @@ void gui_sleepmode()
 void gui_fwupgrade()
 {
     _popup = true; 
-    gui_clear(); 
-    gui_frame(); 
-    gui_writeText(7,7, "Firmware");
-    gui_writeText(7,16, "Upgrade...");
-    gui_flush();
+    disp_clear(); 
+    disp_frame(); 
+    disp_setBoldFont(true);
+    disp_writeText(7,7, "Firmware");
+    disp_writeText(7,16, "Upgrade...");
+    disp_setBoldFont(false);
+    disp_flush();
 }
     
     
@@ -187,13 +193,25 @@ void gui_fwupgrade()
 
 void gui_welcome() 
 {
-  gui_clear();
-  gui_circle(40,24,10);
-  gui_line(40,2,40,55);
-  gui_line(14,24,66,24);
-  gui_writeText(2,7,"Arctic");
-  gui_writeText(43,36, "Tracker");
-  gui_flush();
+  disp_clear();
+  
+#if DISPLAY_TYPE == 0
+  disp_circle(40,24,10);
+  disp_line(40,2,40,55);
+  disp_line(14,24,66,24);
+  disp_writeText(2,7,"Arctic");
+  disp_writeText(43,36, "Tracker");
+#else
+  disp_circle(60,30,10);
+  disp_line(60,4,60,56);
+  disp_line(35,30,84,30);
+  disp_setBoldFont(true);
+  disp_writeText(6,12,"Arctic");
+  disp_writeText(70,42, "Tracker");
+  disp_setBoldFont(false);
+#endif
+  
+  disp_flush();
 }
 
 
@@ -229,5 +247,7 @@ static void mhandle_fwupgrade(void* x) {
 }
 
 static void mhandle_shutdown(void* x) {
+    disp_clear(); 
+    disp_flush();
     systemShutdown(); 
 }
