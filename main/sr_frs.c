@@ -1,6 +1,7 @@
-
-#include <stdio.h>
 #include "defines.h"
+
+#if !defined(RADIO_DISABLE)
+#include <stdio.h>
 #include "config.h"
 #include "hdlc.h"
 #include "afsk.h"
@@ -32,7 +33,25 @@ static bool _handshake(void);
 static bool _setGroupParm(void);
 static void _initialize(void);
 static void squelch_handler(void* arg);
-
+ 
+ bool frs_is_on(void);
+ void frs_require(void);
+ void frs_release(void);
+ void frs_wait_enabled(void);
+ void frs_init(uart_port_t uart);
+ bool frs_setFreq(uint32_t txfreq, uint32_t rxfreq);
+ bool frs_setSquelch(uint8_t sq);
+ void frs_on(bool on);
+ void frs_PTT(bool on);
+ void frs_PTT_I(bool on);
+ bool frs_setVolume(uint8_t vol);
+ bool frs_setMicLevel(uint8_t level);
+ bool frs_setPowerSave(bool on);
+ bool frs_setLowTxPower(bool on); 
+ bool frs_isLowTxPower(void); 
+ void frs_wait_channel_ready(void);
+ 
+ 
 /*
  * Serial driver config
  */
@@ -67,39 +86,43 @@ static cond_t chan_rdy;
  * Initialize
  ***********************************************/
 
-void radio_init(uart_port_t uart)
+void frs_init(uart_port_t uart)
 {  
-    ESP_LOGD(TAG, "radio_init, uart=%d", uart);
+    _serial = uart; 
+    ESP_LOGI(TAG, "frs_init, uart=%d", uart);
     ESP_ERROR_CHECK(uart_param_config(uart, &_serialConfig));
-    ESP_ERROR_CHECK(uart_set_pin(uart, RADIO_PIN_TXD, RADIO_PIN_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+//    ESP_ERROR_CHECK(uart_set_pin(uart, RADIO_PIN_TXD, RADIO_PIN_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     ESP_ERROR_CHECK(uart_driver_install(uart, RADIO_BUF_SIZE, RADIO_BUF_SIZE, 0, NULL, 0));
-    _serial = uart;
     
     gpio_set_direction(RADIO_PIN_PTT,  GPIO_MODE_OUTPUT); 
     gpio_set_direction(RADIO_PIN_TXP,  GPIO_MODE_OUTPUT); 
     gpio_set_direction(RADIO_PIN_PD,   GPIO_MODE_OUTPUT);
-    gpio_set_direction(RADIO_PIN_SQUELCH,  GPIO_MODE_INPUT);
+    gpio_set_direction(RADIO_PIN_SQUELCH, GPIO_MODE_INPUT);
+    
+  //  gpio_get_drive_capability(RADIO_PIN_PTT, GPIO_DRIVE_CAP_MAX);
+  //  gpio_get_drive_capability(RADIO_PIN_TXP, GPIO_DRIVE_CAP_MAX);
     
     gpio_set_level(RADIO_PIN_PTT, 1);
     gpio_set_level(RADIO_PIN_TXP, 0); 
-    tx_led_off();
         
     radio_mutex = mutex_create();
     ptt_mutex = mutex_create();
     tx_off = cond_create();
     radio_rdy = cond_create();
     chan_rdy = cond_create();
-    radio_setLowTxPower(true);
+    frs_setLowTxPower(true);
     
     /* Squelch input. Pin interrupt */
     gpio_set_intr_type(RADIO_PIN_SQUELCH, GPIO_INTR_ANYEDGE);
     gpio_isr_handler_add(RADIO_PIN_SQUELCH, squelch_handler, NULL);
     gpio_set_direction(RADIO_PIN_SQUELCH, GPIO_MODE_INPUT);
-    gpio_intr_enable(RADIO_PIN_SQUELCH);
+    gpio_set_pull_mode(RADIO_PIN_SQUELCH, GPIO_PULLUP_ONLY);
+    gpio_pullup_en(BUTTON_PIN);
+    gpio_intr_enable(RADIO_PIN_SQUELCH);  
     
-    sleepMs(50);
-    if (GET_BYTE_PARAM("RADIO.on"))
-        radio_require();
+    sleepMs(500);
+    if (get_byte_param("RADIO.on", 0)>0)
+        frs_require();
 }
   
  
@@ -116,9 +139,11 @@ static void _initialize()
     _squelch = get_byte_param("TRX_SQUELCH", DFL_TRX_SQUELCH);
     ESP_LOGI(TAG, "_initialize: txfreq=%d, rxfreq=%d", _txfreq, _rxfreq);
     _flags = 0x00;
-    _widebw = 0;
-    radio_setMicLevel(8);
-    radio_setVolume(7);
+    _widebw = 0;  /* Set to 1 for wide bandwidth */
+    
+    frs_setMicLevel(2);
+    frs_setVolume(8);
+    frs_setPowerSave(false);
     _setGroupParm();
     cond_set(tx_off);
    
@@ -138,18 +163,20 @@ static void _initialize()
  * Squelch handler (ISR function)
  ************************************************/
 
-static void squelch_handler(void* arg) 
+static void IRAM_ATTR squelch_handler(void* arg) 
 {
     if (!_sq_on && cond_isSetI(radio_rdy) && !gpio_get_level(RADIO_PIN_SQUELCH)) {
         _sq_on = true;
+        gpio_set_level(LED_STATUS_PIN, 1);
         afsk_rx_start();
         cond_clearI(chan_rdy);       
     }
     else if (_sq_on) {
-        _sq_on = false; 
+        _sq_on = false;
+        gpio_set_level(LED_STATUS_PIN, 0);
         afsk_rx_stop();
         cond_setI(chan_rdy);
-    }
+    } 
 }
 
 
@@ -158,7 +185,7 @@ static void squelch_handler(void* arg)
  * Return true if radio is on
  ******************************************************/
 
-bool radio_is_on(void) {
+bool frs_is_on(void) {
     return (count >= 1); 
 }
 
@@ -167,11 +194,11 @@ bool radio_is_on(void) {
  * Need radio - turn it on if not already on
  ******************************************************/
  
-void radio_require(void)
+void frs_require(void)
 {
     mutex_lock(radio_mutex);
     if (++count == 1) {
-        radio_on(true);   
+        frs_on(true);   
         afsk_tx_start();
         ESP_LOGI(TAG, "Radio is turned ON");
     }
@@ -185,7 +212,7 @@ void radio_require(void)
  * need it
  *******************************************************/
  
-void radio_release(void)
+void frs_release(void)
 {
     mutex_lock(radio_mutex);
     if (--count <= 0) {
@@ -197,7 +224,7 @@ void radio_release(void)
        hdlc_wait_idle();
        cond_wait(tx_off);
        afsk_tx_stop();
-       radio_on(false);
+       frs_on(false);
        ESP_LOGI(TAG, "Radio is turned OFF");
     }
     if (count < 0) count = 0;
@@ -210,7 +237,7 @@ void radio_release(void)
  * Wait until radio is ready 
  ************************************************/
 
-void radio_wait_enabled() 
+void frs_wait_enabled() 
 {
     WAIT_RADIO_READY;
 }
@@ -220,7 +247,7 @@ void radio_wait_enabled()
 /************************************************
  * Wait until channel is ready 
  ************************************************/
-void wait_channel_ready()
+void frs_wait_channel_ready()
 {
     /* Wait to radio is on and squelch is closed */
     WAIT_CHANNEL_READY;
@@ -232,7 +259,7 @@ void wait_channel_ready()
  * Power on
  ************************************************/
 
-void radio_on(bool on)
+void frs_on(bool on)
 {
     if (on == _on)
         return; 
@@ -256,7 +283,7 @@ void radio_on(bool on)
  * PTT 
  ************************************************/
 
-void radio_PTT(bool on)
+void frs_PTT(bool on)
 {
     if (!_on)
        return;
@@ -282,7 +309,7 @@ void radio_PTT(bool on)
 
 
 
-void radio_PTT_I(bool on)
+void frs_PTT_I(bool on)
 {
     if (!_on)
        return;
@@ -306,7 +333,7 @@ void radio_PTT_I(bool on)
  * Set TX and RX frequency (100 Hz units)
  ***********************************************/
   
-bool radio_setFreq(uint32_t txfreq, uint32_t rxfreq)
+bool frs_setFreq(uint32_t txfreq, uint32_t rxfreq)
 {
     if (txfreq > 0)
        _txfreq = txfreq;
@@ -321,7 +348,7 @@ bool radio_setFreq(uint32_t txfreq, uint32_t rxfreq)
  * Set squelch level (1-8)
  ***********************************************/
 
-bool radio_setSquelch(uint8_t sq) 
+bool frs_setSquelch(uint8_t sq) 
 {
     _squelch = sq;
     if (_squelch > 8)
@@ -335,7 +362,7 @@ bool radio_setSquelch(uint8_t sq)
  * Set receiver volume (1-8)
  ************************************************/
 
-bool radio_setVolume(uint8_t vol)
+bool frs_setVolume(uint8_t vol)
 {
     char buf[32];
     if (!_on)
@@ -356,7 +383,7 @@ bool radio_setVolume(uint8_t vol)
  * Set mic sensitivity (1-8)
  ************************************************/
 
-bool radio_setMicLevel(uint8_t level)
+bool frs_setMicLevel(uint8_t level)
 {
     char buf[32];
     if (!_on)
@@ -378,7 +405,7 @@ bool radio_setMicLevel(uint8_t level)
  * else it is set to 1W
  *************************************************/
 
-bool radio_setLowTxPower(bool on)
+bool frs_setLowTxPower(bool on)
 {
     if (on)
         _flags ^= FLAG_LO_POWER;
@@ -389,7 +416,7 @@ bool radio_setLowTxPower(bool on)
 
 
 
-bool radio_isLowTxPower() {
+bool frs_isLowTxPower() {
     return !(_flags & FLAG_LO_POWER);
 }
 
@@ -399,7 +426,7 @@ bool radio_isLowTxPower() {
  * Auto powersave on/off. 
  ************************************************/
 
-bool radio_setPowerSave(bool on)
+bool frs_setPowerSave(bool on)
 {
     char buf[32];
     if (!_on)
@@ -449,3 +476,6 @@ static bool _setGroupParm()
     ESP_LOGD(TAG, "%s", reply);
     return (reply[15] == '0');
 }
+
+
+#endif
