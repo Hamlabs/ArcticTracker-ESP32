@@ -6,10 +6,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "defines.h"
 #include "esp_console.h"
 #include "argtable3/argtable3.h"
 #include "system.h"
-#include "defines.h"
 #include "config.h"
 #include "commands.h"
 #include "ax25.h"
@@ -54,7 +54,7 @@ static int do_teston(int argc, char** argv)
 
 static int do_testpacket(int argc, char** argv)
 {
-    static FBUF packet;    
+    FBUF packet;    
     fbq_t* outframes = hdlc_get_encoder_queue();
     char from[11], to[11];
     char *dbuf = malloc(71); 
@@ -62,7 +62,7 @@ static int do_testpacket(int argc, char** argv)
     radio_require();    
     sleepMs(100);
     get_str_param("MYCALL", from, 10, "NOCALL");
-    get_str_param("DEST", to, 10, "APAT20");       
+    get_str_param("DEST", to, 10, "APAT30");       
     get_str_param("DIGIPATH", dbuf, 70, "");
 
     fbuf_new(&packet);
@@ -129,6 +129,10 @@ static int do_trget(int argc, char* argv[])
 
 void hdl_squelch(uint8_t sq) {
     radio_setSquelch(sq);
+}
+
+void hdl_miclevel(uint8_t ml) {
+    radio_setMicLevel(ml); 
 }
 
 
@@ -201,6 +205,7 @@ CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",     DFL_MINPAUSE,    0, 250, NU
 CMD_BYTE_SETTING (_param_mindist,    "MINDIST",      DFL_MINDIST,     0, 250, NULL);
 CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",   DFL_STATUSTIME,  1, 250, NULL);
 CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 1, 8,   hdl_squelch);
+CMD_BYTE_SETTING (_param_miclevel,   "TRX_MICLEVEL", DFL_TRX_MICLEVEL,1, 8,   hdl_miclevel);
 CMD_BYTE_SETTING (_param_repeat,     "REPEAT",       DFL_REPEAT,      0, 4,   NULL);
 
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
@@ -262,7 +267,8 @@ void register_aprs()
     ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
-    
+    ADD_CMD("miclevel",   &_param_miclevel,    "Miclevel setting (1-8)",             "[<val>]");
+        
     ADD_CMD("timestamp",  &_param_timestamp,   "Timestamp setting",  "[on|off]");
     ADD_CMD("compress",   &_param_compress,    "Compress setting",  "[on|off]");
     ADD_CMD("altitude",   &_param_altitude,    "Altitude setting",  "[on|off]");

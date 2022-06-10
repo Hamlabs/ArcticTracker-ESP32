@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "defines.h"
 #include "esp_system.h"
 #include "esp_console.h"
 #include "esp_vfs_dev.h"
@@ -15,7 +16,6 @@
 #include "commands.h"
 #include "config.h"
 #include "networking.h"
-#include "defines.h"
 #include "fbuf.h"
 #include "gps.h"
 #include "ui.h"
@@ -29,6 +29,8 @@
 #include "trackstore.h"
 #include "gui.h"
 
+#include "driver/usb_serial_jtag.h"
+#include "esp_vfs_usb_serial_jtag.h"
 
 static const char* TAG = "main";
 
@@ -49,17 +51,27 @@ static void initialize_console()
     setvbuf(stdout, NULL, _IONBF, 0);
 
     /* Minicom, screen, idf_monitor send CR when ENTER key is pressed */
-    esp_vfs_dev_uart_port_set_rx_line_endings(0, ESP_LINE_ENDINGS_CR);
     /* Move the caret to the beginning of the next line on '\n' */
+    /* Install driver for interrupt-driven reads and writes */
+    /* Tell VFS to use driver */
+
+#if defined CONSOLE_DRIVER_UART
+    /* Use UART driver n*/
+    esp_vfs_dev_uart_port_set_rx_line_endings(0, ESP_LINE_ENDINGS_CR);
     esp_vfs_dev_uart_port_set_tx_line_endings(0, ESP_LINE_ENDINGS_CRLF);
-
-    /* Install UART driver for interrupt-driven reads and writes */
     ESP_ERROR_CHECK( uart_driver_install(CONFIG_ESP_CONSOLE_UART_NUM,
-            256, 0, 0, NULL, 0) );
-
-    /* Tell VFS to use UART driver */
+        256, 0, 0, NULL, 0) );
     esp_vfs_dev_uart_use_driver(CONFIG_ESP_CONSOLE_UART_NUM);
 
+#else
+    /* Use USB SERIAL/JTAG driver */
+    esp_vfs_dev_usb_serial_jtag_set_rx_line_endings(ESP_LINE_ENDINGS_CR);
+    esp_vfs_dev_usb_serial_jtag_set_tx_line_endings(ESP_LINE_ENDINGS_CRLF);
+    usb_serial_jtag_driver_config_t cfg = USB_SERIAL_JTAG_DRIVER_CONFIG_DEFAULT();
+    usb_serial_jtag_driver_install(&cfg);
+    esp_vfs_usb_serial_jtag_use_driver();
+#endif
+    
     /* Initialize the console */
     esp_console_config_t console_config = {
             .max_cmdline_args = 8,
@@ -99,14 +111,14 @@ void run_console()
      */
     const char* prompt = LOG_COLOR_I "cmd> " LOG_RESET_COLOR;
 
-    printf("\n"
-           "Welcome to Arctic Tracker 2.0 on ESP32, by LA7ECA.\n\n"
-           "Type 'help' to get the list of commands.\n"
-           "Use UP/DOWN arrows to navigate through command history.\n"
-           "Press TAB when typing command name to auto-complete.\n");
-
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();
+    printf("\n"
+        "Welcome to Arctic Tracker 3.0 on ESP32S3, by LA7ECA.\n\n"
+        "Type 'help' to get the list of commands.\n"
+        "Use UP/DOWN arrows to navigate through command history.\n"
+        "Press TAB when typing command name to auto-complete.\n");
+    
     if (probe_status) { /* zero indicates success */
         printf("\n"
                "Your terminal application does not support escape sequences.\n"
@@ -157,15 +169,14 @@ void register_aprs();
 static void startup(void* arg) 
 {
     sleepMs(2500);
-    
     trackstore_start();
     afsk_init(); 
     hdlc_init_decoder(afsk_rx_init());
     FBQ* oq = hdlc_init_encoder(afsk_tx_init());
-    
+   
     gps_init(GPS_UART);
-    radio_init(RADIO_UART);
-    
+    radio_init();
+        
     tracker_init(oq);
     tracklog_init();
     digipeater_init(oq);
@@ -185,17 +196,24 @@ esp_vfs_spiffs_conf_t spconf = {
     };
 
 void spiffs_init() {
+    
     esp_err_t ret = esp_vfs_spiffs_register(&spconf);
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) 
             ESP_LOGE(TAG, "Failed to mount or format filesystem");
         else if (ret == ESP_ERR_NOT_FOUND) 
             ESP_LOGE(TAG, "Failed to find SPIFFS partition");
+        else 
+            ESP_LOGE(TAG, "ERROR in mounting filesystem: %d", ret);
     }
-    
+
     if (esp_spiffs_mounted(spconf.partition_label)) 
-         ESP_LOGI(TAG, "SPIFFS partition mounted on %s\n", spconf.base_path);
+         ESP_LOGI(TAG, "SPIFFS partition mounted on %s", spconf.base_path);
     
+    size_t size, used;
+    ret = esp_spiffs_info(spconf.partition_label, &size, &used);
+    if (ret == ESP_OK)
+        ESP_LOGI(TAG, "SPIFFS fs: '%s', %d bytes, %d used", spconf.partition_label, size, used);
 }
 
 
@@ -207,10 +225,17 @@ void spiffs_init() {
 
 void app_main()
 {       
+    /* Change function of somee pins through IO mux to be GPIO */
+    gpio_iomux_out(39, 1, false); // FUNC_MTCK_GPIO39
+    gpio_iomux_out(40, 1, false); // FUNC_MTDO_GPIO40
+    gpio_iomux_out(41, 1, false); // FUNC_MTDI_GPIO41
+    gpio_iomux_out(42, 1, false); // FUNC_MTMS_GPIO42
+    
+    
+    fbuf_init();
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
     set_logLevels();
-
     adc_init(); 
     initialize_console();
     
@@ -221,11 +246,12 @@ void app_main()
     register_aprs();
     wifi_init();
     spiffs_init();    
+    
     ui_init();
     
     /* Put this on CPU #1 or we may run out of interrupts */
     xTaskCreatePinnedToCore(&startup, "Startup thread", 
         3200, NULL, NORMALPRIO+1, NULL, 1);
-
+     
     run_console();   
 }

@@ -24,6 +24,7 @@
 #define DFL_MINDIST        100
 #define DFL_STATUSTIME      30
 #define DFL_TRX_SQUELCH      1
+#define DFL_TRX_MICLEVEL     6
 #define DFL_TURNLIMIT       35
 #define DFL_IGATE_PORT   14580 
 #define DFL_TXFREQ     1448000

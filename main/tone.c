@@ -3,16 +3,19 @@
  */
 
 
-//#include "afsk.h"
+#include "defines.h"
 #include <stdbool.h>
 #include <stdint.h>
-#include "driver/dac.h"
-#include "defines.h"
 #include "system.h"
+
 #include "afsk.h"
 
-
-#define STEPS 16
+#if defined(TONE_ADC_ENABLE)
+#include "driver/dac.h"
+#endif
+#if defined(TONE_SDELTA_ENABLE)
+#include "driver/sigmadelta.h"
+#endif
 
 /* 
  * It would be optimal to use the least common multiplier (LCM) of 
@@ -32,8 +35,13 @@
 static bool _toneHigh = false;
 static bool _on = false; 
 static uint8_t sine[STEPS] = 
-   {0x80,0xa0,0xd0,0xe0,0xf0,0xe0,0xd0,0xa0,0x70,0x50,0x20,0x10,0,0x10,0x20,0x50};   
-
+    {125, 173, 213, 240, 250, 240, 213, 173, 125, 77,  37,  10,  0,   10,  37,  77};   
+    
+/* 80% */
+static uint8_t sine2[STEPS] = 
+    {125, 163, 196, 217, 225, 217, 196, 163, 125, 87,  54,  33,  25,  33,  54,  87};
+   
+    
 static bool sinewave(void* arg); 
     
  
@@ -43,12 +51,20 @@ static bool sinewave(void* arg);
  * This is to be done 16 X the frequency of the generated tone. 
  *****************************************************************/
 volatile uint8_t i = 0;
+volatile uint16_t cnt = 0;
+volatile bool high = false;
 
 static bool sinewave(void *arg) 
 {
-// FIXME
-//  clock_clear_intr(TONE_TIMERGRP, TONE_TIMERIDX);
-    dac_output_voltage(TONE_DAC, sine[i++]);
+#if defined(TONE_ADC_ENABLE)
+    dac_output_voltage(TONE_DAC_CHAN, sine[i]);
+#endif
+#if defined(TONE_SDELTA_ENABLE)
+    
+    sigmadelta_set_duty(TONE_SDELTA_CHAN, (_toneHigh ? sine[i]-128 : sine2[i]-128));
+//    sigmadelta_set_duty(TONE_SDELTA_CHAN, sine[i]-128);
+#endif
+    i++;
     if (i >= STEPS) 
         i=0;
     return true;
@@ -61,9 +77,25 @@ static bool sinewave(void *arg)
 static bool _inited = false; 
 void tone_init() {
     if (!_inited) {
-        dac_output_enable(TONE_DAC);
         clock_init(TONE_TIMERGRP, TONE_TIMERIDX, CLOCK_DIVIDER, sinewave, false);
         _inited = true;
+      
+#if defined(TONE_ADC_ENABLE)
+        /* DAC in ESP32 */
+        dac_output_enable(TONE_DAC_CHAN);
+        dac_output_voltage(TONE_DAC_CHAN, 0);
+#endif
+#if defined(TONE_SDELTA_ENABLE)  
+        /* Sigma delta method */
+        sigmadelta_config_t sigmadelta_cfg = {
+            .channel = TONE_SDELTA_CHAN,
+            .sigmadelta_prescale = 5,
+            .sigmadelta_duty = 0,
+            .sigmadelta_gpio = TONE_SDELTA_PIN,
+        };
+        sigmadelta_config(&sigmadelta_cfg);
+        sigmadelta_set_duty(TONE_SDELTA_CHAN, 0);
+#endif        
     }
 }
 
@@ -73,8 +105,8 @@ void tone_init() {
  **************************************************************************/
 
 void tone_start() {
-   _on = true;
-   clock_start(TONE_TIMERGRP, TONE_TIMERIDX, 
+    _on = true;
+    clock_start(TONE_TIMERGRP, TONE_TIMERIDX, 
         _toneHigh ? FREQ(AFSK_SPACE*STEPS) : FREQ(AFSK_MARK*STEPS));
 }
 
@@ -110,7 +142,24 @@ void tone_toggle()
 
 void tone_stop() {
     clock_stop(TONE_TIMERGRP, TONE_TIMERIDX);
-    dac_output_voltage(TONE_DAC, 0);
+#if defined(TONE_ADC_ENABLE)
+    dac_output_voltage(TONE_DAC_CHAN, 0);
+#endif
+#if defined(TONE_SDELTA_ENABLE) 
+    sigmadelta_set_duty(TONE_SDELTA_CHAN, 0);
+#endif
 }
+
+#if !defined(TONE_ADC_ENABLE) && !defined(TONE_SDELTA_ENABLE)
+
+void tone_init() {}
+void tone_start() {}
+void tone_setHigh(bool hi) {}
+void tone_toggle() {}
+void tone_stop() {}
+
+#endif
+
+
 
 

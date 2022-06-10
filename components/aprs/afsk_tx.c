@@ -5,12 +5,11 @@
  * By LA7ECA, ohanssen@acm.org and LA3T.
  */
 
-
+#include "defines.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include "afsk.h"
 #include "radio.h"
-#include "defines.h"
 #include "system.h"
 
 
