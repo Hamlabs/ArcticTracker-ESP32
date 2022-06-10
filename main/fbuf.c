@@ -31,7 +31,13 @@ typedef struct _slot {
 } fbslot_t; 
 
 
+
+#if defined(FBUF_STATIC_MEM)
 static fbslot_t _pool[FBUF_SLOTS]; 
+#else
+fbslot_t *_pool; 
+#endif
+
 
 
 static fbindex_t _free_slots = FBUF_SLOTS; 
@@ -48,8 +54,8 @@ fbindex_t fbuf_freeSlots()
 fbindex_t fbuf_usedSlots()
    { return FBUF_SLOTS - _free_slots; }
    
-uint16_t fbuf_freeMem()
-   { return _free_slots * FBUF_SLOTSIZE; } 
+uint32_t fbuf_freeMem()
+   { return (uint32_t) _free_slots * FBUF_SLOTSIZE; } 
    
    
    
@@ -68,6 +74,7 @@ uint16_t fbuf_freeMem()
 
 void fbuf_errorHandler( void(*f)(void) ) 
   { memFullError = f; }
+
 
 
 
@@ -102,6 +109,14 @@ static void _fbuf_releaseslot(fbindex_t i) {
              _free_slots++;
     }
 }
+
+
+void fbuf_init() {
+#if !defined(FBUF_STATIC_MEM)
+    _pool = malloc(FBUF_SLOTSIZE * FBUF_SLOTS);
+#endif
+}
+
 
 
 /*******************************************************

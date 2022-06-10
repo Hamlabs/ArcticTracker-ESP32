@@ -6,7 +6,6 @@
 #if !defined __FBUF_H__
 #define __FBUF_H__
 
-// #include "defines.h"
 #include <inttypes.h>
 #include "defines.h"
 #include "system.h"
@@ -35,6 +34,7 @@ FBUF;
    Operations for packet buffer chain
  ****************************************/
 
+void     fbuf_init      (void);
 void     fbuf_new       (FBUF* b);
 FBUF     fbuf_newRef    (FBUF* b);
 void     fbuf_release   (FBUF* b);
@@ -54,7 +54,7 @@ void     fbuf_removeLast(FBUF* b);
 
 fbindex_t fbuf_usedSlots(void);
 fbindex_t fbuf_freeSlots(void);
-uint16_t fbuf_freeMem(void);
+uint32_t fbuf_freeMem(void);
 
 #define fbuf_eof(b) ((b)->rslot == NILPTR)
 #define fbuf_length(b) ((b)->length)
