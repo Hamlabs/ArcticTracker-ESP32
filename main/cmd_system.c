@@ -102,6 +102,10 @@ static int do_write(int argc, char** argv) {
         char path[263];
         sprintf(path, "/files/%s", argv[1]);
         FILE *f = fopen(path, "a");
+        if (f==NULL) {
+            printf("Couldn't open file\n");
+            return 0;
+        }
         printf("Writing to %s. Ctrl-D to terminate\n", path);
 
         /* Loop reading text from console. Ctrl-D to disconnect */
@@ -188,9 +192,16 @@ static int do_sysinfo(int argc, char** argv)
             model = "Unknown";
             break;
     }
- 
-    printf("Free heap:       %d\n", esp_get_free_heap_size());
-    printf("FBUF free mem:   %d\n", fbuf_freeMem());
+    
+    extern esp_vfs_spiffs_conf_t spconf;
+    size_t size, used;
+    esp_spiffs_info(spconf.partition_label, &size, &used);
+    
+    
+    printf("Free heap:       %d bytes\n", esp_get_free_heap_size());
+    printf("FBUF free mem:   %d bytes\n", fbuf_freeMem());
+    printf("FBUF used slots: %d\n", fbuf_usedSlots());
+    printf("SPIFFS filesys:  %d bytes, %d used, %d free\n", size, used, size-used);
     printf("IDF version:     %s\n\n", esp_get_idf_version());
     printf("Chip info:\n");
     printf("  model:         %s\n", model);
@@ -199,7 +210,7 @@ static int do_sysinfo(int argc, char** argv)
            info.features & CHIP_FEATURE_WIFI_BGN ? "802.11bgn" : "",
            info.features & CHIP_FEATURE_BLE ? " / BLE" : "",
            info.features & CHIP_FEATURE_BT ? " / BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? " / Embedded-Flash:" : " / External-Flash:",
+           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash :" : "/External-Flash:  ",
            spi_flash_get_chip_size() / (1024 * 1024), " MB");
     printf("  revision nr:   %d\n", info.revision);
     return 0;
@@ -398,12 +409,15 @@ static int do_adcinfo(int argc, char** argv)
 {
     adc_print_char(); 
     printf("\n");
-    
-    uint32_t val = adc_read(RADIO_INPUT);
+     
+    uint32_t val; 
+#if !defined(RADIO_DISABLE)
+    val = adc2_read(RADIO_INPUT);
     printf("Radio input: %d, %d mV\n", val, adc_toVoltage(val));
-    val = adc_read(BATT_ADC_INPUT);
+#endif
+    val = adc1_read(BATT_ADC_INPUT);
     printf(" BATT input: %d, %d mV\n", val, adc_toVoltage(val));
-    val = adc_read(X1_ADC_INPUT);
+    val = adc1_read(X1_ADC_INPUT);
     printf("   X1 input: %d, %d mV\n", val, adc_toVoltage(val));
     
     for (int i=1; i<800; i++) {

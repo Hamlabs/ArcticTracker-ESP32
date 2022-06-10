@@ -49,7 +49,9 @@ void adc_init()
     
     /* Configure ADC input channels */
     adc1_config_width(WIDTH);
-    adc1_config_channel_atten(RADIO_INPUT, ATTEN);
+#if !defined(RADIO_DISABLE)
+    adc2_config_channel_atten(RADIO_INPUT, ATTEN);
+#endif
     adc1_config_channel_atten(X1_ADC_INPUT, ATTEN);
     adc1_config_channel_atten(BATT_ADC_INPUT, ATTEN);
     adc_calibrate(); 
@@ -63,7 +65,7 @@ void adc_init()
  * to voltage
  *************************************************************************/
 
-uint16_t adc_read(uint8_t chan) 
+uint16_t adc1_read(uint8_t chan) 
 { 
     uint32_t val = 0;
     for (int i=0; i<64; i++)
@@ -71,6 +73,16 @@ uint16_t adc_read(uint8_t chan)
     return (uint16_t) (val/64); 
 }
 
+uint16_t adc2_read(uint8_t chan) 
+{ 
+    uint32_t val = 0;
+    int out, n = 0; 
+    for (int i=0; i<64; i++)
+        if (adc2_get_raw(WIDTH, (adc2_channel_t) chan, &out)==ESP_OK)
+            {n++; val += out;};
+    printf("adc2 n=%d\n", n);
+    return (uint16_t) (val/n); 
+}
 
 
 /*************************************************************************
@@ -88,7 +100,7 @@ uint16_t adc_toVoltage(uint16_t val)
 
 uint16_t adc_batt()
 { 
-    uint16_t val = adc_read(BATT_ADC_INPUT);
+    uint16_t val = adc1_read(BATT_ADC_INPUT);
     if (val==0)
         return 0; 
     return adc_toVoltage(val) * BATT_DIVISOR; 
@@ -131,16 +143,15 @@ uint16_t adc_batt_status(char* line1, char* line2)
 
 
 
-
-int adc1_get_rawISR(adc1_channel_t channel)
+int adc2_get_rawISR(adc2_channel_t channel)
 {
-    int adc_value;
+    uint16_t out;
     
-    /* FIXME: Find out if we need to do some calibration, set attenuation before we convert */
+    adc2_get_raw(WIDTH, (adc2_channel_t) channel, &out);
     
-    adc_hal_convert(ADC_NUM_1, channel, &adc_value);   //Start conversion, For ADC1, the data always valid.
-    return adc_value;
+    return out;
 }
+
 
 
 
@@ -151,7 +162,7 @@ int adc1_get_rawISR(adc1_channel_t channel)
 
 void adc_calibrate() {
     /* Calibrate radio channel input */
-    dcoffset = adc_read(RADIO_INPUT)-16;
+    dcoffset = adc2_read(RADIO_INPUT)-16;
 }
 
 
@@ -162,7 +173,8 @@ int16_t adc_sample()
      * spinlock and interrupts may happen there interfering with the read. 
      */
     taskDISABLE_INTERRUPTS();
-    uint16_t sample = (uint16_t) adc1_get_rawISR((adc1_channel_t) RADIO_INPUT);
+    uint16_t sample = (uint16_t) adc2_get_rawISR((adc2_channel_t) RADIO_INPUT);
+    
     taskENABLE_INTERRUPTS();
     int16_t res = ((int16_t) sample) - dcoffset;
     return res;
