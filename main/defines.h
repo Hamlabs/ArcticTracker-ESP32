@@ -10,9 +10,9 @@
 // #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 
-#define VERSION_STRING "v2.0 alpha"
+#define VERSION_STRING "v3.0 alpha"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2022-02-04"
+#define FW_DATE "2022-05-29"
 
 #define BIT_0	( 1 << 0 )
 
@@ -38,40 +38,62 @@
 #define FEET2M    3.2898
 
 
+#define MCU ESP32S3
+
 /* Queues for AFSK encoder/decoder */
 #define AFSK_RX_QUEUE_SIZE      128
 #define AFSK_TX_QUEUE_SIZE      128
 #define HDLC_DECODER_QUEUE_SIZE  16
 #define HDLC_ENCODER_QUEUE_SIZE  16
 
-/* Radio */
-#define RADIO_UART          UART_NUM_2
-#define RADIO_PIN_TXD        2
-#define RADIO_PIN_RXD       15
-#define RADIO_PIN_PTT       17
-#define RADIO_PIN_TXP        5
-#define RADIO_PIN_PD        18
-#define RADIO_PIN_SQUELCH   16
+/* Radio module */
+//#define RADIO_DISABLE
+//#define DAC_DISABLE
+#if !defined(RADIO_DISABLE)
+
+#define RADIO_UART          UART_NUM_0
+// #define RADIO_PIN_TXD        2
+// #define RADIO_PIN_RXD       15
+#define RADIO_PIN_PTT       38
+#define RADIO_PIN_TXP       40
+#define RADIO_PIN_PD        39
+#define RADIO_PIN_SQUELCH   13
 #define RADIO_BUF_SIZE      256
-#define RADIO_INPUT         ADC1_CHANNEL_0
+#endif
+
+/* Radio audio input */
+#define RADIO_INPUT         ADC2_CHANNEL_3
+
 
 /* Misc. ADC inputs */
-#define X1_ADC_INPUT        ADC1_CHANNEL_6
-#define BATT_ADC_INPUT      ADC1_CHANNEL_3
+#define X1_ADC_INPUT        ADC1_CHANNEL_4
+#define BATT_ADC_INPUT      ADC2_CHANNEL_7
+
+/* Batt charger */
+#define BATT_CHG_TEST     14
+
 
 /* GPS */
 #define GPS_UART        UART_NUM_1
-#define GPS_TXD_PIN     26
-#define GPS_RXD_PIN     35
+//#define GPS_TXD_PIN     17
+//#define GPS_RXD_PIN     18
 
 
-/* DISPLAY CONFIG 
- * DISPLAY_TYPE is either 0=NOKIA or 1=SSD1306 
- * SSD1306_HEIGHT is either 64 or HALF 32 
+/* DISPLAY CONFIG: 
+ * DISPLAY_TYPE is either 0=NOKIA (SPI) or 1=SSD1306 (I2C)
+ * -1 to disable
+ * SSD1306_HEIGHT and SSD1306_WIDTH should be set according to the 
+ * actual display used. Known alternatives are: 
+ * 
+ * 128x64  (0.96") is a very popular configuration
+ * 128x32  (0.91") half height (not supported yet)
+ * 72x40   (0.42") e.g. DM-OLED042-647 from DisplayModule (not supported yet)
+ * 
  */
 
-#define DISPLAY_TYPE 1
-#define SSD1306_HEIGHT 64
+#define DISPLAY_TYPE     1
+#define SSD1306_WIDTH  128
+#define SSD1306_HEIGHT  64
 
 /* These are for the Nokia display on SPI */
 #define LCD_PIN_CS      33
@@ -80,36 +102,44 @@
 #define LCD_PIN_RST     -1
 
 /* These are for the SSD1306 display on I2C */
-#define DISP_SDA_PIN    33
-#define DISP_SCL_PIN    32
+#define DISP_SDA_PIN     9
+#define DISP_SCL_PIN    10
 
-/* SPI pins */
+
+/* SPI setup */
+#define SPI_HOST        SPI3_HOST
 #define SPI_PIN_MISO    -1
 #define SPI_PIN_MOSI    14 
 #define SPI_PIN_CLK     12
 
 /* LEDs and button */
-#define LED_STATUS_PIN  23
-#define LED_TX_PIN      22
-#define BUTTON_PIN      13
+#define LED_STATUS_PIN  41
+#define LED_TX_PIN      42
+#define BUTTON_PIN       0
 
 /* Buzzer */
-#define BUZZER_PIN      21
+#define BUZZER_PIN      45
 #define BUZZER_TIMERGRP  0
 #define BUZZER_TIMERIDX  0
 
 /* Tone generation (for AFSK) */
-#define TONE_DAC        DAC_CHANNEL_1
-#define AFSK_MARK       1200
-#define AFSK_SPACE      2200
+#define TONE_SDELTA_ENABLE
+// #define TONE_DAC_ENABLE
+
+#define TONE_DAC_CHAN    DAC_CHANNEL_1
+#define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
+#define TONE_SDELTA_PIN  48
+
+#define AFSK_MARK        1200
+#define AFSK_SPACE       2200
 
 /* Shared timer for AFSK RX and TX */
-#define AFSK_TIMERGRP   1
-#define AFSK_TIMERIDX   0
+#define AFSK_TIMERGRP    1
+#define AFSK_TIMERIDX    0
 
 /* Timer for AFSK tone generation */
-#define TONE_TIMERGRP   0
-#define TONE_TIMERIDX   1
+#define TONE_TIMERGRP    0
+#define TONE_TIMERIDX    1
 
 
 #define HTTPD_DEFAULT_USR "arctic"
@@ -123,13 +153,13 @@
 /* Stack sizes for tasks */
 #define STACK_AUTOCON        3000
 #define STACK_HDLC_TEST      1000
-#define STACK_HDLC_TXENCODER 2200
-#define STACK_HDLC_RXDECODER 2200
+#define STACK_HDLC_TXENCODER 4200
+#define STACK_HDLC_RXDECODER 3200
 #define STACK_NMEALISTENER   2900
-#define STACK_LEDBLINKER     1100
+#define STACK_LEDBLINKER     1300
 #define STACK_UI_SRV         3600
 #define STACK_TRACKER        3700
-#define STACK_MONITOR        2700
+#define STACK_MONITOR        3000
 #define STACK_GUI            2600
 #define STACK_HLIST           900
 #define STACK_DIGI           2800
@@ -163,8 +193,8 @@
 
 #define BBUF_SIZE 4096
 
-#define FBUF_SLOTSIZE 32
-#define FBUF_SLOTS 512
+#define FBUF_SLOTSIZE   32
+#define FBUF_SLOTS    2048
 
 /* Regular expressions defining various input formats */
 #define REGEX_AXADDR   "\\w{3,6}(-\\d{1,2})?"
