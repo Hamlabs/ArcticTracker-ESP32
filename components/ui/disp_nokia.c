@@ -43,10 +43,10 @@ static void spi_init() {
     };
     
     //Initialize the SPI bus
-    ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
+    ret=spi_bus_initialize(SPI_HOST, &buscfg, 1);
     ESP_ERROR_CHECK(ret);
     //Attach the LCD to the SPI bus
-    ret=spi_bus_add_device(HSPI_HOST, &devcfg, &_spip);
+    ret=spi_bus_add_device(SPI_HOST, &devcfg, &_spip);
     ESP_ERROR_CHECK(ret);
 }
 

@@ -34,11 +34,13 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int
 /************************************** Not defined ******************************************/
 
 #else
-#error "DISPLAY_TYPE NOT DEFINED"
+
+#define DISPLAY_HEIGHT 8
+#define DISPLAY_WIDTH 8
+
 #endif
 
 /*********************************************************************************************/
-
 
 uint8_t buffer [DISPLAY_HEIGHT/8] [DISPLAY_WIDTH];
 bool    changed [DISPLAY_HEIGHT/8];
@@ -276,6 +278,8 @@ void disp_setBoldFont(bool on) {
 void disp_writeText(int x, int y, const char * strp) 
 {
   uint8_t i;
+  if (y+8 > DISPLAY_HEIGHT)
+      return;
   
   /* y offset within a single row */
   int offset = y % 8; 
@@ -318,8 +322,8 @@ void disp_init()
 #if DISPLAY_TYPE == 0
     spi_init(); 
     lcd_init();
-#else
-    i2c_master_init(&_dev_, DISP_SDA_PIN, DISP_SCL_PIN, DISP_RESET_PIN);
+#elif DISPLAY_TYPE == 1
+    i2c_master_init(&_dev_, DISP_SDA_PIN, DISP_SCL_PIN, DISP_RESET_PIN); // S3 hangs here !!
     i2c_init(&_dev_, DISPLAY_WIDTH, DISPLAY_HEIGHT);
 #endif  
 }
@@ -342,10 +346,9 @@ void disp_flush()
 #if DISPLAY_TYPE == 0 
             for (j = 0; j < DISPLAY_WIDTH; j++) 
                 lcd_writeByte(buffer[i][j], LCD_SEND_DATA);
-#else
+#elif DISPLAY_TYPE == 1        
             i2c_display_image(&_dev_, i, 0, buffer[i], DISPLAY_WIDTH);
 #endif
-            
     }
 }
 
@@ -387,6 +390,8 @@ void disp_clear()
 
 void disp_setPixel(int x, int y, bool on) 
 {
+    if (y >= DISPLAY_HEIGHT)
+        return;
     changed[y/8] = true;
     uint8_t b = (0x01 << (y % 8));
     if (on)

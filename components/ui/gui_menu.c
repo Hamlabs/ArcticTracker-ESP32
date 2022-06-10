@@ -179,8 +179,8 @@ void gui_fwupgrade()
     disp_clear(); 
     disp_frame(); 
     disp_setBoldFont(true);
-    disp_writeText(7,7, "Firmware");
-    disp_writeText(7,16, "Upgrade...");
+    disp_writeText(10,10, "Firmware");
+    disp_writeText(10,19, "Upgrade...");
     disp_setBoldFont(false);
     disp_flush();
 }
@@ -201,13 +201,21 @@ void gui_welcome()
   disp_line(14,24,66,24);
   disp_writeText(2,7,"Arctic");
   disp_writeText(43,36, "Tracker");
-#else
+#elif DISPLAY_HEIGHT >= 64
   disp_circle(60,30,10);
   disp_line(60,4,60,56);
   disp_line(35,30,84,30);
-  disp_setBoldFont(true);
+  disp_setBoldFont(true); 
   disp_writeText(6,12,"Arctic");
   disp_writeText(70,42, "Tracker");
+  disp_setBoldFont(false);
+#else
+  disp_circle(60,16,10);
+  disp_line(60,0,60,32);
+  disp_line(35,16,84,16);
+  disp_setBoldFont(true); 
+  disp_writeText(3,5, "Arctic");
+  disp_writeText(74,21, "Tracker");
   disp_setBoldFont(false);
 #endif
   

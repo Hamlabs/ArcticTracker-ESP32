@@ -5,7 +5,7 @@
   * By LA7ECA, ohanssen@acm.org
   */
 
- 
+
 #if DISPLAY_TYPE == 0
 
 #define DISPLAY_WIDTH  84
@@ -13,7 +13,7 @@
 
 #elif DISPLAY_TYPE == 1
 
-#define DISPLAY_WIDTH  128
+#define DISPLAY_WIDTH  SSD1306_WIDTH
 #define DISPLAY_HEIGHT SSD1306_HEIGHT
 
 #endif

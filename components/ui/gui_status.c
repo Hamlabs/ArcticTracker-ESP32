@@ -23,13 +23,20 @@
 #define LINE3 37
 #define LINE4 48
 
-#else
+#elif DISPLAY_HEIGHT >= 64
 
 #define LINE1 14
 #define LINE2 24
 #define LINE3 34
 #define LINE4 44
 #define LINE5 54
+
+#else
+#define LINE1  3
+#define LINE2 13
+#define LINE3 23
+#define LINE4 33
+#define LINE5 43
 
 #endif
 
@@ -95,6 +102,7 @@ void status_next() {
  ****************************************************************/
 
 static void status_heading(char* label) {
+#if DISPLAY_HEIGHT >= 64
     disp_label(0,0, label);
 #if DISPLAY_TYPE == 0
     disp_flag(32,0, "i", wifi_isEnabled() );
@@ -104,6 +112,7 @@ static void status_heading(char* label) {
     disp_flag(32,0, "i", wifi_isEnabled() );
     disp_flag(44,0, "g", GET_BYTE_PARAM("IGATE.on")); 
     disp_flag(56,0, "d", GET_BYTE_PARAM("DIGIPEATER.on"));
+#endif
 #endif
     
     uint16_t batt = adc_batt(); 
@@ -119,7 +128,9 @@ static void status_heading(char* label) {
     disp_hLine(0,10,66);
 #else
     disp_battery(110,2,bi);
+#if DISPLAY_HEIGHT >= 64
     disp_hLine(0,10,106);
+#endif
 #endif
 }
 
