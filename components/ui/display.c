@@ -42,7 +42,12 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int
 
 /*********************************************************************************************/
 
+#if defined SH1106_HACK
+uint8_t buffer [DISPLAY_HEIGHT/8] [DISPLAY_WIDTH+4];
+#else
 uint8_t buffer [DISPLAY_HEIGHT/8] [DISPLAY_WIDTH];
+#endif 
+
 bool    changed [DISPLAY_HEIGHT/8];
 
 bool _inverse = false;
@@ -277,6 +282,11 @@ void disp_setBoldFont(bool on) {
 
 void disp_writeText(int x, int y, const char * strp) 
 {
+#if defined SH1106_HACK
+    x += 2;
+#endif
+    
+    
   uint8_t i;
   if (y+8 > DISPLAY_HEIGHT)
       return;
@@ -325,6 +335,7 @@ void disp_init()
 #elif DISPLAY_TYPE == 1
     i2c_master_init(&_dev_, DISP_SDA_PIN, DISP_SCL_PIN, DISP_RESET_PIN); // S3 hangs here !!
     i2c_init(&_dev_, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    i2c_contrast(&_dev_, 192); 
 #endif  
 }
 
@@ -347,9 +358,9 @@ void disp_flush()
             for (j = 0; j < DISPLAY_WIDTH; j++) 
                 lcd_writeByte(buffer[i][j], LCD_SEND_DATA);
 #elif DISPLAY_TYPE == 1        
-            i2c_display_image(&_dev_, i, 0, buffer[i], DISPLAY_WIDTH);
+            i2c_display_image(&_dev_, i, 0, buffer[i], DISPLAY_WIDTH+4);
 #endif
-    }
+        }
 }
 
 
@@ -378,8 +389,12 @@ void disp_clear()
   uint16_t i, j;
   for (i = 0; i < DISPLAY_HEIGHT/8; i++) {
     changed[i] = true;
+#if defined SH1106_HACK
     for (j = 0; j < DISPLAY_WIDTH; j++)
-      buffer[i][j] = 0;
+#else
+    for (j = 0; j < DISPLAY_WIDTH+4; j++)   
+#endif
+        buffer[i][j] = 0;
   }
 }
 
@@ -390,6 +405,10 @@ void disp_clear()
 
 void disp_setPixel(int x, int y, bool on) 
 {
+#if defined SH1106_HACK
+    x += 2;
+#endif
+    
     if (y >= DISPLAY_HEIGHT)
         return;
     changed[y/8] = true;
