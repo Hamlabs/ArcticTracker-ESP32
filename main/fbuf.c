@@ -94,6 +94,7 @@ static fbindex_t _fbuf_newslot ()
            _free_slots--;
            return i; 
        }
+    printf("-newslot return null-\n");
     return NILPTR; 
 }
 
@@ -113,8 +114,14 @@ static void _fbuf_releaseslot(fbindex_t i) {
 
 void fbuf_init() {
 #if !defined(FBUF_STATIC_MEM)
-    _pool = malloc(FBUF_SLOTSIZE * FBUF_SLOTS);
+    _pool = malloc(sizeof(fbslot_t) * FBUF_SLOTS);
 #endif
+    for (int i=0; i<FBUF_SLOTS; i++)
+    {
+        _pool[i].refcnt = 0;
+        _pool[i].length = 0;
+        _pool[i].next = NILPTR;
+    }
 }
 
 
@@ -202,8 +209,10 @@ void fbuf_rseek(FBUF* b, const uint16_t pos)
 void fbuf_putChar (FBUF* b, const char c)
 {
     /* if wslot is NIL it means that writing is not allowed */
-    if (b->wslot == NILPTR)
+    if (b->wslot == NILPTR) {
+        printf("-no write-\n");
        return;
+    }
     
     uint8_t pos = _pool[b->wslot].length; 
     if (pos == FBUF_SLOTSIZE || b->head == NILPTR)
