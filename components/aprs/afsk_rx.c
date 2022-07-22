@@ -33,7 +33,12 @@
 
 
 /* Queue of decoded bits. To be used by HDLC packet decoder */
-static QueueHandle_t iq; 
+static fifo_t iq; 
+static fifo_t delay;
+
+/* Semaphore to signal availability of afsk frames */
+static semaphore_t afsk_frames; 
+
 
 
 
@@ -60,68 +65,67 @@ static AfskRx afsk;
 
 
 static void add_bit(bool bit);
-
-static int8_t delay_buf[100];
-static int8_t delay_buf1[100]; 
-
-static fifo_t fifo, fifo1;
-
 static void afsk_process_sample(int8_t curr_sample);
-
-
-
-
-/*****************************
- * Sampler ISR 
- *****************************/
-
-uint32_t cp0_regs[18];
-
-void afsk_rxSampler(void *arg) 
-{
-    // get FPU state
-    uint32_t cp_state = xthal_get_cpenable();
-  
-    /* Save FPU registers and enable FPU in ISR */
-    if(cp_state)
-        xthal_save_cp0(cp0_regs);
-    else 
-        xthal_set_cpenable(1);
-
-    afsk_process_sample((int8_t) (adc_sample()/14));
-    
-    /* Restore FPU registers and turn it back off */
-    if(cp_state) 
-        xthal_restore_cp0(cp0_regs);
-    else 
-        xthal_set_cpenable(0);
-    
-}
+static void afsk_rxdecoder(void* arg);
 
 
 /*******************************************
   Modem Initialization                             
  *******************************************/
 
-QueueHandle_t afsk_rx_init() 
+fifo_t* afsk_rx_init() 
 { 
   /* Allocate memory for struct */
   memset(&afsk, 0, sizeof(afsk));
+
+  afsk_frames = sem_create(0);
+  fifo_init(&iq, AFSK_RX_QUEUE_SIZE); 
   
-  fifo_init(&fifo,  delay_buf,  sizeof(delay_buf)); 
-  fifo_init(&fifo1, delay_buf1, sizeof(delay_buf1));  
+  rxSampler_init();
   
-  /* Fill sample FIFO with 0 */
-  for (int i = 0; i < SAMPLESPERBIT / 2; i++) {
-    fifo_push(&fifo, 0); 
-    fifo_push(&fifo1, 0);
-  }
-  
-  iq =  xQueueCreate(AFSK_RX_QUEUE_SIZE, 1);
-  return iq;
+  xTaskCreatePinnedToCore(&afsk_rxdecoder, "AFSK RX decoder", 
+        STACK_AFSK_RXDECODER, NULL, NORMALPRIO, NULL, CORE_AFSK_RXDECODER);
+
+  return &iq;
 }
 
 
+
+static void frameInfo() {      
+    int cnt=0, cnt100=0, cnt40=0, cnt10=0;
+    rxSampler_reset();
+    while (!rxSampler_eof()) {
+        cnt++;
+        int8_t sample = rxSampler_get();
+        if (sample < -100 || sample > 100)
+            cnt100++;
+        else if (sample < -40 || sample > 40)
+            cnt40++;
+    }
+}
+
+
+
+static void doFrame() {
+    rxSampler_reset();
+    while (!rxSampler_eof())
+        afsk_process_sample(rxSampler_get()); 
+}
+
+
+/* Decoding thread */
+static void afsk_rxdecoder(void* arg) 
+{
+    while (true) {
+        sem_down(afsk_frames);
+        doFrame(1);    
+    }
+}
+
+
+void afsk_rx_newFrame() {
+    sem_up(afsk_frames);
+}
 
    
 
@@ -201,30 +205,6 @@ static int8_t fir_filter(int8_t s, enum fir_filters f)
 
 
 
-/******************************************************************************
-   Automatic gain control. 
-   
-*******************************************************************************/
-
-#define DECAY 5
-
-static uint8_t peak_mark = 250;
-static uint8_t peak_space = 250;
-
-
-static int8_t agc (int8_t in, uint8_t *ppeak)
-{
-    if (*ppeak > 100) 
-       *ppeak -= DECAY; 
-    if (in*2 > *ppeak)
-       *ppeak = in*2;
-    
-    float factor = 250.0f / *ppeak;        
-    return (int8_t) (factor * (float) in);
-}
-
-
-
 /***************************************************************
   This routine should be called 9600
   times each second to analyze samples taken from
@@ -236,17 +216,14 @@ static void afsk_process_sample(int8_t curr_sample)
     afsk.iirY[0] = fir_filter(curr_sample, FIR_1200_BP);
     afsk.iirY[1] = fir_filter(curr_sample, FIR_2200_BP);
     
-    afsk.iirY[1] = (int8_t) (afsk.iirY[1] * 1.2f); 
+    afsk.iirY[1] = (int8_t) (afsk.iirY[1] * 1.2); 
     
     afsk.iirY[0] = ABS(afsk.iirY[0]);
     afsk.iirY[1] = ABS(afsk.iirY[1]);
     
-    afsk.iirY[0] = agc(afsk.iirY[0], &peak_mark);
-    afsk.iirY[1] = agc(afsk.iirY[1], &peak_space);
-    
-    
     afsk.sampled_bits <<= 1;
-    afsk.sampled_bits |= fir_filter(afsk.iirY[1] - afsk.iirY[0], FIR_1200_LP) > 0;
+    afsk.sampled_bits |= (fir_filter(afsk.iirY[1] - afsk.iirY[0], FIR_1200_LP) > 0 ? 1 : 0);
+
     
     /* 
      * If there is a transition, adjust the phase of our sampler
@@ -278,14 +255,17 @@ static void afsk_process_sample(int8_t curr_sample)
          * otherwise is a 0.
          * This algorithm presumes that there are 8 samples per bit.
          */
-        uint8_t bits = afsk.sampled_bits & 0x07;
-        if ( bits == 0x07     // 111, 3 bits set to 1
-              || bits == 0x06 // 110, 2 bits
-              || bits == 0x05 // 101, 2 bits
-              || bits == 0x03 // 011, 2 bits
+        uint8_t bits = afsk.sampled_bits & 0x0f;
+        if ( bits == 0x07       // 0111, 3 bits set to 1
+                || bits == 0x0f // 1111 
+                || bits == 0x0b // 1011
+                || bits == 0x0d // 1101
+                || bits == 0x0e // 1110
+                || bits == 0x03
            )
            afsk.found_bits |= 1;
-
+    
+        
         /* 
          * Now we can pass the actual bit to the HDLC parser.
          * We are using NRZI coding, so if 2 consecutive bits
@@ -296,25 +276,23 @@ static void afsk_process_sample(int8_t curr_sample)
     }
 } 
 
-
+uint8_t octet = 0; 
+int bit_count = 0;
 
 /*********************************************************
  * Send a single bit to the HDLC decoder
  *********************************************************/
 
-static uint8_t bit_count = 0;
-
 static void add_bit(bool bit)
 {     
-    static uint8_t octet;
     octet = (octet >> 1) | (bit ? 0x80 : 0x00);
     bit_count++;
-  
+
     if (bit_count == 8) 
-    {       
-        if (!xQueueIsQueueFullFromISR(iq))
-            xQueueSendFromISR(iq, &octet, NULL);
+    {      
+        fifo_put(&iq, octet);
         bit_count = 0;
+        
     }
 }
 

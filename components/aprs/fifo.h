@@ -2,24 +2,27 @@
 #define __FIFO_H__
 
 #include <stdint.h>
+#include "system.h"
 
-/* FIFO of bytes. Max length 256.
+/* FIFO of bytes. Max size: 64k. 
  * Classic ringbuffer impl. Not thread safe. 
  */
 
  
 typedef struct _fifo_t {
-    uint8_t size; 
-    uint8_t len;
-    uint8_t pos;
+    uint16_t size; 
+    uint16_t wpos;
+    uint16_t pos;
+    semaphore_t capacity, elements;
+    mutex_t mutex;
     int8_t* buffer; 
 } fifo_t;
 
 
 
-void fifo_init(fifo_t* f, int8_t* buffer, uint8_t size);
-void fifo_push(fifo_t* f, int8_t x);
-int8_t fifo_pop(fifo_t* f);
+void fifo_init(fifo_t* f, uint16_t size);
+void fifo_put(fifo_t* f, uint8_t x);
+uint8_t fifo_get(fifo_t* f);
 
 
 #endif

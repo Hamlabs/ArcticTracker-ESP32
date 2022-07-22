@@ -7,6 +7,7 @@
 
  #include "freertos/FreeRTOS.h"
  #include "freertos/queue.h"
+ #include "fifo.h"
 
  #define AFSK_CLOCK_DIVIDER 16
  
@@ -29,12 +30,20 @@
  void afsk_tx_start(void);
  void afsk_tx_stop(void);
  
- QueueHandle_t afsk_rx_init(void);
+ fifo_t* afsk_rx_init(void);
  void afsk_rx_start(void); 
  void afsk_rx_stop(void);
  
  void afsk_rx_enable(void); 
  void afsk_rx_disable(void);
- 
+ void afsk_rx_newFrame(void); 
  void afsk_PTT(bool on);
+ 
+ void   rxSampler_init();
+ int8_t rxSampler_get();
+ bool   rxSampler_eof();
+ void   rxSampler_reset();
+ void   rxSampler_nextFrame();
+ void   rxSampler_isr();
+  
 #endif

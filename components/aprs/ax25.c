@@ -1,3 +1,4 @@
+
 /*
  * AX.25 packet header encoding.
  * Adapted from Polaric Tracker code. 
@@ -103,11 +104,14 @@ char* digis2str(char* string, uint8_t ndigis, addr_t digis[], bool trunc)
  * Convert comma-separated list of digis into AX.25 digipeater path
  *********************************************************************/
 
+char x1[20], x2[20];
+
 uint8_t str2digis(addr_t* digis, char* str)
 {
     char* tokens[8];
     if (strlen(str) <2)
         return 0;
+    
     uint8_t ndigis = tokenize(str, tokens, 7, ",", false);
     args2digis(digis, ndigis, tokens);
     return ndigis;
@@ -121,11 +125,11 @@ uint8_t str2digis(addr_t* digis, char* str)
 
 uint8_t args2digis(addr_t* digis, int ndigis, char *argv[])
 {
-  if (ndigis > 7) 
-    ndigis = 7;
-  for (uint8_t i=0; i<ndigis; i++)
-    str2addr(&digis[i], argv[i], false);
-  return ndigis; 
+    if (ndigis > 7) 
+        ndigis = 7;
+    for (uint8_t i=0; i<ndigis; i++)
+        str2addr(&digis[i], argv[i], false);
+    return ndigis; 
 }
 
 
@@ -303,8 +307,10 @@ void ax25_display_frame(FBUF *b)
        putchar(':');    
        for (i=0; i < fbuf_length(b) - AX25_HDR_LEN(ndigis); i++) {
           register char c = fbuf_getChar(b); 
-          if (c!='\n' && c!='\r' && c>=(char) 28)
+          if (c!='\n' && c!='\r' && c>=(char) 32 && c<(char)127)
               putchar(c);
+          else
+              putchar('.');
        }
     }
 

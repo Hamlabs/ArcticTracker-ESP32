@@ -7,6 +7,7 @@
 #define __HDLC_H__
 
 #include "fbuf.h"
+#include "fifo.h"
 #include "freertos/ringbuf.h"
 
 #define HDLC_FLAG 0x7E
@@ -22,6 +23,6 @@ bool hdlc_enc_packets_waiting(void);
 uint8_t rand_u8(void);
 
 void hdlc_subscribe_rx(fbq_t* q, uint8_t i);
-void hdlc_init_decoder (QueueHandle_t s);
+void hdlc_init_decoder (fifo_t *s);
 
 #endif

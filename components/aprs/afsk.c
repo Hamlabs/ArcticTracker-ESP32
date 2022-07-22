@@ -1,3 +1,4 @@
+
 #include <stdbool.h>
 #include "defines.h"
 #include "afsk.h"
@@ -32,7 +33,7 @@ static bool afsk_sampler(void *arg)
 // FIXME
 //    clock_clear_intr(AFSK_TIMERGRP, AFSK_TIMERIDX);
     if (rxMode)
-        afsk_rxSampler(arg); 
+        rxSampler_isr(arg); 
     else
         afsk_txBitClock(arg); 
     return true;
@@ -85,6 +86,9 @@ void afsk_rx_stop() {
         return;
     clock_stop(AFSK_TIMERGRP, AFSK_TIMERIDX);  
     rxMode=false; 
+    rxSampler_nextFrame(); 
+    afsk_rx_newFrame();
+
     if (txOn)
         clock_start(AFSK_TIMERGRP, AFSK_TIMERIDX, FREQ(AFSK_BITRATE));
 }

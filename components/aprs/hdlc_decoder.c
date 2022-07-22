@@ -13,11 +13,12 @@
 #include "ax25.h"
 #include "fbuf.h"
 #include "ui.h"
+#include "fifo.h"
 
 #define TAG "hdlc-dec"
 
 
-static QueueHandle_t inq;
+static fifo_t* inq;
 static fbuf_t fbuf;
 static fbq_t* mqueue[3];
 
@@ -56,7 +57,7 @@ static uint8_t get_bit ()
    static uint8_t byte; 
    
    if (bit_count < 8) {
-      xQueueReceive(inq, &byte, portMAX_DELAY);
+      byte = fifo_get(inq);
       bits |= ((uint16_t) byte << bit_count);
       bit_count += 8;
    }
@@ -106,11 +107,11 @@ static void hdlc_rxdecoder (void* arg)
    ESP_LOGD(TAG, "Start receiving frame"); 
    fbuf_release (&fbuf); // In case we had an abort or checksum
    fbuf_new(&fbuf);      // mismatch on the previous frame
+   
    do {
       if (length > MAX_HDLC_FRAME_SIZE) 
          goto flag_sync; // Lost termination flag or only receiving noise?
       
-          
       for (bit_count = 0; bit_count < 8; bit_count++) 
       {
          octet = (bit ? 0x80 : 0x00) | (octet >> 1);
@@ -140,7 +141,7 @@ static void hdlc_rxdecoder (void* arg)
        */
       fbuf_removeLast(&fbuf);
       fbuf_removeLast(&fbuf);
-
+      
       if (mqueue[0] || mqueue[1] || mqueue[2]) { 
          if (mqueue[0]) fbq_put( mqueue[0], fbuf);               /* Monitor */
          if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&fbuf)); /* Digipeater */
@@ -150,9 +151,9 @@ static void hdlc_rxdecoder (void* arg)
          fbuf_release(&fbuf); 
       fbuf_new(&fbuf);
    }
-   else
+   else {
        ESP_LOGI(TAG, "Invalid frame received. length=%d", length);
-
+   }
    goto frame_sync; // Two consecutive frames may share the same flag
 }
 
@@ -182,11 +183,14 @@ bool crc_match(FBUF* b, uint8_t length)
 
 
 
+
+
+
 /***********************************************************
  * init hdlc-deoder
  ***********************************************************/
 
-void hdlc_init_decoder (QueueHandle_t s)
+void hdlc_init_decoder (fifo_t* s)
 {   
   inq = s;
   mqueue[0] = mqueue[1] = mqueue[2] = NULL;
