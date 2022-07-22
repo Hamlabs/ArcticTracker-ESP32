@@ -143,8 +143,10 @@ static void check_frame(FBUF *f)
    int8_t  sar_pos = -1;
    uint8_t ndigis =  ax25_decode_header(f, &from, &to, digis, &ctrl, &pid);
    
-   if (hlist_duplicate(&from, &to, f, ndigis))
+   if (hlist_duplicate(&from, &to, f, ndigis)) { 
+       ESP_LOGI(TAG, "Frame is duplicate. Ignore."); 
        return;
+   }
    get_str_param("MYCALL", mycall_s, 10, DFL_MYCALL);
    str2addr(&mycall, mycall_s, false);
 
@@ -178,6 +180,9 @@ static void check_frame(FBUF *f)
    /* Mark as digipeated through mycall */
    j = i;
    mycall.flags = FLAG_DIGI;
+   
+   
+   
    digis2[j++] = mycall; 
    
    

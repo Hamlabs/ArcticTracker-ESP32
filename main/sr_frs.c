@@ -167,13 +167,13 @@ static void IRAM_ATTR squelch_handler(void* arg)
 {
     if (!_sq_on && cond_isSetI(radio_rdy) && !gpio_get_level(RADIO_PIN_SQUELCH)) {
         _sq_on = true;
-        gpio_set_level(LED_STATUS_PIN, 1);
+//        gpio_set_level(LED_STATUS_PIN, 1);
         afsk_rx_start();
         cond_clearI(chan_rdy);       
     }
     else if (_sq_on) {
         _sq_on = false;
-        gpio_set_level(LED_STATUS_PIN, 0);
+//        gpio_set_level(LED_STATUS_PIN, 0);
         afsk_rx_stop();
         cond_setI(chan_rdy);
     } 
@@ -371,7 +371,7 @@ bool frs_setVolume(uint8_t vol)
     if (vol > 8)
         vol = 8;
     int len = sprintf(buf, "AT+DMOSETVOLUME=%1d\r\n", vol);
-    ESP_LOGD(TAG, "%s", buf);
+    // ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
     readline(_serial, reply, 16);
     return (reply[13] == '0');

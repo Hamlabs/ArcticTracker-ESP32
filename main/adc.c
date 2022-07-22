@@ -162,7 +162,8 @@ int adc2_get_rawISR(adc2_channel_t channel)
 
 void adc_calibrate() {
     /* Calibrate radio channel input */
-    dcoffset = adc2_read(RADIO_INPUT)-16;
+    dcoffset = adc2_read(RADIO_INPUT);
+    printf("DCOFFSET=%d\n", dcoffset);
 }
 
 
@@ -174,8 +175,9 @@ int16_t adc_sample()
      */
     taskDISABLE_INTERRUPTS();
     uint16_t sample = (uint16_t) adc2_get_rawISR((adc2_channel_t) RADIO_INPUT);
-    
-    taskENABLE_INTERRUPTS();
+  
+    taskENABLE_INTERRUPTS();    
+    sample &= 0x0FFF;
     int16_t res = ((int16_t) sample) - dcoffset;
     return res;
 }

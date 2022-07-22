@@ -230,6 +230,8 @@ void app_main()
     gpio_iomux_out(40, 1, false); // FUNC_MTDO_GPIO40
     gpio_iomux_out(41, 1, false); // FUNC_MTDI_GPIO41
     gpio_iomux_out(42, 1, false); // FUNC_MTMS_GPIO42
+    gpio_iomux_in(18, U1RXD_IN_IDX); 
+    
     
     
     fbuf_init();

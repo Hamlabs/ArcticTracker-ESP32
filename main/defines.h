@@ -12,7 +12,7 @@
 
 #define VERSION_STRING "v3.0 alpha"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2022-05-29"
+#define FW_DATE "2022-07-22"
 
 #define BIT_0	( 1 << 0 )
 
@@ -41,8 +41,8 @@
 #define MCU ESP32S3
 
 /* Queues for AFSK encoder/decoder */
-#define AFSK_RX_QUEUE_SIZE      128
-#define AFSK_TX_QUEUE_SIZE      128
+#define AFSK_RX_QUEUE_SIZE      256
+#define AFSK_TX_QUEUE_SIZE      256
 #define HDLC_DECODER_QUEUE_SIZE  16
 #define HDLC_ENCODER_QUEUE_SIZE  16
 
@@ -75,8 +75,8 @@
 
 /* GPS */
 #define GPS_UART        UART_NUM_1
-//#define GPS_TXD_PIN     17
-//#define GPS_RXD_PIN     18
+#define GPS_TXD_PIN     17
+#define GPS_RXD_PIN     18
 
 
 /* DISPLAY CONFIG: 
@@ -94,6 +94,13 @@
 #define DISPLAY_TYPE     1
 #define SSD1306_WIDTH  128
 #define SSD1306_HEIGHT  64
+
+/* 
+ * Some displays have the SH1106 chip instead of SSD1306 but have
+ * a resolution of 128x64 - mostly compatible with a little hack. 
+ */
+#define SH1106_HACK     1
+
 
 /* These are for the Nokia display on SPI */
 #define LCD_PIN_CS      33
@@ -155,6 +162,7 @@
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 4200
 #define STACK_HDLC_RXDECODER 3200
+#define STACK_AFSK_RXDECODER 3300
 #define STACK_NMEALISTENER   2900
 #define STACK_LEDBLINKER     1300
 #define STACK_UI_SRV         3600
@@ -162,7 +170,7 @@
 #define STACK_MONITOR        3000
 #define STACK_GUI            2600
 #define STACK_HLIST           900
-#define STACK_DIGI           2800
+#define STACK_DIGI           3200
 #define STACK_TCP_REC        3000
 #define STACK_IGATE          3000
 #define STACK_IGATE_RADIO    2300
@@ -176,6 +184,7 @@
 #define CORE_LEDBLINKER     0
 #define CORE_UI_SRV         0
 #define CORE_GUI            1
+#define CORE_AFSK_RXDECODER 0
 #define CORE_HDLC_RXDECODER 0
 #define CORE_HDLC_TXENCODER 1
 #define CORE_HDLC_TEST      1
