@@ -316,7 +316,7 @@ CGIFUNC cgi_updateAprs(HttpdConnData *cdata) {
     updateStrField(cdata, "MYCALL",        "mycall",    REGEX_AXADDR, true);
     updateStrField(cdata, "SYMBOL",        "symbol",    REGEX_APRSSYM, false);
     updateStrField(cdata, "DIGIPATH",      "digis",     REGEX_DIGIPATH, true);    
-    updateStrField(cdata, "REP_COMMENT",   "rcomment",  ".*", false);  
+    updateStrField(cdata, "REP.COMMENT",   "rcomment",  ".*", false);  
     
     END_UPDATERESP(cdata);
     return HTTPD_CGI_DONE;

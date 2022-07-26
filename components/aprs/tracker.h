@@ -5,7 +5,7 @@
 #include "gps.h"
 #include "fbuf.h"
 
-
+uint32_t tracker_posReports();
 void tracker_setGate(FBQ* gt);
 void tracker_on(void);
 void tracker_off(void);

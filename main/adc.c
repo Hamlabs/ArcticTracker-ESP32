@@ -26,7 +26,9 @@ static uint16_t dcoffset = 0;
 
 void adc_print_char()
 {
-    if (char_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
+    if (char_type == ESP_ADC_CAL_VAL_EFUSE_TP_FIT)
+        printf("Characterized using Two point value FIT\n");
+    else if (char_type == ESP_ADC_CAL_VAL_EFUSE_TP) {
         printf("Characterized using Two Point Value\n");
     } else if (char_type == ESP_ADC_CAL_VAL_EFUSE_VREF) {
         printf("Characterized using eFuse Vref\n");
@@ -46,6 +48,7 @@ void adc_init()
     uint16_t ref = get_u16_param("ADC.REF", DEFAULT_VREF);
     adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
     char_type = esp_adc_cal_characterize(UNIT, ATTEN, WIDTH, ref, adc_chars);
+    adc_print_char();
     
     /* Configure ADC input channels */
     adc1_config_width(WIDTH);
@@ -117,11 +120,11 @@ uint16_t adc_batt_status(char* line1, char* line2)
     uint16_t vbatt = adc_batt();
     if (line2)
         line2[0] = '\0'; 
-    if (vbatt > 8600) { 
+    if (vbatt > 8500) { 
         if (line1) sprintf(line1, "Ext power.");
         if (line2) sprintf(line2, "Not charging.");
     }
-    else if (vbatt > 8370) {
+    else if (vbatt > 8320) {
         if (line1) sprintf(line1, "Max/Charging..");
     }
     else if (vbatt > 7800) { 

@@ -18,7 +18,7 @@
 #include "gps.h"
 
 
-#define NMEA_BUFSIZE  80
+#define NMEA_BUFSIZE  82
 #define NMEA_MAXTOKENS 16
 
 #define GPS_BUF_SIZE 256

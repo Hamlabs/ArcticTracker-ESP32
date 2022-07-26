@@ -1,3 +1,4 @@
+    
 /*
  * This is the APRS tracking code
  */
@@ -15,9 +16,6 @@
 #include "math.h"
 
 
-// FIXME
-#define adc_read_batt() 1
-
 #define TAG "tracker"
 
 posdata_t prev_pos; 
@@ -30,6 +28,7 @@ static fbq_t* gate = NULL;
 static bool maxpause_reached = false;
 static uint8_t pause_count = 0;
 static bool waited = false;
+static uint32_t posreports = 0;
 
 static void activate_tx(void);
 static bool should_update(posdata_t*, posdata_t*, posdata_t*);
@@ -55,6 +54,10 @@ int abs(int);
 double round(double);
 double log(double);
 long lround(double);
+
+
+uint32_t tracker_posReports() 
+    { return posreports; }
 
 
 /***********************************************************
@@ -401,7 +404,8 @@ static void report_status(posdata_t* pos)
      * telemetry message instead. 
      */
     char vbatt[7];
-    sprintf(vbatt, "%.1f%c", ((float) adc_read_batt()/1000 ), '\0');
+    sprintf(vbatt, "%.1f%c", ((double) adc_batt()/1000 ), '\0');
+
     
     /* Send firmware version and battery voltage in status report */
     fbuf_putstr(&packet, "FW=AT ");
@@ -492,6 +496,8 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     //   log_put(pos, sym, symtab); 
        fbuf_release(&packet);
     }
+    if (!no_tx)
+        posreports++;
 }
 
 
@@ -593,7 +599,7 @@ void send_extra_report(FBUF* packet, posdata_t* pos, char sym, char symtab)
 
 static void send_latlong_compressed(FBUF* packet, double pos, bool is_longitude)
 {
-    uint32_t v = (is_longitude ? 190463 *(180+pos) : 380926 *(90-pos));
+    uint32_t v = (is_longitude ? 190463 *(180+pos) : 380926 *(90-pos)); // FIXME
     fbuf_putChar(packet, (char) (lround(v / 753571) + ASCII_BASE));
     v %= 753571;
     fbuf_putChar(packet, (char) (lround(v / 8281) + ASCII_BASE));
