@@ -12,7 +12,7 @@
 #include "gui.h"
 #include "networking.h"
 #include "system.h"
-
+#include "tracker.h"
 
 #define NSCREENS 7
 
@@ -161,8 +161,11 @@ static void status_screen1() {
     GET_STR_PARAM("DIGIPATH", buf, 70);
     uint8_t ndigis = str2digis(digis, buf);
     digis2str(buf, ndigis, digis, true);
-    
     disp_writeText(0, LINE3, buf);  
+    
+    /* Number of pos reports */
+    sprintf(buf, "Pos reports: %d", tracker_posReports());
+    disp_writeText(0, LINE4, buf); 
     disp_flush();
 }
 
@@ -212,11 +215,16 @@ static void status_screen3() {
  ****************************************************************/
 
 static void status_screen4() {
+    char buf[24]; 
+    
     disp_clear();
     status_heading("W-AP");
-    disp_writeText(0, LINE1, (wifi_isEnabled() ? "Enabled" : "Disabled"));
+    disp_writeText(0, LINE1, (wifi_isEnabled() && wifi_softAp_isEnabled() ? "Enabled" : "Disabled"));
     disp_writeText(0, LINE2, wifi_getApSsid(buf));
-    disp_writeText(0, LINE3, wifi_getApIp(buf));
+    disp_writeText(0, LINE3, wifi_getApIp(buf));   
+    
+    sprintf(buf, "Clients: %d", wifi_softAp_clients());
+    disp_writeText(0, LINE4, buf); 
     disp_flush();
 }
 

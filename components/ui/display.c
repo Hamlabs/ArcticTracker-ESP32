@@ -30,6 +30,8 @@ SSD1306_t  _dev_;
 void i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset);
 void i2c_init(SSD1306_t * dev, int width, int height);
 void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width);
+static void blhandler(TimerHandle_t timer);
+
 
 /************************************** Not defined ******************************************/
 
@@ -326,6 +328,14 @@ void disp_writeText(int x, int y, const char * strp)
 }
 
 
+
+#define BL_LOW 100
+#define BL_HIGH 255
+
+static TimerHandle_t bltimer;
+static int backlightLevel = BL_HIGH;
+
+
    
 void disp_init() 
 { 
@@ -335,11 +345,53 @@ void disp_init()
 #elif DISPLAY_TYPE == 1
     i2c_master_init(&_dev_, DISP_SDA_PIN, DISP_SCL_PIN, DISP_RESET_PIN); // S3 hangs here !!
     i2c_init(&_dev_, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-    i2c_contrast(&_dev_, 192); 
+    i2c_contrast(&_dev_, backlightLevel); 
+    
+    /* Software timer for backlight */
+    uint32_t cnt = 0;
+    bltimer = xTimerCreate ( 
+        "DispLightTimer", pdMS_TO_TICKS(300000),  pdFALSE,
+        ( void * ) &cnt, blhandler
+    ); 
 #endif  
 }
 
-   
+    
+/************************************************************
+ * Turn on backlight and turn it off again after 10 seconds
+ ************************************************************/
+
+static void blhandler(TimerHandle_t timer) {
+    i2c_contrast(&_dev_, 1);
+}
+
+
+static BaseType_t hpw = pdFALSE;     
+void disp_backlight() 
+{ 
+#if DISPLAY_TYPE == 0
+    lcd_backlight();
+#elif DISPLAY_TYPE == 1
+    i2c_contrast(&_dev_, backlightLevel);
+    if (bltimer != NULL) 
+        xTimerStartFromISR(bltimer, &hpw);
+    
+#endif
+}  
+
+void disp_toggleBacklight() {
+    if (backlightLevel == BL_HIGH)
+        backlightLevel = BL_LOW;
+    else
+        backlightLevel = BL_HIGH;
+    i2c_contrast(&_dev_, backlightLevel);
+} 
+
+void disp_sleepmode() {
+}
+
+
+
    
 /********************************************************
  * Synchronise buffer to physical screen
@@ -361,20 +413,6 @@ void disp_flush()
             i2c_display_image(&_dev_, i, 0, buffer[i], DISPLAY_WIDTH+4);
 #endif
         }
-}
-
-
-/*************************************************
- * Backlight and sleep mode
- *************************************************/
-
-void disp_backlight() {
-#if DISPLAY_TYPE == 0
-    lcd_backlight();
-#endif
-}
-
-void disp_sleepmode() {
 }
 
 

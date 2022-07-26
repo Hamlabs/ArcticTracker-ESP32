@@ -17,7 +17,8 @@
 #define DISPLAY_HEIGHT SSD1306_HEIGHT
 
 #endif
- 
+
+ void disp_toggleBacklight(void);
  void disp_backlight(void);
  void disp_writeText(int x, int y, const char * strp);
  void disp_flush(void);

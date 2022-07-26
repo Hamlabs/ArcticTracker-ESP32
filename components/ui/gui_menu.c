@@ -25,10 +25,12 @@ typedef struct {
 
 
 /* Handler functions (defined below) */
+static void mhandle_dispBl(void*);
 static void mhandle_send(void*);
 static void mhandle_igate(void*); 
 static void mhandle_digi(void*); 
 static void mhandle_wifi(void*); 
+static void mhandle_softAp(void* x);
 static void mhandle_fwupgrade(void*); 
 static void mhandle_shutdown(void*);
 
@@ -37,13 +39,16 @@ static const MenuCommand items[] =
 {
 #if DISPLAY_TYPE == 0
     { "Send report",     mhandle_send,      NULL },
+    { "SoftAp +|-",      mhandle_softAp,    NULL },
     { "WIFI +|-",        mhandle_wifi,      NULL },
     { "Igate +|-",       mhandle_igate,     NULL },
     { "Digipeater +|-",  mhandle_digi,      NULL },
     { "Firmware upgr.",  mhandle_fwupgrade, NULL },
     { "Shut down..",     mhandle_shutdown,  NULL },
 #else
+    { "Backlight (+|-)",   mhandle_dispBl,    NULL },
     { "Send pos report",   mhandle_send,      NULL },
+    { "SoftAp (+|-)",      mhandle_softAp,    NULL },
     { "WIFI (+|-)",        mhandle_wifi,      NULL },
     { "Igate (+|-)",       mhandle_igate,     NULL },
     { "Digipeater (+|-)",  mhandle_digi,      NULL },
@@ -229,6 +234,11 @@ void gui_welcome()
  * Menu command handlers
  **********************************************************/
 
+
+static void mhandle_dispBl(void* x) {
+    disp_toggleBacklight(); 
+}
+
 static void mhandle_send(void* x) {
     tracker_posReport(); 
 }
@@ -245,8 +255,15 @@ static void mhandle_digi(void* x) {
     digipeater_activate( !isOn ); 
 }
 
+static void mhandle_softAp(void* x) {
+    bool isOn = get_byte_param("SOFTAP.on", 0);
+    set_byte_param("SOFTAP.on", !isOn);
+    wifi_enable_softAp( !isOn ); 
+}
+
 static void mhandle_wifi(void* x) {
-    bool isOn = wifi_isEnabled(); 
+    bool isOn = get_byte_param("WIFI.on", 0);
+    set_byte_param("WIFI.on", !isOn);
     wifi_enable( !isOn ); 
 }
 

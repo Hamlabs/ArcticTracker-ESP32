@@ -169,7 +169,7 @@ static void button_init() {
   ******************************************/
  
  static void push_handler(void* x) {
-    lcd_backlight();
+    disp_backlight();
     if (menu_is_active())
         menu_select();
     else
@@ -179,7 +179,7 @@ static void button_init() {
  
  
  static void click_handler(void* p) {
-    lcd_backlight();
+    disp_backlight();
     if (menu_is_active())
         menu_increment();
     else
@@ -195,17 +195,16 @@ static void button_init() {
  {   
     /* Button */
     button_init();
-        
+
     /* Buzzer */
     buzzer_init(); 
-    
+
     /* LCD display */  
     disp_init();
     sleepMs(100);
     disp_backlight();
     gui_welcome(); 
     status_init(); 
-        
     
    /* LED blinker thread */
     gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
@@ -215,7 +214,6 @@ static void button_init() {
     
     xTaskCreatePinnedToCore(&ui_thread, "LED blinker", 
         STACK_LEDBLINKER, NULL, NORMALPRIO, NULL, CORE_LEDBLINKER);
-    
     menu_init();
  }
  
