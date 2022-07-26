@@ -28,6 +28,8 @@ char* mdns_hostname(char*);
 
 /* WIFI functions */
 bool   wifi_isEnabled(void);
+bool   wifi_softAp_isEnabled();
+int    wifi_softAp_clients(void);
 bool   wifi_isConnected(void);
 void   wifi_waitConnected(void);
 bool   wifi_join(const char* ssid, const char* pass, int timeout_ms);
@@ -47,6 +49,7 @@ bool   wifi_inScanList(char* ssid);
 char*  wifi_getIpAddr(char* buf);
 char*  wifi_getApSsid(char* buf);
 char*  wifi_getApIp(char* buf);
+
 
 tcpip_adapter_ip_info_t wifi_getIpInfo(void);
 wifi_ap_record_t * wifi_getApList(void);

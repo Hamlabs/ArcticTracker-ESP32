@@ -211,6 +211,7 @@ int do_info(int argc, char** argv)
         printf("   MAC address: %s\n", mac2str(mac) );
       
         printf("\n");
+        printf("        SoftAP: %s\n", (wifi_softAp_isEnabled() ? "On" : "Off"));
         get_str_param("WIFIAP.SSID", buf, 32, default_ssid);
         printf("       AP SSID: %s\n",  buf);     
         get_str_param("WIFIAP.IP", buf, 16, AP_DEFAULT_IP);

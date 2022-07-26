@@ -36,6 +36,7 @@ static wifi_ap_record_t *apList = NULL;
 
 static bool initialized = false;
 static bool enabled = false;
+static bool softApEnabled = false; 
 static bool connected = false;
 static char *status = "Off"; 
 static char hostname[32]; 
@@ -44,7 +45,6 @@ char default_ssid[32];
 
 static esp_err_t event_handler(void *ctx, system_event_t *event);
 static void task_autoConnect( void * pvParms ); 
-void wifi_enable_softAp(bool en);
 
 #define TAG "wifix"
 
@@ -167,9 +167,11 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
         ESP_LOGD(TAG, "Scan done event"); 
         if (enabled) {
             ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&apCount));
-            free(apList);
-            apList = (wifi_ap_record_t *)malloc(sizeof(wifi_ap_record_t) * apCount);
-            ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, apList));
+            if (apCount > 0) {
+                free(apList);
+                apList = (wifi_ap_record_t *) malloc(sizeof(wifi_ap_record_t) * apCount);
+                ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, apList));
+            }
         }
         cond_set(scanDone);
         break;
@@ -223,6 +225,11 @@ void wifi_init(void)
 /********************************************************************************
  * Turn on or off softAP mode
  ********************************************************************************/
+bool wifi_softAp_isEnabled() {
+    return softApEnabled;
+}
+
+
 
 void wifi_enable_softAp(bool en)
 {    
@@ -245,6 +252,9 @@ void wifi_enable_softAp(bool en)
     if (!en) {
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &stacnf));
+        softApEnabled = false;
+        wifi_enable(false);
+        wifi_enable(true);
         return;
     }
 
@@ -265,6 +275,19 @@ void wifi_enable_softAp(bool en)
         ESP_LOGW(TAG, "Invalid SSID for softAP");
     else 
         ESP_ERROR_CHECK(err);
+    softApEnabled = true;
+}
+
+
+int wifi_softAp_clients(void){    
+    wifi_sta_list_t  stations;
+    esp_err_t err = esp_wifi_ap_get_sta_list(&stations);
+    if (err==ESP_ERR_WIFI_MODE) 
+         return 0;
+    
+    tcpip_adapter_sta_list_t infoList;
+    ESP_ERROR_CHECK(tcpip_adapter_get_sta_list(&stations, &infoList));
+    return infoList.num;
 }
 
 
@@ -276,6 +299,7 @@ TaskHandle_t task_autocon = NULL;
 
 void wifi_enable(bool en)
 {
+    /* Enable */
     if (en && !enabled) {
         ESP_ERROR_CHECK( esp_wifi_start() );
         dhcp_enable(true);
@@ -287,6 +311,7 @@ void wifi_enable(bool en)
                 NULL, tskIDLE_PRIORITY, &task_autocon, CORE_AUTOCON ) == pdPASS)
             ESP_LOGD(TAG, "WIFI autoconnect task created");
     }
+    /* Disable */
     if (!en && enabled) {
         /* Kill autoconnect task */
         vTaskDelete( task_autocon );
@@ -520,12 +545,17 @@ static void task_autoConnect( void * pvParms )
     sleepMs(3000);
     while(true) {
         /* Wait until disconnected */
-        xEventGroupWaitBits(wifi_event_group, DISCONNECTED_BIT, 1, 1, portMAX_DELAY );
+        ESP_LOGI(TAG, "Waiting for DISCONNECTED_BIT");
+        if (connected) 
+            xEventGroupWaitBits(wifi_event_group, DISCONNECTED_BIT, 1, 1, portMAX_DELAY );
         sleepMs(6000); 
+        ESP_LOGI(TAG, "Starting scan");
         wifi_startScan(); 
+        ESP_LOGI(TAG, "Waiting for scan");
         wifi_waitScan();
         sleepMs(100);
         /* Go through list of alternatives and if in scan-list, try to connect */
+        ESP_LOGI(TAG, "Going through scan result");
         for (i=0; i<AP_MAX_ALTERNATIVES; i++) {
             if (wifi_getApAlt(i, &alt)) 
                 if (wifi_inScanList(alt.ssid)) {
@@ -535,12 +565,19 @@ static void task_autoConnect( void * pvParms )
                 }
         }
         if (connected) {
+            ESP_LOGI(TAG, "Connected");
             tracklog_post_start();  
             n=0;
         }
-        else if (n>0) { 
-            // Turn off wifi to save power?
-            sleepMs(AUTOCONNECT_PERIOD*1000);
+        else { 
+            if (n>0) { 
+                // Turn off wifi to save power?
+                ESP_LOGI(TAG, "Waiting - to save power");
+                if (!wifi_softAp_isEnabled())
+                    wifi_enable(false);
+                sleepMs(AUTOCONNECT_PERIOD*1000);
+                wifi_enable(true);
+            }
             n++;
         }
     }
