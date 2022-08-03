@@ -19,7 +19,7 @@
 
 
 #define NMEA_BUFSIZE  82
-#define NMEA_MAXTOKENS 16
+#define NMEA_MAXTOKENS 18
 
 #define GPS_BUF_SIZE 256
 #define TAG "gps"
@@ -30,11 +30,11 @@
 posdata_t gps_current_pos; 
 time_t gps_current_time = 0; 
    
-static float altitude = -1;
 
 /* Local handlers */
 static void do_rmc (uint8_t, char**);
 static void do_gga (uint8_t, char**);
+static void do_gsa (uint8_t, char**);
 static void notify_fix (bool);
 static void nmeaListener(void* arg);
 
@@ -42,6 +42,8 @@ static void nmeaListener(void* arg);
 static char buf[NMEA_BUFSIZE+1];
 static bool monitor_pos, monitor_raw; 
 static bool is_fixed = true;
+static float altitude = -1;
+static float pdop = -1;
 
 
 #define WAIT_FIX(timeout) xSemaphoreTake(enc_idle, (timeout) / portTICK_PERIOD_MS)
@@ -144,7 +146,9 @@ static void nmeaListener(void* arg)
     if (strncmp("RMC", argv[0]+3, 3) == 0)
       do_rmc(argc, argv);
     else if (strncmp("GGA", argv[0]+3, 3) == 0)
-      do_gga(argc, argv);
+      do_gga(argc, argv);   
+    else if (strncmp("GSA", argv[0]+3, 3) == 0)
+      do_gsa(argc, argv);
   }
 }
 
@@ -158,6 +162,8 @@ posdata_t*  gps_get_pos()
    { return &gps_current_pos; }
 time_t gps_get_time()
    { return gps_current_time; } 
+float gps_get_pdop()
+   { return pdop; }
   
   
   
@@ -184,7 +190,8 @@ void gps_mon_off(void)
 void gps_on()
 {
  //  clear_port(GPSON);
-   notify_fix(false);
+    ESP_LOGD(TAG, "GPS on is called");
+    notify_fix(false);
 }
 
 
@@ -342,7 +349,7 @@ void notify_fix(bool lock)
 
 
 bool gps_is_fixed()
-   { return is_fixed && GET_BYTE_PARAM("TRACKER.on"); }
+   { return is_fixed; /*&& GET_BYTE_PARAM("TRACKER.on"); */}
    
   
 /* Return true if we waited */   
@@ -374,6 +381,7 @@ static void do_rmc(uint8_t argc, char** argv)
     nmea2time(&gps_current_time, argv[1], argv[9]);
     
     if (*argv[2] != 'A') { 
+       ESP_LOGD(TAG, "RMC does not indicate 'A'");
        notify_fix(false);          /* Ignore if receiver not in lock */
        lock_cnt = 4;
        return;
@@ -383,6 +391,7 @@ static void do_rmc(uint8_t argc, char** argv)
          lock_cnt--;
          return;
       }
+      
       
     lock_cnt = 1;
     notify_fix(true);
@@ -437,4 +446,16 @@ static void do_gga(uint8_t argc, char** argv)
        altitude = -1; 
 }
 
+
+/******************************************* 
+ * Get accuracy from GSA line
+ *******************************************/
+
+static void do_gsa(uint8_t argc, char** argv)
+{
+    if (argc == 18 && *argv[2] > '1') 
+       sscanf(argv[15], "%f", &pdop);
+    else
+       pdop = -1; 
+}
 
