@@ -115,7 +115,6 @@ void frs_init(uart_port_t uart)
     /* Squelch input. Pin interrupt */
     gpio_set_intr_type(RADIO_PIN_SQUELCH, GPIO_INTR_ANYEDGE);
     gpio_isr_handler_add(RADIO_PIN_SQUELCH, squelch_handler, NULL);
-    gpio_set_direction(RADIO_PIN_SQUELCH, GPIO_MODE_INPUT);
     gpio_set_pull_mode(RADIO_PIN_SQUELCH, GPIO_PULLUP_ONLY);
     gpio_pullup_en(BUTTON_PIN);
     gpio_intr_enable(RADIO_PIN_SQUELCH);  

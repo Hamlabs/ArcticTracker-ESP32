@@ -205,13 +205,13 @@ static void button_init() {
     disp_backlight();
     gui_welcome(); 
     status_init(); 
-    
-   /* LED blinker thread */
+
     gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
     gpio_set_direction(LED_TX_PIN,  GPIO_MODE_OUTPUT);
     gpio_set_level(LED_STATUS_PIN, 0);
     gpio_set_level(LED_TX_PIN, 0);
-    
+
+    /* LED blinker thread */
     xTaskCreatePinnedToCore(&ui_thread, "LED blinker", 
         STACK_LEDBLINKER, NULL, NORMALPRIO, NULL, CORE_LEDBLINKER);
     menu_init();

@@ -70,7 +70,7 @@
 #define BATT_ADC_INPUT      ADC2_CHANNEL_7
 
 /* Batt charger */
-#define BATT_CHG_TEST     14
+#define BATT_CHG_TEST     12
 
 
 /* GPS */
@@ -163,19 +163,19 @@
 #define STACK_HDLC_TXENCODER 3100
 #define STACK_HDLC_RXDECODER 3100
 #define STACK_AFSK_RXDECODER 3000
-#define STACK_NMEALISTENER   3500
+#define STACK_NMEALISTENER   3600
 #define STACK_LEDBLINKER     1300
-#define STACK_UI_SRV         3600
-#define STACK_TRACKER        3700
+#define STACK_UI_SRV         3500
+#define STACK_TRACKER        3500
 #define STACK_MONITOR        3000
-#define STACK_GUI            2600
+#define STACK_GUI            3000
 #define STACK_HLIST           900
 #define STACK_DIGI           3200
 #define STACK_TCP_REC        3000
 #define STACK_IGATE          3000
 #define STACK_IGATE_RADIO    2300
-#define STACK_TRACKLOG       2900
-#define STACK_TRACKLOGPOST   3700
+#define STACK_TRACKLOG       3100
+#define STACK_TRACKLOGPOST   3900
 
     
 #define CORE_AUTOCON        0

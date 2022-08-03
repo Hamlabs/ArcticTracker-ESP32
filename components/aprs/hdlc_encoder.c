@@ -192,9 +192,10 @@ static void hdlc_encode_frames()
              */
             fbq_put(mqueue, buffer);
         }
-        else 
+        else {
+            ESP_LOGI(TAG, "Release frame.");
             fbuf_release(&buffer);   
-    
+        }
         hdlc_encode_byte(crc^0xFF, false);       // Send FCS, LSB first
         hdlc_encode_byte((crc>>8)^0xFF, false);  // MSB
         

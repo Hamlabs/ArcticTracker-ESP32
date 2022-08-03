@@ -94,9 +94,9 @@ static fbindex_t _fbuf_newslot ()
            _free_slots--;
            return i; 
        }
-    printf("-newslot return null-\n");
     return NILPTR; 
 }
+
 
 
 /******************************************************
@@ -105,9 +105,9 @@ static fbindex_t _fbuf_newslot ()
 
 static void _fbuf_releaseslot(fbindex_t i) {
     if (_pool[i].refcnt > 0) {
-           _pool[i].refcnt--;
-           if (_pool[i].refcnt == 0)
-             _free_slots++;
+        _pool[i].refcnt--;
+        if (_pool[i].refcnt == 0)
+            _free_slots++;
     }
 }
 
@@ -138,6 +138,7 @@ void fbuf_new (FBUF* bb)
 }
 
 
+
 /*******************************************************
     dispose the content of a buffer chain
  *******************************************************/
@@ -152,6 +153,7 @@ void fbuf_release(FBUF* bb)
     bb->head = bb->wslot = bb->rslot = NILPTR;
     bb->rpos = bb->length = 0;
 }
+
 
 
 /*******************************************************
