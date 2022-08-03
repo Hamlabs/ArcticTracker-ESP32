@@ -67,6 +67,11 @@ int16_t  adc_sample();
 void     adc_calibrate();
 
 
+/* Battery */
+void batt_init(void);
+bool batt_charge(void);
+
+
 
 #define sleepMs(n)  vTaskDelay(pdMS_TO_TICKS(n))
 #define t_yield     taskYIELD

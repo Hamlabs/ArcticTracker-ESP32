@@ -13,7 +13,7 @@
 #include "fbuf.h"
 #include "tracker.h"
 #include "networking.h"
-
+#include "tracklogger.h"
 
 typedef void (*menucmd_t)(void*);
 
@@ -33,7 +33,7 @@ static void mhandle_wifi(void*);
 static void mhandle_softAp(void* x);
 static void mhandle_fwupgrade(void*); 
 static void mhandle_shutdown(void*);
-
+static void mhandle_tracklog(void* x);
 
 static const MenuCommand items[] = 
 {
@@ -47,11 +47,12 @@ static const MenuCommand items[] =
     { "Shut down..",     mhandle_shutdown,  NULL },
 #else
     { "Backlight (+|-)",   mhandle_dispBl,    NULL },
-    { "Send pos report",   mhandle_send,      NULL },
     { "SoftAp (+|-)",      mhandle_softAp,    NULL },
     { "WIFI (+|-)",        mhandle_wifi,      NULL },
+    { "Track log (+|-)",   mhandle_tracklog,  NULL },
     { "Igate (+|-)",       mhandle_igate,     NULL },
     { "Digipeater (+|-)",  mhandle_digi,      NULL },
+    { "Send pos report",   mhandle_send,      NULL },
     { "Firmware upgrade",  mhandle_fwupgrade, NULL },
     { "Shut down..",       mhandle_shutdown,  NULL },
 #endif
@@ -146,20 +147,28 @@ void menu_end()
  * Thread that periodically update display and turn
  * off/on igate or digipeater.
  ****************************************************/
- // FIXME Move to ui.h and rename to service Thread
+ // FIXME Move to ui.c and rename to service Thread
  
- static void gui_thread (void* arg) 
- {
-     while (true) {
-         sleepMs(5000);
-         
-         if (!menu_is_active() && !disp_popupActive())
-             status_show();
+bool charging = false;
+
+static void gui_thread (void* arg) 
+{
+    while (true) {
+        sleepMs(5000);
+             
+        if (batt_charge() && !charging)
+            { beeps("-.-.  "); blipUp(); }
+        if (!batt_charge() && charging)
+            { beeps("-.-.  "); blipDown(); }
+        charging = batt_charge();
+    
+        if (!menu_is_active() && !disp_popupActive())
+            status_show();
          
  //        igate_on(GET_BYTE_PARAM("IGATE.on"));
  //        digipeater_on(GET_BYTE_PARAM("DIGIPEATER.on"));
-     }
- }
+    }
+}
  
  
 void menu_init()
@@ -259,6 +268,19 @@ static void mhandle_softAp(void* x) {
     bool isOn = get_byte_param("SOFTAP.on", 0);
     set_byte_param("SOFTAP.on", !isOn);
     wifi_enable_softAp( !isOn ); 
+}
+
+static void mhandle_tracklog(void* x) {
+    bool isOn = get_byte_param("TRKLOG.on", 0) && get_byte_param("TRKLOG.POST.on", 0) ;
+    if (isOn) {
+        tracklog_off();
+        set_byte_param("TRKLOG.POST.on", 0);
+    }
+    else {
+        tracklog_on();
+        set_byte_param("TRKLOG.POST.on", 1);
+        tracklog_post_start(); 
+    }    
 }
 
 static void mhandle_wifi(void* x) {

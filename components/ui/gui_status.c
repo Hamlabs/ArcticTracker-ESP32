@@ -13,8 +13,11 @@
 #include "networking.h"
 #include "system.h"
 #include "tracker.h"
+#include "trackstore.h"
+#include "tracklogger.h"
 
-#define NSCREENS 7
+
+#define NSCREENS 8
 
 #if DISPLAY_TYPE == 0
 
@@ -52,7 +55,7 @@ static void status_screen3(void);
 static void status_screen4(void);
 static void status_screen5(void);
 static void status_screen6(void);
-
+static void status_screen7(void);
 
 
 void status_init() {
@@ -80,7 +83,9 @@ void status_show() {
         case 5:  status_screen5(); 
                  break;  
         case 6:  status_screen6(); 
-                 break;            
+                 break;  
+        case 7:  status_screen7(); 
+                 break;       
     }
     mutex_unlock(gui_mutex);
 }
@@ -176,12 +181,18 @@ static void status_screen1() {
  ****************************************************************/
 
 static void status_screen2() {
+    char buf[24];
     disp_clear();
     status_heading("GPS");
     if (gps_is_fixed()) {
        disp_writeText(0, LINE1, pos2str_lat(buf, gps_get_pos()));
        disp_writeText(0, LINE2, pos2str_long(buf, gps_get_pos()));
        disp_writeText(0, LINE3, datetime2str(buf, gps_get_time()));
+       
+       if (gps_get_pdop() > -1) {
+            sprintf(buf, "pdop: %1.02f", (float) gps_get_pdop());
+            disp_writeText(0, LINE4, buf);
+       }
     }		     
     else
        disp_writeText(0, LINE1, "Searching...");
@@ -234,6 +245,8 @@ static void status_screen4() {
  * 5. Battery status
  ****************************************************************/
 
+int chg_cnt = 0;
+
 static void status_screen5() {
     char b1[16], b2[16];
     b2[0] = '\0';
@@ -245,7 +258,16 @@ static void status_screen5() {
     disp_writeText(0, LINE1, buf);
     disp_writeText(0, LINE2, b1);
     disp_setBoldFont(true);
-    disp_writeText(0, LINE3, b2);
+
+    if (batt_charge()) {
+        disp_writeText(0, LINE4, "CHARGING...");
+        chg_cnt = 50;
+    }
+    else if (adc_batt() >= 8240 && chg_cnt > 0) {
+        disp_writeText(0, LINE4, "CHARGE COMPLETE!");
+        chg_cnt--; 
+    }
+        
     disp_setBoldFont(false);
     disp_flush();
 }
@@ -262,5 +284,22 @@ static void status_screen6() {
     disp_writeText(0, LINE1, FW_NAME);
     disp_writeText(0, LINE2, VERSION_STRING);
     disp_writeText(0, LINE3, FW_DATE);   
+    disp_flush();
+}
+
+
+/****************************************************************
+ * 7. Track log upload status
+ ****************************************************************/
+
+static void status_screen7() {
+    disp_clear();
+    status_heading("TRKL");
+    char buf[24];
+    
+    sprintf(buf, "Reports stored: %d", trackstore_nEntries());
+    disp_writeText(0, LINE1, (GET_BYTE_PARAM("TRKLOG.on") ? "Enabled" : "Disabled"));
+    disp_writeText(0, LINE2, buf); 
+    disp_writeText(0, LINE3, tracklog_status());
     disp_flush();
 }
