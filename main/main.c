@@ -191,12 +191,11 @@ static void startup(void* arg)
 esp_vfs_spiffs_conf_t spconf = {
       .base_path = "/files",
       .partition_label = "storage",
-      .max_files = 5,
+      .max_files = 10,
       .format_if_mount_failed = true
     };
 
 void spiffs_init() {
-    
     esp_err_t ret = esp_vfs_spiffs_register(&spconf);
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) 
@@ -222,6 +221,7 @@ void spiffs_init() {
 /********************************************************************************
  * Main function
  ********************************************************************************/
+extern void rest_start(int port, char* uri);
 
 void app_main()
 {       
@@ -233,7 +233,7 @@ void app_main()
     gpio_iomux_in(18, U1RXD_IN_IDX); 
     
     
-    
+    batt_init();
     fbuf_init();
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
@@ -248,7 +248,7 @@ void app_main()
     register_aprs();
     wifi_init();
     spiffs_init();    
-    
+    rest_start(8081, "/");
     ui_init();
     
     /* Put this on CPU #1 or we may run out of interrupts */
