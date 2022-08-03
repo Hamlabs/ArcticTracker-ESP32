@@ -4,8 +4,8 @@
 
 
 #define MAX_UINT16     65535
-#define BLOCK_SIZE     128
-#define MAX_BLOCKS     128
+#define BLOCK_SIZE     256
+#define MAX_BLOCKS     256
 #define POS_RESOLUTION 100000
 
 /* 
@@ -43,5 +43,6 @@ posentry_t* trackstore_getEnt(posentry_t* pbuf);
 posdata_t* trackstore_get(posdata_t* pbuf);
 posentry_t* trackstore_peek(posentry_t* pbuf);
 void trackstore_reset();
+int trackstore_nEntries();
 
 #endif

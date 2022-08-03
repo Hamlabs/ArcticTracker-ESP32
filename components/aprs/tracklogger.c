@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "system.h"
 #include "config.h"
 #include "gps.h"
@@ -18,6 +19,8 @@
 static TaskHandle_t tracklogt = NULL; 
 static TaskHandle_t trackpostt = NULL; 
 static bool trackpost_running = false;
+static char statusmsg[32];
+static int  posted=0;
 
 static void tracklog(void* arg);
 static void post_loop(); 
@@ -59,6 +62,19 @@ void tracklog_off() {
 }
 
 
+
+/********************************************************
+ *  short status text (for display)
+ ********************************************************/
+
+char* tracklog_status() {
+    return statusmsg;
+}
+
+
+int tracklog_nPosted() {
+    return posted;
+}
 
 
 /********************************************************
@@ -110,6 +126,8 @@ static void tracklog(void* arg) {
 static void remove_old() {
     posentry_t entry; 
     uint32_t now = (uint32_t) getTime();
+    if (now==0)
+        return;
     uint32_t ttl = get_byte_param("TRKLOG.TTL", DFL_TRKLOG_TTL);
     uint32_t tdiff = ttl * 60 * 60;
     
@@ -178,13 +196,16 @@ int tracklog_post() {
     len += sprintf(buf+len-1, ",\n\"mac\":\"%s\"}", b64hash);
     
     /* Post it */
-    printf("POST:\n%s\n", buf+keylen);
     int status = http_post(url, "text/json", buf+keylen, len-keylen);
     if (status == 200) {
         ESP_LOGI(TAG, "Posted track-log (%d bytes/%d entries) to %s", len, i, url);
+        sprintf(statusmsg, "Posted %d reports OK", i);
+        posted += i;
     }
-    else
+    else {
         ESP_LOGW(TAG, "Post of track-log failed. Status=%d", status);
+        sprintf(statusmsg, "Post failed. code=%d", status);
+    }
     free(buf);
     return i;
 }
@@ -195,6 +216,7 @@ static void post_loop()
 {       
     sleepMs(5000);    
     ESP_LOGI(TAG, "Starting trklog POST task");
+    sprintf(statusmsg, "POST task running");
     trackpost_running = true;
     while (wifi_isConnected() && GET_BYTE_PARAM("TRKLOG.POST.on")) {
         int n = tracklog_post();
@@ -207,6 +229,7 @@ static void post_loop()
     }
     trackpost_running = false;
     ESP_LOGI(TAG, "Stopping trklog POST task");   
+    sprintf(statusmsg, "POST task stopped");
     vTaskDelete(NULL);
 }
 

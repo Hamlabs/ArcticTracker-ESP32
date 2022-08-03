@@ -12,3 +12,5 @@ void tracklog_on(void);
 void tracklog_off(void);
 void tracklog_post_start(void);
 int tracklog_post(void);
+char* tracklog_status(void);
+int tracklog_nPosted(void);

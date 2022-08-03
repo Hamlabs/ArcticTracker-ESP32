@@ -17,7 +17,7 @@ static bool check_rblock();
 static FILE* open_block(blkno_t blk, char* perm);
 static void delete_block(blkno_t blk);
 static void write_entry(posentry_t* entr, FILE* f);
-static void read_entry(posentry_t* entr, FILE* f, uint16_t pos);
+static bool read_entry(posentry_t* entr, FILE* f, uint16_t pos);
 static void reset_empty();
 
 #define TAG "trackstore"
@@ -93,6 +93,17 @@ void trackstore_stop() {
 
 
 /******************************************************
+ * number of entries
+ ******************************************************/
+
+int trackstore_nEntries() {
+    return (meta.nblocks-1) * BLOCK_SIZE + meta.last - meta.first;
+}
+
+
+
+
+/******************************************************
  * Add a posdata record
  ******************************************************/
 
@@ -109,22 +120,22 @@ void trackstore_put(posdata_t *x) {
     entry.lng = x->longitude * POS_RESOLUTION;
     entry.altitude = x->altitude;
     
-    /* Drop it if no change in position in the last 60 seconds */
-  //  if (entry.lat == prev.lat && entry.lng == prev.lng && 
-  //      entry.time < prev.time+60)
-  //          return; 
+    /* Drop it if no change in position within the last 60 seconds */
+    if (entry.lat == prev.lat && entry.lng == prev.lng && 
+        entry.time < prev.time+60)
+            return; 
     prev = entry;
     
     ESP_LOGD(TAG, "put - first=%d, last=%d, firstblk=%d, lastblk=%d, nblocks=%d ",
              meta.first, meta.last, meta.firstblk, meta.lastblk, meta.nblocks );
-    
+     
+    mutex_lock(mutex); 
+     
     /* If empty */
     if (meta.firstblk == meta.lastblk &&
         meta.first == meta.last ) 
           reset_empty(); 
-           
-    mutex_lock(mutex); 
-    
+ 
     /* if block is full, add a new one */
     if (meta.last >= BLOCK_SIZE) {
         ESP_LOGD(TAG, "put - switch block");
@@ -133,9 +144,6 @@ void trackstore_put(posdata_t *x) {
         meta.lastblk = (meta.lastblk + 1) % MAX_UINT16;
         meta.nblocks++;
         lastfile = open_block(meta.lastblk, "a+");
-        
-        
-        
         meta.last = 0;
     } 
     
@@ -173,11 +181,11 @@ posentry_t* trackstore_getEnt(posentry_t* pbuf) {
     if (!check_rblock()) 
         { mutex_unlock(mutex); return NULL; }
         
-    read_entry(pbuf, firstfile, meta.first);
+    bool readok = read_entry(pbuf, firstfile, meta.first);
     meta.first++;
     set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
     mutex_unlock(mutex); 
-    return pbuf;
+    return (readok? pbuf : NULL);
 }
 
 
@@ -217,7 +225,8 @@ posentry_t* trackstore_peek(posentry_t* pbuf) {
          meta.first == meta.last ) || (!check_rblock())) 
         { mutex_unlock(mutex); return NULL; }
 
-    read_entry(pbuf, firstfile, meta.first);
+    if (!read_entry(pbuf, firstfile, meta.first))
+        { mutex_unlock(mutex); return NULL; }
     mutex_unlock(mutex);
     return pbuf;
 }
@@ -315,13 +324,14 @@ static void write_entry(posentry_t* entr, FILE* f) {
  * Read entry from file at specified position
  ******************************************************/
 
-static void read_entry(posentry_t* entr, FILE* f, uint16_t pos) {
+static bool read_entry(posentry_t* entr, FILE* f, uint16_t pos) {
     memset(entr, 0, sizeof(posentry_t));
-    if ( fseek(f, pos*sizeof(posentry_t), SEEK_SET) == -1) {
+    if ( fsetpos(f, pos*sizeof(posentry_t)) == -1) {
         ESP_LOGE(TAG, "read_entry - file seek error: pos=%d. %s", pos, strerror(errno));
-        return;
+        return false;
     }
     fread(entr, sizeof(posentry_t), 1, f); 
+    return true;
 }
 
 
