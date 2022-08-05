@@ -48,6 +48,18 @@ esp_err_t rest_options_handler(httpd_req_t *req) {
 }
 
 
+/*******************************************************************************************
+ * Serialize and send JSON with the response. 
+ *******************************************************************************************/
+
+esp_err_t rest_JSON_send(httpd_req_t *req, cJSON *root) {
+    const char *sys_info = cJSON_Print(root);    
+    httpd_resp_sendstr(req, sys_info);
+    free((void *)sys_info);
+    cJSON_Delete(root);
+    return ESP_OK;
+}
+
 
 
 /*******************************************************************************************
@@ -63,7 +75,11 @@ void rest_register(char* uri, httpd_method_t method, esp_err_t (*handler)(httpd_
         .handler = handler,
         .user_ctx = context
     };
-    httpd_register_uri_handler(server, &system_info_get_uri);
+    esp_err_t err = httpd_register_uri_handler(server, &system_info_get_uri);
+    if (err == ESP_ERR_INVALID_ARG)
+        ESP_LOGE(TAG, "Cannot register method for %s. Null arg.", uri);
+    else if (err == ESP_ERR_INVALID_ARG)
+        ESP_LOGE(TAG, "Cannot register method for %s. Handler not found.", uri);
 }
 
 
@@ -134,6 +150,7 @@ void rest_start(int port, const char *path)
     /* Set up and start HTTP server */
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = port;
+    config.max_uri_handlers = 32;
     config.uri_match_fn = httpd_uri_match_wildcard;
 
     ESP_LOGI(TAG, "Starting REST HTTP Server on port %d", port);

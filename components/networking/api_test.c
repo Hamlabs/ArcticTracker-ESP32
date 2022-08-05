@@ -36,6 +36,8 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     cJSON_AddStringToObject(root, "ipaddr", wifi_getIpAddr(buf));
     cJSON_AddStringToObject(root, "mdns", mdns_hostname(buf));
     
+    cJSON_AddBoolToObject(root, "softap", wifi_softAp_isEnabled());
+    
     sprintf(buf, "%1.02f", ((double) adc_batt()) / 1000);
     cJSON_AddStringToObject(root, "vbatt",  buf);       
     
@@ -49,11 +51,7 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     sprintf(buf, "%s %s", st1, st2);
     cJSON_AddStringToObject(root, "battstatus", buf);
     
-    const char *sys_info = cJSON_Print(root);    
-    httpd_resp_sendstr(req, sys_info);
-    free((void *)sys_info);
-    cJSON_Delete(root);
-    return ESP_OK;
+    return rest_JSON_send(req, root);
 }
 
 
@@ -93,11 +91,7 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
     cJSON_AddBoolToObject(root, "altitude", get_byte_param("ALTITUDE.on", 0));
     cJSON_AddBoolToObject(root, "extraturn", get_byte_param("EXTRATURN.on", 0));
     
-    const char *sys_info = cJSON_Print(root);    
-    httpd_resp_sendstr(req, sys_info);
-    free((void *)sys_info);
-    cJSON_Delete(root);
-    return ESP_OK;
+    return rest_JSON_send(req, root);
 }
 
 
@@ -179,11 +173,8 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
     
     get_str_param("IGATE.PASS", buf, 6, "");
     cJSON_AddStringToObject(root, "passcode", buf);
-    const char *sys_info = cJSON_Print(root);    
-    httpd_resp_sendstr(req, sys_info);
-    free((void *)sys_info);
-    cJSON_Delete(root);
-    return ESP_OK;
+    
+    return rest_JSON_send(req, root);
 }
 
 
@@ -226,6 +217,139 @@ static esp_err_t digi_put_handler(httpd_req_t *req)
 }
 
 
+
+/******************************************************************
+ *  GET handler for setting related to WIFI 
+ ******************************************************************/
+
+static esp_err_t wifi_get_handler(httpd_req_t *req) 
+{
+    char buf[64];
+    rest_cors_enable(req); 
+    httpd_resp_set_type(req, "application/json");
+    cJSON *root = cJSON_CreateObject();
+
+    get_str_param("WIFIAP.SSID", buf, 32, default_ssid);
+    cJSON_AddStringToObject(root, "apssid", buf);
+    
+    get_str_param("WIFIAP.AUTH", buf, 64, AP_DEFAULT_PASSWD);
+    cJSON_AddStringToObject(root, "appass", buf);
+    
+    get_str_param("HTTPD.USR", buf, 32, HTTPD_DEFAULT_USR);
+    cJSON_AddStringToObject(root, "htuser", buf);
+    
+    get_str_param("HTTPD.PWD", buf, 64, HTTPD_DEFAULT_PWD);
+    cJSON_AddStringToObject(root, "htpass", buf);
+    
+    for (int i=0; i<6; i++) {
+        wifiAp_t res;
+        if (wifi_getApAlt(i, &res)) {
+            char ssid[32];
+            char pw[64];
+            sprintf(ssid, "ap_%d_ssid", i);
+            sprintf(pw, "ap_%d_pw", i);
+            cJSON_AddStringToObject(root, ssid, res.ssid);
+            cJSON_AddStringToObject(root, pw, res.passwd);
+        }
+    }
+    
+    return rest_JSON_send(req, root);
+}
+
+
+
+/******************************************************************
+ *  PUT handler for setting related to WIFI
+ ******************************************************************/
+
+static esp_err_t wifi_put_handler(httpd_req_t *req) 
+{
+    cJSON *root; 
+    CHECK_JSON_INPUT(req, root);
+    rest_cors_enable(req);
+ 
+    char* apssid = cJSON_GetObjectItem(root, "apssid")->valuestring;
+    char* appass = cJSON_GetObjectItem(root, "appass")->valuestring;
+    char* htuser = cJSON_GetObjectItem(root, "htuser")->valuestring;
+    char* htpass = cJSON_GetObjectItem(root, "htpass")->valuestring;
+    set_str_param("WIFIAP.SSID", apssid);
+    set_str_param("WIFIAP.AUTH", appass);
+    set_str_param("HTTPD.USR", htuser);
+    set_str_param("HTTPD.PWD", htpass);
+    
+    for (int i=0; i<6; i++) {
+        char ssid[32];
+        char pw[64];
+        wifiAp_t ap; 
+        sprintf(ssid, "ap_%d_ssid", i);
+        sprintf(pw, "ap_%d_pw", i);
+        strcpy (ap.ssid, cJSON_GetObjectItem(root, ssid)->valuestring);
+        strcpy (ap.passwd, cJSON_GetObjectItem(root, pw)->valuestring);
+        wifi_setApAlt(i, &ap);
+    }
+    
+    cJSON_Delete(root);
+    httpd_resp_sendstr(req, "PUT WIFI settings successful");
+    return ESP_OK;
+}    
+    
+    
+/******************************************************************
+ *  GET handler for setting related to track logging
+ ******************************************************************/
+
+static esp_err_t trklog_get_handler(httpd_req_t *req)
+{
+    char buf[128];
+    rest_cors_enable(req); 
+    httpd_resp_set_type(req, "application/json");
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddBoolToObject(root, "trklog_on", get_byte_param("TRKLOG.on", 0));
+    cJSON_AddBoolToObject(root, "trkpost_on", get_byte_param("TRKLOG.POST.on", 0));
+    cJSON_AddNumberToObject(root, "interv", get_byte_param("TRKLOG.INT", DFL_TRKLOG_INT));
+    cJSON_AddNumberToObject(root, "ttl", get_byte_param("TRKLOG.TTL", DFL_TRKLOG_TTL));
+
+    get_str_param("TRKLOG.URL", buf, 64, DFL_TRKLOG_URL);
+    cJSON_AddStringToObject(root, "url", buf);
+
+    get_str_param("TRKLOG.KEY", buf, 128, "");
+    cJSON_AddStringToObject(root, "key", buf);
+    
+    return rest_JSON_send(req, root);
+}
+
+
+/******************************************************************
+ *   PUT handler for setting related to track logging
+ ******************************************************************/
+
+static esp_err_t trklog_put_handler(httpd_req_t *req)
+{
+    cJSON *root; 
+    CHECK_JSON_INPUT(req, root);
+    rest_cors_enable(req); 
+     
+    bool trklog = cJSON_GetObjectItem(root, "trklog_on")->valueint;
+    bool trkpost = cJSON_GetObjectItem(root, "trkpost_on")->valueint;
+    uint8_t interv = (uint8_t) cJSON_GetObjectItem(root, "interv")->valueint;
+    uint8_t ttl = (uint8_t) cJSON_GetObjectItem(root, "ttl")->valueint;
+    char* url = cJSON_GetObjectItem(root, "url")->valuestring;
+    char* key = cJSON_GetObjectItem(root, "key")->valuestring;
+    
+    set_byte_param("TRKLOG.on", trklog);
+    set_byte_param("TRKLOG.POST.on", trkpost);
+    set_byte_param("TRKLOG.INT", interv);
+    set_byte_param("TRKLOG.TTL", ttl);
+    set_str_param ("TRKLOG.URL", url);
+    set_str_param ("TRKLOG.KEY", key);
+    
+    cJSON_Delete(root);
+    httpd_resp_sendstr(req, "PUT WIFI settings successful");
+    return ESP_OK;
+} 
+    
+    
+    
 /******************************************************************
  *  Register handlers for uri/methods
  ******************************************************************/
@@ -240,5 +364,13 @@ void register_api_test()
 
     REGISTER_GET("/api/aprs",     aprs_get_handler);
     REGISTER_PUT("/api/aprs",     aprs_put_handler);
-    REGISTER_OPTIONS("/api/aprs", rest_options_handler);
+    REGISTER_OPTIONS("/api/aprs", rest_options_handler);    
+    
+    REGISTER_GET("/api/wifi",     wifi_get_handler);
+    REGISTER_PUT("/api/wifi",     wifi_put_handler);
+    REGISTER_OPTIONS("/api/wifi", rest_options_handler);
+    
+    REGISTER_GET("/api/trklog",    trklog_get_handler);
+    REGISTER_PUT("/api/trklog",    trklog_put_handler);
+    REGISTER_OPTIONS("/api/trklog",rest_options_handler);
 }

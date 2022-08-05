@@ -14,6 +14,7 @@
 void      rest_register(char* uri, httpd_method_t method, esp_err_t (*handler)(httpd_req_t *r) );
 esp_err_t rest_get_input(httpd_req_t *req,  char **buf);
 esp_err_t rest_JSON_input(httpd_req_t *req,  cJSON **json);
+esp_err_t rest_JSON_send(httpd_req_t *req, cJSON *root);
 void      rest_start(int port, const char *path);
 void      rest_stop(void);
 void      rest_cors_enable(httpd_req_t *req);
