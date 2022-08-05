@@ -326,7 +326,7 @@ static void write_entry(posentry_t* entr, FILE* f) {
 
 static bool read_entry(posentry_t* entr, FILE* f, uint16_t pos) {
     memset(entr, 0, sizeof(posentry_t));
-    if ( fsetpos(f, pos*sizeof(posentry_t)) == -1) {
+    if ( fseek(f, pos*sizeof(posentry_t), SEEK_SET) == -1) {
         ESP_LOGE(TAG, "read_entry - file seek error: pos=%d. %s", pos, strerror(errno));
         return false;
     }
