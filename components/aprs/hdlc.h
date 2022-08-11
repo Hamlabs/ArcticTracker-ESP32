@@ -24,5 +24,5 @@ uint8_t rand_u8(void);
 
 void hdlc_subscribe_rx(fbq_t* q, uint8_t i);
 void hdlc_init_decoder (fifo_t *s);
-
+void hdlc_next_frame(void);
 #endif

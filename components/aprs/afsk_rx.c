@@ -10,6 +10,7 @@
 #include <string.h>
 #include "defines.h"
 #include "afsk.h"
+#include "hdlc.h"
 #include "ui.h"
 #include "fifo.h"
 #include "radio.h"
@@ -34,12 +35,10 @@
 
 /* Queue of decoded bits. To be used by HDLC packet decoder */
 static fifo_t iq; 
-static fifo_t delay;
+
 
 /* Semaphore to signal availability of afsk frames */
 static semaphore_t afsk_frames; 
-
-
 
 
 /*********************************************************
@@ -65,8 +64,106 @@ static AfskRx afsk;
 
 
 static void add_bit(bool bit);
-static void afsk_process_sample(int8_t curr_sample);
+static void afsk_process_sample(int8_t curr_sample, float f1, float f2);
 static void afsk_rxdecoder(void* arg);
+
+
+   
+
+/************************************************
+ * FIR filtering 
+ ************************************************/
+
+typedef struct FIR
+{
+  int8_t taps;
+  int8_t coef[FIR_MAX_TAPS];
+  int16_t mem[FIR_MAX_TAPS];
+} FIR;
+
+
+enum fir_filters
+{
+  FIR_1200_BP=0,
+  FIR_2200_BP=1,
+  FIR_1200_LP=2,
+  FIR_PREEMP=3,
+  FIR_DEEMP=4
+};
+
+
+static FIR fir_table[] =
+{
+  [FIR_1200_BP] = {
+    .taps = 11,
+    .coef = {
+      -12, -16, -15, 0, 20, 29, 20, 0, -15, -16, -12
+    },
+    .mem = {
+      0,
+    },
+  },
+  [FIR_2200_BP] = {
+    .taps = 11,
+    .coef = {
+      11, 15, -8, -26, 4, 30, 4, -26, -8, 15, 11
+    },
+    .mem = {
+      0,
+    },
+  },
+  [FIR_1200_LP] = {
+    .taps = 8,
+    .coef = {
+      -9, 3, 26, 47, 47, 26, 3, -9
+    },
+    .mem = {
+      0,
+    },
+  },  
+  [FIR_PREEMP] = {
+    .taps = 5,
+    .coef = {
+      -18, -29, 93, -29, -18
+    },
+    .mem = {
+      0,
+    },
+  },  
+  [FIR_DEEMP] = {
+    .taps = 5,
+    .coef = {
+      6, 39, 60, 39, 6
+    },
+    .mem = {
+      0,
+    },
+  },
+};
+
+
+
+static int8_t fir_filter(int8_t s, enum fir_filters f)
+{
+  int8_t Q = fir_table[f].taps - 1;
+  int8_t *B = fir_table[f].coef;
+  int16_t *Bmem = fir_table[f].mem;
+  
+  int8_t i;
+  int16_t y;
+  
+  Bmem[0] = s;
+  y = 0;
+  
+  for (i = Q; i >= 0; i--)
+  {
+    y += Bmem[i] * B[i];
+    Bmem[i + 1] = Bmem[i];
+  }
+  
+  return (int8_t) (y / 128);
+}
+
 
 
 /*******************************************
@@ -106,101 +203,47 @@ static void frameInfo() {
 
 
 
-static void doFrame() {
+static void doFrame(float f1, float f2) {
     rxSampler_reset();
     while (!rxSampler_eof())
-        afsk_process_sample(rxSampler_get()); 
+        afsk_process_sample(rxSampler_get(), f1, f2);
+    
+    /* 
+     * Add 0-samples after the end of the frame to flush filters
+     */
+    for (int i=0; i<16; i++)
+        afsk_process_sample(0, 1, 1);
 }
 
+uint32_t nsamples = 0;
+uint32_t tone22=0, tone12=0;
+float balance() {
+    double res = ((double) tone12 / nsamples) / ((double) tone22 / nsamples);
+    tone22=0; tone12=0; nsamples = 0;
+    return res;
+}
 
 /* Decoding thread */
 static void afsk_rxdecoder(void* arg) 
 {
     while (true) {
         sem_down(afsk_frames);
-        doFrame(1);    
+        hdlc_next_frame();
+        balance();
+        doFrame(1, 1);
+        float bal = balance();
+        sleepMs(10);
+        if (bal >= 1)
+            doFrame(1, bal);
+        else
+            doFrame(1/bal, 1);
+        sleepMs(10);
     }
 }
 
 
 void afsk_rx_newFrame() {
     sem_up(afsk_frames);
-}
-
-   
-
-/************************************************
- * FIR filtering 
- ************************************************/
-
-typedef struct FIR
-{
-  int8_t taps;
-  int8_t coef[FIR_MAX_TAPS];
-  int16_t mem[FIR_MAX_TAPS];
-} FIR;
-
-
-enum fir_filters
-{
-  FIR_1200_BP=0,
-  FIR_2200_BP=1,
-  FIR_1200_LP=2
-};
-
-
-static FIR fir_table[] =
-{
-  [FIR_1200_BP] = {
-    .taps = 11,
-    .coef = {
-      -12, -16, -15, 0, 20, 29, 20, 0, -15, -16, -12
-    },
-    .mem = {
-      0,
-    },
-  },
-  [FIR_2200_BP] = {
-    .taps = 11,
-    .coef = {
-      11, 15, -8, -26, 4, 30, 4, -26, -8, 15, 11
-    },
-    .mem = {
-      0,
-    },
-  },
-  [FIR_1200_LP] = {
-    .taps = 8,
-    .coef = {
-      -9, 3, 26, 47, 47, 26, 3, -9
-    },
-    .mem = {
-      0,
-    },
-  },
-};
-
-
-
-static int8_t fir_filter(int8_t s, enum fir_filters f)
-{
-  int8_t Q = fir_table[f].taps - 1;
-  int8_t *B = fir_table[f].coef;
-  int16_t *Bmem = fir_table[f].mem;
-  
-  int8_t i;
-  int16_t y;
-  
-  Bmem[0] = s;
-  y = 0;
-  
-  for (i = Q; i >= 0; i--)
-  {
-    y += Bmem[i] * B[i];
-    Bmem[i + 1] = Bmem[i];
-  }
-  
-  return (int8_t) (y / 128);
 }
 
 
@@ -211,15 +254,21 @@ static int8_t fir_filter(int8_t s, enum fir_filters f)
   the physical medium. 
 ****************************************************************/
 
-static void afsk_process_sample(int8_t curr_sample) 
+static void afsk_process_sample(int8_t curr_sample, float filt0, float filt1) 
 { 
     afsk.iirY[0] = fir_filter(curr_sample, FIR_1200_BP);
     afsk.iirY[1] = fir_filter(curr_sample, FIR_2200_BP);
     
-    afsk.iirY[1] = (int8_t) (afsk.iirY[1] * 1.2); 
+    afsk.iirY[0] = (int8_t) (afsk.iirY[0]);
+    afsk.iirY[1] = (int8_t) (afsk.iirY[1]); 
     
-    afsk.iirY[0] = ABS(afsk.iirY[0]);
-    afsk.iirY[1] = ABS(afsk.iirY[1]);
+    afsk.iirY[0] = ABS(afsk.iirY[0]) * filt0;
+    afsk.iirY[1] = ABS(afsk.iirY[1]) * filt1;
+    
+    tone12 += afsk.iirY[0];
+    tone22 += afsk.iirY[1];
+    nsamples++;
+    
     
     afsk.sampled_bits <<= 1;
     afsk.sampled_bits |= (fir_filter(afsk.iirY[1] - afsk.iirY[0], FIR_1200_LP) > 0 ? 1 : 0);
@@ -278,6 +327,7 @@ static void afsk_process_sample(int8_t curr_sample)
 
 uint8_t octet = 0; 
 int bit_count = 0;
+
 
 /*********************************************************
  * Send a single bit to the HDLC decoder

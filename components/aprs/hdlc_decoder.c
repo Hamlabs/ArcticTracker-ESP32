@@ -22,8 +22,12 @@ static fifo_t* inq;
 static fbuf_t fbuf;
 static fbq_t* mqueue[3];
 
+static uint16_t tag_seq = 0;
+static uint16_t prev_seq = 0;
+static uint16_t prev_crc = 0;
+
 static uint8_t get_bit (void); 
-static bool crc_match(FBUF*, uint8_t);
+static bool crc_match(FBUF*, uint8_t, uint16_t *crc);
 
 
 
@@ -132,9 +136,21 @@ static void hdlc_rxdecoder (void* arg)
    } while (bit != HDLC_FLAG);
    
    
-   if (length > AX25_HDR_LEN(0)+2 && crc_match(&fbuf, length)) 
+   uint16_t rcrc; 
+   
+   if (length > AX25_HDR_LEN(0)+2 && crc_match(&fbuf, length, &rcrc)) 
    {     
-      ESP_LOGI(TAG, "Valid frame received. length=%d", length); 
+      ESP_LOGI(TAG, "Valid frame received. seq=%d, length=%d", tag_seq, length); 
+      
+      /* Ignore if it is a duplicate */
+      if (tag_seq == prev_seq && rcrc == prev_crc) {
+          fbuf_release(&fbuf); 
+          fbuf_new(&fbuf);
+          goto frame_sync;
+      }
+      prev_seq = tag_seq;
+      prev_crc = rcrc;
+      
       /* Send packets to subscribers, if any. 
        * Note that every receiver should release the buffers after use. 
        * Note also that receiver queues should not share the fbuf, use newRef to create a new reference
@@ -163,13 +179,13 @@ static void hdlc_rxdecoder (void* arg)
  * CRC check
  ***********************************************************/
 
-bool crc_match(FBUF* b, uint8_t length)
+bool crc_match(FBUF* b, uint8_t length, uint16_t *crc)
 {
    /* Calculate FCS from frame content */
-   uint16_t crc = 0xFFFF;
+   *crc = 0xFFFF;
    uint8_t i;
    for (i=0; i<length-2; i++)
-       crc = _crc_ccitt_update(crc, fbuf_getChar(b)); 
+       *crc = _crc_ccitt_update(*crc, fbuf_getChar(b)); 
        
    /* Get FCS from 2 last bytes of frame */
    uint16_t rcrc; 
@@ -177,11 +193,21 @@ bool crc_match(FBUF* b, uint8_t length)
    rcrc = (uint16_t) fbuf_getChar(b) ^ 0xFF;
    rcrc |= (uint16_t) (fbuf_getChar(b) ^ 0xFF) << 8;
  
-   return (crc==rcrc);
+   return (*crc==rcrc);
 }
 
 
 
+/*********************************************************************
+ * Increment sequence number and filter-tag for incoming frame. 
+ * This is used to detect duplicates. This is a hack. It depends on 
+ * the queue of input bits is shorter than any valid frame. Alternatively 
+ * we could find a way to synchronise with the queeue. 
+ *********************************************************************/
+
+void hdlc_next_frame() {
+    tag_seq = (tag_seq + 1) % 65000; 
+}
 
 
 
