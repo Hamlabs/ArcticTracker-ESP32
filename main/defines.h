@@ -41,7 +41,7 @@
 #define MCU ESP32S3
 
 /* Queues for AFSK encoder/decoder */
-#define AFSK_RX_QUEUE_SIZE      256
+#define AFSK_RX_QUEUE_SIZE       16
 #define AFSK_TX_QUEUE_SIZE      256
 #define HDLC_DECODER_QUEUE_SIZE  16
 #define HDLC_ENCODER_QUEUE_SIZE  16
@@ -176,6 +176,7 @@
 #define STACK_IGATE_RADIO    2300
 #define STACK_TRACKLOG       3100
 #define STACK_TRACKLOGPOST   3900
+#define STACK_HTTPD          5000
 
     
 #define CORE_AUTOCON        0
