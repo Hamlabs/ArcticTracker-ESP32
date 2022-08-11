@@ -29,6 +29,8 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     char buf[32];
     rest_cors_enable(req); 
     httpd_resp_set_type(req, "application/json");
+    CHECK_AUTH(req);
+    
     cJSON *root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "heap", esp_get_free_heap_size());
     cJSON_AddNumberToObject(root, "flash", spi_flash_get_chip_size());
@@ -64,8 +66,9 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
     char buf[64];
     rest_cors_enable(req); 
     httpd_resp_set_type(req, "application/json");
-    cJSON *root = cJSON_CreateObject();
+    CHECK_AUTH(req);
     
+    cJSON *root = cJSON_CreateObject();
     get_str_param("MYCALL", buf, 10, DFL_MYCALL);
     cJSON_AddStringToObject(root, "mycall", buf );
     
@@ -101,46 +104,28 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
 
 static esp_err_t aprs_put_handler(httpd_req_t *req) 
 {
-    cJSON *root; 
-    CHECK_JSON_INPUT(req, root);
+    cJSON *root;   
     rest_cors_enable(req); 
+    CHECK_JSON_INPUT(req, root);
+      
+    set_str_param("MYCALL",  JSON_STR(root, "mycall"));
+    set_str_param("SYMBOL",  JSON_STR(root, "symbol"));
+    set_str_param("PATH",    JSON_STR(root, "path"));
+    set_str_param("COMMENT", JSON_STR(root, "comment"));
     
-    char* mycall = cJSON_GetObjectItem(root, "mycall")->valuestring;
-    char* symbol = cJSON_GetObjectItem(root, "symbol")->valuestring;
-    char* path = cJSON_GetObjectItem(root, "path")->valuestring;
-    char* comment = cJSON_GetObjectItem(root, "comment")->valuestring;
+    set_byte_param("MAXPAUSE", JSON_BYTE(root, "maxpause"));
+    set_byte_param("MINPAUSE", JSON_BYTE(root, "minpause"));
+    set_byte_param("MINDIST",  JSON_BYTE(root, "mindist"));
+    set_byte_param("REPEAT",   JSON_BYTE(root, "repeat"));
     
-    uint8_t maxpause = (uint8_t) cJSON_GetObjectItem(root, "maxpause")->valueint;
-    uint8_t minpause = (uint8_t) cJSON_GetObjectItem(root, "minpause")->valueint;
-    uint8_t mindist = (uint8_t) cJSON_GetObjectItem(root, "mindist")->valueint;
-    uint8_t repeat = (uint8_t) cJSON_GetObjectItem(root, "repeat")->valueint;
-    uint16_t turnlimit = (uint16_t) cJSON_GetObjectItem(root, "turnlimit")->valueint;
-    int32_t txfreq = (int32_t) cJSON_GetObjectItem(root, "txfreq")->valueint;
-    int32_t rxfreq = (int32_t) cJSON_GetObjectItem(root, "rxfreq")->valueint;
+    set_u16_param("TURNLIMIT", JSON_U16(root, "turnlimit"));
+    set_i32_param("TXFREQ",    JSON_INT(root, "txfreq"));
+    set_i32_param("RXFREQ",    JSON_INT(root, "rxfreq"));
     
-    bool timestamp = cJSON_GetObjectItem(root, "timestamp")->valueint;
-    bool compress = cJSON_GetObjectItem(root, "compress")->valueint;
-    bool altitude = cJSON_GetObjectItem(root, "altitude")->valueint;
-    bool extraturn = cJSON_GetObjectItem(root, "extraturn")->valueint;
-    
-    set_str_param("MYCALL", mycall);
-    set_str_param("SYMBOL", symbol);
-    set_str_param("PATH",   path);
-    set_str_param("COMMENT", comment);
-    
-    set_byte_param("MAXPAUSE", maxpause);
-    set_byte_param("MINPAUSE", minpause);
-    set_byte_param("MINDIST", mindist);
-    set_byte_param("REPEAT", repeat);
-    
-    set_u16_param("TURNLIMIT", turnlimit);
-    set_i32_param("TXFREQ", txfreq);
-    set_i32_param("RXFREQ", rxfreq);
-    
-    set_byte_param("TIMESTAMP.on", timestamp);
-    set_byte_param("COMPRESS.on", compress);
-    set_byte_param("ALTITUDE.on", altitude);
-    set_byte_param("EXTRATURN.on", extraturn);
+    set_byte_param("TIMESTAMP.on", JSON_BOOL(root, "timestamp"));
+    set_byte_param("COMPRESS.on",  JSON_BOOL(root, "compress"));
+    set_byte_param("ALTITUDE.on",  JSON_BOOL(root, "altitude"));
+    set_byte_param("EXTRATURN.on", JSON_BOOL(root, "extraturn"));
     
     cJSON_Delete(root);
     httpd_resp_sendstr(req, "PUT digi/igate settings successful");
@@ -158,6 +143,8 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
     char buf[64];
     rest_cors_enable(req); 
     httpd_resp_set_type(req, "application/json");
+    CHECK_AUTH(req);
+    
     cJSON *root = cJSON_CreateObject();
     cJSON_AddBoolToObject(root, "digiOn", get_byte_param("DIGIPEATER.on", 0));
     cJSON_AddBoolToObject(root, "wide1", get_byte_param("DIGI.WIDE1.on", 0));
@@ -185,29 +172,22 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
 
 static esp_err_t digi_put_handler(httpd_req_t *req) 
 {
-    cJSON *root; 
-    CHECK_JSON_INPUT(req, root);
+    cJSON *root;    
     rest_cors_enable(req); 
+    CHECK_JSON_INPUT(req, root);
+
+    set_byte_param("DIGI.WIDE1.on", JSON_BOOL(root, "wide1"));
+    set_byte_param("DIGI.SAR.on",   JSON_BOOL(root, "sar"));
+    set_u16_param("IGATE.PORT",     JSON_U16(root, "port"));
+    set_u16_param("IGATE.PASS",     JSON_U16(root, "passcode"));
+    set_str_param("IGATE.HOST",     JSON_STR(root, "server"));
+    set_str_param("IGATE.USER",     JSON_STR(root, "user"));
     
-    bool digiOn = cJSON_GetObjectItem(root, "digiOn")->valueint;
-    bool wide1 = cJSON_GetObjectItem(root, "wide1")->valueint;
-    bool sar = cJSON_GetObjectItem(root, "sar")->valueint;
-    bool igateOn = cJSON_GetObjectItem(root, "igateOn")->valueint;
-    uint16_t port = (uint16_t) cJSON_GetObjectItem(root, "port")->valueint;
-    char* server = cJSON_GetObjectItem(root, "server")->valuestring;
-    char* user = cJSON_GetObjectItem(root, "user")->valuestring;
-    uint16_t passcode = (uint16_t) cJSON_GetObjectItem(root, "passcode")->valueint;
-    
-    set_byte_param("DIGI.WIDE1.on", wide1);
-    set_byte_param("DIGI.SAR.on", sar);
-    set_u16_param("IGATE.PORT", port);
-    set_u16_param("IGATE.PASS", passcode);
-    set_str_param("IGATE.HOST", server);
-    set_str_param("IGATE.USER", user);
-    
+    bool digiOn = JSON_BOOL(root, "digiOn");
     set_byte_param("DIGIPEATER.on", digiOn);
     digipeater_activate(digiOn);
 
+    bool igateOn = JSON_BOOL(root, "igateOn");
     set_byte_param("IGATE.on", igateOn);
     igate_activate(igateOn); 
     
@@ -227,8 +207,9 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     char buf[64];
     rest_cors_enable(req); 
     httpd_resp_set_type(req, "application/json");
+    CHECK_AUTH(req);
+    
     cJSON *root = cJSON_CreateObject();
-
     get_str_param("WIFIAP.SSID", buf, 32, default_ssid);
     cJSON_AddStringToObject(root, "apssid", buf);
     
@@ -240,6 +221,10 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     
     get_str_param("HTTPD.PWD", buf, 64, HTTPD_DEFAULT_PWD);
     cJSON_AddStringToObject(root, "htpass", buf);
+    
+    /* Don't send the API key */
+    cJSON_AddStringToObject(root, "apikey", "");
+    
     
     for (int i=0; i<6; i++) {
         wifiAp_t res;
@@ -264,18 +249,18 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
 
 static esp_err_t wifi_put_handler(httpd_req_t *req) 
 {
-    cJSON *root; 
-    CHECK_JSON_INPUT(req, root);
+    cJSON *root;  
     rest_cors_enable(req);
+    CHECK_JSON_INPUT(req, root);
  
-    char* apssid = cJSON_GetObjectItem(root, "apssid")->valuestring;
-    char* appass = cJSON_GetObjectItem(root, "appass")->valuestring;
-    char* htuser = cJSON_GetObjectItem(root, "htuser")->valuestring;
-    char* htpass = cJSON_GetObjectItem(root, "htpass")->valuestring;
-    set_str_param("WIFIAP.SSID", apssid);
-    set_str_param("WIFIAP.AUTH", appass);
-    set_str_param("HTTPD.USR", htuser);
-    set_str_param("HTTPD.PWD", htpass);
+    set_str_param("WIFIAP.SSID", JSON_STR(root, "apssid"));
+    set_str_param("WIFIAP.AUTH", JSON_STR(root, "appass"));
+    set_str_param("HTTPD.USR",   JSON_STR(root, "htuser"));
+    set_str_param("HTTPD.PWD",   JSON_STR(root, "htpass"));
+    
+    /* API key is updated if it is non-empty */
+    if (strlen(JSON_STR(root, "apikey"))==0)
+        set_str_param("API.KEY", JSON_STR(root, "apikey"));
     
     for (int i=0; i<6; i++) {
         char ssid[32];
@@ -283,8 +268,8 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
         wifiAp_t ap; 
         sprintf(ssid, "ap_%d_ssid", i);
         sprintf(pw, "ap_%d_pw", i);
-        strcpy (ap.ssid, cJSON_GetObjectItem(root, ssid)->valuestring);
-        strcpy (ap.passwd, cJSON_GetObjectItem(root, pw)->valuestring);
+        strcpy (ap.ssid, JSON_STR(root, ssid));
+        strcpy (ap.passwd, JSON_STR(root, pw));
         wifi_setApAlt(i, &ap);
     }
     
@@ -303,6 +288,8 @@ static esp_err_t trklog_get_handler(httpd_req_t *req)
     char buf[128];
     rest_cors_enable(req); 
     httpd_resp_set_type(req, "application/json");
+    CHECK_AUTH(req);
+    
     cJSON *root = cJSON_CreateObject();
     cJSON_AddBoolToObject(root, "trklog_on", get_byte_param("TRKLOG.on", 0));
     cJSON_AddBoolToObject(root, "trkpost_on", get_byte_param("TRKLOG.POST.on", 0));
@@ -325,23 +312,16 @@ static esp_err_t trklog_get_handler(httpd_req_t *req)
 
 static esp_err_t trklog_put_handler(httpd_req_t *req)
 {
-    cJSON *root; 
-    CHECK_JSON_INPUT(req, root);
+    cJSON *root;    
     rest_cors_enable(req); 
-     
-    bool trklog = cJSON_GetObjectItem(root, "trklog_on")->valueint;
-    bool trkpost = cJSON_GetObjectItem(root, "trkpost_on")->valueint;
-    uint8_t interv = (uint8_t) cJSON_GetObjectItem(root, "interv")->valueint;
-    uint8_t ttl = (uint8_t) cJSON_GetObjectItem(root, "ttl")->valueint;
-    char* url = cJSON_GetObjectItem(root, "url")->valuestring;
-    char* key = cJSON_GetObjectItem(root, "key")->valuestring;
-    
-    set_byte_param("TRKLOG.on", trklog);
-    set_byte_param("TRKLOG.POST.on", trkpost);
-    set_byte_param("TRKLOG.INT", interv);
-    set_byte_param("TRKLOG.TTL", ttl);
-    set_str_param ("TRKLOG.URL", url);
-    set_str_param ("TRKLOG.KEY", key);
+    CHECK_JSON_INPUT(req, root);
+
+    set_byte_param("TRKLOG.on", JSON_BOOL(root, "trklog"));
+    set_byte_param("TRKLOG.POST.on", JSON_BOOL(root, "trkpost"));
+    set_byte_param("TRKLOG.INT", JSON_BYTE(root, "interv"));
+    set_byte_param("TRKLOG.TTL", JSON_BYTE(root, "ttl"));
+    set_str_param ("TRKLOG.URL", JSON_STR(root, "url"));
+    set_str_param ("TRKLOG.KEY", JSON_STR(root, "key"));
     
     cJSON_Delete(root);
     httpd_resp_sendstr(req, "PUT WIFI settings successful");
@@ -356,7 +336,8 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
 
 void register_api_test() 
 {    
-    REGISTER_GET("/api/info",     system_info_handler); 
+    REGISTER_GET("/api/info",     system_info_handler);
+    REGISTER_OPTIONS("/api/info", rest_options_handler);
 
     REGISTER_GET("/api/digi",     digi_get_handler);
     REGISTER_PUT("/api/digi",     digi_put_handler);

@@ -322,6 +322,7 @@ void set_logLevels() {
     set_logLevel("trackstore", "LGLV.trackstore", dfl); 
     set_logLevel("tracklog", "LGLV.tracklog", dfl);
     set_logLevel("mbedtls", "LGLV.mbedtls", dfl);
+    set_logLevel("rest", "LGLV.rest", dfl);
 }
 
 
@@ -336,7 +337,7 @@ bool hasTag(char*tag) {
            strcmp(tag, "digi")==0       || strcmp(tag, "igate")==0    || 
            strcmp(tag, "tcp-cli")==0    || strcmp(tag, "main")==0     ||
            strcmp(tag, "trackstore")==0 || strcmp(tag, "tracklog")==0 ||
-           strcmp(tag, "mbedtls")==0  || 
+           strcmp(tag, "mbedtls")==0    || strcmp(tag, "rest")==0  ||
            strcmp(tag, "*")==0;
 }
 

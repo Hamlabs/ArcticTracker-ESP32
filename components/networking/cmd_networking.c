@@ -15,6 +15,7 @@
 #include "networking.h"
 #include "system.h"
 #include "linenoise/linenoise.h"
+#include "restapi.h"
 
 
 static void   showScan(void);
@@ -22,9 +23,6 @@ static void   showScan(void);
 int    do_connect(int argc, char** argv);
 int    do_scan(int argc, char** argv); 
 void   register_wifi(void);
-
-
-
 
 
 
@@ -280,6 +278,7 @@ CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",   &_param_softap_handler);
 CMD_BOOL_SETTING(_param_httpd,     "HTTPD.on",    &_param_httpd_handler); 
 CMD_STR_SETTING (_param_httpd_usr, "HTTPD.USR",   32, HTTPD_DEFAULT_USR, NULL);
 CMD_STR_SETTING (_param_httpd_pwd, "HTTPD.PWD",   64, HTTPD_DEFAULT_PWD, NULL);
+CMD_STR_SETTING (_param_apikey,    "API.KEY",     128, "", NULL);
 CMD_STR_SETTING (_param_ap_ssid,   "WIFIAP.SSID", 32, default_ssid, NULL); 
 CMD_STR_SETTING (_param_ap_auth,   "WIFIAP.AUTH", 64, AP_DEFAULT_PASSWD, NULL);
 CMD_STR_SETTING (_param_ap_ip,     "WIFIAP.IP",   17, AP_DEFAULT_IP, REGEX_IPADDR);
@@ -321,6 +320,7 @@ void register_wifi()
     ADD_CMD("httpd",      &_param_httpd,     "HTTPD On/Off setting", "[on|off]");
     ADD_CMD("httpd-user", &_param_httpd_usr, "HTTPD User name", "[<user>]");
     ADD_CMD("httpd-pass", &_param_httpd_pwd, "HTTPD Password",  "[<passwd>]");
+    ADD_CMD("api-key",    &_param_apikey,    "REST API Key",    "[<key>]");
     ADD_CMD("fw-url",     &_param_fwurl,     "URL for firmware update", "<url>");
     ADD_CMD("fw-cert",    &_param_fwcert,    "Certificate for firmware update", "");
     ADD_CMD("connect",    &do_connect,       "Connect to internet server", "<host> <port>");
