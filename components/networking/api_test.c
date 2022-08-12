@@ -215,12 +215,9 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     
     get_str_param("WIFIAP.AUTH", buf, 64, AP_DEFAULT_PASSWD);
     cJSON_AddStringToObject(root, "appass", buf);
-    
-    get_str_param("HTTPD.USR", buf, 32, HTTPD_DEFAULT_USR);
-    cJSON_AddStringToObject(root, "htuser", buf);
-    
-    get_str_param("HTTPD.PWD", buf, 64, HTTPD_DEFAULT_PWD);
-    cJSON_AddStringToObject(root, "htpass", buf);
+
+    get_str_param("FW.URL", buf, 64, DFL_TRKLOG_URL);
+    cJSON_AddStringToObject(root, "fwurl", buf);
     
     /* Don't send the API key */
     cJSON_AddStringToObject(root, "apikey", "");
@@ -255,8 +252,7 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
  
     set_str_param("WIFIAP.SSID", JSON_STR(root, "apssid"));
     set_str_param("WIFIAP.AUTH", JSON_STR(root, "appass"));
-    set_str_param("HTTPD.USR",   JSON_STR(root, "htuser"));
-    set_str_param("HTTPD.PWD",   JSON_STR(root, "htpass"));
+    set_str_param("FW.URL",      JSON_STR(root, "fwurl"));
     
     /* API key is updated if it is non-empty */
     if (strlen(JSON_STR(root, "apikey"))==0)
