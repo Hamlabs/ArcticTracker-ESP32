@@ -10,6 +10,8 @@
 #include "fbuf.h"
 // #include "tcpip_adapter.h"
 #include "esp_netif.h"
+#include "mdns.h"
+
 
 #define AP_MAX_PASSWD_LEN 64
 #define AP_MAX_ALTERNATIVES 6
@@ -68,5 +70,13 @@ int  inet_read(char* buf, int size);
 void inet_write(char* data, int len);
 bool inet_isConnected(void);
 int  http_post(char* uri, char* ctype, char* data, int dlen);
+
+/* mdns */
+mdns_result_t* mdns_find_service(const char * service_name, const char * proto);
+void mdns_print_results(mdns_result_t * results);
+void mdns_start(char* ident);
+
+#define mdns_free_results(results)    mdns_query_results_free(results)
+
 
 #endif

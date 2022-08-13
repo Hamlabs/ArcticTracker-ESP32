@@ -14,7 +14,6 @@
 #include "config.h"
 #include "commands.h"
 #include "networking.h"
-#include "mdns.h"
 #include "tracklogger.h"
 
 #define AP_BEACON_INTERVAL 5000 // in milliseconds
@@ -39,9 +38,9 @@ static bool enabled = false;
 static bool softApEnabled = false; 
 static bool connected = false;
 static char *status = "Off"; 
-static char hostname[32]; 
 static cond_t scanDone;
 char default_ssid[32];
+
 
 static esp_err_t event_handler(void *ctx, system_event_t *event);
 static void task_autoConnect( void * pvParms ); 
@@ -81,47 +80,6 @@ static void dhcp_enable(bool on)
     }
 }
 
-
-
-/**********************************************************************************
- * start mdns service 
- **********************************************************************************/
-
-void mdns_start(char* ident) {
-    //initialize mDNS service
-    esp_err_t err = mdns_init();
-    if (err) {
-        printf("MDNS Init failed: %d\n", err);
-        return;
-    }
-
-    char buffer[32]; 
-    
-    /* Set hostname */
-    sprintf(hostname, "arctic-%s", ident);
-    mdns_hostname_set(hostname);
-    
-    /* Set default instance */
-    sprintf(buffer, "Arctic Tracker: %s", ident);
-    mdns_instance_name_set(buffer);
-    
-    /* Announce services */
-    mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
-    mdns_service_instance_name_set("_http", "_tcp", "Arctic Tracker HTTP Server");
-    
-    mdns_txt_item_t txtData[1] = {
-        {"ident", ident}
-    };
-    /* Set txt data for service (will free and replace current data) */
-    mdns_service_txt_set("_http", "_tcp", txtData, 1);
-}
-
-
-char* mdns_hostname(char* buf) {
-    sprintf(buf, "%s.local", hostname);
-    return buf;
-    
-}
     
     
     
@@ -303,8 +261,6 @@ void wifi_enable(bool en)
     if (en && !enabled) {
         ESP_ERROR_CHECK( esp_wifi_start() );
         dhcp_enable(true);
-        if (GET_BYTE_PARAM("HTTPD.on"))
-            httpd_enable(true);
         
         /* Start autoconnect task */
         if ( xTaskCreatePinnedToCore( task_autoConnect, "wifi-autocon", STACK_AUTOCON, 
@@ -316,9 +272,6 @@ void wifi_enable(bool en)
         /* Kill autoconnect task */
         vTaskDelete( task_autocon );
         ESP_LOGD(TAG, "WIFI autoconnect task killed");
-        
-        /* Disable http and dhcp server and shut down wifi */
-        httpd_enable(false);
         dhcp_enable(false);
         ESP_ERROR_CHECK( esp_wifi_stop() );
     }
