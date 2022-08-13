@@ -1276,16 +1276,6 @@ CONFIG_WPA_MBEDTLS_CRYPTO=y
 # CONFIG_WPA_WPS_STRICT is not set
 # CONFIG_WPA_11KV_SUPPORT is not set
 # end of Supplicant
-
-#
-# espfs
-#
-CONFIG_ESPFS_PRESENT=y
-CONFIG_ESPFS_MAX_PARTITIONS=3
-CONFIG_ESPFS_IMAGEROOTDIR="html"
-# CONFIG_ESPFS_USE_HEATSHRINK is not set
-CONFIG_ESPFS_LINK_BINARY=y
-# end of espfs
 # end of Component config
 
 #
