@@ -113,8 +113,6 @@ int do_connect(int argc, char** argv)
     return 0;
 }
 
-
-
 /********************************************************************************
  * Scan command handler
  ********************************************************************************/
@@ -124,6 +122,22 @@ int do_scan(int argc, char** argv)
     wifi_startScan();
     wifi_waitScan(); 
     showScan();
+    return 0;
+}
+
+/********************************************************************************
+ * Scan command handler
+ ********************************************************************************/
+void test_mdns();
+int do_mdns(int argc, char** argv) 
+{
+    char buf[20];
+    for (int i=0; i<argc; i++) {
+        sprintf(buf, "_%s", argv[i]); 
+        mdns_result_t * res = mdns_find_service(buf, "_tcp");
+        mdns_print_results(res);
+        mdns_free_results(res);
+    }
     return 0;
 }
 
@@ -275,9 +289,6 @@ inline static void _param_httpd_handler(bool x) {
    
 CMD_BOOL_SETTING(_param_wifi,      "WIFI.on",     &_param_wifi_handler);
 CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",   &_param_softap_handler);
-CMD_BOOL_SETTING(_param_httpd,     "HTTPD.on",    &_param_httpd_handler); 
-CMD_STR_SETTING (_param_httpd_usr, "HTTPD.USR",   32, HTTPD_DEFAULT_USR, NULL);
-CMD_STR_SETTING (_param_httpd_pwd, "HTTPD.PWD",   64, HTTPD_DEFAULT_PWD, NULL);
 CMD_STR_SETTING (_param_apikey,    "API.KEY",     128, "", NULL);
 CMD_STR_SETTING (_param_ap_ssid,   "WIFIAP.SSID", 32, default_ssid, NULL); 
 CMD_STR_SETTING (_param_ap_auth,   "WIFIAP.AUTH", 64, AP_DEFAULT_PASSWD, NULL);
@@ -308,6 +319,7 @@ void register_wifi()
 
     ADD_CMD_X(&join_cmd);
     
+    ADD_CMD("mdns",       &do_mdns,          "Scan for MDNS services", NULL);  
     ADD_CMD("wifi-scan",  &do_scan,          "Scan for wifi access points", NULL);  
     ADD_CMD("wifi-info",  &do_info,          "Info about WIFI connection", NULL);
     ADD_CMD("wifi",       &_param_wifi,      "WIFI On/Off setting", "[on|off]");
@@ -317,9 +329,6 @@ void register_wifi()
     ADD_CMD("ap-auth",    &_param_ap_auth,   "WIFI SoftAP password", "[<password>]");
     ADD_CMD("ap-ip",      &_param_ap_ip,     "WIFI_SoftAP IP address", "[<ip>]");
     ADD_CMD("ap-sta",     &do_apSta,         "WIFI SoftAP Connected stations", NULL);
-    ADD_CMD("httpd",      &_param_httpd,     "HTTPD On/Off setting", "[on|off]");
-    ADD_CMD("httpd-user", &_param_httpd_usr, "HTTPD User name", "[<user>]");
-    ADD_CMD("httpd-pass", &_param_httpd_pwd, "HTTPD Password",  "[<passwd>]");
     ADD_CMD("api-key",    &_param_apikey,    "REST API Key",    "[<key>]");
     ADD_CMD("fw-url",     &_param_fwurl,     "URL for firmware update", "<url>");
     ADD_CMD("fw-cert",    &_param_fwcert,    "Certificate for firmware update", "");
