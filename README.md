@@ -20,13 +20,12 @@ experiences and ideas for a version 3. It is now implemented: http://hamlabs.no/
 ## Implementation status
 
 It is implemented in C and based on the ESP-IDF which 
-again is based on FreeRTOS. It runs a webserver which is based on 
-libesphttpd: See https://github.com/chmorgan/libesphttpd
+again is based on FreeRTOS. 
 
 It is fairly complete now. The following is implemented :
 
-* Command shell. 
-* Settings of various parameters, using persistent storage (flash). 
+* Command shell running on a serial port (USB). This allows settings of various parameters, using persistent storage (flash).
+* REST API (for settings)
 * Internetworking using WIFI. Automatically connect to access points available. User can set up 
   an ordered list of APs to try. It can also function as its own access point. 
 * Webserver. Used for setup. 
@@ -42,7 +41,10 @@ It is fairly complete now. The following is implemented :
 * Track logging. Store positions in flash memory e.g. every 5 seconds and upload to a REST
   API on a Polaric Server when network is available. 
 
-Work in progess: REST API. Will replace the old Web server .
+## REST API
+A REST API has replaced the old web-server. It mainly has methods for reading and updating settings.
+
+## Hardware
 
 A updated PCB layout has been produced and is currently being tested. It works! I hope to come back with more on this.
 
