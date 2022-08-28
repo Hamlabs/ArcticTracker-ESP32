@@ -20,16 +20,13 @@ experiences and ideas for a version 3. It is now implemented: http://hamlabs.no/
 ## Implementation status
 
 It is implemented in C and based on the ESP-IDF which 
-again is based on FreeRTOS. 
-
-It is fairly complete now. The following is implemented :
+again is based on FreeRTOS. It is fairly complete now. The following is implemented :
 
 * Command shell running on a serial port (USB). This allows settings of various parameters, using persistent storage (flash).
-* REST API (for settings)
+* Webserver/REST API.
 * Internetworking using WIFI. Automatically connect to access points available. User can set up 
   an ordered list of APs to try. It can also function as its own access point. 
-* Webserver. Used for setup. 
-* Interface with GPS. 
+* Interface with GPS for position and time. 
 * OLED display, status screens and menu. Use button to operate.
 * Controlling radio.
 * Sending APRS packets. Tracking, smart beaconing.
@@ -42,15 +39,15 @@ It is fairly complete now. The following is implemented :
   API on a Polaric Server when network is available. 
 
 ## REST API
-A REST API has replaced the old web-server. It mainly has methods for reading and updating settings.
+A REST API has replaced the old web-server. It mainly has methods for reading and updating settings. A authentication scheme based on SHA256 HMAC is used. A web-browser-based client is under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) on the LAN. 
 
 ## Hardware
 
-A updated PCB layout has been produced and is currently being tested. It works! I hope to come back with more on this.
+A updated PCB layout has been produced and is currently being tested. It works! I hope to come back with more on this soon.
 
 ## Future work
 
-A version 4 will probably abandon APRS (AFSK) completely and move on to exploring 
+A version 4 tracker will probably abandon APRS (AFSK) completely and move on to exploring 
 LoRa and FSK modes on 70 cm. 
 
 
