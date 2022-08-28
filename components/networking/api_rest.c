@@ -6,13 +6,10 @@
 #include "esp_http_server.h"
 #include "esp_system.h"
 #include "esp_log.h"
-#include "esp_vfs.h"
-#include "espfs_image.h"
 #include "cJSON.h"
 #include "system.h"
 #include "networking.h"
 #include "config.h"
-#include "sdkconfig.h"
 #include "esp_spi_flash.h"
 #include "restapi.h"
 #include "digipeater.h"
@@ -255,7 +252,7 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
     set_str_param("FW.URL",      JSON_STR(root, "fwurl"));
     
     /* API key is updated if it is non-empty */
-    if (strlen(JSON_STR(root, "apikey"))==0)
+    if (strlen(JSON_STR(root, "apikey"))<=3)
         set_str_param("API.KEY", JSON_STR(root, "apikey"));
     
     for (int i=0; i<6; i++) {
@@ -323,14 +320,26 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
     httpd_resp_sendstr(req, "PUT WIFI settings successful");
     return ESP_OK;
 } 
+
+
+
+
+static esp_err_t trackers_handler(httpd_req_t *req) {
+    cJSON *root = cJSON_CreateArray();
     
-    
+    /* For all trackers visible in mDNS */
+        cJSON_AddItemToArray(root, cJSON_CreateString("tracker.mdns.hostname"));
+    return rest_JSON_send(req, root);
+}
+
+
+
     
 /******************************************************************
  *  Register handlers for uri/methods
  ******************************************************************/
 
-void register_api_test() 
+void register_api_rest() 
 {    
     REGISTER_GET("/api/info",     system_info_handler);
     REGISTER_OPTIONS("/api/info", rest_options_handler);

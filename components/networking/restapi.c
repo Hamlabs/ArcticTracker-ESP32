@@ -7,14 +7,12 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_vfs.h"
-#include "espfs_image.h"
 #include "cJSON.h"
 #include "system.h"
 #include "networking.h"
 #include "config.h"
-#include "sdkconfig.h"
-#include "esp_spi_flash.h"
 #include "restapi.h"
+#include "trex.h"
 
 #include "mbedtls/sha256.h"
 #include "mbedtls/base64.h"
@@ -33,9 +31,15 @@ typedef struct rest_server_context {
 } rest_server_context_t;
 
 
+typedef struct rest_sess_context {
+    char orig[32];
+} rest_sess_context_t;
+ 
+ 
 static rest_server_context_t *context; 
 static httpd_handle_t server = NULL;
 
+static char* get_origin(httpd_req_t *req);
 static esp_err_t is_auth(httpd_req_t *req, char* payload, int plsize);
 static void nonce_init(void);
 
@@ -43,8 +47,7 @@ static void nonce_init(void);
 
 
 void rest_cors_enable(httpd_req_t *req) {
-    // FIXME
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "http://localhost");   
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", get_origin(req));   
     httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Arctic-Nonce, Arctic-Hmac");
@@ -52,12 +55,46 @@ void rest_cors_enable(httpd_req_t *req) {
 
 
 esp_err_t rest_options_handler(httpd_req_t *req) {
-    // FIXME
     rest_cors_enable(req);
     httpd_resp_set_hdr(req, "Allow", "GET, PUT, POST, DELETE");
     httpd_resp_sendstr(req, "");
     return ESP_OK;
 }
+
+
+
+/*******************************************************************************************
+ * Return origin in requst, IF it matches API.ORIGINS regular expression
+ *******************************************************************************************/
+
+static char* get_origin(httpd_req_t *req) {
+    char filter[64];
+    char origin[32];
+
+    if (req->sess_ctx == NULL)
+        req->sess_ctx = malloc(sizeof(rest_sess_context_t));
+    char* buf =  ((rest_sess_context_t*) req->sess_ctx)->orig; 
+    buf[0]=0;
+    
+    /* Get regular expression */
+    get_str_param("API.ORIGINS", filter, 64, "nohost");
+    TRex *rex = trex_compile(filter);
+    if (rex==NULL)
+        return buf;
+    
+    /* Get origin header */
+    if (httpd_req_get_hdr_value_str(req, "Origin", origin, 32) != ESP_OK) {
+        ESP_LOGW(TAG, "Cannot retrieve Origin header");
+        trex_free(rex);
+        return buf;
+    }
+    /* Check it and return it if it matches */
+    if (trex_match(rex, origin))
+        strcpy(buf, origin);
+    trex_free(rex);
+    return buf;
+}
+
 
 
 /*******************************************************************************************
@@ -194,7 +231,7 @@ void rest_start(int port, const char *path)
     ESP_LOGI(TAG, "Starting REST HTTP Server on port %d", port);
     httpd_start(&server, &config);
     
-    register_api_test();
+    register_api_rest();
 }
 
 
@@ -212,6 +249,9 @@ void rest_stop() {
 #define NONCE_SIZE 12
 
 
+/*******************************************************************************************
+ * Use cuckoo filter to check for duplicate nonces.
+ *******************************************************************************************/
 
 static cuckoo_filter_t *nonces1, *nonces2;; 
 
@@ -240,6 +280,10 @@ static void nonce_add(char* n) {
 }    
 
 
+
+/*******************************************************************************************
+ * Authenticate using hmac scheme
+ *******************************************************************************************/
 
 static esp_err_t is_auth(httpd_req_t *req, char* payload, int plsize) {
     

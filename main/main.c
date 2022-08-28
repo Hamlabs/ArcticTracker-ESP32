@@ -248,7 +248,7 @@ void app_main()
     register_aprs();
     wifi_init();
     spiffs_init();    
-    rest_start(8081, "/");
+    rest_start(HTTPD_PORT, "/");
     ui_init();
     
     /* Put this on CPU #1 or we may run out of interrupts */
