@@ -40,6 +40,7 @@ static void monitor (void *arg)
             else 
                 fbuf_print(&frame);
             printf("\n");
+            sleepMs(10);
         }
     
         /* And dispose the frame. Note that also an empty frame should be disposed! */

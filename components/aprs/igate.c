@@ -160,7 +160,7 @@ static void igate_main(void* arg)
             /* Unsubscribe and terminate child thread */
             _igate_run = false; 
             fbq_signal(&rxqueue);
-            sleepMs(10);
+            sleepMs(50);
             hdlc_subscribe_rx(NULL, 2);
        
             /* Connection failure. Wait for 2 minutes */
@@ -204,7 +204,6 @@ void igate_activate(bool m)
    
     if (tstart) {
       /* Subscribe to RX (and tracker) packets and start treads */
-        hdlc_subscribe_rx(mq, 2);
         tracker_setGate(mq);
         xTaskCreatePinnedToCore(&igate_main, "Igate Main", 
             STACK_IGATE, NULL, NORMALPRIO, NULL, CORE_IGATE);
@@ -222,9 +221,7 @@ void igate_activate(bool m)
         /* Close internet connection */
         inet_close(); 
         sleepMs(100);
-
-        hdlc_subscribe_rx(NULL, 2);
-        tracker_setGate(NULL);
+        tracker_setGate(NULL);       
         _icount = _rcvd = _tracker_icount = 0;
     }
 }

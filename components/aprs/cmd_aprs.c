@@ -110,14 +110,25 @@ static int do_listen(int argc, char* argv[])
 
 static int do_trget(int argc, char* argv[])
 {
-   (void) argv;
-   (void) argc; 
-   posentry_t x;
-   if (trackstore_getEnt(&x)==NULL)
-       printf("*** Store is empty\n");
-   else
-       printf("Entry: time=%d, %u, %u\n", x.time, x.lat, x.lng);
-   return 0;
+    (void) argv;
+    (void) argc; 
+    posentry_t x;
+    if (trackstore_getEnt(&x)==NULL)
+        printf("*** Store is empty\n");
+    else
+        printf("Entry: time=%d, %u, %u\n", x.time, x.lat, x.lng);
+   
+    return 0;
+}
+
+
+static int do_trput(int argc, char* argv[])
+{
+    (void) argv;
+    (void) argc; 
+    gps_current_pos.latitude += 0.001;
+    trackstore_put(&gps_current_pos);
+    return 0;
 }
 
 
@@ -242,6 +253,7 @@ void register_aprs()
     ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
     ADD_CMD("listen",     &do_listen,          "Monitor radio channel", "");
     ADD_CMD("trklog-get", &do_trget,           "Get track record", "");      
+    ADD_CMD("trklog-put", &do_trput,           "Put track record", "");  
     
     ADD_CMD("mycall",     &_param_mycall,      "My callsign", "[<callsign>]");
     ADD_CMD("dest",       &_param_dest,        "APRS destination address", "[<addr>]");
