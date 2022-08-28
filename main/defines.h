@@ -149,8 +149,7 @@
 #define TONE_TIMERIDX    1
 
 
-#define HTTPD_DEFAULT_USR "arctic"
-#define HTTPD_DEFAULT_PWD "hacker"
+#define HTTPD_PORT        80
 #define AP_DEFAULT_PASSWD ""
 #define AP_DEFAULT_IP     "192.168.0.1"
 #define AP_MAX_CLIENTS    4
@@ -169,12 +168,12 @@
 #define STACK_TRACKER        3500
 #define STACK_MONITOR        3000
 #define STACK_GUI            3000
-#define STACK_HLIST           900
+#define STACK_HLIST          1000
 #define STACK_DIGI           3200
 #define STACK_TCP_REC        3000
-#define STACK_IGATE          3000
+#define STACK_IGATE          3200
 #define STACK_IGATE_RADIO    2300
-#define STACK_TRACKLOG       3100
+#define STACK_TRACKLOG       3300
 #define STACK_TRACKLOGPOST   3900
 #define STACK_HTTPD          5000
 
