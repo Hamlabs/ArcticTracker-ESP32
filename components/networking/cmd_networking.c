@@ -290,6 +290,7 @@ inline static void _param_httpd_handler(bool x) {
 CMD_BOOL_SETTING(_param_wifi,      "WIFI.on",     &_param_wifi_handler);
 CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",   &_param_softap_handler);
 CMD_STR_SETTING (_param_apikey,    "API.KEY",     128, "", NULL);
+CMD_STR_SETTING (_param_apiorig,   "API.ORIGINS", 64, "", NULL);
 CMD_STR_SETTING (_param_ap_ssid,   "WIFIAP.SSID", 32, default_ssid, NULL); 
 CMD_STR_SETTING (_param_ap_auth,   "WIFIAP.AUTH", 64, AP_DEFAULT_PASSWD, NULL);
 CMD_STR_SETTING (_param_ap_ip,     "WIFIAP.IP",   17, AP_DEFAULT_IP, REGEX_IPADDR);
@@ -329,7 +330,8 @@ void register_wifi()
     ADD_CMD("ap-auth",    &_param_ap_auth,   "WIFI SoftAP password", "[<password>]");
     ADD_CMD("ap-ip",      &_param_ap_ip,     "WIFI_SoftAP IP address", "[<ip>]");
     ADD_CMD("ap-sta",     &do_apSta,         "WIFI SoftAP Connected stations", NULL);
-    ADD_CMD("api-key",    &_param_apikey,    "REST API Key",    "[<key>]");
+    ADD_CMD("api-key",    &_param_apikey,    "REST API Key", "[<key>]");    
+    ADD_CMD("api-origins",&_param_apiorig,   "Allowed origins for REST API webclients", "[<regex>]");
     ADD_CMD("fw-url",     &_param_fwurl,     "URL for firmware update", "<url>");
     ADD_CMD("fw-cert",    &_param_fwcert,    "Certificate for firmware update", "");
     ADD_CMD("connect",    &do_connect,       "Connect to internet server", "<host> <port>");
