@@ -1,7 +1,8 @@
 #include "esp_http_server.h"
 #include "cJSON.h"
 
-
+#define JSON_GETITEM(root, id, type, dfl) \
+   (cJSON_GetObjectItem((root), (id)) == NULL ? (dfl) : cJSON_GetObjectItem((root), (id))->value##type)
 
 #define REGISTER_GET(uri, handler) rest_register((uri), HTTP_GET, (handler))
 #define REGISTER_PUT(uri, handler) rest_register((uri), HTTP_PUT, (handler))
@@ -9,12 +10,12 @@
 #define REGISTER_DELETE(uri, handler) rest_register((uri), HTTP_DELETE, (handler))
 #define REGISTER_OPTIONS(uri, handler) rest_register((uri), HTTP_OPTIONS, (handler))
 
-#define JSON_STR(root, id)   cJSON_GetObjectItem((root), (id))->valuestring
-#define JSON_BYTE(root, id)  (uint8_t) cJSON_GetObjectItem((root), (id))->valueint
-#define JSON_BOOL(root, id)  (bool) cJSON_GetObjectItem((root), (id))->valueint
-#define JSON_U16(root, id)   (uint16_t) cJSON_GetObjectItem((root), (id))->valueint
-#define JSON_U32(root, id)   (uint32_t) cJSON_GetObjectItem((root), (id))->valueint
-#define JSON_INT(root, id)   (int) cJSON_GetObjectItem((root), (id))->valueint
+#define JSON_STR(root, id)  JSON_GETITEM(root, id, string, "")
+#define JSON_BYTE(root, id)  (uint8_t) JSON_GETITEM(root, id, int, 0)
+#define JSON_BOOL(root, id)  (bool) JSON_GETITEM(root, id, int, 0)
+#define JSON_U16(root, id)   (uint16_t) JSON_GETITEM(root, id, int, 0)
+#define JSON_U32(root, id)   (uint32_t) JSON_GETITEM(root, id, int, 0)
+#define JSON_INT(root, id)   (int) JSON_GETITEM(root, id, int, 0)
 
 #define CHECK_JSON_INPUT(req, json)  \
     if (rest_JSON_input(req, &json) == ESP_FAIL) \

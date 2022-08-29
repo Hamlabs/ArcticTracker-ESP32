@@ -14,6 +14,7 @@
 #include "restapi.h"
 #include "digipeater.h"
 #include "igate.h"
+#include "tracklogger.h"
 
 
 
@@ -252,7 +253,7 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
     set_str_param("FW.URL",      JSON_STR(root, "fwurl"));
     
     /* API key is updated if it is non-empty */
-    if (strlen(JSON_STR(root, "apikey"))<=3)
+    if (strlen(JSON_STR(root, "apikey"))>3)
         set_str_param("API.KEY", JSON_STR(root, "apikey"));
     
     for (int i=0; i<6; i++) {
@@ -309,8 +310,14 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
     rest_cors_enable(req); 
     CHECK_JSON_INPUT(req, root);
 
-    set_byte_param("TRKLOG.on", JSON_BOOL(root, "trklog"));
-    set_byte_param("TRKLOG.POST.on", JSON_BOOL(root, "trkpost"));
+    set_byte_param("TRKLOG.on", JSON_BOOL(root, "trklog_on"));
+    if (get_byte_param("TRKLOG.on", 0))
+        tracklog_on();
+    
+    set_byte_param("TRKLOG.POST.on", JSON_BOOL(root, "trkpost_on"));
+    if (get_byte_param("TRKLOG.POST.on", 0))
+        tracklog_post_start();
+        
     set_byte_param("TRKLOG.INT", JSON_BYTE(root, "interv"));
     set_byte_param("TRKLOG.TTL", JSON_BYTE(root, "ttl"));
     set_str_param ("TRKLOG.URL", JSON_STR(root, "url"));
@@ -323,12 +330,23 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
 
 
 
+/******************************************************************
+ *   GET handler for mDNS info about trackers on LAN
+ ******************************************************************/
 
 static esp_err_t trackers_handler(httpd_req_t *req) {
     cJSON *root = cJSON_CreateArray();
-    
-    /* For all trackers visible in mDNS */
-        cJSON_AddItemToArray(root, cJSON_CreateString("tracker.mdns.hostname"));
+    mdns_result_t * res = mdns_find_service("_http", "_tcp");
+    while(res) {
+    //    if (strncmp(res->hostname, "Arctic-", 7) != 0)
+    //        break;
+        cJSON *obj = cJSON_CreateObject();
+        cJSON_AddStringToObject(obj, "name", res->instance_name);
+        cJSON_AddStringToObject(obj, "host", res->hostname);
+        cJSON_AddNumberToObject(obj, "port", res->port); 
+        cJSON_AddItemToArray(root, obj);
+        res = res->next;
+    }
     return rest_JSON_send(req, root);
 }
 
@@ -343,7 +361,10 @@ void register_api_rest()
 {    
     REGISTER_GET("/api/info",     system_info_handler);
     REGISTER_OPTIONS("/api/info", rest_options_handler);
-
+    
+    REGISTER_GET("/api/trackers",     trackers_handler);
+    REGISTER_OPTIONS("/api/trackers", rest_options_handler);
+    
     REGISTER_GET("/api/digi",     digi_get_handler);
     REGISTER_PUT("/api/digi",     digi_put_handler);
     REGISTER_OPTIONS("/api/digi", rest_options_handler);

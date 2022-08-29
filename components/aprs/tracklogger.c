@@ -45,6 +45,8 @@ void tracklog_init()
  ********************************************************/
 
 void tracklog_on() {
+    if (get_byte_param("TRKLOG.on", 0))
+        return;
     set_byte_param("TRKLOG.on", 1);
     if (tracklogt == NULL)
         xTaskCreatePinnedToCore(&tracklog, "Track logger", 
@@ -209,6 +211,8 @@ int tracklog_post() {
     free(buf);
     return i;
 }
+
+
 
 
 

@@ -97,6 +97,7 @@ static char* get_origin(httpd_req_t *req) {
 
 
 
+
 /*******************************************************************************************
  * Serialize and send JSON with the response. 
  *******************************************************************************************/
@@ -211,7 +212,7 @@ esp_err_t rest_JSON_input(httpd_req_t *req,  cJSON **json)
  * Start http server supporting REST APIs. 
  *******************************************************************************************/
 
-extern void register_api_test(void);
+extern void register_api_rest(void);
 
 void rest_start(int port, const char *path) 
 {
@@ -238,6 +239,10 @@ void rest_start(int port, const char *path)
 
 void rest_stop() {
 }
+
+
+
+
 
 
 
