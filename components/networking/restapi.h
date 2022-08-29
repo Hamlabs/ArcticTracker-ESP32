@@ -25,7 +25,8 @@
     if (rest_AUTH(req) == ESP_FAIL) \
         return ESP_FAIL; 
     
-
+    
+/* REST API server */
 void      rest_register(char* uri, httpd_method_t method, esp_err_t (*handler)(httpd_req_t *r) );
 esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int* size);
 esp_err_t rest_AUTH(httpd_req_t *req);
@@ -35,4 +36,8 @@ void      rest_start(int port, const char *path);
 void      rest_stop(void);
 void      rest_cors_enable(httpd_req_t *req);
 esp_err_t rest_options_handler(httpd_req_t *req);
+
+/* Security */
 char*     compute_hmac(const char* keyid, char* res, int hlen, uint8_t* data1, int len1, uint8_t* data2, int len2);
+esp_err_t is_auth(httpd_req_t *req, char* payload, int plsize);
+void      nonce_init();
