@@ -14,8 +14,7 @@ used an ESP23. This was based on the even earlier Arctic Tracker
 module (with NodeMCU). 
 
 See http://www.hamlabs.no for some blogging about this project. 
-A working prototype was built and demonstrated. The last arcticle describes some
-experiences and ideas for a version 3. It is now implemented: http://hamlabs.no/2022/03/18/arctic-tracker-what-now/
+A working prototype was built and demonstrated. The last arcticle describes what is done with version 3. It is now implemented: http://hamlabs.no/2023/01/10/arctic_third_round/
 
 ## Implementation status
 
@@ -39,11 +38,13 @@ again is based on FreeRTOS. It is fairly complete now. The following is implemen
   API on a Polaric Server when network is available. 
 
 ## REST API
-A REST API has replaced the old web-server. It mainly has methods for reading and updating settings. A authentication scheme based on SHA256 HMAC is used. A web-browser-based client is under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) on the LAN. 
+A REST API has replaced the old web-server. It mainly has methods for reading and updating settings. A strong authentication scheme based on SHA256 HMAC is used. A web-browser-based client is under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) on the LAN. 
+
+The web-client is here: https://github.com/Hamlabs/ArcticTracker-Webapp
 
 ## Hardware
 
-A updated PCB layout has been produced and is currently being tested. It works! I hope to come back with more on this soon.
+A updated PCB layout has been produced and is currently being tested. 5 trackers have been made. It works! 
 
 ## Future work
 
