@@ -315,7 +315,7 @@ void igate_login(char* user, uint16_t pass, char* filter)
 {
     int n=0;
     char buf[128];
-    n = sprintf(buf, "user %s pass %d vers Arctic-Tracker 0.1\r\n", user, pass);
+    n = sprintf(buf, "user %s pass %d vers Arctic-Tracker %s\r\n", user, pass, VERSION_SSTRING);
     ESP_LOGD(TAG, "Login string: %s", buf);
     inet_write(buf, n);
     inet_read(buf, 128);

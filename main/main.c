@@ -114,10 +114,10 @@ void run_console()
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();
     printf("\n"
-        "Welcome to Arctic Tracker 3.0 on ESP32S3, by LA7ECA.\n\n"
+        "Welcome to Arctic Tracker %s on ESP32S3, by LA7ECA.\n\n"
         "Type 'help' to get the list of commands.\n"
         "Use UP/DOWN arrows to navigate through command history.\n"
-        "Press TAB when typing command name to auto-complete.\n");
+        "Press TAB when typing command name to auto-complete.\n", VERSION_SSTRING);
     
     if (probe_status) { /* zero indicates success */
         printf("\n"
