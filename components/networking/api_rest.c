@@ -106,10 +106,10 @@ static esp_err_t aprs_put_handler(httpd_req_t *req)
     rest_cors_enable(req); 
     CHECK_JSON_INPUT(req, root);
       
-    set_str_param("MYCALL",  JSON_STR(root, "mycall"));
-    set_str_param("SYMBOL",  JSON_STR(root, "symbol"));
-    set_str_param("PATH",    JSON_STR(root, "path"));
-    set_str_param("COMMENT", JSON_STR(root, "comment"));
+    set_str_param("MYCALL",   JSON_STR(root, "mycall"));
+    set_str_param("SYMBOL",   JSON_STR(root, "symbol"));
+    set_str_param("DIGIPATH", JSON_STR(root, "path"));
+    set_str_param("COMMENT",  JSON_STR(root, "comment"));
     
     set_byte_param("MAXPAUSE", JSON_BYTE(root, "maxpause"));
     set_byte_param("MINPAUSE", JSON_BYTE(root, "minpause"));
@@ -149,15 +149,13 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
     cJSON_AddBoolToObject(root, "sar", get_byte_param("DIGI.SAR.on", 0));
     cJSON_AddBoolToObject(root, "igateOn", get_byte_param("IGATE.on", 0));
     cJSON_AddNumberToObject(root, "port", get_u16_param("IGATE.PORT", DFL_IGATE_PORT));
-    
+    cJSON_AddNumberToObject(root, "passcode", get_u16_param("IGATE.PASS", 0));
+     
     get_str_param("IGATE.HOST", buf, 64, DFL_IGATE_HOST);
     cJSON_AddStringToObject(root, "server", buf);
     
     get_str_param("IGATE.USER", buf, 32, DFL_IGATE_USER);
     cJSON_AddStringToObject(root, "user", buf);
-    
-    get_str_param("IGATE.PASS", buf, 6, "");
-    cJSON_AddStringToObject(root, "passcode", buf);
     
     return rest_JSON_send(req, root);
 }
@@ -334,12 +332,11 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
  *   GET handler for mDNS info about trackers on LAN
  ******************************************************************/
 
-static esp_err_t trackers_handler(httpd_req_t *req) {
+static esp_err_t trackers_handler(httpd_req_t *req) {   
+    rest_cors_enable(req);
     cJSON *root = cJSON_CreateArray();
     mdns_result_t * res = mdns_find_service("_http", "_tcp");
     while(res) {
-    //    if (strncmp(res->hostname, "Arctic-", 7) != 0)
-    //        break;
         cJSON *obj = cJSON_CreateObject();
         cJSON_AddStringToObject(obj, "name", res->instance_name);
         cJSON_AddStringToObject(obj, "host", res->hostname);

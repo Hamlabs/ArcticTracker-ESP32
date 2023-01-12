@@ -16,16 +16,16 @@
 #include "mbedtls/platform.h"
 #include "restapi.h"
 
+
 #define KEY_SIZE 128
 #define HMAC_TRUNC 24
 #define HMAC_SHA256_SIZE 32
 #define HMAC_KEY_SIZE 64
 #define HMAC_B64_SIZE 45
 #define NONCE_SIZE 12
+#define NONCE_BIN_SIZE 8
 
 #define TAG "rest"
-
-
 
 
 /*******************************************************************************************
@@ -61,6 +61,26 @@ static void nonce_add(char* n) {
 
 
 /*******************************************************************************************
+ * Add auth headers to client request
+ *******************************************************************************************/
+
+void rest_setSecHdrs(esp_http_client_handle_t client, char* data, int dlen)
+{
+    char hmac[HMAC_B64_SIZE+1];
+    uint8_t bnonce[NONCE_BIN_SIZE];
+    char nonce[NONCE_SIZE+1];
+    size_t olen;
+    esp_fill_random(bnonce, NONCE_BIN_SIZE);
+    mbedtls_base64_encode((unsigned char*) nonce, NONCE_SIZE, &olen, bnonce, NONCE_BIN_SIZE  );
+    
+    compute_hmac("API.KEY", hmac, HMAC_B64_SIZE, (uint8_t*) nonce, NONCE_SIZE, (uint8_t*) data, dlen);
+    esp_http_client_set_header(client, "Arctic-Nonce", nonce);
+    esp_http_client_set_header(client, "Arctic-Hmac", hmac);
+}
+    
+    
+
+/*******************************************************************************************
  * Authenticate a HTTP request using hmac scheme. 
  * Assume that the request contains two headers: 
  *   Arctic-Nonce - a number which is different each time a request is made. 
@@ -71,7 +91,7 @@ static void nonce_add(char* n) {
  * The key should be stored in config "API.KEY" (nvs storage). 
  *******************************************************************************************/
 
-esp_err_t is_auth(httpd_req_t *req, char* payload, int plsize) 
+esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize) 
 {    
     char nonce[NONCE_SIZE+1];
     if (httpd_req_get_hdr_value_str(req, "Arctic-Nonce", nonce, NONCE_SIZE+1 ) != ESP_OK) {

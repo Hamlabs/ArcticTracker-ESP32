@@ -13,7 +13,7 @@
 #include "config.h"
 #include "restapi.h"
 #include "trex.h"
-
+#include "esp_crt_bundle.h"
 
 
 #define SCRATCH_BUFSIZE (10240)
@@ -162,7 +162,7 @@ esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int *size)
  *******************************************************************************************/
 
 esp_err_t rest_AUTH(httpd_req_t *req) {
-    if (is_auth(req, "", 0) != ESP_OK) {
+    if (rest_isAuth(req, "", 0) != ESP_OK) {
         httpd_resp_send_err(req, HTTPD_401_UNAUTHORIZED, "Authorisation failed");
         return ESP_FAIL;
     }
@@ -184,7 +184,7 @@ esp_err_t rest_JSON_input(httpd_req_t *req,  cJSON **json)
     if (rest_get_input(req, &buf, &size) == ESP_FAIL)
         return ESP_FAIL;
     
-    if (is_auth(req, buf, size) != ESP_OK) {
+    if (rest_isAuth(req, buf, size) != ESP_OK) {
         httpd_resp_send_err(req, HTTPD_401_UNAUTHORIZED, "Authorisation failed");
         return ESP_FAIL;
     } 
@@ -232,4 +232,38 @@ void rest_start(int port, const char *path)
 void rest_stop() {
 }
 
+
+
+
+/***************************************************************************
+ * HTTP post with HMAC authentication. 
+ *  - URL, data, length-of-data
+ ***************************************************************************/
+
+esp_err_t rest_post(char* uri, char* data, int dlen) 
+{
+    esp_http_client_config_t config = {
+        .url = uri,
+        .method = HTTP_METHOD_POST, 
+        
+        /* We may configure this? See OTA */
+        .cert_pem = NULL,
+        .crt_bundle_attach = esp_crt_bundle_attach
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    esp_http_client_set_post_field(client, data, dlen);
+    rest_setSecHdrs(client, data, dlen);
+    esp_err_t err = esp_http_client_perform(client);
+
+    int status = esp_http_client_get_status_code(client);
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "Status = %d, content_length = %d",
+            status, esp_http_client_get_content_length(client));
+    }
+    else
+        ESP_LOGW(TAG,  "HTTP post failed. Status = %d", status);
+        
+    esp_http_client_cleanup(client);
+    return status;
+}
 
