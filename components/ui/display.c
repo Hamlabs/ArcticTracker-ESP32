@@ -646,10 +646,10 @@ void disp_frame()
    disp_vLine(82,0,45);
    disp_vLine(83,3,41);
 #else
-   disp_hLine(1,0,100);   // top
-   disp_hLine(1,59,100);  // bottom
+   disp_hLine(1,0,110);   // top
+   disp_hLine(1,59,110);  // bottom
    disp_vLine(0,0,59);    //left
-   disp_vLine(100,0,59);  // right
+   disp_vLine(110,0,59);  // right
 #endif   
 }
 

@@ -44,7 +44,9 @@ static const MenuCommand items[] =
     { "Igate +|-",       mhandle_igate,     NULL },
     { "Digipeater +|-",  mhandle_digi,      NULL },
     { "Firmware upgr.",  mhandle_fwupgrade, NULL },
-    { "Shut down..",     mhandle_shutdown,  NULL },
+    { "Shut down..",     mhandle_shutdown,  NULL }
+};
+static int nitems = 7;
 #else
     { "Backlight (+|-)",   mhandle_dispBl,    NULL },
     { "SoftAp (+|-)",      mhandle_softAp,    NULL },
@@ -55,9 +57,9 @@ static const MenuCommand items[] =
     { "Send pos report",   mhandle_send,      NULL },
     { "Firmware upgrade",  mhandle_fwupgrade, NULL },
     { "Shut down..",       mhandle_shutdown,  NULL },
-#endif
 };
-static int nitems = 6; 
+static int nitems = 9; 
+#endif
 
 
 
