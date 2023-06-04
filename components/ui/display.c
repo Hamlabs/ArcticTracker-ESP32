@@ -257,17 +257,17 @@ const uint8_t Font8x7[][7] = {
 /* Default font and font width. disp_setBoldFont changes these 
  * Bold font is 0x7 
  */
-static uint8_t *font = Font8x5; 
+static uint8_t *font = (uint8_t*) Font8x5; 
 static uint8_t font_width = 5;
 
    
 void disp_setBoldFont(bool on) {
     if (on) {
-        font = Font8x7;
+        font = (uint8_t*) Font8x7;
         font_width = 7;
     }
     else {
-        font = Font8x5; 
+        font = (uint8_t*) Font8x5; 
         font_width = 5; 
     }
 }
@@ -399,8 +399,9 @@ void disp_sleepmode() {
 
 void disp_flush() 
 {
-    uint16_t i,j;
+    uint16_t i;
 #if DISPLAY_TYPE == 0
+    uint16_t j;
     lcd_setPosXY(0,0);
 #endif
     for (i = 0; i < DISPLAY_HEIGHT/8; i++) 

@@ -10,10 +10,10 @@
 // #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 
-#define VERSION_SSTRING "3.0b2"
-#define VERSION_STRING "v3.0 beta2"
+#define VERSION_SSTRING "3.0b3"
+#define VERSION_STRING "v3.0 beta3"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2022-12-16"
+#define FW_DATE "2023-06-04"
 
 #define BIT_0	( 1 << 0 )
 
@@ -39,6 +39,10 @@
 #define FEET2M    3.2898
 
 
+/* FIXME: Need to find or specify the clock frequency !!! 
+ */ 
+#define TIMER_BASE_CLK 80000000
+ 
 #define MCU ESP32S3
 
 /* Queues for AFSK encoder/decoder */
@@ -158,7 +162,7 @@
 #define AUTOCONNECT_PERIOD 240
 
 /* Stack sizes for tasks */
-#define STACK_AUTOCON        3000
+#define STACK_AUTOCON        4000
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 3100
 #define STACK_HDLC_RXDECODER 3100

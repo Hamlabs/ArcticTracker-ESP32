@@ -38,7 +38,7 @@ static void tcp_server(void *pvParam)
     serverAddr.sin_port = htons( srv.port );
     int ss;
     static struct sockaddr_in remote_addr;
-    static unsigned int socklen;
+    static socklen_t socklen;
     socklen = sizeof(remote_addr);
     sprintf(tname, "worker_%d", srv.port);
 

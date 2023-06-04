@@ -206,7 +206,7 @@ esp_err_t rest_JSON_input(httpd_req_t *req,  cJSON **json)
 
 extern void register_api_rest(void);
 
-void rest_start(int port, const char *path) 
+void rest_start(uint16_t port, const char *path) 
 {
     nonce_init();
     
@@ -221,7 +221,7 @@ void rest_start(int port, const char *path)
     config.max_uri_handlers = 32;
     config.uri_match_fn = httpd_uri_match_wildcard;
 
-    ESP_LOGI(TAG, "Starting REST HTTP Server on port %d", port);
+    ESP_LOGI(TAG, "Starting REST HTTP Server on port %u", port);
     httpd_start(&server, &config);
     
     register_api_rest();
@@ -257,7 +257,7 @@ esp_err_t rest_post(char* uri, char* data, int dlen)
 
     int status = esp_http_client_get_status_code(client);
     if (err == ESP_OK) {
-        ESP_LOGI(TAG, "Status = %d, content_length = %d",
+        ESP_LOGI(TAG, "Status = %d, content_length = %lld",
             status, esp_http_client_get_content_length(client));
     }
     else

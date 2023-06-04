@@ -53,7 +53,7 @@ char*  wifi_getApSsid(char* buf);
 char*  wifi_getApIp(char* buf);
 
 
-tcpip_adapter_ip_info_t wifi_getIpInfo(void);
+esp_netif_ip_info_t wifi_getIpInfo(void);
 wifi_ap_record_t * wifi_getApList(void);
 
 /* Web server */
@@ -61,7 +61,7 @@ void   httpd_enable(bool);
 
 /* Utilities */
 char* mac2str(uint8_t *x);
-void  str2ip(ip4_addr_t *ip, char* str);
+void  str2ip(esp_ip4_addr_t *ip, char* str);
 
 /* TCP client */
 int  inet_open(char* host, int port);

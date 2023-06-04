@@ -30,6 +30,8 @@
 #include "trackstore.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_chip_info.h"
+
 
 static int do_sysinfo(int argc, char** argv);
 static int do_restart(int argc, char** argv);
@@ -88,6 +90,15 @@ static int do_rm(int argc, char** argv) {
 }
 
 
+
+/********************************************************************************
+ * Reformat filesystem
+ ********************************************************************************/
+
+static int do_format(int argc, char** argv) {
+    spiffs_format();
+    return 0;
+}
 
 /********************************************************************************
  * Write file
@@ -198,20 +209,20 @@ static int do_sysinfo(int argc, char** argv)
     esp_spiffs_info(spconf.partition_label, &size, &used);
     
     
-    printf("Free heap:       %d bytes\n", esp_get_free_heap_size());
-    printf("FBUF free mem:   %d bytes\n", fbuf_freeMem());
+    printf("Free heap:       %ld bytes\n", esp_get_free_heap_size());
+    printf("FBUF free mem:   %ld bytes\n", fbuf_freeMem());
     printf("FBUF used slots: %d\n", fbuf_usedSlots());
-    printf("SPIFFS filesys:  %d bytes, %d used, %d free\n", size, used, size-used);
+    printf("SPIFFS filesys:  %u bytes, %u used, %u free\n", size, used, size-used);
     printf("IDF version:     %s\n\n", esp_get_idf_version());
     printf("Chip info:\n");
     printf("  model:         %s\n", model);
     printf("  cores:         %d\n", info.cores);
-    printf("  features:      %s%s%s%s%d%s\r\n",
+    printf("  features:      %s%s%s%s\n",
            info.features & CHIP_FEATURE_WIFI_BGN ? "802.11bgn" : "",
            info.features & CHIP_FEATURE_BLE ? " / BLE" : "",
            info.features & CHIP_FEATURE_BT ? " / BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash :" : "/External-Flash:  ",
-           spi_flash_get_chip_size() / (1024 * 1024), " MB");
+           info.features & CHIP_FEATURE_EMB_FLASH ? " / Embedded-Flash :" : " / External-Flash:  "
+    );
     printf("  revision nr:   %d\n", info.revision);
     return 0;
 }
@@ -224,7 +235,7 @@ static int do_sysinfo(int argc, char** argv)
 
 static int do_free(int argc, char** argv)
 {
-    printf("%d\n", esp_get_free_heap_size());
+    printf("%ld\n", esp_get_free_heap_size());
     return 0;
 }
 
@@ -301,7 +312,7 @@ static int do_time(int argc, char** argv)
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         printf("%s UTC\n", strftime_buf);
         
-        printf("Seconds: %ld\n", getTime());
+        printf("Seconds: %lld\n", getTime());
     }
     else
         printf("Time is not set\n");
@@ -413,12 +424,12 @@ static int do_adcinfo(int argc, char** argv)
     uint32_t val; 
 #if !defined(RADIO_DISABLE)
     val = adc2_read(RADIO_INPUT);
-    printf("Radio input: %d, %d mV\n", val, adc_toVoltage(val));
+    printf("Radio input: %ld, %d mV\n", val, adc_toVoltage(val));
 #endif
     val = adc1_read(BATT_ADC_INPUT);
-    printf(" BATT input: %d, %d mV\n", val, adc_toVoltage(val));
+    printf(" BATT input: %ld, %d mV\n", val, adc_toVoltage(val));
     val = adc1_read(X1_ADC_INPUT);
-    printf("   X1 input: %d, %d mV\n", val, adc_toVoltage(val));
+    printf("   X1 input: %ld, %d mV\n", val, adc_toVoltage(val));
     
     for (int i=1; i<800; i++) {
         int16_t x = adc_sample();
@@ -471,6 +482,7 @@ void register_system()
     ADD_CMD("trk-reset", &do_reset,       "Reset track storage", NULL);  
     ADD_CMD("ls",        &do_ls,          "List files", NULL);  
     ADD_CMD("rm",        &do_rm,          "Remove file", "<file>");
+    ADD_CMD("format",    &do_format,      "Format filesystem", NULL);
     ADD_CMD("write",     &do_write,       "Write to file", "<file>");
     ADD_CMD("read",      &do_read,        "Read from file", "<file>");
     ADD_CMD("free",      &do_free,        "Get the total size of heap memory available", NULL);

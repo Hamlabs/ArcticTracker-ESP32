@@ -155,12 +155,12 @@ static void showScan(void)
     }
     int i;
            
-    printf("\nBSSID              AUTH         RSSI SSID\n");
+    printf("\nBSSID              AUTH               RSSI  SSID\n");
     
     for (i=0; i<wifi_getApCount(); i++) {
         wifi_ap_record_t ap = wifi_getApList()[i]; 
         char *authmode = wifi_authMode(ap.authmode);
-        printf("%s  %-12s %4d %s\n",
+        printf("%s  %-16s  %4d   %s\n",
             mac2str(ap.bssid), authmode, ap.rssi, ap.ssid);
     }
     /* FIXME: Should we free list memory? */
@@ -186,14 +186,11 @@ int do_apSta(int argc, char** argv)
     else
         ESP_ERROR_CHECK(err);
     
-    tcpip_adapter_sta_list_t infoList;
-    ESP_ERROR_CHECK(tcpip_adapter_get_sta_list(&stations, &infoList));
-    for(int i = 0; i < infoList.num; i++) {
-        tcpip_adapter_sta_info_t st = infoList.sta[i];
-        const ip4_addr_t * ipaddr = (const ip4_addr_t*) &(st.ip); 
-        printf("MAC: %s IP: %s\n",
-            mac2str(st.mac),
-            ip4addr_ntoa(ipaddr));
+    // FIXME: find IP of each station
+    for(int i = 0; i < stations.num; i++) {
+        wifi_sta_info_t st = stations.sta[i];
+        printf("MAC: %s\n",
+            mac2str(st.mac));
       }
     return 0;
 }
@@ -209,13 +206,14 @@ int do_info(int argc, char** argv)
     char buf[32];
     if (wifi_isEnabled()) {
         // FIXME: Any heap resources that should be freed? ? ? ? 
- 
+        // FIXME: Find IP address
+        
         printf("    Stn status: %s\n",  wifi_getStatus());
         if (wifi_isConnected()) {
-            tcpip_adapter_ip_info_t ipinfo = wifi_getIpInfo();
+       //     tcpip_adapter_ip_info_t ipinfo = wifi_getIpInfo();
             char buf[40];
             printf("  Connected to: %s\n", (char*) wifi_getConnectedAp(buf));
-            printf("    IP address: %s\n", ip4addr_ntoa(&ipinfo.ip) );
+       //     printf("    IP address: %s\n", ip4addr_ntoa(&ipinfo.ip) );
             printf(" mDNS hostname: %s\n", mdns_hostname(buf));
         }
         uint8_t mac[6];

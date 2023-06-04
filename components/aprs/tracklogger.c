@@ -175,7 +175,7 @@ int tracklog_post() {
     keylen = len = sprintf(buf, "%s", key);
     len += sprintf(buf+len, "{\"call\":\"%s\", \"pos\":[\n", call);
     for (;;) {
-        len += sprintf(buf+len, "{\"time\":%u, \"lat\":%u, \"lng\":%u}", pd.time, pd.lat, pd.lng);
+        len += sprintf(buf+len, "{\"time\":%lu, \"lat\":%lu, \"lng\":%lu}", pd.time, pd.lat, pd.lng);
         if (++i >= JS_CHUNK_SIZE)
             break;
         if (trackstore_getEnt(&pd) == NULL)

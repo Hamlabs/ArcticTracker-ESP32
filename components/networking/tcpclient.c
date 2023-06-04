@@ -132,16 +132,17 @@ int http_post(char* uri, char* ctype, char* data, int dlen)
     esp_err_t err = esp_http_client_perform(client);
 
     int status = esp_http_client_get_status_code(client);
-    if (err == ESP_OK) {
-        ESP_LOGI(TAG, "Status = %d, content_length = %d",
-            status, esp_http_client_get_content_length(client));
-    }
-    else
+    if (err != ESP_OK) 
         ESP_LOGW(TAG,  "HTTP post failed. Status = %d", status);
         
     esp_http_client_cleanup(client);
     return status;
 }
+
+
+
+
+
 
 
 

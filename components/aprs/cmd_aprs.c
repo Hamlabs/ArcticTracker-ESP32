@@ -116,7 +116,7 @@ static int do_trget(int argc, char* argv[])
     if (trackstore_getEnt(&x)==NULL)
         printf("*** Store is empty\n");
     else
-        printf("Entry: time=%d, %u, %u\n", x.time, x.lat, x.lng);
+        printf("Entry: time=%ld, %lu, %lu\n", x.time, x.lat, x.lng);
    
     return 0;
 }

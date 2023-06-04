@@ -34,7 +34,7 @@ esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int* size);
 esp_err_t rest_AUTH(httpd_req_t *req);
 esp_err_t rest_JSON_input(httpd_req_t *req,  cJSON **json);
 esp_err_t rest_JSON_send(httpd_req_t *req, cJSON *root);
-void      rest_start(int port, const char *path);
+void      rest_start(uint16_t port, const char *path);
 void      rest_stop(void);
 void      rest_cors_enable(httpd_req_t *req);
 esp_err_t rest_options_handler(httpd_req_t *req);

@@ -12,9 +12,9 @@
 #include "driver/gpio.h"
 
 extern void buzzer_init();
-static void bphandler(void* p);
-static void holdhandler(void* p);
-static void clickhandler(void* p);
+static void bphandler(struct tmrTimerControl * p);
+static void holdhandler(struct tmrTimerControl * p);
+static void clickhandler(struct tmrTimerControl * p);
 
 #define TAG "ui"
 
@@ -84,7 +84,7 @@ static void button_handler(void* x)
 }
  
  
-static void bphandler(void* p)
+static void bphandler(struct tmrTimerControl* p)
 {
     (void) p;
     /* If the button has been pressed down for 10ms */
@@ -93,13 +93,13 @@ static void bphandler(void* p)
 }
  
 
-static void clickhandler(void* p) {
+static void clickhandler(struct tmrTimerControl * p) {
     (void) p;  
     cond_setBits(buttCond, BUTT_EV_SHORT);
 }
 
 
-static void holdhandler(void* p) {
+static void holdhandler(struct tmrTimerControl *p) {
     (void)p;
     pressed = false;
     cond_setBits(buttCond, BUTT_EV_LONG);

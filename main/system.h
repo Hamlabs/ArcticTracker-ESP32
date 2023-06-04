@@ -39,7 +39,13 @@ void clock_stop(int group, int idx);
 void clock_changeInterval(int group, int idx, double interval);
 void IRAM_ATTR clock_clear_intr(int group, int index);
 
- 
+
+/* SPIFFS FS */
+void spiffs_init();
+void spiffs_format();
+
+
+
 /* Logging */
 bool hasTag(char*tag);
 void set_logLevels(void);

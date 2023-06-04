@@ -57,11 +57,12 @@ static void squelch_handler(void* arg);
  */
 
 static uart_config_t _serialConfig = {
-    .baud_rate = 9600,
-    .data_bits = UART_DATA_8_BITS,
-    .parity    = UART_PARITY_DISABLE,
-    .stop_bits = UART_STOP_BITS_1,
-    .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    .baud_rate  = 9600,
+    .data_bits  = UART_DATA_8_BITS,
+    .parity     = UART_PARITY_DISABLE,
+    .stop_bits  = UART_STOP_BITS_1,
+    .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
+    .source_clk = UART_SCLK_DEFAULT
 };
 static uart_port_t _serial;
 
@@ -136,7 +137,7 @@ static void _initialize()
     _txfreq = get_i32_param("TXFREQ", DFL_TXFREQ);
     _rxfreq = get_i32_param("RXFREQ", DFL_RXFREQ);
     _squelch = get_byte_param("TRX_SQUELCH", DFL_TRX_SQUELCH);
-    ESP_LOGI(TAG, "_initialize: txfreq=%d, rxfreq=%d", _txfreq, _rxfreq);
+    ESP_LOGI(TAG, "_initialize: txfreq=%ld, rxfreq=%ld", _txfreq, _rxfreq);
     _flags = 0x00;
     _widebw = 0;  /* Set to 1 for wide bandwidth */
     
@@ -431,7 +432,7 @@ bool frs_setPowerSave(bool on)
     if (!_on)
         return true;
     char reply[16];
-    int len = printf(buf, "AT+DMOAUTOPOWCONTR=%1d\r\n", (on ? 1:0));
+    int len = sprintf(buf, "AT+DMOAUTOPOWCONTR=%1d\r\n", (on ? 1:0));
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
     readline(_serial, reply, 16);
@@ -464,8 +465,8 @@ static bool _setGroupParm()
     if (!_on)
         return true;
     char txbuf[16], rxbuf[16], reply[16];
-    sprintf(txbuf, "%u.%04u", _txfreq/10000, _txfreq%10000);
-    sprintf(rxbuf, "%u.%04u", _rxfreq/10000, _rxfreq%10000);
+    sprintf(txbuf, "%lu.%04lu", _txfreq/10000, _txfreq%10000);
+    sprintf(rxbuf, "%lu.%04lu", _rxfreq/10000, _rxfreq%10000);
 
     int len = sprintf(buf, "AT+DMOSETGROUP=%1d,%s,%s,00,%1d,00,%1d\r\n",
             _widebw, txbuf, rxbuf, _squelch, _flags);

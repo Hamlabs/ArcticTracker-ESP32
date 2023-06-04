@@ -54,11 +54,12 @@ static SemaphoreHandle_t enc_idle; // Binary semaphore
 
 
 static uart_config_t _serialConfigGps = {
-    .baud_rate = 9600,
-    .data_bits = UART_DATA_8_BITS,
-    .parity    = UART_PARITY_DISABLE,
-    .stop_bits = UART_STOP_BITS_1,
-    .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+    .baud_rate  = 9600,
+    .data_bits  = UART_DATA_8_BITS,
+    .parity     = UART_PARITY_DISABLE,
+    .stop_bits  = UART_STOP_BITS_1,
+    .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
+    .source_clk = UART_SCLK_DEFAULT,
 };
 
 

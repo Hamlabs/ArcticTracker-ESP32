@@ -22,6 +22,7 @@
 #define DEFAULT_SSID "NO-SSID"
 #define DEFAULT_PWD "NO-PASSWORD"
 
+#define TAG "wifix"
 
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT           = BIT0;
@@ -42,10 +43,15 @@ static cond_t scanDone;
 char default_ssid[32];
 
 
-static esp_err_t event_handler(void *ctx, system_event_t *event);
+/* esp netif object representing the WIFI station */
+esp_netif_t *sta_netif = NULL;
+esp_netif_t *ap_netif = NULL;
+
+
+static esp_err_t wifi_event_handler(void* arg, esp_event_base_t ebase, int32_t eid, void* event_data);
+
 static void task_autoConnect( void * pvParms ); 
 
-#define TAG "wifix"
 
 
 
@@ -57,27 +63,29 @@ static void task_autoConnect( void * pvParms );
 static bool dhcp_started = false; 
 static void dhcp_enable(bool on)
 {
+/*
     if (on && !dhcp_started) {
         char ip[16]; 
         // stop DHCP server
-        tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP);
+        esp_netif_dhcps_stop(ap_netif);
         // assign a static IP to the network interface
-        tcpip_adapter_ip_info_t info;
+        esp_netif_ip_info_t info;
         memset(&info, 0, sizeof(info));
         get_str_param("WIFIAP.IP", ip, 16, AP_DEFAULT_IP);
         str2ip(&info.ip, ip);
         str2ip(&info.gw, ip); //ESP acts as router, so gw addr will be its own addr
-        IP4_ADDR(&info.netmask, 255, 255, 255, 0);
-        ESP_ERROR_CHECK(tcpip_adapter_set_ip_info(TCPIP_ADAPTER_IF_AP, &info));
+        str2ip(&info.netmask, "255.255.255.0");
+        ESP_ERROR_CHECK(esp_netif_set_ip_info(ap_netif, &info));
         // start the DHCP server   
-        ESP_ERROR_CHECK(tcpip_adapter_dhcps_start(TCPIP_ADAPTER_IF_AP));
+        ESP_ERROR_CHECK(esp_netif_dhcps_start(ap_netif));
         ESP_LOGD(TAG, "DHCP server started on %s", ip);
         dhcp_started = true;
     }
     if (!on && dhcp_started) {
-        ESP_ERROR_CHECK(tcpip_adapter_dhcps_stop(TCPIP_ADAPTER_IF_AP));
+        ESP_ERROR_CHECK(esp_netif_dhcps_stop(ap_netif));
         dhcp_started = false; 
     }
+*/
 }
 
     
@@ -88,40 +96,31 @@ static void dhcp_enable(bool on)
  * Event handler
  ********************************************************************************/
 
-static esp_err_t event_handler(void *ctx, system_event_t *event)
+static esp_err_t wifi_event_handler(void* arg, esp_event_base_t ebase,
+                                    int32_t eid, void* event_data)
 {
-    switch(event->event_id) {
-        
-    case SYSTEM_EVENT_STA_START:
+    if (eid == WIFI_EVENT_STA_STOP) {
         status = "Idle";
-        break;
-    
-    case SYSTEM_EVENT_STA_STOP:
-        status = "Off";
-        break;
-
-    case SYSTEM_EVENT_STA_GOT_IP:
+    }
+    else if (eid == IP_EVENT_STA_GOT_IP) {
         xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
         xEventGroupClearBits(wifi_event_group, DISCONNECTED_BIT);
         status = "Connected";
         connected = true; 
         time_init(); 
-        break;
-        
-    case SYSTEM_EVENT_STA_CONNECTED:
+    }
+    else if (eid == WIFI_EVENT_STA_CONNECTED) {
         ESP_LOGD(TAG, "STA Connect event");
         status = "Waiting for IP";
-        break;
-        
-    case SYSTEM_EVENT_STA_DISCONNECTED:
+    }
+    else if (eid == WIFI_EVENT_STA_DISCONNECTED) {
         ESP_LOGD(TAG, "STA Disconnect event");
         xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
         xEventGroupSetBits(wifi_event_group, DISCONNECTED_BIT);
         status = "Disconnected";
         connected = false;
-        break;
-        
-    case SYSTEM_EVENT_SCAN_DONE: 
+    }
+    else if (eid == WIFI_EVENT_SCAN_DONE) { 
         ESP_LOGD(TAG, "Scan done event"); 
         if (enabled) {
             ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&apCount));
@@ -132,10 +131,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             }
         }
         cond_set(scanDone);
-        break;
-        
-    default:
-        break;
     }
     return ESP_OK;
 }
@@ -152,25 +147,38 @@ void wifi_init(void)
     if (initialized)
         return;
     char ident[16];
+    
     get_str_param("MYCALL", ident, 16, DFL_MYCALL);
     if (strcmp(ident, "") == 0 || strcmp(ident, "NOCALL") == 0)
-        sprintf(ident,"%X", chipId());
+        sprintf(ident,"%lX", chipId());
     
     wifi_event_group = xEventGroupCreate();
-    xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);        
+    xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);        // DO WE NEED THESE? 
     xEventGroupSetBits(wifi_event_group, DISCONNECTED_BIT);
     
-    tcpip_adapter_init();
+    esp_netif_init();
     sprintf(default_ssid, "Arctic_%s", ident);
-    ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
     
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    sta_netif = esp_netif_create_default_wifi_sta();
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     
-    wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on"));
+//    wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on")); NEED TO BE FIXED
+    
     esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
     scanDone = cond_create();
-
+    
+    /* Register event handlers */
+    esp_event_handler_instance_t instance_any_id;
+    esp_event_handler_instance_t instance_got_ip;
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(
+        WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, &instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(
+        IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, &instance_got_ip));
+    
+    // Now we need to set mode, the config and start it
+    
     if (GET_BYTE_PARAM("WIFI.on"))
         wifi_enable(true);
     
@@ -191,61 +199,11 @@ bool wifi_softAp_isEnabled() {
 
 void wifi_enable_softAp(bool en)
 {    
-    wifi_config_t apcnf = {
-        .ap = {
-            .max_connection = AP_MAX_CLIENTS,
-            .ssid_hidden = AP_SSID_HIDDEN, 
-            .beacon_interval = AP_BEACON_INTERVAL,
-            .authmode = WIFI_AUTH_WPA_WPA2_PSK
-        },
-    };
-    wifi_config_t stacnf = {        
-        .sta = {
-            .ssid = DEFAULT_SSID,
-            .password = DEFAULT_PWD,
-        },
-    };
-    
-    
-    if (!en) {
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &stacnf));
-        softApEnabled = false;
-        wifi_enable(false);
-        wifi_enable(true);
-        return;
-    }
-
-    
-    get_str_param("WIFIAP.SSID", (char*) apcnf.ap.ssid, 32, default_ssid);
-    apcnf.ap.ssid_len = strlen((char*) apcnf.ap.ssid);
-    
-    get_str_param("WIFIAP.AUTH", (char*) apcnf.ap.password, 64, AP_DEFAULT_PASSWD);
-    if (strlen((char*) apcnf.ap.password) == 0) 
-        apcnf.ap.authmode = WIFI_AUTH_OPEN;
-    
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
-    
-    esp_err_t err = esp_wifi_set_config(ESP_IF_WIFI_AP, &apcnf);
-    if (err == ESP_ERR_WIFI_PASSWORD)
-        ESP_LOGW(TAG, "Invalid password for softAP");
-    else if (err == ESP_ERR_WIFI_SSID)
-        ESP_LOGW(TAG, "Invalid SSID for softAP");
-    else 
-        ESP_ERROR_CHECK(err);
-    softApEnabled = true;
 }
 
 
-int wifi_softAp_clients(void){    
-    wifi_sta_list_t  stations;
-    esp_err_t err = esp_wifi_ap_get_sta_list(&stations);
-    if (err==ESP_ERR_WIFI_MODE) 
-         return 0;
-    
-    tcpip_adapter_sta_list_t infoList;
-    ESP_ERROR_CHECK(tcpip_adapter_get_sta_list(&stations, &infoList));
-    return infoList.num;
+int wifi_softAp_clients(void) {
+    return 0;
 }
 
 
@@ -332,17 +290,17 @@ void wifi_deleteApAlt(int n) {
  * Get ip address info
  ********************************************************************************/
 
-tcpip_adapter_ip_info_t wifi_getIpInfo(void) { 
-    tcpip_adapter_ip_info_t ip_info;
-    ESP_ERROR_CHECK(tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info));
+esp_netif_ip_info_t wifi_getIpInfo(void) { 
+    esp_netif_ip_info_t ip_info;
+    ESP_ERROR_CHECK(esp_netif_get_ip_info(sta_netif, &ip_info));
     return ip_info;
 }
 
 
 char* wifi_getIpAddr(char* buf) {
-    tcpip_adapter_ip_info_t ipinfo;
+    esp_netif_ip_info_t ipinfo;
     ipinfo = wifi_getIpInfo(); 
-    sprintf(buf, "%s", ip4addr_ntoa(&ipinfo.ip));
+    esp_ip4addr_ntoa(&ipinfo.ip, buf, 16);
     return buf;
 }
 
@@ -567,19 +525,22 @@ char* wifi_authMode(int mode)
         switch(mode) {
             case WIFI_AUTH_OPEN:
                 return "OPEN";
-                break;
             case WIFI_AUTH_WEP:
                 return "WEP";
-                break;
             case WIFI_AUTH_WPA_PSK:
                 return "WPA_PSK";
-                break;
             case WIFI_AUTH_WPA2_PSK:
                 return "WPA2_PSK";
-                break;
             case WIFI_AUTH_WPA_WPA2_PSK:
                 return "WPA_WPA2_PSK";
-                break;
+            case WIFI_AUTH_WPA2_ENTERPRISE:
+                return "WPA2_ENTERPRISE";
+            case WIFI_AUTH_WPA3_PSK:
+                return "WPA3_PSK";
+            case WIFI_AUTH_WPA2_WPA3_PSK:
+                return "WPA2_WPA3_PSK";
+            case WIFI_AUTH_OWE:
+                return "OWE";
             default:
                 return "Unknown";
             break;
@@ -593,12 +554,12 @@ char* wifi_authMode(int mode)
  * Convert string to IP address
  ********************************************************************************/
 
-void str2ip(ip4_addr_t *ip, char* str) 
+void str2ip(esp_ip4_addr_t *ip, char* str) 
 {
     unsigned int d1=0, d2=0, d3=0, d4=0;
     if (sscanf(str, "%u.%u.%u.%u", &d1, &d2, &d3, &d4) < 4)
         ESP_LOGE("str2ip", "Error in IP address format");
-    IP4_ADDR(ip, d1, d2, d3, d4);
+    esp_netif_set_ip4_addr(ip, d1, d2, d3, d4);
 }
 
 

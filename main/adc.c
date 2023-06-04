@@ -94,7 +94,7 @@ uint16_t adc2_read(uint8_t chan)
  *************************************************************************/
 
 uint16_t adc_toVoltage(uint16_t val)
-    { return (uint16_t) esp_adc_cal_raw_to_voltage((uint32_t) val, adc_chars); }
+    { return 0;  return (uint16_t) esp_adc_cal_raw_to_voltage((uint32_t) val, adc_chars); }
 
 
     
@@ -104,6 +104,7 @@ uint16_t adc_toVoltage(uint16_t val)
 
 uint16_t adc_batt()
 { 
+    return 0;
     uint16_t val = adc1_read(BATT_ADC_INPUT);
     if (val==0)
         return 0; 
@@ -164,7 +165,7 @@ uint16_t adc_batt_status(char* line1, char* line2)
 
 int adc2_get_rawISR(adc2_channel_t channel)
 {
-    uint16_t out;
+    int out;
     
     adc2_get_raw(WIDTH, (adc2_channel_t) channel, &out);
     

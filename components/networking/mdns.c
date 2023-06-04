@@ -88,7 +88,7 @@ void mdns_print_results(mdns_result_t * results)
         printf("%d: %s\n", i++, r->instance_name); 
         a = r->addr;
         while(a){
-            if(a->addr.type == IPADDR_TYPE_V6){
+            if(a->addr.type == ESP_IPADDR_TYPE_V6){
                 printf("     IPv6: " IPV6STR "\n", IPV62STR(a->addr.u_addr.ip6));
             } else {
                 printf("     IPv4: " IPSTR "\n", IP2STR(&(a->addr.u_addr.ip4)));

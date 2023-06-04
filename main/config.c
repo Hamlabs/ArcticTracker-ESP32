@@ -10,6 +10,8 @@
 #include "config.h"
 #include "esp_system.h"
 #include "trex.h"
+#include "esp_mac.h"
+
 
 static nvs_handle nvs; 
 static uint8_t _nvs_init = 0;
@@ -274,7 +276,7 @@ int param_setting_i32(int argc, char** argv, const char* key, int32_t dfl, int32
 {
     char buf[64];
     if (argc < 2)
-        printf("%d\n", get_i32_param(key, dfl));
+        printf("%ld\n", get_i32_param(key, dfl));
     else if (strcasecmp(argv[1], "reset")==0) {
         delete_param(key);
         printf("OK\n");
@@ -290,11 +292,11 @@ int param_setting_i32(int argc, char** argv, const char* key, int32_t dfl, int32
 char* param_parseI32(const char* key, char* val, int32_t llimit, int32_t ulimit, char *buf )
 {
     int32_t n = 0;
-    if (sscanf(val, "%d", &n) == 1) {
+    if (sscanf(val, "%ld", &n) == 1) {
         if (n < llimit)
-            sprintf(buf, "ERROR: Value must be more than %d", llimit);
+            sprintf(buf, "ERROR: Value must be more than %ld", llimit);
         else if (n > ulimit)
-            sprintf(buf, "ERROR. Value must be less than %d", ulimit);
+            sprintf(buf, "ERROR. Value must be less than %ld", ulimit);
         else { 
             sprintf(buf, "OK");
             set_i32_param(key, n);

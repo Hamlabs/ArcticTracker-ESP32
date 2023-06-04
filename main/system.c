@@ -18,6 +18,8 @@
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
 #include "esp_sleep.h"
+#include "esp_flash.h"
+#include "esp_spiffs.h"
 #include "ui.h"
 #include "gui.h"
 #include "afsk.h"
@@ -65,6 +67,8 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     case HTTP_EVENT_DISCONNECTED:
         ESP_LOGD(TAG, "HTTP_EVENT_DISCONNECTED");
         break;
+    case HTTP_EVENT_REDIRECT:
+        ESP_LOGD(TAG, "HTTP_EVENT_REDIRECT");
     }
     return ESP_OK;
 }
@@ -105,7 +109,11 @@ esp_err_t firmware_upgrade()
         .event_handler = _http_event_handler,
         .keep_alive_enable = true,
         .skip_cert_common_name_check = false
+    };   
+    esp_https_ota_config_t ota_config = {
+        .http_config = &config,
     };
+    
     if (fwcert == NULL || strlen(fwcert) < 10) {
         config.cert_pem = NULL;
         config.crt_bundle_attach = esp_crt_bundle_attach;
@@ -113,7 +121,7 @@ esp_err_t firmware_upgrade()
         
         
     BLINK_FWUPGRADE;    
-    esp_err_t ret = esp_https_ota(&config);
+    esp_err_t ret = esp_https_ota(&ota_config);
     if (ret == ESP_OK) {
         ESP_LOGW(TAG, "Fw upgrade ok. Rebooting..");
         esp_restart();
@@ -174,6 +182,50 @@ void systemShutdown(void)
     esp_deep_sleep_start();
 }
 
+
+/**************************************************
+ *  SPIFFS FILESYSTEM
+ **************************************************/
+
+
+#define SPIFFS_LABEL "storage"
+
+esp_vfs_spiffs_conf_t spconf = {
+      .base_path = "/files",
+      .partition_label = SPIFFS_LABEL,
+      .max_files = 10,
+      .format_if_mount_failed = true
+    };
+
+    
+void spiffs_init() {
+    /* Register and mount */
+    esp_err_t ret = esp_vfs_spiffs_register(&spconf);
+    if (ret != ESP_OK) {
+        if (ret == ESP_FAIL) 
+            ESP_LOGE(TAG, "Failed to mount or format filesystem");
+        else if (ret == ESP_ERR_NOT_FOUND) 
+            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
+        else 
+            ESP_LOGE(TAG, "ERROR in mounting filesystem: %d", ret);
+    }
+
+    /* Check if SPIFFS fs is mounted */
+    if (esp_spiffs_mounted(spconf.partition_label)) 
+         ESP_LOGI(TAG, "SPIFFS partition mounted on %s", spconf.base_path);
+    
+    /* Get and log info */
+    size_t size, used;
+    ret = esp_spiffs_info(spconf.partition_label, &size, &used);
+    if (ret == ESP_OK)
+        ESP_LOGI(TAG, "SPIFFS fs: '%s', %d bytes, %d used", spconf.partition_label, size, used);
+}
+
+
+void spiffs_format() {
+    if ( esp_spiffs_format(SPIFFS_LABEL) != ESP_OK)
+        ESP_LOGW(TAG, "SPIFFS format failed\n");
+}
 
 
 

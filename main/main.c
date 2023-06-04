@@ -29,6 +29,7 @@
 #include "trackstore.h"
 #include "gui.h"
 
+#include "soc/gpio_sig_map.h"
 #include "driver/usb_serial_jtag.h"
 #include "esp_vfs_usb_serial_jtag.h"
 
@@ -188,35 +189,6 @@ static void startup(void* arg)
 }
 
 
-esp_vfs_spiffs_conf_t spconf = {
-      .base_path = "/files",
-      .partition_label = "storage",
-      .max_files = 10,
-      .format_if_mount_failed = true
-    };
-
-void spiffs_init() {
-    esp_err_t ret = esp_vfs_spiffs_register(&spconf);
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) 
-            ESP_LOGE(TAG, "Failed to mount or format filesystem");
-        else if (ret == ESP_ERR_NOT_FOUND) 
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
-        else 
-            ESP_LOGE(TAG, "ERROR in mounting filesystem: %d", ret);
-    }
-
-    if (esp_spiffs_mounted(spconf.partition_label)) 
-         ESP_LOGI(TAG, "SPIFFS partition mounted on %s", spconf.base_path);
-    
-    size_t size, used;
-    ret = esp_spiffs_info(spconf.partition_label, &size, &used);
-    if (ret == ESP_OK)
-        ESP_LOGI(TAG, "SPIFFS fs: '%s', %d bytes, %d used", spconf.partition_label, size, used);
-}
-
-
-
 
 /********************************************************************************
  * Main function
@@ -238,7 +210,7 @@ void app_main()
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
     set_logLevels();
-    adc_init(); 
+ //   adc_init(); FIXME FIXME
     initialize_console();
     
     /* Register commands */

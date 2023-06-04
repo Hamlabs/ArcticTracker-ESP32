@@ -157,7 +157,7 @@ static void status_screen1() {
     disp_setBoldFont(false);
     
     int32_t f = GET_I32_PARAM("TXFREQ");
-    sprintf(buf, "%03d.%03d MHz%c", f/10000, (f/10)%1000, '\0');
+    sprintf(buf, "%03ld.%03ld MHz%c", f/10000, (f/10)%1000, '\0');
     disp_writeText(0, LINE2, buf);
     
     /* Get and convert digipeater path */
@@ -169,7 +169,7 @@ static void status_screen1() {
     disp_writeText(0, LINE3, buf);  
     
     /* Number of pos reports */
-    sprintf(buf, "Pos reports: %d", tracker_posReports());
+    sprintf(buf, "Pos reports: %ld", tracker_posReports());
     disp_writeText(0, LINE4, buf); 
     disp_flush();
 }
