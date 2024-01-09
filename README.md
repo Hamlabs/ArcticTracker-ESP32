@@ -46,7 +46,7 @@ A updated PCB layout has been produced and is currently being tested. 5 trackers
 
 ## Future work
 
-A version 4 tracker will probably move on to exploring LoRa and FSK modes on 70 cm. There are also some newer VHF-modules around that can be interesting to look at and that might eliminate the need for a separate PA module: The SR-FRS-4W (4 watts), SR-FRS-2WVS (2 watts), the SA-868 (2 watts). The SA868 comes with a programmable version and I wonder if it could be somehow optimized a bit for APRS? It could also be an idea to try to port the software to the T-TWR-plus. 
+A version 4 tracker will probably move on to exploring LoRa and FSK modes on 70 cm. There are also some other VHF-modules around that can be interesting to look at without a separate PA module: The SR-FRS-2WVS (2 watts), the SA-868 (2 watts), maybe the SR-FRS-4W. The SA868 comes with a programmable version and I wonder if it could be somehow optimized a bit for APRS? It could also be an idea to try to port the software to the T-TWR-plus. 
 
 I am open for ideas and contributions :)
  
