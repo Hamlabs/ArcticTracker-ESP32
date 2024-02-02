@@ -4,8 +4,8 @@
   */
 
 #include "system.h"
-#include "driver/timer.h"
-#include "hal/timer_hal.h"
+#include "driver/gptimer.h"
+
 
 
 
@@ -13,22 +13,34 @@
  * Timer setup
  ************************************************************************/
 
-void clock_init(int group, int idx, uint16_t divider, timer_isr_t isr, bool iram)
+void clock_init(gptimer_handle_t *clock, uint32_t resolution, uint32_t period, gptimer_alarm_cb_t cb, void* arg)
 {
     /* Select and initialize basic parameters of the timer */
-    timer_config_t config = {
-        .divider = divider,
-        .counter_dir = TIMER_COUNT_UP,
-        .counter_en = TIMER_PAUSE,
-        .alarm_en = TIMER_ALARM_EN,
-        .auto_reload = true,
-    }; // default clock source is APB
-    timer_init(group, idx, &config);
+    gptimer_config_t config = {
+      .clk_src = GPTIMER_CLK_SRC_DEFAULT,
+      .direction = GPTIMER_COUNT_UP,
+      .resolution_hz = resolution
+    };
+    ESP_ERROR_CHECK( gptimer_new_timer(&config, clock) );
 
     /* Timer's counter will initially start from value below.
        Also, if auto_reload is set, this value will be automatically reload on alarm */
-    timer_set_counter_value(group, idx, 0);
-    timer_isr_callback_add(group, idx, isr, NULL, 0);
+    ESP_ERROR_CHECK( gptimer_set_raw_count(*clock, 0) );
+    
+    /* Alarm config */
+    gptimer_alarm_config_t alarm_config = {
+        .reload_count = 0, // counter will reload with 0 on alarm event
+        .alarm_count = period,
+        .flags.auto_reload_on_alarm = true,
+    };
+    ESP_ERROR_CHECK(gptimer_set_alarm_action(*clock, &alarm_config));
+    
+    /* Alarm callback */
+    gptimer_event_callbacks_t cbs = {
+        .on_alarm = cb, // register user callback
+    };
+    ESP_ERROR_CHECK(gptimer_register_event_callbacks(*clock, &cbs, arg));
+    ESP_ERROR_CHECK(gptimer_enable(*clock));
 }
 
 
@@ -36,12 +48,9 @@ void clock_init(int group, int idx, uint16_t divider, timer_isr_t isr, bool iram
  * Start a timer with a specific interval
  ************************************************************************/
 
-void clock_start(int group, int idx, double interval) 
+void clock_start(gptimer_handle_t clock)
 {
-    timer_set_counter_value(group, idx, 0);
-    timer_set_alarm_value(group, idx, interval);
-    timer_enable_intr(group, idx);
-    timer_start(group, idx);
+   ESP_ERROR_CHECK(gptimer_start(clock));
 }
 
 
@@ -49,8 +58,9 @@ void clock_start(int group, int idx, double interval)
  * Stop (pause) a timer
  ************************************************************************/
 
-void clock_stop(int group, int idx) {
-    timer_pause(group, idx);
+void clock_stop(gptimer_handle_t clock) 
+{
+    ESP_ERROR_CHECK(gptimer_stop(clock));
 }
 
 
@@ -60,13 +70,15 @@ void clock_stop(int group, int idx) {
  * interrupt will be triggered. 
  ************************************************************************/
 
-void clock_changeInterval(int group, int idx, double interval)
+void clock_set_interval(gptimer_handle_t clock, uint32_t period)
 {
-    uint64_t counter = 
-    timer_group_get_counter_value_in_isr(group, idx);
-    if (counter >= interval)
-        timer_group_set_alarm_value_in_isr(group, idx, counter + 2);
-    timer_group_set_alarm_value_in_isr(group, idx, interval);
+    /* Alarm config */
+    gptimer_alarm_config_t alarm_config = {
+        .reload_count = 0, // counter will reload with 0 on alarm event
+        .alarm_count = period,
+        .flags.auto_reload_on_alarm = true,
+    };
+    ESP_ERROR_CHECK(gptimer_set_alarm_action(clock, &alarm_config));
 }
 
 

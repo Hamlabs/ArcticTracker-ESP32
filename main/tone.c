@@ -20,17 +20,17 @@
 /* 
  * It would be optimal to use the least common multiplier (LCM) of 
  * the sampling frequencies (16 x 1200 and 16 x 2200) as the clock 
- * frequency of the timer. 211.2 KHz.
+ * frequency (resolution) of the timer. 211.2 KHz.
  */
 
-#define CLOCK_DIVIDER 16
-#define CLOCK_FREQ (TIMER_BASE_CLK / CLOCK_DIVIDER)
-#define FREQ(f)    (CLOCK_FREQ/(f))
-
+#define TONE_RESOLUTION 211200 
+#define FREQ2CNT(f) TONE_RESOLUTION/(f) 
+#define TONE_CNT FREQ2CNT(AFSK_MARK*STEPS)
 
 /* The sine wave is generated in 16 steps */
 #define STEPS 16
 
+static clock_t toneclk;
 
 static bool _toneHigh = false;
 static bool _on = false; 
@@ -42,7 +42,7 @@ static uint8_t sine2[STEPS] =
     {125, 163, 196, 217, 225, 217, 196, 163, 125, 87,  54,  33,  25,  33,  54,  87};
    
     
-static bool sinewave(void* arg); 
+static bool sinewave(struct gptimer_t * t, const gptimer_alarm_event_data_t * a, void * arg); 
     
  
     
@@ -54,7 +54,7 @@ volatile uint8_t i = 0;
 volatile uint16_t cnt = 0;
 volatile bool high = false;
 
-static bool sinewave(void *arg) 
+static bool sinewave(struct gptimer_t * t, const gptimer_alarm_event_data_t * a, void * arg) 
 {
 #if defined(TONE_ADC_ENABLE)
     dac_output_voltage(TONE_DAC_CHAN, sine[i]);
@@ -62,7 +62,6 @@ static bool sinewave(void *arg)
 #if defined(TONE_SDELTA_ENABLE)
     
     sigmadelta_set_duty(TONE_SDELTA_CHAN, (_toneHigh ? sine[i]-128 : sine2[i]-128));
-//    sigmadelta_set_duty(TONE_SDELTA_CHAN, sine[i]-128);
 #endif
     i++;
     if (i >= STEPS) 
@@ -77,7 +76,7 @@ static bool sinewave(void *arg)
 static bool _inited = false; 
 void tone_init() {
     if (!_inited) {
-        clock_init(TONE_TIMERGRP, TONE_TIMERIDX, CLOCK_DIVIDER, sinewave, false);
+        clock_init(&toneclk, TONE_RESOLUTION, TONE_CNT, sinewave, NULL);
         _inited = true;
       
 #if defined(TONE_ADC_ENABLE)
@@ -106,8 +105,8 @@ void tone_init() {
 
 void tone_start() {
     _on = true;
-    clock_start(TONE_TIMERGRP, TONE_TIMERIDX, 
-        _toneHigh ? FREQ(AFSK_SPACE*STEPS) : FREQ(AFSK_MARK*STEPS));
+    tone_setHigh(_toneHigh); 
+    clock_start(toneclk);  
 }
 
 
@@ -123,8 +122,8 @@ void tone_setHigh(bool hi)
         return;
     _toneHigh = hi; 
     if (_on) 
-        clock_changeInterval(TONE_TIMERGRP, TONE_TIMERIDX, 
-            _toneHigh ? FREQ(AFSK_SPACE*STEPS) : FREQ(AFSK_MARK*STEPS) ); 
+        clock_set_interval(toneclk, 
+            _toneHigh ? FREQ2CNT(AFSK_SPACE*STEPS) : FREQ2CNT(AFSK_MARK*STEPS) ); 
 } 
 
   
@@ -141,7 +140,7 @@ void tone_toggle()
  **************************************************************************/
 
 void tone_stop() {
-    clock_stop(TONE_TIMERGRP, TONE_TIMERIDX);
+    clock_stop(toneclk);
 #if defined(TONE_ADC_ENABLE)
     dac_output_voltage(TONE_DAC_CHAN, 0);
 #endif

@@ -375,12 +375,13 @@ void set_logLevels() {
     set_logLevel("tracklog", "LGLV.tracklog", dfl);
     set_logLevel("mbedtls", "LGLV.mbedtls", dfl);
     set_logLevel("rest", "LGLV.rest", dfl);
+    set_logLevel("adc", "LGLV.adc", dfl);
 }
 
 
 bool hasTag(char*tag) {
     return strcmp(tag, "wifi")==0       || strcmp(tag, "wifix")==0    || strcmp(tag, "uart")==0    || 
-           strcmp(tag, "config")==0     || strcmp(tag, "httpd")==0    ||
+           strcmp(tag, "config")==0     || strcmp(tag, "httpd")==0    || strcmp(tag, "adc")==0     ||
            strcmp(tag, "shell")==0      || strcmp(tag, "system")==0   ||
            strcmp(tag, "tracker")==0    || strcmp(tag, "esp-tls")==0  ||
            strcmp(tag, "radio")==0      || strcmp(tag, "ui")==0       ||
@@ -389,7 +390,7 @@ bool hasTag(char*tag) {
            strcmp(tag, "digi")==0       || strcmp(tag, "igate")==0    || 
            strcmp(tag, "tcp-cli")==0    || strcmp(tag, "main")==0     ||
            strcmp(tag, "trackstore")==0 || strcmp(tag, "tracklog")==0 ||
-           strcmp(tag, "mbedtls")==0    || strcmp(tag, "rest")==0  ||
+           strcmp(tag, "mbedtls")==0    || strcmp(tag, "rest")==0     ||
            strcmp(tag, "*")==0;
 }
 

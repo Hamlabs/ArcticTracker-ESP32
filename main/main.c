@@ -204,13 +204,12 @@ void app_main()
     gpio_iomux_out(42, 1, false); // FUNC_MTMS_GPIO42
     gpio_iomux_in(18, U1RXD_IN_IDX); 
     
-    
     batt_init();
     fbuf_init();
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
     set_logLevels();
- //   adc_init(); FIXME FIXME
+    adc_init(); 
     initialize_console();
     
     /* Register commands */

@@ -11,7 +11,7 @@
 
 #include "driver/uart.h"
 #include "esp_log.h"
-#include "driver/timer.h"
+#include "driver/gptimer.h"
 #include "driver/adc.h"
 
 #if !defined __DEF_SYSTEM_H__
@@ -33,12 +33,13 @@ char*  time2str (char*, time_t);
 char*  date2str (char*, time_t);
 
 /* Hardware timer - as periodic clocks */
-void clock_init(int group, int idx, uint16_t divider,   timer_isr_t isr, bool iram);
-void clock_start(int group, int idx, double interval);
-void clock_stop(int group, int idx);
-void clock_changeInterval(int group, int idx, double interval);
-void IRAM_ATTR clock_clear_intr(int group, int index);
 
+#define clock_t gptimer_handle_t
+
+void clock_init(gptimer_handle_t *clock, uint32_t resolution, uint32_t period, gptimer_alarm_cb_t cb, void* arg);
+void clock_start(gptimer_handle_t clock);
+void clock_stop(gptimer_handle_t clock);
+void clock_set_interval(gptimer_handle_t clock, uint32_t period);
 
 /* SPIFFS FS */
 void spiffs_init();

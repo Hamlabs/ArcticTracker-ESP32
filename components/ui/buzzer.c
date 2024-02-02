@@ -9,9 +9,10 @@
 #include "ui.h"
 
 
-#define CLOCK_DIVIDER 16
-#define CLOCK_FREQ (TIMER_BASE_CLK / CLOCK_DIVIDER)
-#define FREQ(f)    (CLOCK_FREQ/(f*2))
+#define BUZZ_RESOLUTION 1000000
+#define BUZZ_CNT 100
+
+#define FREQ2CNT(f) BUZZ_RESOLUTION/((f)*2) 
 
 
 static void buzzer_start(uint16_t freq);
@@ -24,10 +25,8 @@ static void buzzer_stop(void);
 
 volatile int buzz_pin = 0; 
 
-static bool buzzer_isr(void* arg) 
+static bool buzzer_isr(struct gptimer_t * t, const gptimer_alarm_event_data_t * a, void * arg) 
 {
-// FIXME
-//    clock_clear_intr(BUZZER_TIMERGRP, BUZZER_TIMERIDX);
     buzz_pin = (buzz_pin==1 ? 0 : 1);
     gpio_set_level(BUZZER_PIN, buzz_pin);    
     return true;
@@ -82,10 +81,11 @@ void beeps(char* s)
 /**************************************
  * Init buzzer
  **************************************/
+static clock_t buzzer;
 
 void buzzer_init() {
     gpio_set_direction(BUZZER_PIN,  GPIO_MODE_OUTPUT);
-    clock_init(BUZZER_TIMERGRP, BUZZER_TIMERIDX, CLOCK_DIVIDER, buzzer_isr, true);
+    clock_init(&buzzer, BUZZ_RESOLUTION, BUZZ_CNT, buzzer_isr, NULL);
 }
 
 
@@ -95,7 +95,8 @@ void buzzer_init() {
  **************************************************************************/
 
 static void buzzer_start(uint16_t freq) {
-    clock_start(BUZZER_TIMERGRP, BUZZER_TIMERIDX, FREQ(freq)); 
+    clock_set_interval(buzzer, FREQ2CNT(freq));
+    clock_start(buzzer); 
 }
 
 
@@ -105,7 +106,7 @@ static void buzzer_start(uint16_t freq) {
  **************************************************************************/
 
 static void buzzer_stop() {
-    clock_stop(BUZZER_TIMERGRP, BUZZER_TIMERIDX);
+    clock_stop(buzzer);
     gpio_set_level(BUZZER_PIN, 0);
 }
 

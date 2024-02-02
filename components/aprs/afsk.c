@@ -8,15 +8,16 @@
 
 /* Important: Sample rate must be divisible by bitrate */
 /* Sampling clock setup */
-#define CLOCK_DIVIDER 16
-#define CLOCK_FREQ (TIMER_BASE_CLK / CLOCK_DIVIDER)
-#define FREQ(f) (CLOCK_FREQ/(f))
+#define FREQ2CNT(f) AFSK_RESOLUTION/(f) 
+#define AFSK_CNT FREQ2CNT(1200)
+
 
 /* Common stuff for afsk-RX and afsk-TX. */
 static bool    rxMode = false; 
 static bool    txOn = false; 
 static int     rxEnable = 0;
 static mutex_t afskmx; 
+static clock_t afskclk;
 
 void afsk_rxSampler(void *arg);
 void afsk_txBitClock(void *arg);
@@ -28,10 +29,8 @@ void afsk_txBitClock(void *arg);
 
 
 
-static bool afsk_sampler(void *arg) 
+static bool afsk_sampler(struct gptimer_t * t, const gptimer_alarm_event_data_t * a, void * arg) 
 {   
-// FIXME
-//    clock_clear_intr(AFSK_TIMERGRP, AFSK_TIMERIDX);
     if (rxMode)
         rxSampler_isr(arg); 
     else
@@ -48,7 +47,7 @@ static bool afsk_sampler(void *arg)
 void afsk_init() 
 {
     afskmx = mutex_create();
-    clock_init(AFSK_TIMERGRP, AFSK_TIMERIDX, CLOCK_DIVIDER, afsk_sampler, false);
+    clock_init(&afskclk, AFSK_RESOLUTION, AFSK_CNT, afsk_sampler, NULL);
 }
 
 
@@ -75,22 +74,22 @@ void afsk_rx_start() {
     if (!rxEnable) 
         return;
     afsk_PTT(false); 
-    clock_stop(AFSK_TIMERGRP, AFSK_TIMERIDX);     
+    if (txOn) 
+        clock_stop(afskclk);     
     rxMode = true; 
-    clock_start(AFSK_TIMERGRP, AFSK_TIMERIDX, FREQ(AFSK_SAMPLERATE));
+    txOn = false;
+    clock_start(afskclk);
 }
 
    
 void afsk_rx_stop() {
     if (!rxEnable)
         return;
-    clock_stop(AFSK_TIMERGRP, AFSK_TIMERIDX);  
+    if (rxMode) 
+        clock_stop(afskclk);  
     rxMode=false; 
     rxSampler_nextFrame(); 
     afsk_rx_newFrame();
-
-    if (txOn)
-        clock_start(AFSK_TIMERGRP, AFSK_TIMERIDX, FREQ(AFSK_BITRATE));
 }
 
 
@@ -101,9 +100,13 @@ void afsk_rx_stop() {
  
 void afsk_tx_start() {
     mutex_lock(afskmx);
-    clock_stop(AFSK_TIMERGRP, AFSK_TIMERIDX);
-    clock_start(AFSK_TIMERGRP, AFSK_TIMERIDX, FREQ(AFSK_BITRATE));
+    if (rxMode) 
+        clock_stop(afskclk);
+    
+    clock_set_interval(afskclk, FREQ2CNT(AFSK_BITRATE));
+    clock_start(afskclk);
     txOn = true; 
+    rxMode = false;
     mutex_unlock(afskmx);
 }
 
@@ -115,11 +118,14 @@ void afsk_tx_start() {
  
  void afsk_tx_stop() {
     mutex_lock(afskmx);
-    clock_stop(AFSK_TIMERGRP, AFSK_TIMERIDX); 
+    if (txOn) 
+        clock_stop(afskclk); 
     afsk_PTT(false); 
     txOn = false; 
-    if (rxMode)
-        clock_start(AFSK_TIMERGRP, AFSK_TIMERIDX, FREQ(AFSK_SAMPLERATE));
+    if (rxMode) {
+        clock_set_interval(afskclk, FREQ2CNT(AFSK_SAMPLERATE));
+        clock_start(afskclk);
+    }
     mutex_unlock(afskmx);
  }
  

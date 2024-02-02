@@ -322,21 +322,6 @@ static int do_time(int argc, char** argv)
 
 
 /********************************************************************************
- * Regular expression testing
- ********************************************************************************/
-
-static int do_regmatch(int argc, char** argv) 
-{
-    printf("ARG LEN: %d\n", strlen(argv[1]));
-    if (regexMatch(argv[1], argv[2]))
-        printf("match\n");
-    else
-        printf("NO match\n");
-    return 0;
-}
-
-
-/********************************************************************************
  * GPS testing/monitoring
  ********************************************************************************/
 
@@ -418,19 +403,16 @@ static int do_fwupgrade(int argc, char** argv)
 
 static int do_adcinfo(int argc, char** argv)
 {
-    adc_print_char(); 
-    printf("\n");
-     
     uint32_t val; 
 #if !defined(RADIO_DISABLE)
-    val = adc2_read(RADIO_INPUT);
-    printf("Radio input: %ld, %d mV\n", val, adc_toVoltage(val));
+ //   val = adc2_read(RADIO_INPUT);
+ //   printf("Radio input: %ld, %d mV\n", val, adc_toVoltage(val));
 #endif
     val = adc1_read(BATT_ADC_INPUT);
     printf(" BATT input: %ld, %d mV\n", val, adc_toVoltage(val));
     val = adc1_read(X1_ADC_INPUT);
     printf("   X1 input: %ld, %d mV\n", val, adc_toVoltage(val));
-    
+    /*
     for (int i=1; i<800; i++) {
         int16_t x = adc_sample();
         x = x >> 3;
@@ -439,6 +421,7 @@ static int do_adcinfo(int argc, char** argv)
             printf("\n");
         sleepMs(50);
     }
+    */
     printf("\n");
     return 0;
 }
@@ -491,7 +474,6 @@ void register_system()
     ADD_CMD("tasks",     &do_tasks,       "Get information about running tasks", NULL);
     ADD_CMD("log",       &do_log,         "Set loglevel (tags: wifi, wifix, http, config, shell)", "<tag> | * [<level>|delete]") ;
     ADD_CMD("time",      &do_time,        "Get date and time", NULL);
-    ADD_CMD("regex",     &do_regmatch,    "Regex match", NULL);
     ADD_CMD("nmea",      &do_nmea,        "Monitor GPS NMEA datastream", "[raw]");
     ADD_CMD("tone",      &do_tone,        "tone generator test", "");
     ADD_CMD("ptt",       &do_ptt,         "Transmitter on", "");

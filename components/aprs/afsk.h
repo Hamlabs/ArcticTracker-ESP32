@@ -9,8 +9,7 @@
  #include "freertos/queue.h"
  #include "fifo.h"
 
- #define AFSK_CLOCK_DIVIDER 16
- 
+ #define AFSK_RESOLUTION 38400 
  #define AFSK_BITRATE 1200
  #define AFSK_SAMPLERATE 9600
  
