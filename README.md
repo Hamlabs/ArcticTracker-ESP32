@@ -1,7 +1,5 @@
 # ArcticTracker-ESP32
 
-
-
 Arctic Tracker (v.3) is an APRS tracker platform based on the ESP32S3
 MCU module, a GPS, a display and a VHF transceiver module. 
 It is also a IoT device capable of using WIFI and the 
@@ -48,7 +46,8 @@ A updated PCB layout has been produced and is currently being tested. 5 trackers
 
 ## Future work
 
-A version 4 tracker will probably abandon APRS (AFSK) completely and move on to exploring 
-LoRa and FSK modes on 70 cm. 
+A version 4 tracker will probably move on to exploring LoRa and FSK modes on 70 cm. There are also some other VHF-modules around that can be interesting to look at without a separate PA module: The SR-FRS-2WVS (2 watts), the SA-868 (2 watts), maybe the SR-FRS-4W. The SA868 comes with a programmable version and I wonder if it could be somehow optimized a bit for APRS? It could also be an idea to try to port the software to the T-TWR-plus. 
 
+I am open for ideas and contributions :)
+ 
 
