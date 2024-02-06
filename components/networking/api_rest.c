@@ -10,7 +10,7 @@
 #include "system.h"
 #include "networking.h"
 #include "config.h"
-#include "esp_spi_flash.h"
+#include "esp_flash.h"
 #include "restapi.h"
 #include "digipeater.h"
 #include "igate.h"
@@ -28,26 +28,33 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     rest_cors_enable(req); 
     httpd_resp_set_type(req, "application/json");
     CHECK_AUTH(req);
+     
+    uint32_t size_flash;
+    esp_flash_get_size(NULL, &size_flash);
     
     cJSON *root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "heap", esp_get_free_heap_size());
-    cJSON_AddNumberToObject(root, "flash", 0 /* spi_flash_get_chip_size() */ ); // FIXME
+    cJSON_AddNumberToObject(root, "flash", size_flash );
     cJSON_AddStringToObject(root, "ap", wifi_getConnectedAp(buf));
     cJSON_AddStringToObject(root, "ipaddr", wifi_getIpAddr(buf));
     cJSON_AddStringToObject(root, "mdns", mdns_hostname(buf));
     
     cJSON_AddBoolToObject(root, "softap", wifi_softAp_isEnabled());
     
-    sprintf(buf, "%1.02f", ((double) adc_batt()) / 1000);
+    int16_t vbatt = batt_voltage();
+    int16_t pbatt = batt_percent();
+    sprintf(buf, "%1.02f", ((double) vbatt) / 1000);
     cJSON_AddStringToObject(root, "vbatt",  buf);       
+    cJSON_AddNumberToObject(root, "vpercent", pbatt);    
     
     uint8_t mac[6];
     ESP_ERROR_CHECK(esp_wifi_get_mac(WIFI_IF_STA, mac));
     sprintf(buf, "%s", mac2str(mac));
     cJSON_AddStringToObject(root, "macaddr", buf);
     
-    char st1[16], st2[16];
-    adc_batt_status(st1, st2);
+    char st1[16]; 
+    char st2[16];
+    batt_status(st1, st2);
     sprintf(buf, "%s %s", st1, st2);
     cJSON_AddStringToObject(root, "battstatus", buf);
     

@@ -69,7 +69,6 @@ uint16_t adc1_read(uint8_t chan);
 uint16_t adc2_read(uint8_t chan);
 uint16_t adc_toVoltage(uint16_t val);
 uint16_t adc_batt();
-uint16_t adc_batt_status(char* line1, char* line2);
 int16_t  adc_sample();
 void     adc_calibrate();
 
@@ -77,6 +76,9 @@ void     adc_calibrate();
 /* Battery */
 void batt_init(void);
 bool batt_charge(void);
+int16_t batt_voltage(void);
+int16_t batt_percent(void);
+int16_t batt_status(char* line1, char* line2);
 
 
 

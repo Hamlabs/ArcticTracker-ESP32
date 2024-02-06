@@ -41,7 +41,7 @@ static void nmeaListener(void* arg);
 /* Local variables */
 static char buf[NMEA_BUFSIZE+1];
 static bool monitor_pos, monitor_raw; 
-static bool is_fixed = true;
+static bool is_fixed = false;
 static float altitude = -1;
 static float pdop = -1;
 

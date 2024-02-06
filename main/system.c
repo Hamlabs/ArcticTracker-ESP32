@@ -27,6 +27,9 @@
 #include "gps.h"
 #include "esp_crt_bundle.h"
 #include "tracker.h"
+#if DEVICE == T_TWR 
+#include "pmu.h"
+#endif
 
 
 static void initialize_sntp(void);
@@ -137,19 +140,31 @@ esp_err_t firmware_upgrade()
 
 /******************************************************************************
  * Battery charger  
+ * FIXME: Consider moving this part to the pmu component
  ******************************************************************************/
 
 void batt_init(void)
 {
+#if DEVICE == T_TWR
+    pmu_init();
+    pmu_power_setup();
+    pmu_batt_setup();
+    ESP_LOGI(TAG, "Power/battery management enabled - T-TWR board used");
+#else
     gpio_set_direction(BATT_CHG_TEST, GPIO_MODE_INPUT);    
     gpio_set_pull_mode(BATT_CHG_TEST, GPIO_FLOATING);
+#endif
 }
 
 
 static bool charging = false;
 bool batt_charge(void)
 {
+#if DEVICE == T_TWR
+    bool chg = pmu_isCharging();
+#else
     bool chg = (gpio_get_level(BATT_CHG_TEST) == 1);
+#endif
     if (chg == charging)
         return chg;
     
@@ -163,6 +178,80 @@ bool batt_charge(void)
     }
     return chg;
 }
+
+
+
+/* Battery status */
+
+int16_t batt_voltage(void) 
+{
+#if DEVICE == T_TWR
+    return pmu_getBattVoltage();
+#else
+    return adc_batt();
+#endif
+}
+
+
+/* Charging profile for 2S LiPo battery */
+static uint16_t volt2s[] = 
+{ 8400, 8300, 8220, 8160, 8050, 7970, 7910, 7830, 7750, 7710, 7670, 
+  7630, 7590, 7570, 7530, 7490, 7450, 7410, 7370, 7220, 6550 };
+
+  
+int16_t batt_percent(void) 
+{
+#if DEVICE == T_TWR
+    return pmu_getBattPercent();
+#else
+    uint8_t p = 100;
+    uint8_t chg = (batt_charge() ? 90 : 0);
+    
+    for (i=0; i<21; i++)
+        if (vbatt < volt2s[i]+chg)
+            p -= 5;
+        else
+            break;
+    return p;
+#endif
+}
+
+
+
+/*************************************************************************
+ * Textual description of battery status
+ *************************************************************************/
+
+int16_t batt_status(char* line1, char* line2)
+{
+    // FIXME: Translate voltage to percentage for tracker without pmu?
+    // FIXME: Adjust percentages
+    
+    int16_t pbatt = pmu_getBattPercent();
+    int16_t vbatt = pmu_getBattVoltage();
+    if (line2)
+        sprintf(line2, " ");
+    
+    if (pbatt > 90) {
+        if (line1) sprintf(line1, "Max (charged)");
+    }
+    else if (pbatt > 70) { 
+        if (line1) sprintf(line1, "Full.");
+    }
+    else if (pbatt > 40) {
+        if (line1) sprintf(line1, "Ok.");
+    }
+    else if (pbatt > 20) {
+        if (line1) sprintf(line1, "Low.");  
+        if (line2 && batt_charge()) sprintf(line2, "Need charging.");
+    }
+    else {
+        if (line1) sprintf(line1, "Empty.");
+        if (line2 && batt_charge()) sprintf(line2, "Charge ASAP!");
+    } 
+    return vbatt;
+}
+
 
 
 
@@ -267,9 +356,9 @@ void time_init()
 
 time_t getTime() {
     time_t now;
-    if (gps_is_fixed())
+    if (gps_is_fixed()) 
         now = gps_get_time();
-    else
+    else 
         time(&now);
     return now;
 }

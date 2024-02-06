@@ -171,17 +171,17 @@ static void startup(void* arg)
 {
     sleepMs(2500);
     trackstore_start();
-    afsk_init(); 
-    hdlc_init_decoder(afsk_rx_init());
-    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
+ //   afsk_init(); 
+ //   hdlc_init_decoder(afsk_rx_init());
+ //   FBQ* oq = hdlc_init_encoder(afsk_tx_init());
    
     gps_init(GPS_UART);
-    radio_init();
+ //   radio_init();
         
-    tracker_init(oq);
-    tracklog_init();
-    digipeater_init(oq);
-    igate_init(); 
+ //   tracker_init(oq);
+ //   tracklog_init();
+ //   digipeater_init(oq);
+ //   igate_init(); 
     
     mon_init();
     sleepMs(100);
@@ -204,12 +204,12 @@ void app_main()
     gpio_iomux_out(42, 1, false); // FUNC_MTMS_GPIO42
     gpio_iomux_in(18, U1RXD_IN_IDX); 
     
-    batt_init();
+
     fbuf_init();
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
     set_logLevels();
-    adc_init(); 
+//    adc_init(); 
     initialize_console();
     
     /* Register commands */
@@ -221,7 +221,8 @@ void app_main()
     spiffs_init();    
     rest_start(HTTPD_PORT, "/");
     ui_init();
-    
+    batt_init(); // Move this first? Move i2c initialization out of display code
+        
     /* Put this on CPU #1 or we may run out of interrupts */
     xTaskCreatePinnedToCore(&startup, "Startup thread", 
         3200, NULL, NORMALPRIO+1, NULL, 1);

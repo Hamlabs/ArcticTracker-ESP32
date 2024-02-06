@@ -120,14 +120,16 @@ static void status_heading(char* label) {
 #endif
 #endif
     
-    uint16_t batt = adc_batt(); 
+    uint16_t batt = batt_percent();
+    
     uint8_t bi; 
-    if (batt > 8000)      bi = 4;
-    else if (batt > 7800) bi = 3; 
-    else if (batt > 7400) bi = 2;  
-    else if (batt > 7100) bi = 1;  // Low
+    if (batt > 80)      bi = 4;
+    else if (batt > 60) bi = 3; 
+    else if (batt > 40) bi = 2;  
+    else if (batt > 20) bi = 1;  // Low
     else bi = 0;
              
+    
 #if DISPLAY_TYPE == 0
     disp_battery(70,3,bi);
     disp_hLine(0,10,66);
@@ -253,17 +255,20 @@ static void status_screen5() {
     disp_clear();
     status_heading("BATT");
  
-    uint16_t batt = adc_batt_status(b1, b2);
-    sprintf(buf, "%1.02f V%c", ((float)batt)/1000, '\0');
+    uint16_t batt = batt_status(b1, b2);
+    uint8_t bp = batt_percent();
+    
+    sprintf(buf, "%1.02f V  %d %c%c", ((float)batt)/1000, bp, '%', '\0');
+
     disp_writeText(0, LINE1, buf);
     disp_writeText(0, LINE2, b1);
     disp_setBoldFont(true);
 
-    if (batt_charge()) {
+    if (batt_charge() ) {
         disp_writeText(0, LINE4, "CHARGING...");
         chg_cnt = 50;
     }
-    else if (adc_batt() >= 8240 && chg_cnt > 0) {
+    else if (batt_voltage() >= 8240 && chg_cnt > 0) {
         disp_writeText(0, LINE4, "CHARGE COMPLETE!");
         chg_cnt--; 
     }

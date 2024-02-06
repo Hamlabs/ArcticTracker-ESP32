@@ -197,7 +197,7 @@ static void button_init() {
     button_init();
 
     /* Buzzer */
-    buzzer_init(); 
+    buzzer_init(); // FIXME: How to buzz on a T-TWR?
 
     /* LCD display */  
     disp_init();
@@ -206,14 +206,15 @@ static void button_init() {
     gui_welcome(); 
     status_init(); 
 
-    gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
-    gpio_set_direction(LED_TX_PIN,  GPIO_MODE_OUTPUT);
-    gpio_set_level(LED_STATUS_PIN, 0);
-    gpio_set_level(LED_TX_PIN, 0);
+// Commented out for T-TWR. FIXME 
+//    gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
+//    gpio_set_direction(LED_TX_PIN,  GPIO_MODE_OUTPUT);
+//    gpio_set_level(LED_STATUS_PIN, 0);
+//    gpio_set_level(LED_TX_PIN, 0);
 
     /* LED blinker thread */
-    xTaskCreatePinnedToCore(&ui_thread, "LED blinker", 
-        STACK_LEDBLINKER, NULL, NORMALPRIO, NULL, CORE_LEDBLINKER);
+//    xTaskCreatePinnedToCore(&ui_thread, "LED blinker", 
+//        STACK_LEDBLINKER, NULL, NORMALPRIO, NULL, CORE_LEDBLINKER);
     menu_init();
  }
  

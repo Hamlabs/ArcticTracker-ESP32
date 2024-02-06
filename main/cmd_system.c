@@ -15,6 +15,7 @@
 #include "esp_spiffs.h"
 #include "driver/rtc_io.h"
 #include "nvs_flash.h"
+#include "esp_flash.h"
 #include "argtable3/argtable3.h"
 #include "system.h"
 #include "commands.h"
@@ -31,6 +32,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_chip_info.h"
+#include "pmu.h"
 
 
 static int do_sysinfo(int argc, char** argv);
@@ -207,7 +209,9 @@ static int do_sysinfo(int argc, char** argv)
     extern esp_vfs_spiffs_conf_t spconf;
     size_t size, used;
     esp_spiffs_info(spconf.partition_label, &size, &used);
-    
+    uint32_t size_flash;
+    esp_flash_get_size(NULL, &size_flash);
+    size_flash /= 1000000;
     
     printf("Free heap:       %ld bytes\n", esp_get_free_heap_size());
     printf("FBUF free mem:   %ld bytes\n", fbuf_freeMem());
@@ -217,11 +221,12 @@ static int do_sysinfo(int argc, char** argv)
     printf("Chip info:\n");
     printf("  model:         %s\n", model);
     printf("  cores:         %d\n", info.cores);
-    printf("  features:      %s%s%s%s\n",
+    printf("  features:      %s%s%s%s%ld%s\n",
            info.features & CHIP_FEATURE_WIFI_BGN ? "802.11bgn" : "",
            info.features & CHIP_FEATURE_BLE ? " / BLE" : "",
            info.features & CHIP_FEATURE_BT ? " / BT" : "",
-           info.features & CHIP_FEATURE_EMB_FLASH ? " / Embedded-Flash :" : " / External-Flash:  "
+           info.features & CHIP_FEATURE_EMB_FLASH ? " / Embedded-Flash :" : " / External-Flash:  ",
+           size_flash, " MB"
     );
     printf("  revision nr:   %d\n", info.revision);
     return 0;
@@ -311,7 +316,6 @@ static int do_time(int argc, char** argv)
         char strftime_buf[64];
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         printf("%s UTC\n", strftime_buf);
-        
         printf("Seconds: %lld\n", getTime());
     }
     else
@@ -434,8 +438,11 @@ static int do_adcinfo(int argc, char** argv)
 
 static int do_vbatt(int argc, char** argv)
 {
-    uint16_t batt = adc_batt();
-    printf("Battery voltage: %1.02f V\n", ((double) batt)/1000);
+    int16_t batt = batt_voltage();
+    if (batt == -1)
+        printf("Battery voltage not available\n");
+    else
+        printf("Battery voltage: %1.02f V\n", ((double) batt)/1000);
     return 0;
 }
 
@@ -450,6 +457,8 @@ static int do_reset(int argc, char** argv) {
     trackstore_reset();
     return 0;
 }
+
+
 
 
 CMD_U16_SETTING  (_param_adcref, "ADC.REF",  1100, 0, 3300);

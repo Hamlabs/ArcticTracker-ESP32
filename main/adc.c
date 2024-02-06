@@ -177,56 +177,6 @@ uint16_t adc_batt()
 
 
 
-/*************************************************************************
- * Textual description of battery status
- *************************************************************************/
-// FIXME: Move to ui.c
-
-uint16_t adc_batt_status(char* line1, char* line2)
-{
-    uint16_t vbatt = adc_batt();
-    if (line2)
-        line2[0] = '\0'; 
-    
-    if (batt_charge()) {
-        if (vbatt > 8340) {
-            if (line1) sprintf(line1, "Max (charged)");
-        }
-        else if (vbatt > 8000) { 
-            if (line1) sprintf(line1, "Full.");
-        }
-        else if (vbatt > 7600) {
-            if (line1) sprintf(line1, "Ok.");
-        }
-        else if (vbatt > 7300) {
-            if (line1) sprintf(line1, "Low.");  
-        }
-    }
-    else {
-        if (vbatt > 8250) {
-            if (line1) sprintf(line1, "Max (charged)");
-        }
-        else if (vbatt > 7800) { 
-            if (line1) sprintf(line1, "Full.");
-        }
-        else if (vbatt > 7400) {
-            if (line1) sprintf(line1, "Ok.");
-        }
-        else if (vbatt > 7100) {
-            if (line1) sprintf(line1, "Low.");  
-            if (line2) sprintf(line2, "Need charging.");
-        }
-        else {
-            if (line1) sprintf(line1, "Empty.");
-            if (line2) sprintf(line2, "Charge ASAP!");
-        } 
-    }
-    
-    return vbatt;
-}
-
-
-
 int adc2_get_rawISR(adc2_channel_t channel)
 {
     int out = 0;

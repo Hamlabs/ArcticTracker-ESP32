@@ -10,12 +10,18 @@
 // #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 
+
 #define VERSION_SSTRING "3.0b3"
 #define VERSION_STRING "v3.0 beta3"
 #define FW_NAME "Arctic esp32"
 #define FW_DATE "2023-06-04"
 
 #define BIT_0	( 1 << 0 )
+
+#define T_TWR 1
+#define DEVICE T_TWR
+
+
 
 /* 
  * If set to true, radio will be turned off even if tracking is active
@@ -43,7 +49,9 @@
  */ 
 #define TIMER_BASE_CLK 80000000
  
+#define BOARD T_TWR
 #define MCU ESP32S3
+
 
 /* Queues for AFSK encoder/decoder */
 #define AFSK_RX_QUEUE_SIZE       16
@@ -79,9 +87,15 @@
 
 
 /* GPS */
+#if DEVICE == T_TWR
+#define GPS_UART        UART_NUM_1
+#define GPS_TXD_PIN     6
+#define GPS_RXD_PIN     5
+#else
 #define GPS_UART        UART_NUM_1
 #define GPS_TXD_PIN     17
 #define GPS_RXD_PIN     18
+#endif
 
 
 /* DISPLAY CONFIG: 
@@ -91,8 +105,8 @@
  * actual display used. Known alternatives are: 
  * 
  * 128x64  (0.96") is a very popular configuration
- * 128x32  (0.91") half height (not supported yet)
- * 72x40   (0.42") e.g. DM-OLED042-647 from DisplayModule (not supported yet)
+ * 128x32  (0.91") half height 
+ * 72x40   (0.42") e.g. DM-OLED042-647 from DisplayModule 
  * 
  */
 
@@ -114,9 +128,13 @@
 #define LCD_PIN_RST     -1
 
 /* These are for the SSD1306 display on I2C */
+#if DEVICE == T_TWR
+#define DISP_SDA_PIN     8
+#define DISP_SCL_PIN     9
+#else
 #define DISP_SDA_PIN     9
 #define DISP_SCL_PIN    10
-
+#endif
 
 /* SPI setup */
 #define SPI_HOST        SPI3_HOST
@@ -124,10 +142,17 @@
 #define SPI_PIN_MOSI    14 
 #define SPI_PIN_CLK     12
 
+
 /* LEDs and button */
+#if DEVICE == T_TWR
+#define LED_STATUS_PIN  -1
+#define LED_TX_PIN      -1
+#define BUTTON_PIN      21
+#else
 #define LED_STATUS_PIN  41
 #define LED_TX_PIN      42
 #define BUTTON_PIN       0
+#endif
 
 /* Buzzer */
 #define BUZZER_PIN      45
@@ -180,7 +205,7 @@
 #define STACK_IGATE_RADIO    2300
 #define STACK_TRACKLOG       3300
 #define STACK_TRACKLOGPOST   3900
-#define STACK_HTTPD          5000
+#define STACK_HTTPD          5500
 
     
 #define CORE_AUTOCON        0
