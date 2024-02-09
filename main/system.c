@@ -520,7 +520,7 @@ esp_log_level_t str2loglevel(char* str)
     return ESP_LOG_NONE;
 }
 
-
+int __characters = 0;
 
 /****************************************************************************
  * read line from serial input 
@@ -531,6 +531,7 @@ bool readline(uart_port_t cbp, char* buf, const uint16_t max)
 {
   char x, xx;
   uint16_t i=0; 
+  __characters = 0;
   
   for (i=0; i<max; i++) {
     uart_read_bytes(cbp, (uint8_t*) &x, 1, portMAX_DELAY);     
@@ -546,6 +547,7 @@ bool readline(uart_port_t cbp, char* buf, const uint16_t max)
     buf[i]=x;
   }
   buf[i] = '\0';
+  __characters = i;
   return true;
 }
 

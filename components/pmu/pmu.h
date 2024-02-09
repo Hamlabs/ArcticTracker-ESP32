@@ -15,6 +15,7 @@ uint16_t pmu_getBattVoltage(void);
 uint16_t pmu_getBattPercent(void);
 float pmu_getTemperature(void);
 bool pmu_isCharging();
+bool pmu_dc3_isOn();
 
 
 #ifdef __cplusplus

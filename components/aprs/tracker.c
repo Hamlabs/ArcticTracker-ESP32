@@ -404,7 +404,7 @@ static void report_status(posdata_t* pos)
      * telemetry message instead. 
      */
     char vbatt[7];
-    sprintf(vbatt, "%.1f%c", ((double) adc_batt()/1000 ), '\0');
+    sprintf(vbatt, "%.1f%c", ((double) batt_voltage()/1000 ), '\0');
 
     
     /* Send firmware version and battery voltage in status report */

@@ -2,7 +2,7 @@
 
 #define DFL_MYCALL       "NOCALL"
 #define DFL_TRKLOG_URL   "https://localhost/trklog"
-#define DFL_DEST         "APAT30"
+#define DFL_DEST         "APAR31"
 #define DFL_DIGIPATH     ""
 #define DFL_SYMBOL       "/]"
 #define DFL_OBJ_SYMBOL   "/]"

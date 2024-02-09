@@ -7,20 +7,16 @@
 #define _DEFINES_H_
 
 
-// #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
-
-
-
-#define VERSION_SSTRING "3.0b3"
-#define VERSION_STRING "v3.0 beta3"
+#define VERSION_SSTRING "3.1a"
+#define VERSION_STRING "v3.1 alpha"
 #define FW_NAME "Arctic esp32"
-#define FW_DATE "2023-06-04"
+#define FW_DATE "2024-02-09"
 
 #define BIT_0	( 1 << 0 )
 
 #define T_TWR 1
 #define DEVICE T_TWR
-
+#define MCU ESP32S3
 
 
 /* 
@@ -49,8 +45,6 @@
  */ 
 #define TIMER_BASE_CLK 80000000
  
-#define BOARD T_TWR
-#define MCU ESP32S3
 
 
 /* Queues for AFSK encoder/decoder */
@@ -60,22 +54,47 @@
 #define HDLC_ENCODER_QUEUE_SIZE  16
 
 /* Radio module */
-//#define RADIO_DISABLE
-//#define DAC_DISABLE
+// #define RADIO_DISABLE
+
 #if !defined(RADIO_DISABLE)
 
+#define RADIO_BUF_SIZE      256
+
+#if DEVICE == T_TWR
 #define RADIO_UART          UART_NUM_0
-// #define RADIO_PIN_TXD        2
-// #define RADIO_PIN_RXD       15
+#define RADIO_PIN_TXD       39 
+#define RADIO_PIN_RXD       48
+#define RADIO_PIN_PTT       41
+#define RADIO_PIN_PD        40
+#define RADIO_PIN_PWR       38
+#define RADIO_PIN_TXSEL     17 
+
+/* Radio audio input */
+#define RADIO_INPUT         ADC2_CHANNEL_3  // IO1 FIXME 
+
+/* Tone generation (for AFSK) */
+#define TONE_SDELTA_ENABLE
+#define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
+#define TONE_SDELTA_PIN  18
+
+#else
+
+#define RADIO_UART          UART_NUM_0
 #define RADIO_PIN_PTT       38
 #define RADIO_PIN_TXP       40
 #define RADIO_PIN_PD        39
 #define RADIO_PIN_SQUELCH   13
-#define RADIO_BUF_SIZE      256
-#endif
 
 /* Radio audio input */
 #define RADIO_INPUT         ADC2_CHANNEL_3
+
+/* Tone generation (for AFSK) */
+#define TONE_SDELTA_ENABLE
+#define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
+#define TONE_SDELTA_PIN  48
+
+#endif
+#endif
 
 
 /* Misc. ADC inputs */
@@ -155,17 +174,14 @@
 #endif
 
 /* Buzzer */
+#if DEVICE == T_TWR
+#define BUZZER_PIN      -1
+#else
 #define BUZZER_PIN      45
+#endif
 #define BUZZER_TIMERGRP  0
 #define BUZZER_TIMERIDX  0
 
-/* Tone generation (for AFSK) */
-#define TONE_SDELTA_ENABLE
-// #define TONE_DAC_ENABLE
-
-#define TONE_DAC_CHAN    DAC_CHANNEL_1
-#define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
-#define TONE_SDELTA_PIN  48
 
 #define AFSK_MARK        1200
 #define AFSK_SPACE       2200
@@ -177,6 +193,7 @@
 /* Timer for AFSK tone generation */
 #define TONE_TIMERGRP    0
 #define TONE_TIMERIDX    1
+
 
 
 #define HTTPD_PORT        80
@@ -226,8 +243,6 @@
 #define CORE_TRACKLOG       1
 #define CORE_TRACKLOGPOST   1
 
-// FIXME: If ledblinker is run on CPU 1, system will crash! 
-// FIXME: Seems to be an issue with beep if it runs on CPU 1 ???
 
 
 #define BBUF_SIZE 4096

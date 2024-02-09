@@ -158,7 +158,7 @@ static void status_screen1() {
     disp_writeText(0, LINE1, call);
     disp_setBoldFont(false);
     
-    int32_t f = GET_I32_PARAM("TXFREQ");
+    int32_t f = get_i32_param("TXFREQ", DFL_TXFREQ);
     sprintf(buf, "%03ld.%03ld MHz%c", f/10000, (f/10)%1000, '\0');
     disp_writeText(0, LINE2, buf);
     

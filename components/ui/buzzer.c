@@ -84,8 +84,10 @@ void beeps(char* s)
 static clock_t buzzer;
 
 void buzzer_init() {
+#if BUZZER_PIN != -1
     gpio_set_direction(BUZZER_PIN,  GPIO_MODE_OUTPUT);
     clock_init(&buzzer, BUZZ_RESOLUTION, BUZZ_CNT, buzzer_isr, NULL);
+#endif
 }
 
 
@@ -95,8 +97,10 @@ void buzzer_init() {
  **************************************************************************/
 
 static void buzzer_start(uint16_t freq) {
+#if BUZZER_PIN != -1
     clock_set_interval(buzzer, FREQ2CNT(freq));
     clock_start(buzzer); 
+#endif
 }
 
 
@@ -106,8 +110,10 @@ static void buzzer_start(uint16_t freq) {
  **************************************************************************/
 
 static void buzzer_stop() {
+#if BUZZER_PIN != -1
     clock_stop(buzzer);
     gpio_set_level(BUZZER_PIN, 0);
+#endif
 }
 
 

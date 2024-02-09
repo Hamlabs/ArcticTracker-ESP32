@@ -171,15 +171,15 @@ static void startup(void* arg)
 {
     sleepMs(2500);
     trackstore_start();
- //   afsk_init(); 
+    afsk_init(); 
  //   hdlc_init_decoder(afsk_rx_init());
- //   FBQ* oq = hdlc_init_encoder(afsk_tx_init());
+    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
    
     gps_init(GPS_UART);
- //   radio_init();
+    radio_init();
         
- //   tracker_init(oq);
- //   tracklog_init();
+    tracker_init(oq);
+    tracklog_init();
  //   digipeater_init(oq);
  //   igate_init(); 
     
@@ -198,12 +198,18 @@ extern void rest_start(int port, char* uri);
 void app_main()
 {       
     /* Change function of somee pins through IO mux to be GPIO */
+#if DEVICE==T_TWR
+    gpio_iomux_in (39, U0RXD_IN_IDX); 
+    gpio_iomux_out(48, U0TXD_OUT_IDX, false); 
+    gpio_iomux_out(40, 1, false);
+    gpio_iomux_out(41, 1, false);
+#else    
     gpio_iomux_out(39, 1, false); // FUNC_MTCK_GPIO39
     gpio_iomux_out(40, 1, false); // FUNC_MTDO_GPIO40
     gpio_iomux_out(41, 1, false); // FUNC_MTDI_GPIO41
     gpio_iomux_out(42, 1, false); // FUNC_MTMS_GPIO42
-    gpio_iomux_in(18, U1RXD_IN_IDX); 
-    
+    gpio_iomux_in (18, U1RXD_IN_IDX); 
+#endif
 
     fbuf_init();
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);

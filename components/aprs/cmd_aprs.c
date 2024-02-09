@@ -189,6 +189,14 @@ void hdl_trkpost(bool on) {
 }
 
 
+#if DEVICE==T_TWR
+
+void hdl_txlow(bool on) {
+    radio_setLowTxPower(on);
+}
+
+#endif
+
 
 // Radio and APRS settings
 
@@ -241,6 +249,9 @@ CMD_BOOL_SETTING (_param_xturn_on,   "EXTRATURN.on",   NULL);
 CMD_BOOL_SETTING (_param_igtrack_on, "IGATE.TRACK.on", NULL);
 CMD_BOOL_SETTING (_param_txmon_on,   "TXMON.on",       NULL);
 
+#if DEVICE==T_TWR
+CMD_BOOL_SETTING (_param_txlow_on,   "TXLOW.on",       hdl_txlow);
+#endif
 
 
 /********************************************************************************
@@ -279,7 +290,7 @@ void register_aprs()
     ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
-    ADD_CMD("miclevel",   &_param_miclevel,    "Miclevel setting (1-8)",             "[<val>]");
+    ADD_CMD("miclevel",   &_param_miclevel,    "Miclevel setting (1-8)",            "[<val>]");
         
     ADD_CMD("timestamp",  &_param_timestamp,   "Timestamp setting",  "[on|off]");
     ADD_CMD("compress",   &_param_compress,    "Compress setting",  "[on|off]");
@@ -302,6 +313,10 @@ void register_aprs()
     ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport in turns", "[on|off]");
     ADD_CMD("igtrack",    &_param_igtrack_on,  "Send posreports directly to APRS/IS when available", "[on|off]");   
     ADD_CMD("txmon",      &_param_txmon_on,    "Tx monitor", "[on|off]");
+    
+#if DEVICE==T_TWR
+    ADD_CMD("txlow",      &_param_txlow_on,    "Tx power low", "[on|off]");
+#endif    
 }
 
 

@@ -86,7 +86,7 @@ void pmu_power_setup()
 {
     /* Turn on the power that needs to be used
      * DC1 ESP32S3 Core VDD , Don't change */
-    PMU.enableDC3();
+    PMU.enableDC1();
 
     /* External pin power supply */
     PMU.enableDC5();
@@ -168,6 +168,11 @@ void pmu_gps_on(bool on)
         PMU.enableALDO4();
     else
         PMU.disableALDO4();
+}
+
+
+bool pmu_dc3_isOn() {
+    return PMU.isEnableDC3();
 }
 
 
