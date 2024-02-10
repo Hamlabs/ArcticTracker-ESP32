@@ -7,15 +7,16 @@
 #define _DEFINES_H_
 
 
-#define VERSION_SSTRING "3.1a"
-#define VERSION_STRING "v3.1 alpha"
-#define FW_NAME "Arctic esp32"
-#define FW_DATE "2024-02-09"
+#define VERSION_SSTRING "3.1"
+#define VERSION_STRING  "v3.1a"
+#define FW_NAME "Arctic Tracker"
+#define FW_DATE "2024-02-10"
 
 #define BIT_0	( 1 << 0 )
 
 #define T_TWR 1
 #define DEVICE T_TWR
+#define DEVICE_STRING "LilyGo T-TWR-Plus"
 #define MCU ESP32S3
 
 
@@ -162,11 +163,12 @@
 #define SPI_PIN_CLK     12
 
 
-/* LEDs and button */
+/* LEDs and buttons */
 #if DEVICE == T_TWR
-#define LED_STATUS_PIN  -1
-#define LED_TX_PIN      -1
-#define BUTTON_PIN      21
+#define BUTTON_PIN       3
+#define ENC_PUSH_PIN    21
+#define ENC_DOWN_PIN    47
+#define ENC_UP_PIN      46
 #else
 #define LED_STATUS_PIN  41
 #define LED_TX_PIN      42

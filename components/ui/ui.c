@@ -18,7 +18,7 @@ static void clickhandler(struct tmrTimerControl * p);
 
 #define TAG "ui"
 
-static void click_handler(void* p); 
+static void click_handler(void* p, bool up); 
 static void push_handler(void* p);
   
 /*********************************************************************
@@ -42,7 +42,7 @@ static cond_t buttCond;
        if ( cond_testBits(buttCond, BUTT_EV_SHORT) ) {
           ESP_LOGI(TAG, "Butt ev short");
           beep(20); 
-          click_handler(NULL);
+          click_handler(NULL, false);
           cond_clearBits(buttCond, BUTT_EV_LONG|BUTT_EV_SHORT);
        }
        else {
@@ -61,18 +61,30 @@ static cond_t buttCond;
  **************************************/
  
 static bool buttval = 0;
+static bool buttval2 = 0;
 static bool pressed; 
 static TimerHandle_t bptimer, bhtimer;
+
+
+/* Rotary encoder on T_TWR */
+static void enc_handler(void* x)
+{
+    int up = gpio_get_level(ENC_UP_PIN);
+    click_handler(NULL, up >=1);
+}
 
 
 static void button_handler(void* x) 
 {
     BaseType_t hpw = pdFALSE;
-    buttval = gpio_get_level(BUTTON_PIN); 
+    buttval = gpio_get_level(BUTTON_PIN);
+#if DEVICE == T_TWR
+    buttval2 = gpio_get_level(ENC_PUSH_PIN);
+#endif
     xTimerStopFromISR(bptimer, &hpw);
     xTimerStopFromISR(bhtimer, &hpw);
 
-    if (buttval==0) {
+    if (buttval==0 || buttval2==0) {
         xTimerStartFromISR(bptimer, &hpw);
         xTimerStartFromISR(bhtimer, &hpw);
     }
@@ -88,8 +100,15 @@ static void bphandler(struct tmrTimerControl* p)
 {
     (void) p;
     /* If the button has been pressed down for 10ms */
+#if DEVICE == T_TWR
+    if ((gpio_get_level(BUTTON_PIN) == 0 && buttval==0) ||
+        (gpio_get_level(ENC_PUSH_PIN) == 0 && buttval2==0) )
+       pressed = true;
+#else
     if ((gpio_get_level(BUTTON_PIN) == 0) && buttval==0)
        pressed = true;
+#endif
+
 }
  
 
@@ -104,6 +123,7 @@ static void holdhandler(struct tmrTimerControl *p) {
     pressed = false;
     cond_setBits(buttCond, BUTT_EV_LONG);
 }
+
 
 
 
@@ -130,6 +150,31 @@ static void button_init() {
     gpio_set_pull_mode(BUTTON_PIN, GPIO_PULLUP_ONLY);
     gpio_pullup_en(BUTTON_PIN);
     gpio_intr_enable(BUTTON_PIN);
+
+#if DEVICE == T_TWR
+    gpio_set_intr_type(ENC_PUSH_PIN, GPIO_INTR_ANYEDGE);
+    gpio_isr_handler_add(ENC_PUSH_PIN, button_handler, NULL);
+    gpio_set_direction(ENC_PUSH_PIN,  GPIO_MODE_INPUT);
+    gpio_set_pull_mode(ENC_PUSH_PIN, GPIO_PULLUP_ONLY);
+    gpio_pullup_en(ENC_PUSH_PIN);
+    gpio_intr_enable(ENC_PUSH_PIN);
+    
+    /*
+    gpio_set_intr_type(ENC_UP_PIN, GPIO_INTR_ANYEDGE);
+    gpio_isr_handler_add(ENC_UP_PIN, enc_handler, NULL);
+    gpio_set_direction(ENC_UP_PIN,  GPIO_MODE_INPUT);
+    gpio_set_pull_mode(ENC_UP_PIN, GPIO_PULLUP_ONLY);
+    gpio_pullup_en(ENC_UP_PIN);
+    gpio_intr_enable(ENC_UP_PIN);
+    
+    gpio_set_intr_type(ENC_DOWN_PIN, GPIO_INTR_ANYEDGE);
+    gpio_isr_handler_add(ENC_DOWN_PIN, enc_handler, NULL);
+    gpio_set_direction(ENC_DOWN_PIN,  GPIO_MODE_INPUT);
+    gpio_set_pull_mode(ENC_DOWN_PIN, GPIO_PULLUP_ONLY);
+    gpio_pullup_en(ENC_DOWN_PIN);
+    gpio_intr_enable(ENC_DOWN_PIN);
+    */
+#endif
     
  }
  
@@ -142,6 +187,7 @@ static void button_init() {
  uint16_t blink_length=500, blink_interval=500;
  bool blink_both=false;
 
+#if DEVICE != T_TWR
  
  static void ui_thread(void* arg)
  {
@@ -162,6 +208,7 @@ static void button_init() {
    }
  }
  
+#endif 
  
  
  /******************************************
@@ -178,12 +225,14 @@ static void button_init() {
 
  
  
- static void click_handler(void* p) {
+ static void click_handler(void* p, bool up) {
     disp_backlight();
     if (menu_is_active())
         menu_increment();
-    else
-        status_next();
+    else {
+        if (up) status_prev(); 
+        else status_next();
+    }
  }
 
  
@@ -197,7 +246,7 @@ static void button_init() {
     button_init();
 
     /* Buzzer */
-    buzzer_init(); // FIXME: How to buzz on a T-TWR?
+    buzzer_init(); 
 
     /* LCD display */  
     disp_init();
@@ -206,15 +255,16 @@ static void button_init() {
     gui_welcome(); 
     status_init(); 
 
-// Commented out for T-TWR. FIXME 
-//    gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
-//    gpio_set_direction(LED_TX_PIN,  GPIO_MODE_OUTPUT);
-//    gpio_set_level(LED_STATUS_PIN, 0);
-//    gpio_set_level(LED_TX_PIN, 0);
+#if DEVICE != T_TWR
+    gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
+    gpio_set_direction(LED_TX_PIN,  GPIO_MODE_OUTPUT);
+    gpio_set_level(LED_STATUS_PIN, 0);
+    gpio_set_level(LED_TX_PIN, 0);
 
     /* LED blinker thread */
-//    xTaskCreatePinnedToCore(&ui_thread, "LED blinker", 
-//        STACK_LEDBLINKER, NULL, NORMALPRIO, NULL, CORE_LEDBLINKER);
+    xTaskCreatePinnedToCore(&ui_thread, "LED blinker", 
+        STACK_LEDBLINKER, NULL, NORMALPRIO, NULL, CORE_LEDBLINKER);
+#endif
     menu_init();
  }
  

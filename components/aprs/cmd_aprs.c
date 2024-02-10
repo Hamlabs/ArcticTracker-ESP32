@@ -62,7 +62,7 @@ static int do_testpacket(int argc, char** argv)
     radio_require();    
     sleepMs(100);
     get_str_param("MYCALL", from, 10, "NOCALL");
-    get_str_param("DEST", to, 10, "APAT30");       
+    get_str_param("DEST", to, 10, DFL_DEST);       
     get_str_param("DIGIPATH", dbuf, 70, "");
 
     fbuf_new(&packet);

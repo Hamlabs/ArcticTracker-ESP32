@@ -92,7 +92,7 @@ void status_show() {
 
 
 /****************************************************************
- * Cycle to next status screen 
+ * Cycle to next or previous status screen 
  ****************************************************************/
 
 void status_next() { 
@@ -100,6 +100,12 @@ void status_next() {
     status_show();
 }
 
+void status_prev() { 
+    current = (current - 1); 
+    if (current < 0) 
+        current = NSCREENS-1; 
+    status_show();
+}
 
 
 /****************************************************************
@@ -187,14 +193,16 @@ static void status_screen2() {
     disp_clear();
     status_heading("GPS");
     if (gps_is_fixed()) {
-       disp_writeText(0, LINE1, pos2str_lat(buf, gps_get_pos()));
-       disp_writeText(0, LINE2, pos2str_long(buf, gps_get_pos()));
-       disp_writeText(0, LINE3, datetime2str(buf, gps_get_time()));
+        disp_setBoldFont(true);
+        disp_writeText(0, LINE1, pos2str_lat(buf, gps_get_pos()));
+        disp_writeText(0, LINE2, pos2str_long(buf, gps_get_pos()));
+        disp_setBoldFont(false);
+        disp_writeText(0, LINE3, datetime2str(buf, gps_get_time()));
        
-       if (gps_get_pdop() > -1) {
+        if (gps_get_pdop() > -1) {
             sprintf(buf, "pdop: %1.02f", (float) gps_get_pdop());
             disp_writeText(0, LINE4, buf);
-       }
+        }
     }		     
     else
        disp_writeText(0, LINE1, "Searching...");
@@ -289,6 +297,7 @@ static void status_screen6() {
     disp_writeText(0, LINE1, FW_NAME);
     disp_writeText(0, LINE2, VERSION_STRING);
     disp_writeText(0, LINE3, FW_DATE);   
+    disp_writeText(0, LINE4, DEVICE_STRING);   
     disp_flush();
 }
 

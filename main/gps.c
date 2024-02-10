@@ -136,13 +136,14 @@ static void nmeaListener(void* arg)
     if (buf[i] == '*') {
       buf[i] = 0;
       sscanf(buf+i+1, "%x", &c_checksum);
-      if (c_checksum != checksum) 
-        continue;
+      if (c_checksum != checksum)
+         continue;
     } 
     nmea_ok = true;
     
     /* Split input line into tokens */
-    argc = tokenize(buf, argv, NMEA_MAXTOKENS, ",", false);           
+    argc = tokenize(buf, argv, NMEA_MAXTOKENS, ",", false); 
+    
     /* Select command handler */    
     if (strncmp("RMC", argv[0]+3, 3) == 0)
       do_rmc(argc, argv);
@@ -372,10 +373,9 @@ bool gps_wait_fix(uint16_t timeout)
 
 static void do_rmc(uint8_t argc, char** argv)
 {
-    static uint8_t lock_cnt = 4;
-    
+    static uint8_t lock_cnt = 4;    
     char tbuf[9];
-    if (argc != 13)                 /* Ignore if wrong format */
+    if (argc < 13 || argc > 14)                 /* Ignore if wrong format */
        return;
     
     /* get timestamp */
@@ -392,8 +392,7 @@ static void do_rmc(uint8_t argc, char** argv)
          lock_cnt--;
          return;
       }
-      
-      
+    
     lock_cnt = 1;
     notify_fix(true);
    
@@ -441,10 +440,10 @@ static void do_rmc(uint8_t argc, char** argv)
 
 static void do_gga(uint8_t argc, char** argv)
 {
-    if (argc == 15 && *argv[6] > '0')
-       sscanf(argv[9], "%f", &altitude);
-    else
-       altitude = -1; 
+   if (argc == 15 && *argv[6] > '0')
+      sscanf(argv[9], "%f", &altitude);
+   else
+      altitude = -1; 
 }
 
 
@@ -454,9 +453,9 @@ static void do_gga(uint8_t argc, char** argv)
 
 static void do_gsa(uint8_t argc, char** argv)
 {
-    if (argc == 18 && *argv[2] > '1') 
-       sscanf(argv[15], "%f", &pdop);
-    else
-       pdop = -1; 
+   if ((argc == 18 || argc==19) && *argv[2] > '1') 
+      sscanf(argv[15], "%f", &pdop);
+   else
+      pdop = -1; 
 }
 
