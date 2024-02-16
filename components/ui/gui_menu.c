@@ -104,6 +104,7 @@ bool menu_is_active()
    { return menu_active; }
 
 
+   
 void menu_activate()
 {
     selection = 0;
@@ -123,6 +124,20 @@ void menu_increment()
        offset++;
     else
        selection++;
+    menu_show(offset, selection);
+}
+
+
+
+void menu_decrement()
+{
+    if (offset+selection == 0) {
+        return; 
+    }
+    if (selection <= 0)
+       offset--;
+    else
+       selection--;
     menu_show(offset, selection);
 }
 

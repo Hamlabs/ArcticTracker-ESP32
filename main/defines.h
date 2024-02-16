@@ -69,6 +69,7 @@
 #define RADIO_PIN_PD        40
 #define RADIO_PIN_PWR       38
 #define RADIO_PIN_TXSEL     17 
+#define RADIO_PIN_SQUELCH   14
 
 /* Radio audio input */
 #define RADIO_INPUT         ADC2_CHANNEL_3  // IO1 FIXME 
@@ -167,8 +168,8 @@
 #if DEVICE == T_TWR
 #define BUTTON_PIN       3
 #define ENC_PUSH_PIN    21
-#define ENC_DOWN_PIN    47
-#define ENC_UP_PIN      46
+#define ENC_A_PIN       47
+#define ENC_B_PIN       46
 #else
 #define LED_STATUS_PIN  41
 #define LED_TX_PIN      42

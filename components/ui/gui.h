@@ -47,10 +47,12 @@
  void menu_init(void);
  bool menu_is_active(void);
  void menu_activate(void);
- void menu_increment(void);
+ void menu_increment(void); 
+ void menu_decrement(void);
  void menu_select(void);
  void menu_end(void);
 
  void status_init();
  void status_show(void);
  void status_next(void);
+ void status_prev(void);
