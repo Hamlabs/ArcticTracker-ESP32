@@ -223,10 +223,7 @@ int16_t batt_percent(void)
  *************************************************************************/
 
 int16_t batt_status(char* line1, char* line2)
-{
-    // FIXME: Translate voltage to percentage for tracker without pmu?
-    // FIXME: Adjust percentages
-    
+{    
     int16_t pbatt = pmu_getBattPercent();
     int16_t vbatt = pmu_getBattVoltage();
     if (line2)
@@ -238,16 +235,16 @@ int16_t batt_status(char* line1, char* line2)
     else if (pbatt > 70) { 
         if (line1) sprintf(line1, "Full.");
     }
-    else if (pbatt > 40) {
+    else if (pbatt > 30) {
         if (line1) sprintf(line1, "Ok.");
     }
-    else if (pbatt > 20) {
+    else if (pbatt > 10) {
         if (line1) sprintf(line1, "Low.");  
-        if (line2 && batt_charge()) sprintf(line2, "Need charging.");
+        if (line2 && !batt_charge()) sprintf(line2, "Need charging");
     }
     else {
         if (line1) sprintf(line1, "Empty.");
-        if (line2 && batt_charge()) sprintf(line2, "Charge ASAP!");
+        if (line2 && !batt_charge()) sprintf(line2, "Charge ASAP!");
     } 
     return vbatt;
 }

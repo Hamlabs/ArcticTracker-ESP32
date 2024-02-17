@@ -280,6 +280,9 @@ static void status_screen5() {
         disp_writeText(0, LINE4, "CHARGE COMPLETE!");
         chg_cnt--; 
     }
+    else if (strlen(b2) > 1)
+        disp_writeText(0, LINE4, b2);
+        
         
     disp_setBoldFont(false);
     disp_flush();
