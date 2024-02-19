@@ -123,16 +123,17 @@ static void status_heading(char* label) {
     disp_flag(32,0, "i", wifi_isEnabled() );
     disp_flag(44,0, "g", GET_BYTE_PARAM("IGATE.on")); 
     disp_flag(56,0, "d", GET_BYTE_PARAM("DIGIPEATER.on"));
+    disp_flag(68,0, "c", batt_charge());
 #endif
 #endif
     
     uint16_t batt = batt_percent();
     
     uint8_t bi; 
-    if (batt > 80)      bi = 4;
-    else if (batt > 60) bi = 3; 
-    else if (batt > 40) bi = 2;  
-    else if (batt > 20) bi = 1;  // Low
+    if (batt > 80 -5)      bi = 4;
+    else if (batt > 60 -5) bi = 3; 
+    else if (batt > 40 -5) bi = 2;  
+    else if (batt > 20 -5) bi = 1;  // Low
     else bi = 0;
              
     
