@@ -169,15 +169,14 @@ void register_aprs();
 
 static void startup(void* arg) 
 {
-    sleepMs(2500);
+    sleepMs(2000);
     trackstore_start();
     afsk_init(); 
- //   hdlc_init_decoder(afsk_rx_init());
+    hdlc_init_decoder(afsk_rx_init());
     FBQ* oq = hdlc_init_encoder(afsk_tx_init());
    
     gps_init(GPS_UART);
     radio_init();
-        
     tracker_init(oq);
     tracklog_init();
  //   digipeater_init(oq);
@@ -203,6 +202,7 @@ void app_main()
     gpio_iomux_out(48, U0TXD_OUT_IDX, false); 
     gpio_iomux_out(40, 1, false);
     gpio_iomux_out(41, 1, false);
+    gpio_iomux_in(15, 1);
 #else    
     gpio_iomux_out(39, 1, false); // FUNC_MTCK_GPIO39
     gpio_iomux_out(40, 1, false); // FUNC_MTDO_GPIO40
@@ -231,7 +231,6 @@ void app_main()
         
     /* Put this on CPU #1 or we may run out of interrupts */
     xTaskCreatePinnedToCore(&startup, "Startup thread", 
-        3200, NULL, NORMALPRIO+1, NULL, 1);
-     
+        3500, NULL, NORMALPRIO+1, NULL, 1);
     run_console();   
 }

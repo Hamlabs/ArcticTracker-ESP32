@@ -69,7 +69,7 @@
 #define RADIO_PIN_PD        40
 #define RADIO_PIN_PWR       38
 #define RADIO_PIN_TXSEL     17 
-#define RADIO_PIN_SQUELCH   14
+#define RADIO_PIN_SQUELCH   15
 
 /* Radio audio input */
 #define RADIO_INPUT         ADC2_CHANNEL_3  // IO1 FIXME 
@@ -157,12 +157,13 @@
 #define DISP_SCL_PIN    10
 #endif
 
-/* SPI setup */
+/* SPI setup. FIXME: Is this needed? */
+#if DEVICE != T_TWR
 #define SPI_HOST        SPI3_HOST
 #define SPI_PIN_MISO    -1
 #define SPI_PIN_MOSI    14 
 #define SPI_PIN_CLK     12
-
+#endif
 
 /* LEDs and buttons */
 #if DEVICE == T_TWR
@@ -215,7 +216,7 @@
 #define STACK_NMEALISTENER   3600
 #define STACK_LEDBLINKER     1300
 #define STACK_UI_SRV         3500
-#define STACK_TRACKER        3500
+#define STACK_TRACKER        3800
 #define STACK_MONITOR        3000
 #define STACK_GUI            3000
 #define STACK_HLIST          1000

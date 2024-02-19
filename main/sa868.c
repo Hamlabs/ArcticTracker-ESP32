@@ -33,6 +33,7 @@ static int count = 0;
 static bool _handshake(void);
 static bool _setGroupParm(void);
 static void _initialize(void);
+static void _squelch_handler(void* arg);
  
  bool sa8_is_on(void);
  void sa8_require(void);
@@ -72,7 +73,7 @@ static uart_port_t _serial;
 static mutex_t radio_mutex;
 static mutex_t ptt_mutex;
 
-// Binary semaphore. Should it be a condition variable?? 
+
 static cond_t tx_off;
   
 static cond_t radio_rdy;
@@ -83,6 +84,7 @@ static cond_t radio_rdy;
 static cond_t chan_rdy;
 #define WAIT_CHANNEL_READY cond_wait(chan_rdy)
 
+ 
 
 
 /***********************************************
@@ -97,13 +99,14 @@ void sa8_init(uart_port_t uart)
     ESP_ERROR_CHECK(uart_driver_install(uart, RADIO_BUF_SIZE, RADIO_BUF_SIZE, 0, NULL, 0));
     ESP_ERROR_CHECK(uart_set_pin(uart, RADIO_PIN_TXD, RADIO_PIN_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     
-    gpio_set_direction(RADIO_PIN_PTT,   GPIO_MODE_OUTPUT); 
-    gpio_set_direction(RADIO_PIN_PD,    GPIO_MODE_OUTPUT);
-    gpio_set_direction(RADIO_PIN_PWR,   GPIO_MODE_OUTPUT);
-    gpio_set_direction(RADIO_PIN_TXSEL, GPIO_MODE_OUTPUT);
+    gpio_set_direction(RADIO_PIN_PTT,     GPIO_MODE_OUTPUT); 
+    gpio_set_direction(RADIO_PIN_PD,      GPIO_MODE_OUTPUT);
+    gpio_set_direction(RADIO_PIN_PWR,     GPIO_MODE_OUTPUT);
+    gpio_set_direction(RADIO_PIN_TXSEL,   GPIO_MODE_OUTPUT);
+    gpio_set_direction(RADIO_PIN_SQUELCH, GPIO_MODE_INPUT);
     gpio_set_level(RADIO_PIN_PTT, 1);
     gpio_set_level(RADIO_PIN_TXSEL, 1);
-        
+            
     radio_mutex = mutex_create();
     ptt_mutex = mutex_create();
     tx_off = cond_create();
@@ -111,12 +114,18 @@ void sa8_init(uart_port_t uart)
     chan_rdy = cond_create();
     sa8_setLowTxPower(true);
     
+    /* Squelch input. Pin interrupt */
+    gpio_set_intr_type(RADIO_PIN_SQUELCH, GPIO_INTR_ANYEDGE);
+    gpio_isr_handler_add(RADIO_PIN_SQUELCH, _squelch_handler, NULL);
+    gpio_set_pull_mode(RADIO_PIN_SQUELCH, GPIO_PULLUP_ONLY);
+    gpio_intr_enable(RADIO_PIN_SQUELCH);  
+    
     sleepMs(500);
     if (get_byte_param("RADIO.on", 0)>0)
         sa8_require();
 }
   
- 
+
  
 static void _initialize()
 {  
@@ -137,39 +146,35 @@ static void _initialize()
     _setGroupParm();
     cond_set(tx_off);
    
-    cond_clear(chan_rdy);
+    if (gpio_get_level(RADIO_PIN_SQUELCH))
+        cond_set(chan_rdy);
+    else
+        cond_clear(chan_rdy);
     
     sleepMs(50);
     ESP_LOGI(TAG, "_initialize: ok");
 }
   
- 
- 
+  
+  
+/************************************************
+ * Squelch handler (ISR function)
+ ************************************************/
 
-/**********************************************************
- * To be called when signal is detected and when
- * silence is detected. Excpected to be called 
- * from ISR. 
- **********************************************************/
-
-void sa8_rx_signal(bool on)
+static void IRAM_ATTR _squelch_handler(void* arg) 
 {
-    if (on) {
-        if (!_sq_on && cond_isSetI(radio_rdy)) {
-            _sq_on = true;
-            afsk_rx_start();
-            cond_clearI(chan_rdy);       
-        }
+    if (!_sq_on && cond_isSetI(radio_rdy) && !gpio_get_level(RADIO_PIN_SQUELCH)) {
+        _sq_on = true;
+        afsk_rx_start();
+        cond_clearI(chan_rdy);       
     }
-    else 
-    {
-        if (_sq_on) {
-            _sq_on = false;
-            afsk_rx_stop();
-            cond_setI(chan_rdy);
-        } 
-    }
+    else if (_sq_on) {
+        _sq_on = false;
+        afsk_rx_stop();
+        cond_setI(chan_rdy);
+    } 
 }
+
 
 
 
@@ -242,7 +247,7 @@ void sa8_wait_enabled()
 void sa8_wait_channel_ready()
 {
     /* Wait to radio is on and squelch is closed */
-//    WAIT_CHANNEL_READY; 
+    WAIT_CHANNEL_READY; 
 }
 
 
@@ -361,7 +366,7 @@ bool sa8_setVolume(uint8_t vol)
     int len = sprintf(buf, "AT+DMOSETVOLUME=%1d\r\n", vol);
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
-    readline(_serial, reply, 16);
+    readline(_serial, reply, 15);
     return (reply[10] == '0');
 }
 
@@ -423,9 +428,9 @@ bool sa8_setFilter(bool emp, bool highpass, bool lowpass)
     char reply[16];
     int len = sprintf(buf, "AT+DMOSETFILTER=%1d,%1d,%1d\r\n", 
         (emp ? 1:0), (highpass ? 1:0), (lowpass ? 1:0)  );
-    ESP_LOGD(TAG, "%s", buf);
+    ESP_LOGD(TAG, "Reply: %s", buf);
     uart_write_bytes(_serial, buf, len);
-    readline(_serial, reply, 16);
+    readline(_serial, reply, 15);
     return (reply[14] == '0');
 }
 
@@ -438,8 +443,8 @@ static bool _handshake()
     int len = sprintf(buf, "AT+DMOCONNECT\r\n");
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
-    readline(_serial, reply+1, 16);
-    ESP_LOGD(TAG, "'%s'", reply);
+    readline(_serial, reply, 15);
+    ESP_LOGD(TAG, "Reply: '%s'", reply);
     return (reply[12] == '0');
 }
 
@@ -462,8 +467,8 @@ static bool _setGroupParm()
             _widebw, txbuf, rxbuf, _tcxcss, _squelch, _rcxcss);
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
-    readline(_serial, reply, 16);
-    ESP_LOGD(TAG, "'%s'", reply);
+    readline(_serial, reply, 15);
+    ESP_LOGD(TAG, "Reply: '%s'", reply);
     return (reply[13] == '0');
 }
 

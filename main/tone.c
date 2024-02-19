@@ -140,6 +140,9 @@ void tone_toggle()
  **************************************************************************/
 
 void tone_stop() {
+    if (!_on)
+        return;
+    _on = false;
     clock_stop(toneclk);
 #if defined(TONE_ADC_ENABLE)
     dac_output_voltage(TONE_DAC_CHAN, 0);
