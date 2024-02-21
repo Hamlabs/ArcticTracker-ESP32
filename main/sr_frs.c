@@ -1,6 +1,7 @@
 #include "defines.h"
 
 #if !defined(RADIO_DISABLE) && DEVICE != T_TWR
+
 #include <stdio.h>
 #include "config.h"
 #include "hdlc.h"
@@ -117,7 +118,6 @@ void frs_init(uart_port_t uart)
     gpio_set_intr_type(RADIO_PIN_SQUELCH, GPIO_INTR_ANYEDGE);
     gpio_isr_handler_add(RADIO_PIN_SQUELCH, squelch_handler, NULL);
     gpio_set_pull_mode(RADIO_PIN_SQUELCH, GPIO_PULLUP_ONLY);
-    gpio_pullup_en(BUTTON_PIN);
     gpio_intr_enable(RADIO_PIN_SQUELCH);  
     
     sleepMs(500);
@@ -294,7 +294,7 @@ void frs_PTT(bool on)
         gpio_set_level(RADIO_PIN_PTT, 0);
         gpio_set_level(RADIO_PIN_TXP, 1); 
         tx_led_on();
-        cond_set(tx_off);
+        cond_clear(tx_off);
         mutex_unlock(ptt_mutex);
     }
     else {

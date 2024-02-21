@@ -290,7 +290,7 @@ void sa8_PTT(bool on)
         mutex_lock(ptt_mutex);
         gpio_set_level(RADIO_PIN_PTT, 0);
         tx_led_on();
-        cond_set(tx_off);
+        cond_clear(tx_off);
         mutex_unlock(ptt_mutex);
     }
     else {
