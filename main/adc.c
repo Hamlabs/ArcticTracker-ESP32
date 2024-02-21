@@ -13,49 +13,13 @@
 #include "ui.h"
 
 #define TAG "adc"
-#define ATTEN         ADC_ATTEN_DB_11
-#define WIDTH         ADC_BITWIDTH_12
-#define BATT_DIVISOR  3.3
 
-static adc_oneshot_unit_handle_t adc1_handle;
-static adc_cali_handle_t adc1_cali_handle = NULL;
-    
-static bool calib1 = false;
+#define WIDTH  ADC_BITWIDTH_12
+
+
+static uint16_t dcoffset = 0;
+
                           
-static bool adc_calibration_init(adc_unit_t unit, adc_atten_t atten, adc_cali_handle_t *out_handle);
-
-
-
-/*************************************************************************
- * Set up ADC
- *************************************************************************/
-
-void adc_init()
-{
-    /* ADC1 Init*/
-    adc_oneshot_unit_init_cfg_t init_config1 = {
-        .unit_id = ADC_UNIT_1,
-        .ulp_mode = ADC_ULP_MODE_DISABLE,
-    };
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));
-
-    /* Channels Config */
-    adc_oneshot_chan_cfg_t config = {
-        .bitwidth = WIDTH,
-        .atten = ATTEN,
-    };
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, X1_ADC_INPUT, &config));
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, BATT_ADC_INPUT, &config));
-    /* RADIO INPUT is on ADC2 */
-    
-    /* ADC1 Calibration Init */
- //   calib1 = adc_calibration_init(ADC_UNIT_1, ATTEN, &adc1_cali_handle);
-
-   // FIXME: Add code for ADC2 
-}
-
-
-
 
 static bool adc_calibration_init(adc_unit_t unit, adc_atten_t atten, adc_cali_handle_t *out_handle)
 {
@@ -121,6 +85,83 @@ static void adc_calibration_deinit(adc_cali_handle_t handle)
 
 
 
+#if DEVICE == T_TWR
+
+#define ATTEN ADC_ATTEN_DB_0
+
+
+
+void radio_adc_init()
+{
+    /* Calibrate radio channel input */
+    dcoffset = radio_adc_sample(RADIO_INPUT);
+    printf("DCOFFSET=%d\n", dcoffset);
+}
+
+
+
+void adc_init()
+{
+    radio_adc_init();
+}
+
+
+
+int16_t radio_adc_sample() 
+{      
+    /* Workaround: Disable interrupts during adc read. The implementation uses a 
+     * spinlock and interrupts may happen there interfering with the read. 
+     */
+    taskDISABLE_INTERRUPTS();
+    uint16_t sample = (uint16_t) adc1_get_raw((adc1_channel_t) RADIO_INPUT);
+    taskENABLE_INTERRUPTS();    
+    sample &= 0x0FFF;
+    int16_t res = ((int16_t) sample) - dcoffset;
+    return res;
+}
+
+
+
+
+#else
+
+#define ATTEN         ADC_ATTEN_DB_11
+#define WIDTH         ADC_BITWIDTH_12
+#define BATT_DIVISOR  3.3
+
+
+static adc_oneshot_unit_handle_t adc1_handle;
+static adc_cali_handle_t adc1_cali_handle = NULL;
+    
+static bool calib1 = false;
+
+
+/*************************************************************************
+ * Set up ADC
+ *************************************************************************/
+
+void adc_init()
+{
+    /* ADC1 Init*/
+    adc_oneshot_unit_init_cfg_t init_config1 = {
+        .unit_id = ADC_UNIT_1,
+        .ulp_mode = ADC_ULP_MODE_DISABLE,
+    };
+    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));
+
+    /* Channels Config */
+    adc_oneshot_chan_cfg_t config = {
+        .bitwidth = WIDTH,
+        .atten = ATTEN,
+    };
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, X1_ADC_INPUT, &config));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, BATT_ADC_INPUT, &config));
+    
+    /* RADIO INPUT is on ADC2 */    
+}
+
+
+
 /*************************************************************************
  * Read an ADC channel. 
  * Return an average of 64 samples. Use adc_toVoltage to convert 
@@ -134,14 +175,6 @@ uint16_t adc1_read(uint8_t chan)
     ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, chan, raw);
     return raw;
 }
-
-
-uint16_t adc2_read(uint8_t chan) 
-{ 
-    uint32_t val = 0;
-    return (uint16_t) (val); 
-}
-
 
 
 
@@ -160,7 +193,7 @@ uint16_t adc_toVoltage(uint16_t val)
     }
     return voltage;
 }
-
+ 
 
     
 /*************************************************************************
@@ -177,26 +210,37 @@ uint16_t adc_batt()
 
 
 
-int adc2_get_rawISR(adc2_channel_t channel)
-{
-    int out = 0;
-    return out;
-}
-
-
-
 
 /*************************************************************************
  * Sampling of radio channel - to be called from timer ISR 
  *************************************************************************/
 
 
-void adc_calibrate() {
+void radio_adc_init()
+{
+    /* Calibrate radio channel input */
+    dcoffset = adc2_read(RADIO_INPUT);
 }
 
 
 
-int16_t adc_sample() 
-{  
-    return 0;
+int16_t radio_adc_sample() 
+{      
+    /* Workaround: Disable interrupts during adc read. The implementation uses a 
+     * spinlock and interrupts may happen there interfering with the read. 
+     */
+    taskDISABLE_INTERRUPTS();
+    uint16_t sample = (uint16_t) adc2_get_rawISR((adc2_channel_t) RADIO_INPUT);
+  
+    taskENABLE_INTERRUPTS();    
+    sample &= 0x0FFF;
+    int16_t res = ((int16_t) sample) - dcoffset;
+    return res;
 }
+
+
+
+#endif
+
+
+

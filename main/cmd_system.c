@@ -408,6 +408,11 @@ static int do_fwupgrade(int argc, char** argv)
 static int do_adcinfo(int argc, char** argv)
 {
     uint32_t val; 
+    
+#if DEVICE == T_TWR
+    printf("ADC status not supported yet on T-TWR\n");
+#else
+    
 #if !defined(RADIO_DISABLE)
  //   val = adc2_read(RADIO_INPUT);
  //   printf("Radio input: %ld, %d mV\n", val, adc_toVoltage(val));
@@ -416,16 +421,8 @@ static int do_adcinfo(int argc, char** argv)
     printf(" BATT input: %ld, %d mV\n", val, adc_toVoltage(val));
     val = adc1_read(X1_ADC_INPUT);
     printf("   X1 input: %ld, %d mV\n", val, adc_toVoltage(val));
-    /*
-    for (int i=1; i<800; i++) {
-        int16_t x = adc_sample();
-        x = x >> 3;
-        printf("%5d  ", x);
-        if (i> 19 && i % 20 == 0)
-            printf("\n");
-        sleepMs(50);
-    }
-    */
+#endif
+    
     printf("\n");
     return 0;
 }

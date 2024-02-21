@@ -66,11 +66,12 @@ uint8_t tokenize(char*, char*[], uint8_t, char*, bool);
 void adc_print_char();
 void adc_init();
 uint16_t adc1_read(uint8_t chan);
-uint16_t adc2_read(uint8_t chan);
+uint16_t adc_read(uint8_t chan);
 uint16_t adc_toVoltage(uint16_t val);
 uint16_t adc_batt();
-int16_t  adc_sample();
-void     adc_calibrate();
+
+int16_t  radio_adc_sample();
+void     radio_adc_calibrate();
 
 
 /* Battery */

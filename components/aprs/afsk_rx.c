@@ -1,8 +1,8 @@
 /*
  * AFSK Demodulation. 
  * 
- * Based on code from BertOS AFSK decoder. 
- * Originally by Develer S.r.l. (http://www.develer.com/), GPLv2 licensed.
+ * Partly based on code from BertOS AFSK decoder. 
+ *    Originally by Develer S.r.l. (http://www.develer.com/), GPLv2 licensed.
  * 
  */
 
@@ -187,6 +187,9 @@ fifo_t* afsk_rx_init()
 }
 
 
+/*******************************************
+  Go through samples to get some info   
+ *******************************************/
 
 static void frameInfo() {      
     int cnt=0, cnt100=0, cnt40=0, cnt10=0;
@@ -203,6 +206,10 @@ static void frameInfo() {
 
 
 
+/*******************************************
+  Process the samples to decode frame 
+ *******************************************/
+
 static void doFrame(float f1, float f2) {
     rxSampler_reset();
     while (!rxSampler_eof())
@@ -215,6 +222,12 @@ static void doFrame(float f1, float f2) {
         afsk_process_sample(0, 1, 1);
 }
 
+
+
+/*******************************************
+  Decoding thread
+ *******************************************/
+
 uint32_t nsamples = 0;
 uint32_t tone22=0, tone12=0;
 float balance() {
@@ -223,7 +236,6 @@ float balance() {
     return res;
 }
 
-/* Decoding thread */
 static void afsk_rxdecoder(void* arg) 
 {
     while (true) {
@@ -325,9 +337,9 @@ static void afsk_process_sample(int8_t curr_sample, float filt0, float filt1)
     }
 } 
 
+
 uint8_t octet = 0; 
 int bit_count = 0;
-
 
 /*********************************************************
  * Send a single bit to the HDLC decoder
@@ -342,7 +354,6 @@ static void add_bit(bool bit)
     {      
         fifo_put(&iq, octet);
         bit_count = 0;
-        
     }
 }
 

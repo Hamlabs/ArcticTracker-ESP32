@@ -78,6 +78,7 @@ void afsk_rx_start() {
         clock_stop(afskclk);     
     rxMode = true; 
     txOn = false;
+    clock_set_interval(afskclk, FREQ2CNT(AFSK_SAMPLERATE));
     clock_start(afskclk);
 }
 

@@ -1,6 +1,6 @@
 
 /*
- * Adapted from Polaric Tracker code. 
+ * Adapted from the original Polaric Tracker code. 
  * By LA7DJA, LA7ECA and LA3T
  */
 

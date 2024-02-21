@@ -215,7 +215,7 @@ void app_main()
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
     set_logLevels();
-//    adc_init(); 
+    adc_init(); 
     initialize_console();
     
     /* Register commands */

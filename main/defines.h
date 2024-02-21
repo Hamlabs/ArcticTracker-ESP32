@@ -28,7 +28,7 @@
 #define TRACKER_TRX_ONDEMAND false
 
 
-/* APRS tracking FIXME */
+/* APRS tracking */
 #define TRACKER_SLEEP_TIME 10
 #define TIMER_RESOLUTION   1000 
 #define GPS_FIX_TIME       3
@@ -72,7 +72,7 @@
 #define RADIO_PIN_SQUELCH   15
 
 /* Radio audio input */
-#define RADIO_INPUT         ADC2_CHANNEL_3  // IO1 FIXME 
+#define RADIO_INPUT         ADC1_CHANNEL_0  // IO1 
 
 /* Tone generation (for AFSK) */
 #define TONE_SDELTA_ENABLE
@@ -99,12 +99,18 @@
 #endif
 
 
+
+#if device != T_TWR
+
 /* Misc. ADC inputs */
 #define X1_ADC_INPUT        ADC1_CHANNEL_4
 #define BATT_ADC_INPUT      ADC2_CHANNEL_7
 
 /* Batt charger */
 #define BATT_CHG_TEST     12
+
+#endif
+
 
 
 /* GPS */
