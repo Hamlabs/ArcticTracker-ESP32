@@ -70,9 +70,6 @@ static uart_port_t _serial;
 
 static mutex_t radio_mutex;
 static mutex_t ptt_mutex;
-
-// Binary semaphore. Should it be a condition variable?? 
-static cond_t tx_off;
   
 static cond_t radio_rdy;
 #define WAIT_RADIO_READY   cond_wait(radio_rdy)
@@ -81,6 +78,9 @@ static cond_t radio_rdy;
 
 static cond_t chan_rdy;
 #define WAIT_CHANNEL_READY cond_wait(chan_rdy)
+
+static cond_t tx_off;
+#define WAIT_TX_OFF  cond_wait(tx_off)
 
 
 
@@ -251,6 +251,16 @@ void frs_wait_channel_ready()
 {
     /* Wait to radio is on and squelch is closed */
     WAIT_CHANNEL_READY;
+}
+
+
+
+/************************************************
+ * Wait until tx is off
+ ************************************************/
+void sa8_wait_tx_off()
+{
+    WAIT_TX_OFF;
 }
 
 

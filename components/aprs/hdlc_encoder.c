@@ -11,6 +11,7 @@
 #include "radio.h"
 #include "config.h"
 #include "ax25.h"
+#include "ui.h"
 
 
 #define TAG "hdlc-enc"
@@ -128,10 +129,13 @@ static void hdlc_txencoder (void* arg)
         else 
            break;
       } 
+      tx_led_on();
       hdlc_encode_frames();
       hdlc_idle = true; 
       SIGNAL_IDLE;
       sleepMs(50);
+      wait_tx_off();
+      tx_led_off();
   }
 }
 

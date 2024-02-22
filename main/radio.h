@@ -21,7 +21,7 @@
  bool radio_setLowTxPower(bool on);
  bool radio_isLowTxPower(void);
  void wait_channel_ready(void);
-
+ void wait_tx_off(void);
 
  
 #endif

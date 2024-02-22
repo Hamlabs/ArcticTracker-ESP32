@@ -200,7 +200,7 @@ void gps_on()
 void gps_off()
 { 
    //  set_port(GPSON);
-   BLINK_NORMAL
+   BLINK_NORMAL;
 }
 
 
@@ -339,12 +339,12 @@ void notify_fix(bool lock)
    if (lock != is_fixed)
        ESP_LOGI(TAG, "GPS state: %s", (lock ? "FIXED" : "SEARCHING"));
    if (!lock) 
-       BLINK_GPS_SEARCHING
+       BLINK_GPS_SEARCHING;
    else {
        if (!is_fixed) {
           SIGNAL_FIX;
        }     
-       BLINK_NORMAL
+       BLINK_NORMAL;
    }
    is_fixed = lock;
 }

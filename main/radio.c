@@ -50,7 +50,8 @@ void wait_channel_ready(void) {}
  bool sa8_setLowTxPower(bool on); 
  bool sa8_isLowTxPower(void); 
  void sa8_wait_channel_ready(void);
- 
+ void sa8_wait_tx_off(void);
+  
  bool radio_is_on() { return sa8_is_on(); }
  void radio_require() { sa8_require(); }
  void radio_release() { sa8_release(); }
@@ -67,7 +68,7 @@ void wait_channel_ready(void) {}
  bool radio_setLowTxPower(bool on) { return sa8_setLowTxPower(on); } 
  bool radio_isLowTxPower(void) { return sa8_isLowTxPower(); }
  void wait_channel_ready(void) { sa8_wait_channel_ready(); }
- 
+ void wait_tx_off(void)  {sa8_wait_tx_off();}
 #else
  
  bool frs_is_on(void);
@@ -86,7 +87,8 @@ void wait_channel_ready(void) {}
  bool frs_setLowTxPower(bool on); 
  bool frs_isLowTxPower(void); 
  void frs_wait_channel_ready(void);
- 
+ void frs_wait_tx_off(void);
+  
  bool radio_is_on() { return frs_is_on(); }
  void radio_require() { frs_require(); }
  void radio_release() { frs_release(); }
@@ -103,8 +105,9 @@ void wait_channel_ready(void) {}
  bool radio_setLowTxPower(bool on) { return frs_setLowTxPower(on); } 
  bool radio_isLowTxPower(void) { return frs_isLowTxPower(); }
  void wait_channel_ready(void) { frs_wait_channel_ready(); }
-
- #endif
+ void wait_tx_off(void)  {frs_wait_tx_off();}
+ 
+#endif
 
 #endif
  

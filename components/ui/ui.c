@@ -11,6 +11,7 @@
 #include "gui.h"
 #include "driver/gpio.h"
 
+extern void neopixel_init(); 
 extern void buzzer_init();
 static void bphandler(struct tmrTimerControl * p);
 static void holdhandler(struct tmrTimerControl * p);
@@ -243,7 +244,6 @@ static void holdhandler(struct tmrTimerControl *p) {
 
 
 
-
 static void button_init() {
          
     /* Software timers */
@@ -287,43 +287,11 @@ static void button_init() {
     gpio_set_pull_mode(ENC_B_PIN, GPIO_PULLUP_ONLY);
     gpio_intr_enable(ENC_B_PIN);
     
-    
 #endif
     
  }
  
 
-    
- /*********************************************************************
-  * Main UI thread. LED blinking to indicate that it is alive
-  *********************************************************************/
- 
- uint16_t blink_length=500, blink_interval=500;
- bool blink_both=false;
-
-#if DEVICE != T_TWR
- 
- static void ui_thread(void* arg)
- {
-   (void)arg;
-   blipUp();
-   sleepMs(300);
-   /* Blink LED */
-   BLINK_NORMAL;
-   while (1) {
-     gpio_set_level(LED_STATUS_PIN, 1);
-     if (blink_both)
-         gpio_set_level(LED_TX_PIN, 0);
-     sleepMs(blink_length);
-     gpio_set_level(LED_STATUS_PIN, 0);
-     if (blink_both)
-        gpio_set_level(LED_TX_PIN, 1);
-     sleepMs(blink_interval);
-   }
- }
- 
-#endif 
- 
  
  /******************************************
   * Button event handlers. 
@@ -353,6 +321,8 @@ static void button_init() {
     }
  }
 
+
+
  
  /*****************************************
   * UI init
@@ -366,23 +336,15 @@ static void button_init() {
     /* Buzzer */
     buzzer_init(); 
 
+    /* LEDs m*/
+    led_init();
+    
     /* LCD display */  
     disp_init();
     sleepMs(100);
     disp_backlight();
     gui_welcome(); 
     status_init(); 
-
-#if DEVICE != T_TWR
-    gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
-    gpio_set_direction(LED_TX_PIN,  GPIO_MODE_OUTPUT);
-    gpio_set_level(LED_STATUS_PIN, 0);
-    gpio_set_level(LED_TX_PIN, 0);
-
-    /* LED blinker thread */
-    xTaskCreatePinnedToCore(&ui_thread, "LED blinker", 
-        STACK_LEDBLINKER, NULL, NORMALPRIO, NULL, CORE_LEDBLINKER);
-#endif
     menu_init();
  }
  

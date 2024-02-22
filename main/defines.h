@@ -173,6 +173,8 @@
 
 /* LEDs and buttons */
 #if DEVICE == T_TWR
+
+#define NEOPIXEL_PIN    42
 #define BUTTON_PIN       3
 #define ENC_PUSH_PIN    21
 #define ENC_A_PIN       47

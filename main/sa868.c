@@ -74,17 +74,17 @@ static mutex_t radio_mutex;
 static mutex_t ptt_mutex;
 
 
-static cond_t tx_off;
   
 static cond_t radio_rdy;
 #define WAIT_RADIO_READY   cond_wait(radio_rdy)
 #define SIGNAL_RADIO_READY cond_set(radio_rdy)
-#define CLEAR_RADIO_READY  cond_clear(radio_rdy);
+#define CLEAR_RADIO_READY  cond_clear(radio_rdy)
 
 static cond_t chan_rdy;
 #define WAIT_CHANNEL_READY cond_wait(chan_rdy)
-
  
+static cond_t tx_off;
+#define WAIT_TX_OFF  cond_wait(tx_off)
 
 
 /***********************************************
@@ -251,6 +251,14 @@ void sa8_wait_channel_ready()
 }
 
 
+/************************************************
+ * Wait until tx is off
+ ************************************************/
+void sa8_wait_tx_off()
+{
+    WAIT_TX_OFF;
+}
+
 
 /************************************************
  * Power on
@@ -311,12 +319,10 @@ void sa8_PTT_I(bool on)
     
     if (on) {
         gpio_set_level(RADIO_PIN_PTT, 0);
-        tx_led_on(); 
         cond_clearI(tx_off);
     }
     else {
         gpio_set_level(RADIO_PIN_PTT, 1);
-        tx_led_off();
         cond_setI(tx_off);
     }
 }
