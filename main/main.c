@@ -179,8 +179,8 @@ static void startup(void* arg)
     radio_init();
     tracker_init(oq);
     tracklog_init();
- //   digipeater_init(oq);
- //   igate_init(); 
+    digipeater_init(oq);
+    igate_init(); 
     
     mon_init();
     sleepMs(100);
