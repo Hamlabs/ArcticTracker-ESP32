@@ -3,6 +3,7 @@
  * using the SPI bus. 
  * By LA7ECA, ohanssen@acm.org
  */ 
+#if DEVICE != T_TWR
 
 #include <inttypes.h>
 #include <string.h>
@@ -186,5 +187,5 @@ void lcd_clear() {
    lcd_writeByte(0x20, LCD_SEND_CMD);              /* LCD Standard Commands, horizontal addressing mode */
  }
  
- 
+#endif
  

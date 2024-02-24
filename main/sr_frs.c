@@ -258,7 +258,7 @@ void frs_wait_channel_ready()
 /************************************************
  * Wait until tx is off
  ************************************************/
-void sa8_wait_tx_off()
+void frs_wait_tx_off()
 {
     WAIT_TX_OFF;
 }

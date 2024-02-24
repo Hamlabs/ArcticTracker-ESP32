@@ -13,6 +13,8 @@
 #include "esp_log.h"
 #include "driver/gptimer.h"
 #include "driver/adc.h"
+// FIXME: Use continous ADC drivers for receiving frames
+
 
 #if !defined __DEF_SYSTEM_H__
 #define __DEF_SYSTEM_H__
@@ -44,8 +46,8 @@ void clock_set_interval(gptimer_handle_t clock, uint32_t period);
 /* SPIFFS FS */
 void spiffs_init();
 void spiffs_format();
-
-
+size_t spiffs_size();
+size_t spiffs_free();
 
 /* Logging */
 bool hasTag(char*tag);

@@ -139,7 +139,7 @@ esp_err_t firmware_upgrade()
 
 
 /******************************************************************************
- * Battery charger  
+ * Battery management
  * FIXME: Consider moving this part to the pmu component
  ******************************************************************************/
 
@@ -193,11 +193,14 @@ int16_t batt_voltage(void)
 }
 
 
+
+#if DEVICE != T_TWR
 /* Charging profile for 2S LiPo battery */
-static uint16_t volt2s[] = 
+static const uint16_t volt2s[] = 
 { 8400, 8300, 8220, 8160, 8050, 7970, 7910, 7830, 7750, 7710, 7670, 
   7630, 7590, 7570, 7530, 7490, 7450, 7410, 7370, 7220, 6550 };
-
+#endif
+  
   
 int16_t batt_percent(void) 
 {
@@ -206,8 +209,9 @@ int16_t batt_percent(void)
 #else
     uint8_t p = 100;
     uint8_t chg = (batt_charge() ? 90 : 0);
+    int16_t vbatt = batt_voltage();
     
-    for (i=0; i<21; i++)
+    for (int i=0; i<21; i++)
         if (vbatt < volt2s[i]+chg)
             p -= 5;
         else
@@ -224,8 +228,8 @@ int16_t batt_percent(void)
 
 int16_t batt_status(char* line1, char* line2)
 {    
-    int16_t pbatt = pmu_getBattPercent();
-    int16_t vbatt = pmu_getBattVoltage();
+    int16_t pbatt = batt_percent();
+    int16_t vbatt = batt_voltage();
     if (line2)
         sprintf(line2, " ");
     
@@ -314,6 +318,20 @@ void spiffs_format() {
 }
 
 
+size_t spiffs_size() {
+    size_t size, used;
+    esp_spiffs_info(spconf.partition_label, &size, &used);
+    return size;
+}
+
+
+size_t spiffs_free() {
+    size_t size, used;
+    esp_spiffs_info(spconf.partition_label, &size, &used);
+    return size-used;
+}
+    
+    
 
 /******************************************************************************
  * Get time from NTP
