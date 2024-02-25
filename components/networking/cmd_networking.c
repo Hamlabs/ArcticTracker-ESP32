@@ -119,7 +119,10 @@ int do_connect(int argc, char** argv)
 
 int do_scan(int argc, char** argv) 
 {
-    wifi_startScan();
+    if (!wifi_startScan()) {
+        printf("Couldn't start scan of Wifi\n");
+        return 0;
+    }
     wifi_waitScan(); 
     showScan();
     return 0;

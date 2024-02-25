@@ -13,7 +13,7 @@ extern bool blink_both;
 #if DEVICE == T_TWR
 #define BLINK_GPS_SEARCHING  rgbLED_setBlink(0, 6, 6, 0, 100, 2100)
 #define BLINK_NORMAL         rgbLED_setBlink(0, 5, 5, 5, 100, 2100)
-#define BLINK_CHARGE         rgbLED_setBlink(0, 6, 0, 6, 100, 2100)
+#define BLINK_CHARGE         rgbLED_setBlink(1, 6, 0, 6, 100, 2100)
 #define BLINK_BATTLOW        rgbLED_setBlink(1, 7, 0, 0, 100, 2100)
 #define BLINK_BATTCRITICAL   rgbLED_setBlink(1, 7, 0, 0, 100, 500)
 #define BLINK_FWUPGRADE      rgbLED_setBlink(1, 0, 2, 40, 80, 80)

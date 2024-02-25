@@ -159,10 +159,14 @@ void wifi_init(void)
     esp_netif_init();
     sprintf(default_ssid, "Arctic_%s", ident);
     
+    
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     sta_netif = esp_netif_create_default_wifi_sta();
+    
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    
     
 //    wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on")); NEED TO BE FIXED
     
@@ -430,8 +434,7 @@ bool wifi_join(const char* ssid, const char* pass, int timeout_ms)
 /********************************************************************************
  * Start scanning for APs
  ********************************************************************************/
-
-void wifi_startScan(void)
+bool wifi_startScan(void)
 {
     wifi_scan_config_t scanConf = {
         .ssid = NULL,
@@ -439,8 +442,14 @@ void wifi_startScan(void)
         .channel = 0,
         .show_hidden = 1
     };
-    if (wifi_isEnabled())
-        ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, 0));
+    if (wifi_isEnabled()) {
+        esp_err_t res = esp_wifi_scan_start(&scanConf, 0);
+        if (res == ESP_OK)
+            return true;
+        else
+            ESP_LOGE(TAG, "Network scan initialization failed: %x", res);
+    }
+    return false;
 }
 
 
@@ -453,7 +462,7 @@ static void task_autoConnect( void * pvParms )
     int i;
     int n=0;
     wifiAp_t alt;
-    sleepMs(3000);
+    sleepMs(4000);
     while(true) {
         /* Wait until disconnected */
         ESP_LOGI(TAG, "Waiting for DISCONNECTED_BIT");
@@ -461,7 +470,10 @@ static void task_autoConnect( void * pvParms )
             xEventGroupWaitBits(wifi_event_group, DISCONNECTED_BIT, 1, 1, portMAX_DELAY );
         sleepMs(6000); 
         ESP_LOGI(TAG, "Starting scan");
-        wifi_startScan(); 
+        if (!wifi_startScan()) {
+            sleepMs(20000);
+            continue; 
+        }
         ESP_LOGI(TAG, "Waiting for scan");
         wifi_waitScan();
         sleepMs(100);

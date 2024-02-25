@@ -480,14 +480,16 @@ void set_logLevels() {
     set_logLevel("mbedtls", "LGLV.mbedtls", dfl);
     set_logLevel("rest", "LGLV.rest", dfl);
     set_logLevel("adc", "LGLV.adc", dfl);
+    set_logLevel("httpd_txrx", "LGLV.httpd-txrx", dfl);
+    set_logLevel("httpd_uri", "LGLV.httpd-uri", dfl);
 }
 
 
 bool hasTag(char*tag) {
-    return strcmp(tag, "wifi")==0       || strcmp(tag, "wifix")==0    || strcmp(tag, "uart")==0    || 
-           strcmp(tag, "config")==0     || strcmp(tag, "httpd")==0    || strcmp(tag, "adc")==0     ||
-           strcmp(tag, "shell")==0      || strcmp(tag, "system")==0   ||
-           strcmp(tag, "tracker")==0    || strcmp(tag, "esp-tls")==0  ||
+    return strcmp(tag, "wifi")==0       || strcmp(tag, "wifix")==0    || strcmp(tag, "uart")==0       || 
+           strcmp(tag, "config")==0     || strcmp(tag, "httpd")==0    || strcmp(tag, "adc")==0        ||
+           strcmp(tag, "shell")==0      || strcmp(tag, "system")==0   || strcmp(tag, "httpd-txrx")==0 ||
+           strcmp(tag, "tracker")==0    || strcmp(tag, "esp-tls")==0  || strcmp(tag, "httpd-uri")==0 ||
            strcmp(tag, "radio")==0      || strcmp(tag, "ui")==0       ||
            strcmp(tag, "hdlc-enc")==0   || strcmp(tag, "gps")==0      ||
            strcmp(tag, "hdlc-dec")==0   || strcmp(tag, "uart")==0     ||

@@ -38,7 +38,7 @@ bool   wifi_join(const char* ssid, const char* pass, int timeout_ms);
 void   wifi_init(void);
 void   wifi_enable(bool);
 void   wifi_enable_softAp(bool);
-void   wifi_startScan(void);
+bool   wifi_startScan(void);
 char*  wifi_getStatus(void);
 char*  wifi_authMode(int); 
 int    wifi_getApCount(void);

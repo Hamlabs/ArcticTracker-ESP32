@@ -15,8 +15,8 @@
 #define BIT_0	( 1 << 0 )
 
 #define T_TWR 1
-#define DEVICE 0
-#define DEVICE_STRING "Arctic Tracker 3"
+#define DEVICE T_TWR
+#define DEVICE_STRING "LilyGo T-TWR-plus"
 
 
 /* 
@@ -221,7 +221,7 @@
 #define STACK_HDLC_RXDECODER 3100
 #define STACK_AFSK_RXDECODER 3000
 #define STACK_NMEALISTENER   3600
-#define STACK_LEDBLINKER     1300
+#define STACK_LEDBLINKER     1800
 #define STACK_UI_SRV         3500
 #define STACK_TRACKER        3800
 #define STACK_MONITOR        3000
