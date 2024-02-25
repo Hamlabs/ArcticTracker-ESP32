@@ -40,6 +40,7 @@ void      rest_cors_enable(httpd_req_t *req);
 esp_err_t rest_options_handler(httpd_req_t *req);
 
 /* Security */
+char*     compute_sha256_b64(char* hash, uint8_t *data, int len); 
 char*     compute_hmac(const char* keyid, char* res, int hlen, uint8_t* data1, int len1, uint8_t* data2, int len2);
 esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize);
 void      rest_setSecHdrs(esp_http_client_handle_t client, char* data, int dlen);

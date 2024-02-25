@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include "defines.h"
 #include "config.h"
+#include "system.h"
 #include "cuckoo_filter.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
@@ -18,12 +19,16 @@
 
 
 #define KEY_SIZE 128
+#define SHA256_SIZE 32
+#define SHA256_B64_SIZE 45
 #define HMAC_TRUNC 24
 #define HMAC_SHA256_SIZE 32
 #define HMAC_KEY_SIZE 64
 #define HMAC_B64_SIZE 45
 #define NONCE_SIZE 12
 #define NONCE_BIN_SIZE 8
+#define HTTPAUTH_SIZE 128
+
 
 #define TAG "rest"
 
@@ -89,30 +94,69 @@ void rest_setSecHdrs(esp_http_client_handle_t client, char* data, int dlen)
  * We compute a HMAC using the nonce + the payload and compare it with the HMAC contained
  * in the header. We return ESP_OK if nonce is not seen before and the HMACs match.  
  * The key should be stored in config "API.KEY" (nvs storage). 
+ * 
+ * NOTE: We want to move to the more standard Authorization header like this: 
+ *      Authorization: Arctic-Hmac userid;nonce,hmac (where userid is 'tracker'
+ * 
+ * See https://polaricserver.readthedocs.io/en/latest/clientauth.html#http-requests
+ * 
+ * NOTE: For now, we use the payload directly in computing the MAC. Polaric Server 
+ * use a SHA256 hash of it. 
  *******************************************************************************************/
 
 esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize) 
 {    
     char nonce[NONCE_SIZE+1];
-    if (httpd_req_get_hdr_value_str(req, "Arctic-Nonce", nonce, NONCE_SIZE+1 ) != ESP_OK) {
-        ESP_LOGI(TAG, "Couldn't get header Arctic-Nonce");
-        return ESP_FAIL;
-    }
-    /* In addition to the nonce we should add method, uri, a timestamp, etc... */
-
-    
-    /* 
-     * Verify HMAC. Get HMAC from header and compute one from 
-     * content. Compare. 
-     */
     char rhmac[HMAC_B64_SIZE+1];
     char hmac[HMAC_B64_SIZE+1];
-    if (httpd_req_get_hdr_value_str(req, "Arctic-Hmac", rhmac, HMAC_B64_SIZE+1) != ESP_OK) {
-        ESP_LOGI(TAG, "Couldn't get header Arctic-Hmac");
-        return ESP_FAIL;
+    char httpauth[HTTPAUTH_SIZE+1];
+    char* tokens[4];
+    int tnum;
+    bool authhdr_ok = false;
+    
+    /* First, try the Authorization header */
+    if (httpd_req_get_hdr_value_str(req, "Authorization", httpauth, HTTPAUTH_SIZE+1) != ESP_OK)
+        ESP_LOGI(TAG, "Couldn't get Authorization header");
+    else
+        if (strncmp(httpauth, "Arctic-Hmac", 11) != 0)
+            ESP_LOGI(TAG, "Authorization header is not Arctic-Hmac");
+        else {
+            tnum = tokenize(httpauth+12, tokens, 4, ";", false);
+            if (tnum < 3 || strcmp("tracker", tokens[0]) !=0) {
+                ESP_LOGI(TAG, "Authorization header format error or unknown userid");
+                return ESP_FAIL;
+            }
+            else {
+                strcpy(nonce, tokens[1]);
+                strcpy(rhmac, tokens[2]);
+                authhdr_ok = true;
+            }
+        }
+    
+    if (!authhdr_ok) {
+        /* Fallback on Arctic-Hmac/Arctic-Nonce headers */
+        if (httpd_req_get_hdr_value_str(req, "Arctic-Nonce", nonce, NONCE_SIZE+1 ) != ESP_OK) {
+            ESP_LOGI(TAG, "Couldn't get header Arctic-Nonce");
+            return ESP_FAIL;
+        }
+        
+       /* Get HMAC from header */
+        if (httpd_req_get_hdr_value_str(req, "Arctic-Hmac", rhmac, HMAC_B64_SIZE+1) != ESP_OK) {
+            ESP_LOGI(TAG, "Couldn't get header Arctic-Hmac");
+            return ESP_FAIL;
+        }
     }
-
-    compute_hmac("API.KEY", hmac, HMAC_B64_SIZE, (uint8_t*) nonce, NONCE_SIZE, (uint8_t*) payload, plsize);
+    
+    /* Verify HMAC */
+    char phash[SHA256_B64_SIZE];
+    if (plsize > 0) 
+        compute_sha256_b64(phash, (uint8_t*) payload, plsize);
+    
+    compute_hmac("API.KEY", hmac, HMAC_B64_SIZE, 
+        (uint8_t*) nonce, NONCE_SIZE, 
+        (uint8_t*) (plsize==0 ? "": phash), (plsize==0 ? 0 : SHA256_B64_SIZE-1));
+    
+    
     if (strncmp(hmac, rhmac, HMAC_TRUNC) != 0) {
         ESP_LOGI(TAG, "HMAC signature doesn't match");
         return ESP_FAIL;
@@ -125,6 +169,29 @@ esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize)
     nonce_add(nonce);
     ESP_LOGI(TAG, "Authorization ok");
     return ESP_OK;
+}
+
+
+
+
+/*******************************************************************************************
+ * Generate sha256 hash
+ *******************************************************************************************/
+
+char* compute_sha256_b64(char* res, uint8_t *data, int len) 
+{
+    uint8_t hash[SHA256_SIZE];
+    
+    mbedtls_sha256_context ss;
+    mbedtls_sha256_init (&ss);
+    mbedtls_sha256_starts (&ss, 0);
+    if (len > 0)
+        mbedtls_sha256_update (&ss, (uint8_t*) data, len);
+    mbedtls_sha256_finish (&ss, hash);
+    
+    size_t olen;
+    mbedtls_base64_encode((unsigned char*) res, SHA256_B64_SIZE, &olen, hash, SHA256_SIZE);
+    return res;
 }
 
 
@@ -152,6 +219,12 @@ char* compute_hmac(const char* keyid, char* res, int hlen, uint8_t* data1, int l
     uint8_t hash[HMAC_SHA256_SIZE];
 
     int keylen = GET_STR_PARAM(keyid, key, KEY_SIZE) -1;
+    if (keylen <= 0) {
+        /* Key is not set. Generate a random key */
+        ESP_LOGW(TAG, "API Key is not set");
+        esp_fill_random(key, KEY_SIZE);
+        keylen = KEY_SIZE;
+    }
     
     /* IF key length is more than HMAC_KEY_SIZE, use a hash of it instead */
     if (keylen > HMAC_KEY_SIZE) {
