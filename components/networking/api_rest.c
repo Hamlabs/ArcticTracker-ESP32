@@ -29,7 +29,7 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     httpd_resp_set_type(req, "application/json");
     CHECK_AUTH(req);
      
-    size_t size_flash;
+    uint32_t size_flash;
     esp_flash_get_size(NULL, &size_flash);
    
     cJSON *root = cJSON_CreateObject();

@@ -187,24 +187,6 @@ fifo_t* afsk_rx_init()
 }
 
 
-/*******************************************
-  Go through samples to get some info   
- *******************************************/
-
-static void frameInfo() {      
-    int cnt=0, cnt100=0, cnt40=0, cnt10=0;
-    rxSampler_reset();
-    while (!rxSampler_eof()) {
-        cnt++;
-        int8_t sample = rxSampler_get();
-        if (sample < -100 || sample > 100)
-            cnt100++;
-        else if (sample < -40 || sample > 40)
-            cnt40++;
-    }
-}
-
-
 
 /*******************************************
   Process the samples to decode frame 

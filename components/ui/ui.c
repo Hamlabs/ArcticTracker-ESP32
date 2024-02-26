@@ -11,18 +11,15 @@
 #include "gui.h"
 #include "driver/gpio.h"
 
+#define TAG "ui"
+
 extern void neopixel_init(); 
 extern void buzzer_init();
 static void bphandler(struct tmrTimerControl * p);
 static void holdhandler(struct tmrTimerControl * p);
-static void clickhandler(struct tmrTimerControl * p);
-
-#define TAG "ui"
-
 static void click_handler(void* p, bool up); 
 static void push_handler(void* p);
   
-static void print_inputs();
 
 
 /*********************************************************************
@@ -184,7 +181,7 @@ static bool buttval2 = 1;
 static bool pressed; 
 static bool butt2press; 
 
-static TimerHandle_t bptimer, bhtimer, enctimer;
+static TimerHandle_t bptimer, bhtimer;
 
 
 /* This is a ISR for handling button */

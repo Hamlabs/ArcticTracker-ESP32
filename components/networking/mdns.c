@@ -1,8 +1,5 @@
 #include "esp_log.h"
 #include "mdns.h"
- 
-static const char * if_str[] = {"STA", "AP", "ETH", "MAX"};
-static const char * ip_protocol_str[] = {"V4", "V6", "MAX"};
 
 #define TAG "mdns"
 

@@ -407,8 +407,6 @@ static int do_fwupgrade(int argc, char** argv)
 
 static int do_adcinfo(int argc, char** argv)
 {
-    uint32_t val; 
-    
 #if DEVICE == T_TWR
     printf("ADC status not supported yet on T-TWR\n");
 #else
