@@ -48,7 +48,7 @@ esp_netif_t *sta_netif = NULL;
 esp_netif_t *ap_netif = NULL;
 
 
-static esp_err_t wifi_event_handler(void* arg, esp_event_base_t ebase, int32_t eid, void* event_data);
+static void wifi_event_handler(void* arg, esp_event_base_t ebase, int32_t eid, void* event_data);
 
 static void task_autoConnect( void * pvParms ); 
 
@@ -61,9 +61,9 @@ static void task_autoConnect( void * pvParms );
  ********************************************************************************/
 
 static bool dhcp_started = false; 
+
 static void dhcp_enable(bool on)
 {
-/*
     if (on && !dhcp_started) {
         char ip[16]; 
         // stop DHCP server
@@ -76,8 +76,10 @@ static void dhcp_enable(bool on)
         str2ip(&info.gw, ip); //ESP acts as router, so gw addr will be its own addr
         str2ip(&info.netmask, "255.255.255.0");
         ESP_ERROR_CHECK(esp_netif_set_ip_info(ap_netif, &info));
+        
         // start the DHCP server   
         ESP_ERROR_CHECK(esp_netif_dhcps_start(ap_netif));
+        
         ESP_LOGD(TAG, "DHCP server started on %s", ip);
         dhcp_started = true;
     }
@@ -85,7 +87,6 @@ static void dhcp_enable(bool on)
         ESP_ERROR_CHECK(esp_netif_dhcps_stop(ap_netif));
         dhcp_started = false; 
     }
-*/
 }
 
     
@@ -96,7 +97,7 @@ static void dhcp_enable(bool on)
  * Event handler
  ********************************************************************************/
 
-static esp_err_t wifi_event_handler(void* arg, esp_event_base_t ebase,
+static void wifi_event_handler(void* arg, esp_event_base_t ebase,
                                     int32_t eid, void* event_data)
 {
     if (eid == WIFI_EVENT_STA_STOP) {
@@ -112,6 +113,16 @@ static esp_err_t wifi_event_handler(void* arg, esp_event_base_t ebase,
     else if (eid == WIFI_EVENT_STA_CONNECTED) {
         ESP_LOGD(TAG, "STA Connect event");
         status = "Waiting for IP";
+    }
+    if (eid == WIFI_EVENT_AP_STACONNECTED) {
+        wifi_event_ap_staconnected_t* event = (wifi_event_ap_staconnected_t*) event_data;
+        ESP_LOGI(TAG, "SoftAP: Station join: MAC=%s,  AID=%d",
+                 mac2str(event->mac), event->aid);
+    }    
+    else if (eid == WIFI_EVENT_AP_STADISCONNECTED) {
+        wifi_event_ap_stadisconnected_t* event = (wifi_event_ap_stadisconnected_t*) event_data;
+        ESP_LOGI(TAG, "SoftAp: Station leave: MAC=%s, AID=%d",
+                 mac2str(event->mac), event->aid);
     }
     else if (eid == WIFI_EVENT_STA_DISCONNECTED) {
         ESP_LOGD(TAG, "STA Disconnect event");
@@ -132,7 +143,6 @@ static esp_err_t wifi_event_handler(void* arg, esp_event_base_t ebase,
         }
         cond_set(scanDone);
     }
-    return ESP_OK;
 }
 
 
@@ -168,7 +178,7 @@ void wifi_init(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     
     
-//    wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on")); NEED TO BE FIXED
+    wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on"));
     
     esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
     scanDone = cond_create();
@@ -177,9 +187,9 @@ void wifi_init(void)
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
-        WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, &instance_any_id));
+        WIFI_EVENT, ESP_EVENT_ANY_ID, (esp_event_handler_t) &wifi_event_handler, NULL, &instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(
-        IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, &instance_got_ip));
+        IP_EVENT, IP_EVENT_STA_GOT_IP, (esp_event_handler_t) &wifi_event_handler, NULL, &instance_got_ip));
     
     // Now we need to set mode, the config and start it
     
@@ -203,6 +213,32 @@ bool wifi_softAp_isEnabled() {
 
 void wifi_enable_softAp(bool en)
 {    
+    char ssid[32];
+    char passwd[64];
+    
+    if (en && !softApEnabled) { 
+        get_str_param("WIFIAP.SSID", ssid, 32, default_ssid);
+        get_str_param("WIFIAP.AUTH", passwd, 64, AP_DEFAULT_PASSWD);
+    
+        wifi_config_t conf; 
+        strcpy((char*) conf.ap.ssid, ssid); 
+        conf.ap.ssid_len = strlen(ssid);
+        strcpy((char*) conf.ap.password, passwd);
+        conf.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+    
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &conf));
+        if (ap_netif==NULL)
+            ap_netif = esp_netif_create_default_wifi_ap();
+        dhcp_enable(true);
+        softApEnabled = true;
+        ESP_LOGI(TAG, "wifi_init_softap finished");
+    }
+    else if (softApEnabled) {
+        dhcp_enable(false);
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        softApEnabled = false;
+    }
 }
 
 
@@ -222,7 +258,6 @@ void wifi_enable(bool en)
     /* Enable */
     if (en && !enabled) {
         ESP_ERROR_CHECK( esp_wifi_start() );
-        dhcp_enable(true);
         
         /* Start autoconnect task */
         if ( xTaskCreatePinnedToCore( task_autoConnect, "wifi-autocon", STACK_AUTOCON, 
