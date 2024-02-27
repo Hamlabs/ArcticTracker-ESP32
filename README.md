@@ -1,19 +1,20 @@
 # ArcticTracker-ESP32
 
-Arctic Tracker (v.3) is an APRS tracker platform based on the ESP32S3
-MCU module, a GPS, a display and a VHF transceiver module. It is mainly meant as
-an experimental prototype to show how we can build a tracker using affordable
-modules. 
-It is also a IoT device capable of using WIFI and the internet when this is available: For easy configuration, for
-pushing APRS data, etc. It can also function as a igate. 
+Arctic Tracker (v.3) is an APRS tracker platform based on the ESP32S3 MCU module, a GPS, a display and a 
+VHF transceiver module. Hardware prototypes were created mainly as experimental prototypes to show how we can build a 
+tracker using affordable modules. The Arctic Tracker is also a IoT device capable of using WIFI and the internet when this 
+is available: For easy configuration, for pushing APRS data, etc. It can also function as a igate. 
 
-It is based on the earlier Arctic Tracker (v.2) prototype which used an ESP32. This was 
-again based on the even earlier Arctic Tracker (v.1) prototype which used a Teensy 3 MCU module and a ESP-8266 
-module (with NodeMCU). 
+It is based on the earlier Arctic Tracker (v.2) prototype which used an ESP32. This was again based on the even earlier 
+Arctic Tracker (v.1) prototype which used a Teensy 3 MCU module and a ESP-8266 module (with NodeMCU). 
 
 See http://www.hamlabs.no for some blogging about this project. 
-A working prototype was built and demonstrated. The last arcticle describes what is done with version 3. It is now implemented: http://hamlabs.no/2023/01/10/arctic_third_round/
 
+
+## Supported hardware
+
+* _LilyGo T-TWR-plus_ 2.0: It works! 
+* _Arctic Tracker hardware prototype_: A working hardware prototype was built and demonstrated. More info on: http://hamlabs.no/2023/01/10/arctic_third_round/ A updated PCB layout has been produced and is currently being tested. 5 trackers have been made. It works! 
 
 ## Implemented features
 
@@ -40,12 +41,6 @@ It is fairly complete now. The following features are implemented:
 A REST API is provided for external apps (typically). It mainly has methods for reading and updating settings. A strong authentication scheme based on SHA256 HMAC is used. A web-browser-based client is under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) that are on the same LAN. This is still somewhat work-in-progress...
 
 A web-client (it is work-in-progress) is here: https://github.com/Hamlabs/ArcticTracker-Webapp
-
-## Hardware
-
-A updated PCB layout has been produced and is currently being tested. 5 trackers have been made. It works! 
-
-Work is in progress, making adaptations to the software to run on the LilyGo T-TWR-plus.  
 
 ## Future work
 
