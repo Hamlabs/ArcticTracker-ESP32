@@ -13,7 +13,7 @@ See http://www.hamlabs.no for some blogging about this project.
 ## Supported hardware
 
 * _LilyGo T-TWR-plus_ 2.0: See https://www.lilygo.cc/products/t-twr-plus?variant=42911934185653
-* _Arctic Tracker hardware_: A working hardware prototype was built and demonstrated. More info on: http://hamlabs.no/2023/01/10/arctic_third_round/ A updated PCB layout has been produced and is currently being tested. 5 trackers have been made and tested.
+* _Arctic Tracker hardware_: A working hardware prototype was built and demonstrated. More info on: http://hamlabs.no/2023/01/10/arctic_third_round/ A updated PCB layout has been produced. 5 trackers have been made and tested.
 
 ## Implemented features
 
