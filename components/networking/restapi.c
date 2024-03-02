@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include "esp_http_server.h"
+#include <esp_https_server.h>
+#include "esp_tls.h"
+
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_vfs.h"
@@ -32,7 +35,7 @@ typedef struct rest_sess_context {
  
  
 static rest_server_context_t *context; 
-static httpd_handle_t server = NULL;
+httpd_handle_t http_server = NULL;
 
 static char* get_origin(httpd_req_t *req);
 
@@ -117,7 +120,7 @@ void rest_register(char* uri, httpd_method_t method, esp_err_t (*handler)(httpd_
         .handler = handler,
         .user_ctx = context
     };
-    esp_err_t err = httpd_register_uri_handler(server, &system_info_get_uri);
+    esp_err_t err = httpd_register_uri_handler(http_server, &system_info_get_uri);
     if (err == ESP_ERR_INVALID_ARG)
         ESP_LOGE(TAG, "Cannot register method for %s. Null arg.", uri);
     else if (err == ESP_ERR_INVALID_ARG)
@@ -206,7 +209,7 @@ esp_err_t rest_JSON_input(httpd_req_t *req,  cJSON **json)
 
 extern void register_api_rest(void);
 
-void rest_start(uint16_t port, const char *path) 
+void rest_start(uint16_t port, uint16_t sport, const char *path) 
 {
     nonce_init();
     
@@ -220,10 +223,32 @@ void rest_start(uint16_t port, const char *path)
     config.server_port = port;
     config.max_uri_handlers = 32;
     config.uri_match_fn = httpd_uri_match_wildcard;
-
-    ESP_LOGI(TAG, "Starting REST HTTP Server on port %u", port);
-    httpd_start(&server, &config);
     
+    /* Set up HTTPS server */
+#if defined WEBSERVER_HTTPS
+    httpd_ssl_config_t sconfig = HTTPD_SSL_CONFIG_DEFAULT();
+    sconfig.httpd = config;
+    sconfig.port_secure = sport;
+    sconfig.port_insecure = port;
+
+    extern const unsigned char cert_start[] asm("_binary_cert_pem_start");
+    extern const unsigned char cert_end[]   asm("_binary_cert_pem_end");
+    sconfig.servercert = cert_start;
+    sconfig.servercert_len = cert_end - cert_start;
+
+    extern const unsigned char privkey_pem_start[] asm("_binary_privkey_pem_start");
+    extern const unsigned char privkey_pem_end[]   asm("_binary_privkey_pem_end");
+    sconfig.prvtkey_pem = privkey_pem_start;
+    sconfig.prvtkey_len = privkey_pem_end - privkey_pem_start;
+#endif
+    
+    ESP_LOGI(TAG, "Starting REST HTTP Server on port %u", port);
+    
+#if defined WEBSERVER_HTTPS
+    httpd_ssl_start(&http_server, &sconfig);
+#else
+    httpd_start(&http_server, &config);
+#endif
     register_api_rest();
 }
 

@@ -116,10 +116,10 @@ esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize)
     
     /* First, try the Authorization header */
     if (httpd_req_get_hdr_value_str(req, "Authorization", httpauth, HTTPAUTH_SIZE+1) != ESP_OK)
-        ESP_LOGI(TAG, "Couldn't get Authorization header");
+        ESP_LOGI(TAG, "Couldn't get 'Authorization' header");
     else
         if (strncmp(httpauth, "Arctic-Hmac", 11) != 0)
-            ESP_LOGI(TAG, "Authorization header is not Arctic-Hmac");
+            ESP_LOGI(TAG, "Authorization header is not 'Arctic-Hmac'");
         else {
             tnum = tokenize(httpauth+12, tokens, 4, ";", false);
             if (tnum < 3 || strcmp("tracker", tokens[0]) !=0) {
@@ -136,13 +136,13 @@ esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize)
     if (!authhdr_ok) {
         /* Fallback on Arctic-Hmac/Arctic-Nonce headers */
         if (httpd_req_get_hdr_value_str(req, "Arctic-Nonce", nonce, NONCE_SIZE+1 ) != ESP_OK) {
-            ESP_LOGI(TAG, "Couldn't get header Arctic-Nonce");
+            ESP_LOGI(TAG, "Couldn't get header 'Arctic-Nonce'");
             return ESP_FAIL;
         }
         
        /* Get HMAC from header */
         if (httpd_req_get_hdr_value_str(req, "Arctic-Hmac", rhmac, HMAC_B64_SIZE+1) != ESP_OK) {
-            ESP_LOGI(TAG, "Couldn't get header Arctic-Hmac");
+            ESP_LOGI(TAG, "Couldn't get header 'Arctic-Hmac'");
             return ESP_FAIL;
         }
     }

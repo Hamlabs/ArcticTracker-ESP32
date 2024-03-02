@@ -6,11 +6,11 @@
 #define JSON_GETITEM(root, id, type, dfl) \
    (cJSON_GetObjectItem((root), (id)) == NULL ? (dfl) : cJSON_GetObjectItem((root), (id))->value##type)
 
-#define REGISTER_GET(uri, handler) rest_register((uri), HTTP_GET, (handler))
-#define REGISTER_PUT(uri, handler) rest_register((uri), HTTP_PUT, (handler))
-#define REGISTER_POST(uri, handler) rest_register((uri), HTTP_POST, (handler))
+#define REGISTER_GET(uri,    handler) rest_register((uri), HTTP_GET, (handler))
+#define REGISTER_PUT(uri,    handler) rest_register((uri), HTTP_PUT, (handler))
+#define REGISTER_POST(uri,   handler) rest_register((uri), HTTP_POST, (handler))
 #define REGISTER_DELETE(uri, handler) rest_register((uri), HTTP_DELETE, (handler))
-#define REGISTER_OPTIONS(uri, handler) rest_register((uri), HTTP_OPTIONS, (handler))
+#define REGISTER_OPTIONS(uri,handler) rest_register((uri), HTTP_OPTIONS, (handler))
 
 #define JSON_STR(root, id)  JSON_GETITEM(root, id, string, "")
 #define JSON_BYTE(root, id)  (uint8_t) JSON_GETITEM(root, id, int, 0)
@@ -34,7 +34,7 @@ esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int* size);
 esp_err_t rest_AUTH(httpd_req_t *req);
 esp_err_t rest_JSON_input(httpd_req_t *req,  cJSON **json);
 esp_err_t rest_JSON_send(httpd_req_t *req, cJSON *root);
-void      rest_start(uint16_t port, const char *path);
+void      rest_start(uint16_t port, uint16_t sport, const char *path);
 void      rest_stop(void);
 void      rest_cors_enable(httpd_req_t *req);
 esp_err_t rest_options_handler(httpd_req_t *req);

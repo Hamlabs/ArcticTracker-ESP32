@@ -18,6 +18,7 @@
 #define DEVICE T_TWR
 #define DEVICE_STRING "LilyGo T-TWR-plus"
 
+#define WEBSERVER_HTTPS 
 
 /* 
  * If set to true, radio will be turned off even if tracking is active
@@ -205,9 +206,9 @@
 #define TONE_TIMERGRP    0
 #define TONE_TIMERIDX    1
 
+#define HTTP_PORT        80
+#define HTTPS_PORT       443
 
-
-#define HTTPD_PORT        80
 #define AP_DEFAULT_PASSWD ""
 #define AP_DEFAULT_IP     "192.168.0.1"
 #define AP_MAX_CLIENTS    4

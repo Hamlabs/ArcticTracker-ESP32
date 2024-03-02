@@ -4,3 +4,5 @@ idf_component_register(
     
     INCLUDE_DIRS "." "../components/ui" "../components/aprs" "../components/pmu"
 )
+
+spiffs_create_partition_image(webapp ../webapp FLASH_IN_PROJECT)

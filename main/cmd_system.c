@@ -51,7 +51,10 @@ static int do_ls(int argc, char** argv) {
     DIR *dp;
     struct dirent *ep;   
     struct stat sb;
-    dp = opendir ("/files");
+    char* dir = "/files";
+    if (argc > 1) 
+        dir = argv[1];
+    dp = opendir (dir);
     char tpath[263];
     char tstr[16];
     
@@ -82,7 +85,11 @@ static int do_rm(int argc, char** argv) {
     }
     else {
         char path[263];
-        sprintf(path, "/files/%s", argv[1]);
+        if (strncmp(argv[1], "/files/", 7))
+            sprintf(path, argv[1]);
+        else
+            sprintf(path, "/files/%s", argv[1]);
+        
         if ( unlink(path) == -1)
             printf("Couldn't remove file: %s\n", path);
         else
@@ -113,7 +120,10 @@ static int do_write(int argc, char** argv) {
     }
     else {
         char path[263];
-        sprintf(path, "/files/%s", argv[1]);
+        if (strncmp(argv[1], "/files/", 7))
+            sprintf(path, argv[1]);
+        else
+            sprintf(path, "/files/%s", argv[1]);
         FILE *f = fopen(path, "a");
         if (f==NULL) {
             printf("Couldn't open file\n");
@@ -145,7 +155,10 @@ static int do_read(int argc, char** argv) {
     }
     else {
         char buf[263];
-        sprintf(buf, "/files/%s", argv[1]);
+        if (*argv[1] == '/')
+            sprintf(buf, "%s", argv[1]);
+        else
+            sprintf(buf, "/files/%s", argv[1]);
         FILE *f = fopen(buf, "r");
         printf("\n");
 

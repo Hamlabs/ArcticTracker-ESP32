@@ -28,6 +28,7 @@
 #include "igate.h"
 #include "trackstore.h"
 #include "gui.h"
+#include "restapi.h"
 
 #include "soc/gpio_sig_map.h"
 #include "driver/usb_serial_jtag.h"
@@ -192,7 +193,6 @@ static void startup(void* arg)
 /********************************************************************************
  * Main function
  ********************************************************************************/
-extern void rest_start(int port, char* uri);
 
 void app_main()
 {       
@@ -225,7 +225,7 @@ void app_main()
     register_aprs();
     wifi_init();
     spiffs_init();    
-    rest_start(HTTPD_PORT, "/");
+    rest_start(HTTP_PORT, HTTPS_PORT, "/");
     ui_init();
     batt_init(); // Move this first? Move i2c initialization out of display code
         

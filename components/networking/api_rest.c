@@ -358,32 +358,39 @@ static esp_err_t trackers_handler(httpd_req_t *req) {
 
 
 
-    
+
+extern httpd_handle_t http_server;
+extern esp_err_t register_file_server(httpd_handle_t *server, const char *path);
+
+
 /******************************************************************
  *  Register handlers for uri/methods
  ******************************************************************/
 
 void register_api_rest() 
 {    
-    REGISTER_GET("/api/info",     system_info_handler);
-    REGISTER_OPTIONS("/api/info", rest_options_handler);
+    REGISTER_GET("/api/info",      system_info_handler);
+    REGISTER_OPTIONS("/api/info",  rest_options_handler);
     
     REGISTER_GET("/api/trackers",     trackers_handler);
     REGISTER_OPTIONS("/api/trackers", rest_options_handler);
     
-    REGISTER_GET("/api/digi",     digi_get_handler);
-    REGISTER_PUT("/api/digi",     digi_put_handler);
-    REGISTER_OPTIONS("/api/digi", rest_options_handler);
+    REGISTER_GET("/api/digi",      digi_get_handler);
+    REGISTER_PUT("/api/digi",      digi_put_handler);
+    REGISTER_OPTIONS("/api/digi",  rest_options_handler);
 
-    REGISTER_GET("/api/aprs",     aprs_get_handler);
-    REGISTER_PUT("/api/aprs",     aprs_put_handler);
-    REGISTER_OPTIONS("/api/aprs", rest_options_handler);    
+    REGISTER_GET("/api/aprs",      aprs_get_handler);
+    REGISTER_PUT("/api/aprs",      aprs_put_handler);
+    REGISTER_OPTIONS("/api/aprs",  rest_options_handler);    
     
-    REGISTER_GET("/api/wifi",     wifi_get_handler);
-    REGISTER_PUT("/api/wifi",     wifi_put_handler);
-    REGISTER_OPTIONS("/api/wifi", rest_options_handler);
+    REGISTER_GET("/api/wifi",      wifi_get_handler);
+    REGISTER_PUT("/api/wifi",      wifi_put_handler);
+    REGISTER_OPTIONS("/api/wifi",  rest_options_handler);
     
     REGISTER_GET("/api/trklog",    trklog_get_handler);
     REGISTER_PUT("/api/trklog",    trklog_put_handler);
     REGISTER_OPTIONS("/api/trklog",rest_options_handler);
+    
+    /* Static file access */
+    register_file_server(http_server, "/webapp");
 }
