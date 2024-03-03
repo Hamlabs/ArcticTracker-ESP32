@@ -41,7 +41,7 @@ A REST API is provided for external apps (typically). It mainly has methods for 
 
 A web-client (it is work-in-progress) is here: https://github.com/Hamlabs/ArcticTracker-Webapp. This is also contained in the tracker itself to allow configuration using the softAP mode. 
 
-The webserver uses HTTPS (SSL/TLS). This is mostly due to restrictions in common web-browsers. In the current version, a self-signed certificate is embedded in the code. This means that you will need to accept an exception for this certificate in the browser the first time you access the tracker. Also, if the private key is embedded into the code, it can (for skilled hackers) be exposed. This doesn't affect the authentication scheme though. For stronger security you can always build your firmware yourself and be sure to create a new certificate.
+The webserver uses HTTPS (SSL/TLS). This is mostly due to restrictions in common web-browsers. In the current version, a self-signed certificate is embedded in the code. This means that you will need to accept an exception for this certificate in the browser the first time you access the tracker. Also, if the private key is embedded into published code, it can (for skilled hackers) be exposed. This doesn't affect the authentication scheme though. For stronger security consider building your firmware yourself and be sure to create a new certificate.
 
 ## Building the firmware
 It can be built with *esp-idf* (version 5.0.x) and the *idf.py* tool. Follow the instructions to install the *esp-idf* and run the necessary scripts there first to set it up. Download the *Arctic Tracker* repository in another directory. cd to this directory and run the following commands to add external components.: 
@@ -53,9 +53,9 @@ The *led_strip* is for the LilyGo T-TWR plus. For this device you will also need
 
 It is a good idea to generate a new SSL certificate now and then. You could also just cd to the directory and run the command inside the gencert.sh script. You should have openssl installed on your computer to do this. 
   ```
-  cd components/networking/cert;sh gencert.sh
+  cd components/networking/cert; sh gencert.sh
   ```
-It may be a good idea to open the file *main/defines.h* and check that it is correctly set up for the device you are using. The 
+It may be a good idea to open the file *main/defines.h* and check that it is correctly set up for the device you are using.
 
 To build and run the firmware, plug in your device and run
   ```
