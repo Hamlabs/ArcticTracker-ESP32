@@ -63,6 +63,13 @@ To build and run the firmware, plug in your device and run
   ```
 (If I forgot something, please give me a hint, and I will try to fix it). 
 
+## Setup of the tracker - the command shell
+Plug a USB cable into the tracker and your computer. A serial interface will appear. Start a (serial) terminal program and connect to the serial interface (on Linux it is /dev/ttyACM0). Alternatively, the monitor command of the idf.py may be used. It may be necessary to reset the tracker to get the command prompt (cmd:). 
+
+The command-shell let you configure everything and is useful in developing and debugging the software. Be sure to set the *callsign*. The *'help'* command shows the available commands. The *'tracker on'* command turns on the tracker. The *'wifi on'* command turns on the WIFI. You can set the Wifi-access points and the API key here to be able to do configuration with a web-browser. 
+
+(I hope to be able to document this better soon)
+
 ## Future work
 
 A version 4 tracker will probably move on to exploring LoRa and FSK modes on 70 cm. There are also some other VHF-modules around that can be interesting to look at without a separate PA module: The SR-FRS-2WVS (2 watts), the SA-868 (2 watts), maybe the SR-FRS-4W. The SA868 comes with a programmable version and I wonder if it could be somehow optimized a bit for APRS? 
