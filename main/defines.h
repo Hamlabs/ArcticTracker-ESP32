@@ -14,7 +14,11 @@
 
 #define BIT_0	( 1 << 0 )
 
+/* Supported devices */
+#define ARCTIC3 0
 #define T_TWR 1
+
+/* Device */
 #define DEVICE T_TWR
 #define DEVICE_STRING "LilyGo T-TWR-plus"
 

@@ -79,7 +79,6 @@ static char* get_origin(httpd_req_t *req) {
     
     /* Get origin header */
     if (httpd_req_get_hdr_value_str(req, "Origin", origin, 32) != ESP_OK) {
-        ESP_LOGW(TAG, "Cannot retrieve Origin header");
         trex_free(rex);
         return buf;
     }
