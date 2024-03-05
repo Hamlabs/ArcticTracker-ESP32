@@ -297,32 +297,10 @@ esp_vfs_spiffs_conf_t spconf2 = {
     
     
 void spiffs_init() {
-        
-    /* Register and mount partition 2 (Webapp) */
-    esp_err_t ret = esp_vfs_spiffs_register(&spconf2);
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) 
-            ESP_LOGE(TAG, "Failed to mount or format filesystem (webapp)");
-        else if (ret == ESP_ERR_NOT_FOUND) 
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition 2 (webapp)");
-        else 
-            ESP_LOGE(TAG, "ERROR in mounting filesystem (webapp): %d", ret);
-    }
-    
-    /* Check if SPIFFS fs is mounted */
-    if (esp_spiffs_mounted(spconf2.partition_label)) 
-         ESP_LOGI(TAG, "SPIFFS partition mounted on %s", spconf2.base_path);
-    
-    /* Get and log info */
-    size_t size, used;
-    ret = esp_spiffs_info(spconf2.partition_label, &size, &used);
-    if (ret == ESP_OK)
-        ESP_LOGI(TAG, "SPIFFS fs: '%s', %d bytes, %d used", spconf2.partition_label, size, used);
-        
-    
+    size_t size, used;       
     
     /* Register and mount */
-    ret = esp_vfs_spiffs_register(&spconf);
+    esp_err_t ret = esp_vfs_spiffs_register(&spconf);
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) 
             ESP_LOGE(TAG, "Failed to mount or format filesystem");
@@ -341,8 +319,28 @@ void spiffs_init() {
     if (ret == ESP_OK)
         ESP_LOGI(TAG, "SPIFFS fs: '%s', %d bytes, %d used", spconf.partition_label, size, used);
     
-
     
+    
+    /* Register and mount partition 2 (Webapp) */
+    ret = esp_vfs_spiffs_register(&spconf2);
+    if (ret != ESP_OK) {
+        if (ret == ESP_FAIL) 
+            ESP_LOGE(TAG, "Failed to mount or format filesystem (webapp)");
+        else if (ret == ESP_ERR_NOT_FOUND) 
+            ESP_LOGE(TAG, "Failed to find SPIFFS partition 2 (webapp)");
+        else 
+            ESP_LOGE(TAG, "ERROR in mounting filesystem (webapp): %d", ret);
+    }
+    
+    /* Check if SPIFFS fs is mounted */
+    if (esp_spiffs_mounted(spconf2.partition_label)) 
+         ESP_LOGI(TAG, "SPIFFS partition mounted on %s", spconf2.base_path);
+    
+    /* Get and log info */
+    ret = esp_spiffs_info(spconf2.partition_label, &size, &used);
+    if (ret == ESP_OK)
+        ESP_LOGI(TAG, "SPIFFS fs: '%s', %d bytes, %d used", spconf2.partition_label, size, used);
+        
 }
 
 

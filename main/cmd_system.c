@@ -64,7 +64,7 @@ static int do_ls(int argc, char** argv) {
             sprintf(tpath, "/files/%s", ep->d_name); 
             stat(tpath, &sb);
             datetime2str(tstr, sb.st_mtime);  
-            printf("%8d bytes  %sC  %s\n", (int) sb.st_size, tstr, ep->d_name);
+            printf("%9ld bytes  %sC  %s\n", sb.st_size, tstr, ep->d_name);
         }
         (void) closedir (dp);
     }
@@ -85,7 +85,7 @@ static int do_rm(int argc, char** argv) {
     }
     else {
         char path[263];
-        if (strncmp(argv[1], "/files/", 7))
+        if (strncmp(argv[1], "/files/", 7)==0)
             sprintf(path, argv[1]);
         else
             sprintf(path, "/files/%s", argv[1]);
@@ -120,7 +120,7 @@ static int do_write(int argc, char** argv) {
     }
     else {
         char path[263];
-        if (strncmp(argv[1], "/files/", 7))
+        if (strncmp(argv[1], "/files/", 7) == 0)
             sprintf(path, argv[1]);
         else
             sprintf(path, "/files/%s", argv[1]);
@@ -129,6 +129,7 @@ static int do_write(int argc, char** argv) {
             printf("Couldn't open file\n");
             return 0;
         }
+        
         printf("Writing to %s. Ctrl-D to terminate\n", path);
 
         /* Loop reading text from console. Ctrl-D to disconnect */
