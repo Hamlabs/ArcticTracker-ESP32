@@ -30,7 +30,7 @@ typedef struct rest_server_context {
 
 
 typedef struct rest_sess_context {
-    char orig[32];
+    char orig[64];
 } rest_sess_context_t;
  
  
@@ -45,7 +45,7 @@ void rest_cors_enable(httpd_req_t *req) {
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", get_origin(req));   
     httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Arctic-Nonce, Arctic-Hmac");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Arctic-Nonce, Arctic-Hmac, Authorization");
 }
 
 
@@ -64,7 +64,7 @@ esp_err_t rest_options_handler(httpd_req_t *req) {
 
 static char* get_origin(httpd_req_t *req) {
     char filter[64];
-    char origin[32];
+    char origin[64];
 
     if (req->sess_ctx == NULL)
         req->sess_ctx = malloc(sizeof(rest_sess_context_t));
@@ -78,7 +78,7 @@ static char* get_origin(httpd_req_t *req) {
         return buf;
     
     /* Get origin header */
-    if (httpd_req_get_hdr_value_str(req, "Origin", origin, 32) != ESP_OK) {
+    if (httpd_req_get_hdr_value_str(req, "Origin", origin, 64) != ESP_OK) {
         trex_free(rex);
         return buf;
     }
@@ -140,13 +140,14 @@ esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int *size)
     *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
     int received = 0;
     if (total_len >= SCRATCH_BUFSIZE) {
+        ESP_LOGW(TAG, "rest_get_input: content too long");
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
         return ESP_FAIL;
     }
     while (cur_len < total_len) {
         received = httpd_req_recv(req, *buf + cur_len, total_len);
         if (received <= 0) {
-            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive input");
             return ESP_FAIL;
         }
         cur_len += received;

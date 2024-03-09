@@ -17,6 +17,8 @@
 #include "tracklogger.h"
 
 
+#define TAG "rest"
+
 
 /******************************************************************
  *  GET handler for system status info 
@@ -111,6 +113,8 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
 
 static esp_err_t aprs_put_handler(httpd_req_t *req) 
 {
+    
+    ESP_LOGI(TAG, "aprs_put_handler");
     cJSON *root;   
     rest_cors_enable(req); 
     CHECK_JSON_INPUT(req, root);
@@ -118,7 +122,7 @@ static esp_err_t aprs_put_handler(httpd_req_t *req)
     set_str_param("MYCALL",   JSON_STR(root, "mycall"));
     set_str_param("SYMBOL",   JSON_STR(root, "symbol"));
     set_str_param("DIGIPATH", JSON_STR(root, "path"));
-    set_str_param("COMMENT",  JSON_STR(root, "comment"));
+    set_str_param("REP.COMMENT",  JSON_STR(root, "comment"));
     
     set_byte_param("MAXPAUSE", JSON_BYTE(root, "maxpause"));
     set_byte_param("MINPAUSE", JSON_BYTE(root, "minpause"));
@@ -317,6 +321,7 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
     rest_cors_enable(req); 
     CHECK_JSON_INPUT(req, root);
 
+    
     set_byte_param("TRKLOG.on", JSON_BOOL(root, "trklog_on"));
     if (get_byte_param("TRKLOG.on", 0))
         tracklog_on();

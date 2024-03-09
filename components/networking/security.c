@@ -116,7 +116,7 @@ esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize)
     
     /* First, try the Authorization header */
     if (httpd_req_get_hdr_value_str(req, "Authorization", httpauth, HTTPAUTH_SIZE+1) != ESP_OK)
-        ESP_LOGI(TAG, "Couldn't get 'Authorization' header");
+        ESP_LOGD(TAG, "Couldn't get 'Authorization' header");
     else
         if (strncmp(httpauth, "Arctic-Hmac", 11) != 0)
             ESP_LOGI(TAG, "Authorization header is not 'Arctic-Hmac'");
