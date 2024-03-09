@@ -41,7 +41,7 @@ A REST API is provided for external apps (typically). It mainly has methods for 
 
 A web-client (it is work-in-progress) is here: https://github.com/Hamlabs/ArcticTracker-Webapp. This is also contained in the tracker itself to allow configuration using the softAP mode. 
 
-The webserver uses HTTPS (SSL/TLS). This is mostly due to restrictions in common web-browsers. In the current version, a self-signed certificate is embedded in the code. This means that you will need to accept an exception for this certificate in the browser the first time you access the tracker. Also, if the private key is embedded into published code, it can (for skilled hackers) be exposed. This doesn't affect the authentication scheme though. For stronger security consider building your firmware yourself and be sure to create a new certificate.
+The webserver uses HTTPS (SSL/TLS). In the current version, a self-signed certificate is embedded in the firmware. This means that you will need to accept an exception for this certificate in the browser the first time you access the tracker. Also, if the private key is embedded into published firmware code, it can (for skilled hackers) be exposed. This doesn't affect the authentication scheme though. For stronger security consider building your firmware yourself and be sure to create a new certificate.
 
 ## Building the firmware
 It can be built with *esp-idf* (version 5.0.x) and the *idf.py* tool. Follow the instructions to install the *esp-idf* and run the necessary scripts there first to set it up. Download the *Arctic Tracker* repository in another directory. cd to this directory and run the following commands to add external components.: 
@@ -49,7 +49,7 @@ It can be built with *esp-idf* (version 5.0.x) and the *idf.py* tool. Follow the
   idf.py add-dependency "espressif/mdns^1.2.4" 
   idf.py add-dependency "espressif/led_strip^2.5.3" 
   ```
-The *led_strip* is for the LilyGo T-TWR plus. For this device you will also need to download *XPowersLib* and edit the CMakeLists.txt in the top level directory to set the location where you installed it.
+The *led_strip* component is for the LilyGo T-TWR plus. For this device you will also need to download *XPowersLib* and edit the CMakeLists.txt in the top level directory to set the location where you installed it.
 
 It is a good idea to generate a new SSL certificate now and then. You could also just cd to the directory and run the command inside the gencert.sh script. You should have openssl installed on your computer to do this. 
   ```
