@@ -214,7 +214,7 @@ void app_main()
     fbuf_init();
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
-    set_logLevels();
+    logLevel_init();
     adc_init(); 
     initialize_console();
     

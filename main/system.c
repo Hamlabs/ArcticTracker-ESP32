@@ -477,59 +477,92 @@ char* date2str(char* buf, time_t time)
  * Set loglevels from flash config
  ********************************************************************************/
 
-void set_logLevel(char* comp, char* param, esp_log_level_t dfl) {
-    esp_log_level_t lvl = get_byte_param(param, dfl);
-    ESP_LOGD(TAG, "Set log level for %s = %s", comp, loglevel2str(lvl));
+/* 
+ * Managed log-tags. If you want to control logging of a component, add
+ * its tag(s) to this list.
+ */
+static char* logtags[] = {
+    "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
+    "esp-tls", "radio", "ui", "hdlc_enc", "hdlc-dec", "gps", "uart", "digi", "igate",
+    "tcp-cli", "trackstore", "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", 
+    "httpd_uri", "httpd_parse"
+};
+
+#define NLOGTAGS 26
+
+uint8_t lglv_dfl = ESP_LOG_NONE;
+
+
+
+static char* paramName(char* buf, char* param, int max) {
+    snprintf(buf, max, "LGLV.%s", param);
+    buf[max-1] = '\0';
+    return buf;
+}
+
+
+/* 
+ * Restore loglevel for tag, from NVS
+ */
+void logLevel_restore(char* param, esp_log_level_t dfl) {
+    char buf[16];
+    paramName(buf, param, 16); 
+    esp_log_level_t lvl = get_byte_param(buf, dfl);
+    ESP_LOGD(TAG, "Restore log level for %s = %s", param, loglevel2str(lvl));
+    esp_log_level_set(param, lvl);
+}
+
+
+/*
+ * Set loglevel for tag and store it in NVS
+ */
+void logLevel_set(char* param, uint8_t level) {
+    char buf[16];   
+    paramName(buf, param, 16); 
+    set_byte_param(buf, level); 
+    esp_log_level_set(param, level);
+}
+
+
+/*
+ * Get loglevel setting for tag, from NVS. 
+ * If not set, return default.
+ */
+int logLevel_get(char* param) {
+    char buf[16];  
+    paramName(buf, param, 16); 
+    return get_byte_param(buf, lglv_dfl);
+}
+
+
+/*
+ * Remove loglevel setting for tag, in NVS. 
+ */
+void logLevel_delete(char* param) {
+    char buf[16];  
+    paramName(buf, param,16); 
+    delete_param(buf); 
+    esp_log_level_set(param, lglv_dfl);
+}
+
+
+
+void logLevel_init() {
+    lglv_dfl = get_byte_param("LGLV.ALL", ESP_LOG_WARN) ; 
+    esp_log_level_set("*", lglv_dfl);
     
-    esp_log_level_set(comp, lvl);
+    for (int i=0; i<NLOGTAGS; i++)
+        logLevel_restore(logtags[i], lglv_dfl);
 }
 
 
-void set_logLevels() {
-    esp_log_level_t dfl = get_byte_param("LGLV.ALL", ESP_LOG_WARN) ; 
-    esp_log_level_set("*", dfl);
-        
-    set_logLevel("system", "LGLV.system", dfl);
-    set_logLevel("main", "LGLV.main", dfl);
-    set_logLevel("wifi", "LGLV.wifi", dfl);
-    set_logLevel("wifix", "LGLV.wifix", dfl);
-    set_logLevel("config", "LGLV.config", dfl);
-    set_logLevel("httpd", "LGLV.httpd", dfl);
-    set_logLevel("shell", "LGLV.shell", dfl);
-    set_logLevel("tracker", "LGLV.tracker", dfl);
-    set_logLevel("esp-tls", "LGLV.esp-tls", dfl);
-    set_logLevel("radio", "LGLV.radio", dfl);
-    set_logLevel("ui", "LGLV.ui", dfl);
-    set_logLevel("hdlc-enc", "LGLV.hdlc-enc", dfl);
-    set_logLevel("hdlc-dec", "LGLV.hdlc-dec", dfl);
-    set_logLevel("gps", "LGLV.gps", dfl);
-    set_logLevel("uart", "LGLV.uart", dfl);
-    set_logLevel("digi", "LGLV.digi", dfl);
-    set_logLevel("igate", "LGLV.igate", dfl);
-    set_logLevel("tcp-cli", "LGLV.tcp-cli", dfl);
-    set_logLevel("trackstore", "LGLV.trackstore", dfl); 
-    set_logLevel("tracklog", "LGLV.tracklog", dfl);
-    set_logLevel("mbedtls", "LGLV.mbedtls", dfl);
-    set_logLevel("rest", "LGLV.rest", dfl);
-    set_logLevel("adc", "LGLV.adc", dfl);
-    set_logLevel("httpd_txrx", "LGLV.httpd-txrx", dfl);
-    set_logLevel("httpd_uri", "LGLV.httpd-uri", dfl);
-}
-
-
-bool hasTag(char*tag) {
-    return strcmp(tag, "wifi")==0       || strcmp(tag, "wifix")==0    || strcmp(tag, "uart")==0       || 
-           strcmp(tag, "config")==0     || strcmp(tag, "httpd")==0    || strcmp(tag, "adc")==0        ||
-           strcmp(tag, "shell")==0      || strcmp(tag, "system")==0   || strcmp(tag, "httpd-txrx")==0 ||
-           strcmp(tag, "tracker")==0    || strcmp(tag, "esp-tls")==0  || strcmp(tag, "httpd-uri")==0 ||
-           strcmp(tag, "radio")==0      || strcmp(tag, "ui")==0       ||
-           strcmp(tag, "hdlc-enc")==0   || strcmp(tag, "gps")==0      ||
-           strcmp(tag, "hdlc-dec")==0   || strcmp(tag, "uart")==0     ||
-           strcmp(tag, "digi")==0       || strcmp(tag, "igate")==0    || 
-           strcmp(tag, "tcp-cli")==0    || strcmp(tag, "main")==0     ||
-           strcmp(tag, "trackstore")==0 || strcmp(tag, "tracklog")==0 ||
-           strcmp(tag, "mbedtls")==0    || strcmp(tag, "rest")==0     ||
-           strcmp(tag, "*")==0;
+bool logLevel_hasTag(char* tag) {
+    if (strcmp(tag, "*") == 0)
+        return true;
+    for (int i=0; i<NLOGTAGS; i++)
+        if (strcmp(tag, logtags[i]) == 0)
+            return true;
+    return false; 
 }
 
 
@@ -568,6 +601,7 @@ esp_log_level_t str2loglevel(char* str)
     ESP_LOGW(TAG, "No corresponding log level for string '%s'", str);
     return ESP_LOG_NONE;
 }
+
 
 int __characters = 0;
 

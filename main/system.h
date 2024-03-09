@@ -50,10 +50,16 @@ size_t spiffs_size();
 size_t spiffs_free();
 
 /* Logging */
-bool hasTag(char*tag);
-void set_logLevels(void);
 char* loglevel2str(esp_log_level_t lvl);
 esp_log_level_t str2loglevel(char* str);
+
+void logLevel_restore(char* param, esp_log_level_t dfl);
+void logLevel_set(char* param, uint8_t level);
+int  logLevel_get(char* param);
+void logLevel_delete(char* param);
+void logLevel_init();
+bool logLevel_hasTag(char* tag);
+
 
 
 /* Read text line from serial or other.. */

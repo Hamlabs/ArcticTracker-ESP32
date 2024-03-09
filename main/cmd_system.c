@@ -109,6 +109,7 @@ static int do_format(int argc, char** argv) {
     return 0;
 }
 
+
 /********************************************************************************
  * Write file
  ********************************************************************************/
@@ -126,7 +127,7 @@ static int do_write(int argc, char** argv) {
             sprintf(path, "/files/%s", argv[1]);
         FILE *f = fopen(path, "a");
         if (f==NULL) {
-            printf("Couldn't open file\n");
+            printf("Couldn't open file: %s\n", path);
             return 0;
         }
         
@@ -160,11 +161,15 @@ static int do_read(int argc, char** argv) {
             sprintf(buf, "%s", argv[1]);
         else
             sprintf(buf, "/files/%s", argv[1]);
-        FILE *f = fopen(buf, "r");
+        FILE *f = fopen(buf, "r");  
+        if (f==NULL) {
+            printf("Couldn't open file: %s\n", buf);
+            return 0;
+        }
         printf("\n");
 
         while (true) { 
-            if (fgets(buf, 262, f)==NULL)
+            if (fgets(buf, 262, f) == NULL)
                 break;
             printf("%s",buf);
         }
@@ -298,21 +303,21 @@ static int do_log(int argc, char** argv)
     }
     else {
         char buf[24];
-        if (strlen(argv[1]) > 10 || !hasTag(argv[1])) {
+        if (strlen(argv[1]) > 20 || !logLevel_hasTag(argv[1])) {
             printf("Sorry, unknown tag: %s\n", argv[1]);
             return 0;
         }
-        sprintf(buf, "LGLV.%s", (strcmp(argv[1], "*")==0 ? "ALL" : argv[1]) );
-        uint8_t lvl = get_byte_param(buf, (int) ESP_LOG_WARN);
+        sprintf(buf, "%s", (strcmp(argv[1], "*")==0 ? "ALL" : argv[1]) );
+        uint8_t lvl = logLevel_get(buf);
+        
         if (argc==2) 
             printf("LGLV %s %s\n", argv[1], loglevel2str(lvl));
         else {
             if (strcasecmp(argv[2], "delete")==0)
-                delete_param(buf); 
+                logLevel_delete(buf); 
             else
-                set_byte_param(buf, (uint8_t) str2loglevel(argv[2])); 
+                logLevel_set(buf, (uint8_t) str2loglevel(argv[2])); 
             printf("Ok\n");
-            set_logLevels();
         }
     }
     return 0;
