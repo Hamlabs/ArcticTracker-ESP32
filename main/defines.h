@@ -10,7 +10,7 @@
 #define VERSION_SSTRING "3.1"
 #define VERSION_STRING  "v3.1a"
 #define FW_NAME "Arctic Tracker"
-#define FW_DATE "2024-02-24"
+#define FW_DATE "2024-03-10"
 
 #define BIT_0	( 1 << 0 )
 
@@ -236,7 +236,7 @@
 #define STACK_TCP_REC        3000
 #define STACK_IGATE          3200
 #define STACK_IGATE_RADIO    2300
-#define STACK_TRACKLOG       3300
+#define STACK_TRACKLOG       3500
 #define STACK_TRACKLOGPOST   3900
 #define STACK_HTTPD          5500
 

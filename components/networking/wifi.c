@@ -36,6 +36,7 @@ static wifi_ap_record_t *apList = NULL;
 
 static bool initialized = false;
 static bool enabled = false;
+static bool suspended = false;
 static bool softApEnabled = false; 
 static bool connected = false;
 static char *status = "Off"; 
@@ -258,6 +259,7 @@ void wifi_enable(bool en)
     /* Enable */
     if (en && !enabled) {
         ESP_ERROR_CHECK( esp_wifi_start() );
+        status = "Idle";
         
         /* Start autoconnect task */
         if ( xTaskCreatePinnedToCore( task_autoConnect, "wifi-autocon", STACK_AUTOCON, 
@@ -273,6 +275,30 @@ void wifi_enable(bool en)
         ESP_ERROR_CHECK( esp_wifi_stop() );
     }
     enabled = en;
+    suspended = false;
+}
+
+
+void wifi_suspend(bool susp) 
+{
+    if (!enabled)
+        return;
+    if (susp) {
+         ESP_ERROR_CHECK( esp_wifi_stop() );
+         suspended = true; 
+         status = "Suspended";
+    }
+    else {
+         ESP_ERROR_CHECK( esp_wifi_start() );
+         suspended = false;
+         status = "Idle";
+    }
+}
+
+
+
+bool wifi_isSuspended() {
+    return suspended;
 }
 
 
@@ -511,7 +537,7 @@ static void task_autoConnect( void * pvParms )
         }
         ESP_LOGI(TAG, "Waiting for scan");
         wifi_waitScan();
-        sleepMs(100);
+        sleepMs(200);
         /* Go through list of alternatives and if in scan-list, try to connect */
         ESP_LOGI(TAG, "Going through scan result");
         for (i=0; i<AP_MAX_ALTERNATIVES; i++) {
@@ -532,9 +558,9 @@ static void task_autoConnect( void * pvParms )
                 // Turn off wifi to save power?
                 ESP_LOGI(TAG, "Waiting - to save power");
                 if (!wifi_softAp_isEnabled())
-                    wifi_enable(false);
+                    wifi_suspend(true);
                 sleepMs(AUTOCONNECT_PERIOD*1000);
-                wifi_enable(true);
+                wifi_suspend(false);
             }
             n++;
         }

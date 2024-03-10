@@ -208,8 +208,6 @@ int do_info(int argc, char** argv)
 {
     char buf[32];
     if (wifi_isEnabled()) {
-        // FIXME: Any heap resources that should be freed? ? ? ? 
-        // FIXME: Find IP address
         
         printf("    Stn status: %s\n",  wifi_getStatus());
         if (wifi_isConnected()) {

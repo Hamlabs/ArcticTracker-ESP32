@@ -500,9 +500,11 @@ void register_system()
     ADD_CMD("nmea",      &do_nmea,        "Monitor GPS NMEA datastream", "[raw]");
     ADD_CMD("tone",      &do_tone,        "tone generator test", "");
     ADD_CMD("ptt",       &do_ptt,         "Transmitter on", "");
-    ADD_CMD("fw-upgrade", &do_fwupgrade,  "Firmware upgrade", "");
+    ADD_CMD("fw-upgrade", &do_fwupgrade,  "Firmware upgrade (OTA)", "");
+#if DEVICE != T_TWR
     ADD_CMD("adc",       &do_adcinfo,     "Read ADC", "");
     ADD_CMD("adcref",    &_param_adcref,  "ADC reference value (millivolts)", "[<val>]");
+#endif
     ADD_CMD("vbatt",     &do_vbatt,       "Read battery voltage", "");
     ADD_CMD("shutdown",  &do_shutdown,    "Shut down system (put in deep sleep)", "");
 }

@@ -79,7 +79,6 @@ static int do_testpacket(int argc, char** argv)
 }
 
 
-
 /****************************************************************************
  * Monitor radio communications
  ****************************************************************************/
@@ -99,6 +98,7 @@ static int do_listen(int argc, char* argv[])
   afsk_rx_disable(); 
   radio_release();
   sleepMs(100);
+  
   return 0;
 }
 
@@ -279,7 +279,7 @@ void register_aprs()
            
     ADD_CMD("trklog-int", &_param_trklogint,   "Interval for track logging (seconds)", "[<val>]");
     ADD_CMD("trklog-ttl", &_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
-    ADD_CMD("trklog-key", &_param_serverkey,   "KEY for authenticating messages to Polaric Server", "[<key>]");
+    ADD_CMD("trklog-key", &_param_serverkey,   "KEY for authenticating tracklog-messages to Polaric Server", "[<key>]");
     ADD_CMD("trklog-url", &_param_trklogurl,   "URL for posting tracklog updates to Polaric Server", "[<url>]");
     ADD_CMD("maxframe",   &_param_maxframe,    "APRS max frames in a transmission", "[<val>]");
     ADD_CMD("maxpause",   &_param_maxpause,    "Tracking max pause (10 sec units)", "[<val>]");
