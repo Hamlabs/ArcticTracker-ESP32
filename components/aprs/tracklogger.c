@@ -45,9 +45,10 @@ void tracklog_init()
  ********************************************************/
 
 void tracklog_on() {
-    if (tracklogt == NULL)
-        xTaskCreatePinnedToCore(&tracklog, "Track logger", 
-            STACK_TRACKLOG, NULL, NORMALPRIO, &tracklogt, CORE_TRACKLOG);
+    if (tracklogt != NULL)
+        return;
+    xTaskCreatePinnedToCore(&tracklog, "Track logger", 
+        STACK_TRACKLOG, NULL, NORMALPRIO, &tracklogt, CORE_TRACKLOG);
 }
 
 
@@ -57,6 +58,11 @@ void tracklog_on() {
  ********************************************************/
 
 void tracklog_off() {
+    if (tracklogt == NULL)
+        return;
+    ESP_LOGI(TAG, "Stopping tracklogger task");
+    vTaskDelete( tracklogt );
+    tracklogt = NULL;
 }
 
 
@@ -80,12 +86,23 @@ int tracklog_nPosted() {
  ********************************************************/
 
 void tracklog_post_start() 
-{
+{  
+    if (trackpostt != NULL)
+        return;
     if (GET_BYTE_PARAM("TRKLOG.POST.on") && !trackpost_running && wifi_isConnected())
-        xTaskCreatePinnedToCore(&post_loop, "Trklog POSTer",
+        trackpostt = xTaskCreatePinnedToCore(&post_loop, "Trklog POSTer",
             STACK_TRACKLOGPOST, NULL, NORMALPRIO, &trackpostt, CORE_TRACKLOGPOST);
 }
 
+
+void tracklog_post_stop() 
+{
+    if (trackpostt == NULL)
+        return;
+    ESP_LOGI(TAG, "Stopping tracklogger post task");
+    vTaskDelete( trackpostt );
+    trackpostt = NULL;
+}
 
 
 
