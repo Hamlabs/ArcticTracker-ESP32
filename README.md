@@ -71,8 +71,7 @@ The command-shell let you configure everything and is useful in developing and d
 The tracker should also be able to function as its own access point (*'softap'* command). Info about ip-address, etc. is shown on the display so you can connect your browser to it. 
 
 ## Future work
-
-A version 4 tracker will probably move on to exploring LoRa and FSK modes on 70 cm. There are also some other VHF-modules around that can be interesting to look at without a separate PA module: The SR-FRS-2WVS (2 watts), the SA-868 (2 watts), maybe the SR-FRS-4W. The SA868 comes with a programmable version and I wonder if it could be somehow optimized a bit for APRS? 
+A version 4 tracker we consider moving on to exploring LoRa and FSK modes on 70 cm, though in Norway, there are legal issues with spread-spectrum modes on HAM-radio on the 70cm. There are also some other VHF-modules around that can be interesting to look at without a separate PA module: The SR-FRS-2WVS (2 watts), the SA-868 (2 watts), maybe the SR-FRS-4W. The SA868 comes with a programmable version and I wonder if it could be somehow optimized a bit for APRS? 
 
 I am open for ideas and contributions :)
  
