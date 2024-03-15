@@ -27,40 +27,6 @@ void   register_wifi(void);
 
 
 /********************************************************************************
- * Join an access point
- ********************************************************************************/
-
-/** Arguments used by 'connect' function */
-static struct {
-    struct arg_int *timeout;
-    struct arg_str *ssid;
-    struct arg_str *password;
-    struct arg_end *end;
-} join_args;
-
-
-int do_join(int argc, char** argv)
-{
-    int nerrors = arg_parse(argc, argv, (void**) &join_args);
-    if (nerrors != 0) {
-        arg_print_errors(stderr, join_args.end, argv[0]);
-        return 1;
-    }
-
-    bool connected = wifi_join(
-        join_args.ssid->sval[0],
-        join_args.password->sval[0],
-        join_args.timeout->ival[0]);
-    
-    if (!connected) 
-        printf("Connection failed\n");
-    else
-        printf("Ok\n");
-    return 0;
-}
-
-
-/********************************************************************************
  * Connect to an internet server using tcp (like telnet command)
  ********************************************************************************/
 
@@ -119,6 +85,7 @@ int do_connect(int argc, char** argv)
 
 int do_scan(int argc, char** argv) 
 {
+    wifi_suspend(false);
     if (!wifi_startScan()) {
         printf("Couldn't start scan of Wifi\n");
         return 0;
@@ -211,10 +178,10 @@ int do_info(int argc, char** argv)
         
         printf("    Stn status: %s\n",  wifi_getStatus());
         if (wifi_isConnected()) {
-       //     tcpip_adapter_ip_info_t ipinfo = wifi_getIpInfo();
+            esp_netif_ip_info_t  ipinfo = wifi_getIpInfo();
             char buf[40];
             printf("  Connected to: %s\n", (char*) wifi_getConnectedAp(buf));
-       //     printf("    IP address: %s\n", ip4addr_ntoa(&ipinfo.ip) );
+            printf("    IP address: %s\n", ip4addr_ntoa(&ipinfo.ip) );
             printf(" mDNS hostname: %s\n", mdns_hostname(buf));
         }
         uint8_t mac[6];
@@ -303,22 +270,6 @@ CMD_STR_SETTING (_param_fwcert,    "FW.CERT",     BBUF_SIZE, "", NULL);
 
 void register_wifi()
 {
-    join_args.timeout = arg_int0(NULL, "timeout", "<t>", "Connection timeout, ms");
-    join_args.timeout->ival[0] = 8000; // set default value
-    join_args.ssid = arg_str1(NULL, NULL, "<ssid>", "SSID of AP");
-    join_args.password = arg_str0(NULL, NULL, "<pass>", "PSK of AP");
-    join_args.end = arg_end(2);
-    
-    const esp_console_cmd_t join_cmd = {
-        .command = "wifi-join",
-        .help = "Join WiFi AP as a station",
-        .hint = NULL,
-        .func = &do_join,
-        .argtable = &join_args
-    };
-
-    ADD_CMD_X(&join_cmd);
-    
     ADD_CMD("mdns",       &do_mdns,          "Scan for MDNS services", NULL);  
     ADD_CMD("wifi-scan",  &do_scan,          "Scan for wifi access points", NULL);  
     ADD_CMD("wifi-info",  &do_info,          "Info about WIFI connection", NULL);

@@ -349,7 +349,7 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
 static esp_err_t trackers_handler(httpd_req_t *req) {   
     rest_cors_enable(req);
     cJSON *root = cJSON_CreateArray();
-    mdns_result_t * res = mdns_find_service("_http", "_tcp");
+    mdns_result_t * res = mdns_find_service("_https", "_tcp");
     while(res) {
         cJSON *obj = cJSON_CreateObject();
         cJSON_AddStringToObject(obj, "name", res->instance_name);

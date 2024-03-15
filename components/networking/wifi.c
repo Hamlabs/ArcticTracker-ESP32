@@ -37,10 +37,12 @@ static wifi_ap_record_t *apList = NULL;
 static bool initialized = false;
 static bool enabled = false;
 static bool suspended = false;
+static bool pause = false;
 static bool softApEnabled = false; 
 static bool connected = false;
 static char *status = "Off"; 
 static cond_t scanDone;
+
 char default_ssid[32];
 
 
@@ -278,6 +280,10 @@ void wifi_enable(bool en)
     suspended = false;
 }
 
+   
+/********************************************************************************
+ * Temprarily suspend the WIFI
+ ********************************************************************************/
 
 void wifi_suspend(bool susp) 
 {
@@ -302,6 +308,11 @@ bool wifi_isSuspended() {
 }
 
 
+void wifi_endPause() {
+    pause = false;
+}
+
+
 
 /********************************************************************************
  * Set ap alternative
@@ -315,6 +326,7 @@ void wifi_setApAlt(int n, wifiAp_t* ap) {
     char key[12];
     sprintf(key, "AP.ALT.%d", n);
     set_bin_param(key, (void*) ap, sizeof(wifiAp_t)); 
+    wifi_endPause();
 }
 
 
@@ -559,7 +571,9 @@ static void task_autoConnect( void * pvParms )
                 ESP_LOGI(TAG, "Waiting - to save power");
                 if (!wifi_softAp_isEnabled())
                     wifi_suspend(true);
-                sleepMs(AUTOCONNECT_PERIOD*1000);
+                pause = true;
+                for (int i=0; i<AUTOCONNECT_PERIOD/10 && pause; i++)
+                    sleepMs(10000);
                 wifi_suspend(false);
             }
             n++;

@@ -30,14 +30,14 @@ void mdns_start(char* ident) {
     mdns_instance_name_set(buffer);
     
     /* Announce services */
-    mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
-    mdns_service_instance_name_set("_http", "_tcp", "Arctic Tracker HTTP Server");
+    mdns_service_add(NULL, "_https", "_tcp", 443, NULL, 0);
+    mdns_service_instance_name_set("_https", "_tcp", "Arctic Tracker HTTP Server");
     
     mdns_txt_item_t txtData[1] = {
         {"ident", ident}
     };
     /* Set txt data for service (will free and replace current data) */
-    mdns_service_txt_set("_http", "_tcp", txtData, 1);
+    mdns_service_txt_set("_https", "_tcp", txtData, 1);
 }
 
 

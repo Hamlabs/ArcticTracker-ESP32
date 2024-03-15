@@ -495,7 +495,7 @@ void register_system()
     ADD_CMD("sysinfo",   &do_sysinfo,     "System info", NULL);    
     ADD_CMD("restart",   &do_restart,     "Restart the program", NULL);
     ADD_CMD("tasks",     &do_tasks,       "Get information about running tasks", NULL);
-    ADD_CMD("log",       &do_log,         "Set loglevel (tags: wifi, wifix, http, config, shell)", "<tag> | * [<level>|delete]") ;
+    ADD_CMD("log",       &do_log,         "Set loglevel (for debugging/development)", "<tag> | * [<level>|delete]") ;
     ADD_CMD("time",      &do_time,        "Get date and time", NULL);
     ADD_CMD("nmea",      &do_nmea,        "Monitor GPS NMEA datastream", "[raw]");
     ADD_CMD("tone",      &do_tone,        "tone generator test", "");

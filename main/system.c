@@ -485,10 +485,10 @@ static char* logtags[] = {
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "hdlc_enc", "hdlc-dec", "gps", "uart", "digi", "igate",
     "tcp-cli", "trackstore", "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", 
-    "httpd_uri", "httpd_parse"
+    "httpd_uri", "httpd_parse", "mdns"
 };
 
-#define NLOGTAGS 26
+#define NLOGTAGS 27
 
 uint8_t lglv_dfl = ESP_LOG_NONE;
 
