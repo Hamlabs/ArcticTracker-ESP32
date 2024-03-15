@@ -49,7 +49,7 @@ It can be built with *esp-idf* (version 5.0.x) and the *idf.py* tool. Follow the
   idf.py add-dependency "espressif/mdns^1.2.4" 
   idf.py add-dependency "espressif/led_strip^2.5.3" 
   ```
-The *led_strip* component is for the LilyGo T-TWR plus (neopixel LED). For this device you will also need to download *XPowersLib* and edit the CMakeLists.txt in the top level directory to set the location where you installed it.
+The *led_strip* component is for the LilyGo T-TWR plus (neopixel LED). For this device you will also need to download *XPowersLib* and edit the EXTRA_COMPONENT_DIRS setting in CMakeLists.txt (in the top level directory) to the location where you installed it.
 
 It is a good idea to generate a new SSL certificate now and then. You could also just cd to the directory and run the command inside the gencert.sh script. You should have openssl installed on your computer to do this. 
   ```
