@@ -1,3 +1,4 @@
+![alt text](t_twr.jpg)
 # ArcticTracker-ESP32
 
 Arctic Tracker (v.3) is an APRS tracker platform based on the ESP32S3 MCU module, a GPS, a display and a 
