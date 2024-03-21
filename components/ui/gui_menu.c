@@ -21,6 +21,7 @@ typedef struct {
   const char     *mc_name;  
   menucmd_t       mc_func;
   void           *mc_arg;
+  char           *mc_param;
 } MenuCommand;
 
 
@@ -38,25 +39,25 @@ static void mhandle_tracklog(void* x);
 static const MenuCommand items[] = 
 {
 #if DISPLAY_TYPE == 0
-    { "Send report",     mhandle_send,      NULL },
-    { "SoftAp +|-",      mhandle_softAp,    NULL },
-    { "WIFI +|-",        mhandle_wifi,      NULL },
-    { "Igate +|-",       mhandle_igate,     NULL },
-    { "Digipeater +|-",  mhandle_digi,      NULL },
-    { "Firmware upgr.",  mhandle_fwupgrade, NULL },
-    { "Shut down..",     mhandle_shutdown,  NULL }
+    { "Send report",     mhandle_send,      NULL, NULL },
+    { "SoftAp +|-",      mhandle_softAp,    NULL, NULL },
+    { "WIFI +|-",        mhandle_wifi,      NULL, NULL },
+    { "Igate +|-",       mhandle_igate,     NULL, NULL },
+    { "Digipeater +|-",  mhandle_digi,      NULL, NULL },
+    { "Firmware upgr.",  mhandle_fwupgrade, NULL, NULL },
+    { "Shut down..",     mhandle_shutdown,  NULL, NULL }
 };
 static int nitems = 7;
 #else
-    { "Backlight (+|-)",   mhandle_dispBl,    NULL },
-    { "SoftAp (+|-)",      mhandle_softAp,    NULL },
-    { "WIFI (+|-)",        mhandle_wifi,      NULL },
-    { "Track log (+|-)",   mhandle_tracklog,  NULL },
-    { "Igate (+|-)",       mhandle_igate,     NULL },
-    { "Digipeater (+|-)",  mhandle_digi,      NULL },
-    { "Send pos report",   mhandle_send,      NULL },
-    { "Firmware upgrade",  mhandle_fwupgrade, NULL },
-    { "Shut down..",       mhandle_shutdown,  NULL },
+    { "Send pos report",  mhandle_send,      NULL, NULL },
+    { "Soft Ap",          mhandle_softAp,    NULL, "SOFTAP.on" },
+    { "WIFI",             mhandle_wifi,      NULL, "WIFI.on" },
+    { "Igate",            mhandle_igate,     NULL, "IGATE.on" },
+    { "Digipeater",       mhandle_digi,      NULL, "DIGIPEATER.on" },
+    { "Track log",        mhandle_tracklog,  NULL, "TRKLOG.on" },
+    { "Backlight",        mhandle_dispBl,    NULL, NULL },
+    { "Firmware upgrade", mhandle_fwupgrade, NULL, NULL },
+    { "Shut down..",      mhandle_shutdown,  NULL, NULL }
 };
 static int nitems = 9; 
 #endif
@@ -89,10 +90,15 @@ static void menu_show(int st, int sel)
     for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) 
         disp_writeText(4, 2+i*11, items[st+i].mc_name); 
 #else
-    disp_box(2, sel*11+2, 97, 12, true);
+    disp_box(2, sel*11+2, 97+10, 12, true);
     int i;
-    for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) 
-        disp_writeText(5, 4+i*11, items[st+i].mc_name); 
+    char item[30];
+    for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) {
+        bool on = (bool) get_byte_param(items[st+i].mc_param, false);
+        sprintf(item, "%s  %s", items[st+i].mc_name, 
+                (items[st+i].mc_param==NULL? "": (!on ? "On" : "Off")));
+        disp_writeText(5, 4+i*11, item); 
+    }
 #endif
     
    disp_flush();
