@@ -126,7 +126,10 @@ static int do_trput(int argc, char* argv[])
 {
     (void) argv;
     (void) argc; 
-    gps_current_pos.latitude += 0.001;
+    if (!gps_is_fixed()) {
+        gps_current_pos.timestamp = getTime();
+        gps_current_pos.latitude += 0.001;
+    }
     trackstore_put(&gps_current_pos);
     return 0;
 }

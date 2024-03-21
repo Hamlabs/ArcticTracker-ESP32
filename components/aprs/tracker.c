@@ -288,10 +288,10 @@ static void activate_tx()
 
 static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* current)
 {
-    uint16_t turn_limit = get_u16_param("TURNLIMIT", DFL_TURNLIMIT);
-    uint8_t  minpause   = get_byte_param("MINPAUSE", DFL_MINPAUSE);
-    uint8_t  maxpause   = get_byte_param("MAXPAUSE", DFL_MAXPAUSE);
-    uint8_t  mindist    = get_byte_param("MINDIST",  DFL_MINDIST);
+    uint16_t turn_limit = get_u16_param ("TURNLIMIT", DFL_TURNLIMIT);
+    uint8_t  minpause   = get_byte_param("MINPAUSE",  DFL_MINPAUSE);
+    uint8_t  maxpause   = get_byte_param("MAXPAUSE",  DFL_MAXPAUSE);
+    uint8_t  mindist    = get_byte_param("MINDIST",   DFL_MINDIST);
     
     uint32_t dist       = (prev->timestamp==0) ? 0 : gps_distance(prev, current);
     uint16_t tdist      = (current->timestamp < prev->timestamp)

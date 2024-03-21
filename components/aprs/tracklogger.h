@@ -7,10 +7,11 @@
 
 
  
-void tracklog_init(void);
-void tracklog_on(void);
-void tracklog_off(void);
-void tracklog_post_start(void);
-int tracklog_post(void);
+void  tracklog_init(void);
+void  tracklog_on(void);
+void  tracklog_off(void);
+void  tracklog_post_start(void);
+void  tracklog_post_stop();
+int   tracklog_post(void);
 char* tracklog_status(void);
-int tracklog_nPosted(void);
+int   tracklog_nPosted(void);

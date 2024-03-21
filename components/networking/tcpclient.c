@@ -139,20 +139,3 @@ int http_post(char* uri, char* ctype, char* data, int dlen)
     return status;
 }
 
-
-
-
-
-
-
-
-
-/* Write data from fbuf */
-//void inet_writeFB(FBUF *fb);
-
-//void inet_mon_on(bool on);
-
-//void inet_disable_read(bool on);
-
-//void inet_signalReader(void);
-

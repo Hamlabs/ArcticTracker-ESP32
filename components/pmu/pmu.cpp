@@ -56,7 +56,7 @@ esp_err_t pmu_init()
     /* Set the maximum current of the PMU VBUS input */
     PMU.setVbusCurrentLimit(XPOWERS_AXP2101_VBUS_CUR_LIM_2000MA);
     
-    /* Set VSY off voltage as 2600mV , Adjustment range 2600mV ~ 3300mV */
+    /* Set VSYS off voltage as 2600mV , Adjustment range 2600mV ~ 3300mV */
     PMU.setSysPowerDownVoltage(2600);
     
     /* Don't change these VDDs */

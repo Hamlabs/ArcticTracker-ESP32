@@ -222,7 +222,12 @@ void wifi_enable_softAp(bool en)
     if (en && !softApEnabled) { 
         get_str_param("WIFIAP.SSID", ssid, 32, default_ssid);
         get_str_param("WIFIAP.AUTH", passwd, 64, AP_DEFAULT_PASSWD);
-    
+        
+        if (strlen(passwd) < 8) {
+            ESP_LOGE(TAG, "SoftAP password not set or too short");
+            return;
+        }
+        
         wifi_config_t conf; 
         strcpy((char*) conf.ap.ssid, ssid); 
         conf.ap.ssid_len = strlen(ssid);

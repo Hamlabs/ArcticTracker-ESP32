@@ -242,16 +242,29 @@ int do_apAlt(int argc, char** argv)
 }
 
 
+
+
+
 inline static void _param_wifi_handler(bool x)
    { wifi_enable(x); }
    
-inline static void _param_softap_handler(bool x)
-   { wifi_enable_softAp(x); }
+   
+static void _param_softap_handler(bool x) {
+    char passwd[64];
+    get_str_param("WIFIAP.AUTH", passwd, 64, AP_DEFAULT_PASSWD);
+    if (strlen(passwd) < 8) {
+        printf("SoftAP password not set or too short\n");
+        return;
+    }
+    wifi_enable_softAp(x); 
+}
    
 inline static void _param_httpd_handler(bool x) {
     if (wifi_isEnabled())
         httpd_enable(x);
 }
+   
+   
    
 CMD_BOOL_SETTING(_param_wifi,      "WIFI.on",     &_param_wifi_handler);
 CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",   &_param_softap_handler);

@@ -82,19 +82,21 @@ int tracklog_nPosted() {
 
 
 /********************************************************
- *  Start task for automatic posting
+ *  Start or stop task for automatic posting
  ********************************************************/
 
 void tracklog_post_start() 
 {  
     if (trackpostt != NULL)
         return;
-    if (GET_BYTE_PARAM("TRKLOG.POST.on") && !trackpost_running && wifi_isConnected())
+    if (GET_BYTE_PARAM("TRKLOG.POST.on") && !trackpost_running && wifi_isConnected())        
         trackpostt = xTaskCreatePinnedToCore(&post_loop, "Trklog POSTer",
             STACK_TRACKLOGPOST, NULL, NORMALPRIO, &trackpostt, CORE_TRACKLOGPOST);
 }
 
 
+
+ 
 void tracklog_post_stop() 
 {
     if (trackpostt == NULL)
@@ -103,6 +105,7 @@ void tracklog_post_stop()
     vTaskDelete( trackpostt );
     trackpostt = NULL;
 }
+
 
 
 
@@ -208,7 +211,7 @@ int tracklog_post() {
     size_t olen;
     mbedtls_base64_encode((unsigned char*) b64hash, 45, &olen, hash, 32 );
     b64hash[24] = 0;
-    len += sprintf(buf+len-1, ",\n\"mac\":\"%s\"}", b64hash);
+    len += sprintf(buf+len-1, ",\"mac\":\"%s\"}", b64hash);
     
     /* Post it */
     int status = http_post(url, "text/json", buf+keylen, len-keylen);
@@ -249,8 +252,6 @@ static void post_loop()
     sprintf(statusmsg, "POST task stopped");
     vTaskDelete(NULL);
 }
-
-
 
 
 
