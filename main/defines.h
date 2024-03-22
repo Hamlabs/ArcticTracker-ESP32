@@ -234,8 +234,8 @@
 #define STACK_HLIST          1000
 #define STACK_DIGI           3200
 #define STACK_TCP_REC        3000
-#define STACK_IGATE          3200
-#define STACK_IGATE_RADIO    2300
+#define STACK_IGATE          3500
+#define STACK_IGATE_RADIO    2500
 #define STACK_TRACKLOG       3500
 #define STACK_TRACKLOGPOST   3900
 #define STACK_HTTPD          5500

@@ -116,12 +116,12 @@ static void status_heading(char* label) {
 #if DISPLAY_HEIGHT >= 64
     disp_label(0,0, label);
 #if DISPLAY_TYPE == 0
-    disp_flag(32,0, "i", wifi_isEnabled() );
-    disp_flag(41,0, "g", GET_BYTE_PARAM("IGATE.on")); 
+    disp_flag(32,0, "i", wifi_isConnected() );
+    disp_flag(41,0, "g", wifi_isConnected() && GET_BYTE_PARAM("IGATE.on")); 
     disp_flag(50,0, "d", GET_BYTE_PARAM("DIGIPEATER.on"));
 #else
-    disp_flag(32,0, "i", wifi_isEnabled() );
-    disp_flag(44,0, "g", GET_BYTE_PARAM("IGATE.on")); 
+    disp_flag(32,0, "i", wifi_isConnected() );
+    disp_flag(44,0, "g", wifi_isConnected() && GET_BYTE_PARAM("IGATE.on")); 
     disp_flag(56,0, "d", GET_BYTE_PARAM("DIGIPEATER.on"));
     disp_flag(68,0, "c", batt_charge());
 #endif
