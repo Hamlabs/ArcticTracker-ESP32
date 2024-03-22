@@ -9,7 +9,7 @@ is available: For easy configuration, for pushing APRS data, etc. It can also fu
 It is based on the earlier Arctic Tracker (v.2) prototype which used an ESP32. This was again based on the even earlier 
 Arctic Tracker (v.1) prototype which used a Teensy 3 MCU module and a ESP-8266 module (with NodeMCU). 
 
-See http://www.hamlabs.no for some blogging about this project. 
+See http://www.hamlabs.no for some blogging about this project and on the [port to the T-TWR](http://hamlabs.no/2024/03/22/arctic-tracker-software-on-lilygo-t-twr-plus/) in particular.
 
 ## Supported hardware
 
