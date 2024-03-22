@@ -8,9 +8,9 @@
 
 
 #define VERSION_SSTRING "3.1"
-#define VERSION_STRING  "v3.1-rc1"
+#define VERSION_STRING  "v3.1"
 #define FW_NAME "Arctic Tracker"
-#define FW_DATE "2024-03-12"
+#define FW_DATE "2024-03-22"
 
 #define BIT_0	( 1 << 0 )
 
