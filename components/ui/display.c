@@ -31,7 +31,7 @@ void i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset);
 void i2c_init(SSD1306_t * dev, int width, int height);
 void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width);
 static void blhandler(TimerHandle_t timer);
-
+static void slhandler(TimerHandle_t timer);
 
 /************************************** Not defined ******************************************/
 
@@ -54,6 +54,7 @@ bool    changed [DISPLAY_HEIGHT/8];
 
 bool _inverse = false;
 bool _popup = false; 
+bool _sleepmode = false;
 
 
 const uint8_t  Font8x5 [][5] =
@@ -332,7 +333,7 @@ void disp_writeText(int x, int y, const char * strp)
 #define BL_LOW 100
 #define BL_HIGH 255
 
-static TimerHandle_t bltimer;
+static TimerHandle_t bltimer, sltimer;
 static int backlightLevel = BL_HIGH;
 
 
@@ -349,29 +350,41 @@ void disp_init()
     
     /* Software timer for backlight */
     uint32_t cnt = 0;
+    uint32_t cnt2 = 0;
     bltimer = xTimerCreate ( 
-        "DispLightTimer", pdMS_TO_TICKS(300000),  pdFALSE,
+        "DispLightTimer", pdMS_TO_TICKS(60000),  pdFALSE,
         ( void * ) &cnt, blhandler
+    );    
+    sltimer = xTimerCreate ( 
+        "DispSleepTimer", pdMS_TO_TICKS(190000),  pdFALSE,
+        ( void * ) &cnt2, slhandler
     ); 
 #endif  
 }
 
     
 /************************************************************
- * Turn on backlight and turn it off again after 10 seconds
+ * Backlight and sleep mode
  ************************************************************/
+static BaseType_t hpw = pdFALSE;   
 
 static void blhandler(TimerHandle_t timer) {
     i2c_contrast(&_dev_, 1);
+    if (sltimer != NULL)
+        xTimerStartFromISR(sltimer, &hpw);
+}
+
+static void slhandler(TimerHandle_t timer) {
+    disp_sleepmode(true);
 }
 
 
-static BaseType_t hpw = pdFALSE;     
 void disp_backlight() 
 { 
 #if DISPLAY_TYPE == 0
     lcd_backlight();
 #elif DISPLAY_TYPE == 1
+    disp_sleepmode(false);
     i2c_contrast(&_dev_, backlightLevel);
     if (bltimer != NULL) 
         xTimerStartFromISR(bltimer, &hpw);
@@ -379,15 +392,24 @@ void disp_backlight()
 #endif
 }  
 
+
 void disp_toggleBacklight() {
     if (backlightLevel == BL_HIGH)
         backlightLevel = BL_LOW;
-    else
+    else 
         backlightLevel = BL_HIGH;
     i2c_contrast(&_dev_, backlightLevel);
+    
 } 
 
-void disp_sleepmode() {
+
+
+/* Turn on/off display */
+void disp_sleepmode(bool on) {
+    if (on == _sleepmode)
+        return;
+    _sleepmode = on;
+    i2c_sleep(&_dev_, on);
 }
 
 

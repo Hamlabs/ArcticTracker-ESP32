@@ -45,6 +45,7 @@ void i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset)
 }
 
 
+
 void i2c_init(SSD1306_t * dev, int width, int height) {
 	dev->_width = width;
 	dev->_height = height;
@@ -106,6 +107,7 @@ void i2c_init(SSD1306_t * dev, int width, int height) {
 }
 
 
+
 void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width) {
 	i2c_cmd_handle_t cmd;
 
@@ -149,6 +151,7 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int
 	i2c_cmd_link_delete(cmd);
 }
 
+
 void i2c_contrast(SSD1306_t * dev, int contrast) {
 	i2c_cmd_handle_t cmd;
 	int _contrast = contrast;
@@ -165,6 +168,25 @@ void i2c_contrast(SSD1306_t * dev, int contrast) {
 	i2c_master_cmd_begin(I2C_NUM, cmd, 10/portTICK_PERIOD_MS);
 	i2c_cmd_link_delete(cmd);
 }
+
+
+
+void i2c_sleep(SSD1306_t * dev, bool sleep) {
+	i2c_cmd_handle_t cmd;
+	cmd = i2c_cmd_link_create();
+	i2c_master_start(cmd);
+	i2c_master_write_byte(cmd, (dev->_address << 1) | I2C_MASTER_WRITE, true);
+	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
+	if (sleep)
+		i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_OFF, true);
+	else
+		i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_ON, true);
+	i2c_master_stop(cmd);
+	i2c_master_cmd_begin(I2C_NUM, cmd, 10/portTICK_PERIOD_MS);
+	i2c_cmd_link_delete(cmd);
+}
+
+
 
 
 void i2c_hardware_scroll(SSD1306_t * dev, ssd1306_scroll_type_t scroll) {

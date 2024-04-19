@@ -264,7 +264,7 @@ int16_t batt_status(char* line1, char* line2)
 void systemShutdown(void)
 {   
     sleepMs(500);
-    disp_sleepmode();
+    disp_sleepmode(true);
     sleepMs(1000);
     blipDown();
     sleepMs(50);

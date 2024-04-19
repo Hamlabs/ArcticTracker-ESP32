@@ -3,7 +3,7 @@
 
 #include "driver/spi_master.h"
 
-// Following definitions are bollowed from 
+// Following definitions are borrowed from 
 // http://robotcantalk.blogspot.com/2015/03/interfacing-arduino-with-ssd1306-driven.html
 
 /* Control byte for i2c
@@ -31,7 +31,7 @@ Usage:
 #define OLED_CMD_DISPLAY_ALLON          0xA5
 #define OLED_CMD_DISPLAY_NORMAL         0xA6
 #define OLED_CMD_DISPLAY_INVERTED       0xA7
-#define OLED_CMD_DISPLAY_OFF            0xAE
+#define OLED_CMD_DISPLAY_OFF            0xAE 
 #define OLED_CMD_DISPLAY_ON             0xAF
 
 // Addressing Command Table (pg.30)
@@ -106,6 +106,7 @@ void i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset);
 void i2c_init(SSD1306_t * dev, int width, int height);
 void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width);
 void i2c_contrast(SSD1306_t * dev, int contrast);
+void i2c_sleep(SSD1306_t * dev, bool sleep);
 void i2c_hardware_scroll(SSD1306_t * dev, ssd1306_scroll_type_t scroll);
 
 void spi_master_init(SSD1306_t * dev, int16_t GPIO_MOSI, int16_t GPIO_SCLK, int16_t GPIO_CS, int16_t GPIO_DC, int16_t GPIO_RESET);
