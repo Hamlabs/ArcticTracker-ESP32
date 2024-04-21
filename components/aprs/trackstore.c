@@ -7,7 +7,8 @@
 #include "config.h"
 #include "trackstore.h"
 #include "errno.h"
-
+#include <sys/stat.h>
+ 
 static mutex_t mutex;
 static ts_meta_t meta;
 static posentry_t prev;
@@ -41,6 +42,10 @@ void trackstore_start() {
     get_bin_param("tracks.META", &meta, sizeof(ts_meta_t), NULL);
     ESP_LOGD(TAG, "start: first=%d, last=%d, firstblk=%d, lastblk=%d, nblocks=%d" , 
              meta.first, meta.last, meta.firstblk, meta.lastblk, meta.nblocks);
+    
+    /* Create directory if necessary */
+    if (mkdir("/files/trklog", 0755))
+        ESP_LOGI(TAG, "Created trklog file directory");
     
     /* Open file(s) */
     firstfile = open_block(meta.firstblk, "a+");
@@ -288,7 +293,7 @@ static void reset_empty() {
 
 static FILE* open_block(blkno_t blk, char* perm) {
     char fname[64];
-    sprintf(fname, "/files/tracks_blk%u.bin", blk);
+    sprintf(fname, "/files/trklog/tracks_blk%u.bin", blk);
     FILE* f = fopen(fname, perm);
     if (f==NULL)
         ESP_LOGW(TAG, "Couldn't open file %s: %s", fname, strerror(errno));
@@ -303,7 +308,7 @@ static FILE* open_block(blkno_t blk, char* perm) {
 
 static void delete_block(blkno_t blk) {
     char fname[64];
-    sprintf(fname, "/files/tracks_blk%u.bin", blk);
+    sprintf(fname, "/files/trklog/tracks_blk%u.bin", blk);
     ESP_LOGI(TAG, "Deleting file: %s", fname);
     unlink(fname);
 }
