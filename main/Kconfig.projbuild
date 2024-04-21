@@ -1,0 +1,17 @@
+menu "Arctic Tracker config"
+
+    choice ARCTICTRACKER_TARGET
+        prompt "Target device"
+        default TARGET_T_TWR
+        help
+            Select what target hardware device to be supported. 
+
+        config T_TWR
+            bool "LilyGo T-TWR Plus 2.0"
+        config ARCTIC3
+            bool "Arctic Tracker v3"
+        config ARCTIC4
+            bool "Arctic Tracker v4 (APRS-VHF)"
+    endchoice
+  
+endmenu

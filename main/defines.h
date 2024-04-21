@@ -19,15 +19,20 @@
 /* Supported devices */
 #define ARCTIC3  0
 #define T_TWR    1
+#define ARCTIC4  2
 
-/* Device */
-#define DEVICE T_TWR
+/* Device - use what is selected by menuconfig 
+ * See Kconfig.projbuild 
+ */
+#define DEVICE ARCTICTRACKER_TARGET
 
 
-#if DEVICE==ARCTTIC3
+#if DEVICE==ARCTIC3
 #define DEVICE_STRING "Arctic Tracker 3"
 #elif DEVICE==T_TWR
 #define DEVICE_STRING "LilyGo T-TWR-plus"
+#elif DEVICE==ARCTIC4
+#define DEVICE_STRING "Arctic Tracker 4"
 #endif
 
 /* Webserver settings */
@@ -35,6 +40,13 @@
 #define HTTP_PORT     80
 #define HTTPS_PORT    443
 
+/* Default WIFI SOFTAP settings */
+#define AP_DEFAULT_PASSWD ""
+#define AP_DEFAULT_IP     "192.168.0.1"
+#define AP_MAX_CLIENTS    4
+
+/* Time between connect attempts */
+#define AUTOCONNECT_PERIOD 240
 
 
 /* 
@@ -223,11 +235,6 @@
 #define TONE_TIMERGRP    0
 #define TONE_TIMERIDX    1
 
-#define AP_DEFAULT_PASSWD ""
-#define AP_DEFAULT_IP     "192.168.0.1"
-#define AP_MAX_CLIENTS    4
-
-#define AUTOCONNECT_PERIOD 240
 
 /* Stack sizes for tasks */
 #define STACK_AUTOCON        4000
