@@ -5,5 +5,5 @@ otadata,  data, ota,     0x1e000,  0x2000,
 phy_init, data, phy,     0x20000,  0x1000,
 ota_0,    app,  ota_0,   ,         2M,
 ota_1,    app,  ota_1,   ,         2M,
-webapp,   data, spiffs,  ,         1M,
-storage,  data, spiffs,  ,         10M
+webapp,   data, fat,     ,         1M,
+storage,  data, fat,     ,         10M

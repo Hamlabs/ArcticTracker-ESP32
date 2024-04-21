@@ -6,13 +6,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 #include "defines.h"
 #include "esp_console.h"
 #include "esp_system.h"
 #include "esp_sleep.h"
 #include "esp_partition.h"
 #include "esp_vfs_dev.h"
-#include "esp_spiffs.h"
 #include "driver/rtc_io.h"
 #include "nvs_flash.h"
 #include "esp_flash.h"
@@ -42,7 +42,11 @@ static int do_tasks(int argc, char** argv);
 
 #define TAG "shell"
 
-    
+
+
+
+
+
 /********************************************************************************
  * List files
  ********************************************************************************/
@@ -50,48 +54,71 @@ static int do_tasks(int argc, char** argv);
 static int do_ls(int argc, char** argv) {
     DIR *dp;
     struct dirent *ep;   
-    struct stat sb;
-    char* dir = "/files";
-    if (argc > 1) 
-        dir = argv[1];
-    dp = opendir (dir);
-    char tpath[263];
-    char tstr[16];
+    struct stat sb;     
+    char path[263];
+    char tpath[519];
     
+    if (argc<= 1)
+        getPath(path, "", false);
+    else
+        getPath(path, argv[1], true);
+    dp = opendir (path);
+    
+    char tstr[24];
     if (dp != NULL)
     {
         while ((ep = readdir (dp)) != NULL) {
-            sprintf(tpath, "/files/%s", ep->d_name); 
+            sprintf(tpath, "%s/%s", path, ep->d_name); 
             stat(tpath, &sb);
-            datetime2str(tstr, sb.st_mtime);  
-            printf("%9ld bytes  %sC  %s\n", sb.st_size, tstr, ep->d_name);
+            datetime2str(tstr, sb.st_mtime);
+            if (S_ISDIR(sb.st_mode))
+                printf("%9s  %sC  %s\n", "<DIR>", tstr, ep->d_name);
+            else    
+                printf("%9ld  %sC  %s\n", sb.st_size, tstr, ep->d_name);     
         }
         (void) closedir (dp);
     }
     else
-        ESP_LOGW(TAG, "Couldn't open the directory");
+        perror("Couldn't open the directory");
     return 0;
 }
 
 
+
+/********************************************************************************
+ * Change working directory
+ ********************************************************************************/
+
+static int do_cwd(int argc, char** argv) {
+    bool res = false; 
+    if (argc <= 1)
+        changeWD(NULL);
+    else {
+        res = changeWD(argv[1]);
+        if (!res)
+            perror("Couldn't change directory");
+    }
+    return 0;
+}
+    
+    
+    
 /********************************************************************************
  * Remove file
  ********************************************************************************/
 
 static int do_rm(int argc, char** argv) {
     if (argc<=1) {
-        printf("rm command needs a file name as argument\n");
+        printf("rm command needs a file path as argument\n");
         return 0;
     }
     else {
         char path[263];
-        if (strncmp(argv[1], "/files/", 7)==0)
-            sprintf(path, argv[1]);
-        else
-            sprintf(path, "/files/%s", argv[1]);
+        getPath(path, argv[1], false);
         
-        if ( unlink(path) == -1)
-            printf("Couldn't remove file: %s\n", path);
+        if ( unlink(path) == -1) {
+            perror("Couldn't remove file");
+        }
         else
             printf("Ok\n");
     }
@@ -101,13 +128,25 @@ static int do_rm(int argc, char** argv) {
 
 
 /********************************************************************************
- * Reformat filesystem
+ * Create directory
  ********************************************************************************/
 
-static int do_format(int argc, char** argv) {
-    spiffs_format();
+static int do_mkdir(int argc, char** argv) {
+    if (argc<=1) {
+        printf("mkdir command needs one argument (path)\n");
+        return 0;
+    }
+    else {
+        char path[263];
+        getPath(path, argv[1], true);
+        if (mkdir(path, 0755))      
+            perror("Couldn't create directory");
+        else
+            printf("Ok\n");
+    }
     return 0;
 }
+
 
 
 /********************************************************************************
@@ -121,13 +160,11 @@ static int do_write(int argc, char** argv) {
     }
     else {
         char path[263];
-        if (strncmp(argv[1], "/files/", 7) == 0)
-            sprintf(path, argv[1]);
-        else
-            sprintf(path, "/files/%s", argv[1]);
+        getPath(path, argv[1], true);
+        
         FILE *f = fopen(path, "a");
         if (f==NULL) {
-            printf("Couldn't open file: %s\n", path);
+            perror("Couldn't open file");
             return 0;
         }
         
@@ -157,13 +194,11 @@ static int do_read(int argc, char** argv) {
     }
     else {
         char buf[263];
-        if (*argv[1] == '/')
-            sprintf(buf, "%s", argv[1]);
-        else
-            sprintf(buf, "/files/%s", argv[1]);
+        getPath(buf, argv[1], true);
+        
         FILE *f = fopen(buf, "r");  
         if (f==NULL) {
-            printf("Couldn't open file: %s\n", buf);
+            perror("Couldn't open file");
             return 0;
         }
         printf("\n");
@@ -176,6 +211,16 @@ static int do_read(int argc, char** argv) {
         printf("\n");
         fclose(f);
     }
+    return 0;
+}
+
+
+/********************************************************************************
+ * Reformat filesystem
+ ********************************************************************************/
+
+static int do_format(int argc, char** argv) {
+    fatfs_format();
     return 0;
 }
 
@@ -224,10 +269,9 @@ static int do_sysinfo(int argc, char** argv)
             model = "Unknown";
             break;
     }
-    
-    extern esp_vfs_spiffs_conf_t spconf;
-    size_t size, used;
-    esp_spiffs_info(spconf.partition_label, &size, &used);
+
+    size_t size = fatfs_size(); 
+    size_t free = fatfs_free();
     uint32_t size_flash;
     esp_flash_get_size(NULL, &size_flash);
     size_flash /= 1000000;
@@ -235,7 +279,7 @@ static int do_sysinfo(int argc, char** argv)
     printf("Free heap:       %ld bytes\n", esp_get_free_heap_size());
     printf("FBUF free mem:   %ld bytes\n", fbuf_freeMem());
     printf("FBUF used slots: %d\n", fbuf_usedSlots());
-    printf("SPIFFS filesys:  %u bytes, %u used, %u free\n", size, used, size-used);
+    printf("File system:     %u bytes, %u used, %u free\n", size, size-free, free);
     printf("IDF version:     %s\n\n", esp_get_idf_version());
     printf("Chip info:\n");
     printf("  model:         %s\n", model);
@@ -487,10 +531,12 @@ void register_system()
 {
     ADD_CMD("trk-reset", &do_reset,       "Reset track storage", NULL);  
     ADD_CMD("ls",        &do_ls,          "List files", NULL);  
-    ADD_CMD("rm",        &do_rm,          "Remove file", "<file>");
+    ADD_CMD("mkdir",     &do_mkdir,       "Create directory", "<path>");
+    ADD_CMD("rm",        &do_rm,          "Remove file or directory", "<path>");
+    ADD_CMD("cd",        &do_cwd,         "Change working directory", "<path>");
     ADD_CMD("format",    &do_format,      "Format filesystem", NULL);
-    ADD_CMD("write",     &do_write,       "Write to file", "<file>");
-    ADD_CMD("read",      &do_read,        "Read from file", "<file>");
+    ADD_CMD("write",     &do_write,       "Write to file", "<path>");
+    ADD_CMD("read",      &do_read,        "Read from file", "<path>");
     ADD_CMD("free",      &do_free,        "Get the total size of heap memory available", NULL);
     ADD_CMD("sysinfo",   &do_sysinfo,     "System info", NULL);    
     ADD_CMD("restart",   &do_restart,     "Restart the program", NULL);

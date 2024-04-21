@@ -224,7 +224,7 @@ void app_main()
     register_wifi();
     register_aprs();
     wifi_init();
-    spiffs_init();    
+    fatfs_init();
     rest_start(HTTP_PORT, HTTPS_PORT, "/");
     ui_init();
     batt_init(); // Move this first? Move i2c initialization out of display code

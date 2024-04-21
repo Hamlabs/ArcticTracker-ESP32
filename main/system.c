@@ -18,8 +18,6 @@
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
 #include "esp_sleep.h"
-#include "esp_flash.h"
-#include "esp_spiffs.h"
 #include "ui.h"
 #include "gui.h"
 #include "afsk.h"
@@ -273,97 +271,7 @@ void systemShutdown(void)
 }
 
 
-/**************************************************
- *  SPIFFS FILESYSTEM
- **************************************************/
 
-
-#define SPIFFS_LABEL "storage"
-#define SPIFFS_LABEL2 "webapp"
-
-esp_vfs_spiffs_conf_t spconf = {
-      .base_path = "/files",
-      .partition_label = SPIFFS_LABEL,
-      .max_files = 10,
-      .format_if_mount_failed = true
-    };
-
-esp_vfs_spiffs_conf_t spconf2 = {
-      .base_path = "/webapp",
-      .partition_label = SPIFFS_LABEL2,
-      .max_files = 10,
-      .format_if_mount_failed = true
-    };
-    
-    
-void spiffs_init() {
-    size_t size, used;       
-    
-    /* Register and mount */
-    esp_err_t ret = esp_vfs_spiffs_register(&spconf);
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) 
-            ESP_LOGE(TAG, "Failed to mount or format filesystem");
-        else if (ret == ESP_ERR_NOT_FOUND) 
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
-        else 
-            ESP_LOGE(TAG, "ERROR in mounting filesystem: %d", ret);
-    }
-
-    /* Check if SPIFFS fs is mounted */
-    if (esp_spiffs_mounted(spconf.partition_label)) 
-         ESP_LOGI(TAG, "SPIFFS partition mounted on %s", spconf.base_path);
-    
-    /* Get and log info */
-    ret = esp_spiffs_info(spconf.partition_label, &size, &used);
-    if (ret == ESP_OK)
-        ESP_LOGI(TAG, "SPIFFS fs: '%s', %d bytes, %d used", spconf.partition_label, size, used);
-    
-    
-    
-    /* Register and mount partition 2 (Webapp) */
-    ret = esp_vfs_spiffs_register(&spconf2);
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) 
-            ESP_LOGE(TAG, "Failed to mount or format filesystem (webapp)");
-        else if (ret == ESP_ERR_NOT_FOUND) 
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition 2 (webapp)");
-        else 
-            ESP_LOGE(TAG, "ERROR in mounting filesystem (webapp): %d", ret);
-    }
-    
-    /* Check if SPIFFS fs is mounted */
-    if (esp_spiffs_mounted(spconf2.partition_label)) 
-         ESP_LOGI(TAG, "SPIFFS partition mounted on %s", spconf2.base_path);
-    
-    /* Get and log info */
-    ret = esp_spiffs_info(spconf2.partition_label, &size, &used);
-    if (ret == ESP_OK)
-        ESP_LOGI(TAG, "SPIFFS fs: '%s', %d bytes, %d used", spconf2.partition_label, size, used);
-        
-}
-
-
-void spiffs_format() {
-    if ( esp_spiffs_format(SPIFFS_LABEL) != ESP_OK)
-        ESP_LOGW(TAG, "SPIFFS format failed\n");
-}
-
-
-size_t spiffs_size() {
-    size_t size, used;
-    esp_spiffs_info(spconf.partition_label, &size, &used);
-    return size;
-}
-
-
-size_t spiffs_free() {
-    size_t size, used;
-    esp_spiffs_info(spconf.partition_label, &size, &used);
-    return size-used;
-}
-    
-    
 
 /******************************************************************************
  * Get time from NTP

@@ -43,11 +43,13 @@ void clock_start(gptimer_handle_t clock);
 void clock_stop(gptimer_handle_t clock);
 void clock_set_interval(gptimer_handle_t clock, uint32_t period);
 
-/* SPIFFS FS */
-void spiffs_init();
-void spiffs_format();
-size_t spiffs_size();
-size_t spiffs_free();
+/* FAT FS */
+void fatfs_init();
+void fatfs_format();
+size_t fatfs_size();
+size_t fatfs_free();
+void getPath(char* path, char* fname, bool allowroot);
+bool changeWD(char* wd);
 
 /* Logging */
 char* loglevel2str(esp_log_level_t lvl);

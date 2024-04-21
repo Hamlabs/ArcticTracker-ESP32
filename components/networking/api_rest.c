@@ -37,8 +37,8 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     cJSON *root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "heap", esp_get_free_heap_size());
     cJSON_AddNumberToObject(root, "flash", size_flash );
-    cJSON_AddNumberToObject(root, "sizefs", spiffs_size() );
-    cJSON_AddNumberToObject(root, "freefs", spiffs_free() );
+    cJSON_AddNumberToObject(root, "sizefs", fatfs_size() );
+    cJSON_AddNumberToObject(root, "freefs", fatfs_free() );
     cJSON_AddStringToObject(root, "ap", wifi_getConnectedAp(buf));
     cJSON_AddStringToObject(root, "ipaddr", wifi_getIpAddr(buf));
     cJSON_AddStringToObject(root, "mdns", mdns_hostname(buf));
