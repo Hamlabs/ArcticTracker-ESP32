@@ -6,23 +6,36 @@
 #ifndef _DEFINES_H_
 #define _DEFINES_H_
 
-
+/* Version of software */
 #define VERSION_SSTRING "3.1"
 #define VERSION_STRING  "v3.1"
+
+
 #define FW_NAME "Arctic Tracker"
-#define FW_DATE "2024-03-22"
+#define FW_DATE __DATE__
 
 #define BIT_0	( 1 << 0 )
 
 /* Supported devices */
-#define ARCTIC3 0
-#define T_TWR 1
+#define ARCTIC3  0
+#define T_TWR    1
 
 /* Device */
 #define DEVICE T_TWR
-#define DEVICE_STRING "LilyGo T-TWR-plus"
 
+
+#if DEVICE==ARCTTIC3
+#define DEVICE_STRING "Arctic Tracker 3"
+#elif DEVICE==T_TWR
+#define DEVICE_STRING "LilyGo T-TWR-plus"
+#endif
+
+/* Webserver settings */
 #define WEBSERVER_HTTPS 
+#define HTTP_PORT     80
+#define HTTPS_PORT    443
+
+
 
 /* 
  * If set to true, radio will be turned off even if tracking is active
@@ -209,9 +222,6 @@
 /* Timer for AFSK tone generation */
 #define TONE_TIMERGRP    0
 #define TONE_TIMERIDX    1
-
-#define HTTP_PORT        80
-#define HTTPS_PORT       443
 
 #define AP_DEFAULT_PASSWD ""
 #define AP_DEFAULT_IP     "192.168.0.1"
