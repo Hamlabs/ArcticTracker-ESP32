@@ -65,6 +65,8 @@ To build and run the firmware, plug in your device and run
   ```
   idf.py flash
   ```
+## Flashing a binary
+Pre-compiled binaries are posted with each release and are also available [here](https://arctictracker.no/download/). It can be flashed to the device using *esptool* or a similar program. It is also possible to convert the binary to the UF2 format using *uf2conv*. 
 
 ## Setup of the tracker - the command shell
 Plug a USB cable into the tracker and your computer. A serial interface will appear. Start a (serial) terminal program and connect to the serial interface (on Linux it is /dev/ttyACM0). Alternatively, the monitor command of the idf.py may be used. It may be necessary to reset the tracker to get the command prompt (cmd:). 
