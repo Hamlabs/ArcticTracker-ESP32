@@ -56,8 +56,11 @@ It is a good idea to generate a new SSL certificate now and then. You could also
   ```
   cd components/networking/cert; sh gencert.sh
   ```
-It may be a good idea to open the file *main/defines.h* and check that it is correctly set up for the device you are using.
-
+You may start menuconfig and go to the *Arctic Tracker Config* and check if the right target device is selected. More settings are in *main/defines.h*.
+  ```
+  idf.py menuconfig
+  ```
+  
 To build and run the firmware, plug in your device and run
   ```
   idf.py flash
