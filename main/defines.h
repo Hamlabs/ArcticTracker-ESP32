@@ -6,6 +6,9 @@
 #ifndef _DEFINES_H_
 #define _DEFINES_H_
 
+#include "sdkconfig.h"
+
+
 /* Version of software */
 #define VERSION_SSTRING "3.1"
 #define VERSION_STRING  "v3.1"
@@ -16,24 +19,30 @@
 
 #define BIT_0	( 1 << 0 )
 
+
 /* Supported devices */
 #define ARCTIC3  0
 #define T_TWR    1
 #define ARCTIC4  2
 
-/* Device - use what is selected by menuconfig 
+
+/* 
+ * Device - use what is selected by menuconfig 
  * See Kconfig.projbuild 
  */
-#define DEVICE ARCTICTRACKER_TARGET
 
-
-#if DEVICE==ARCTIC3
-#define DEVICE_STRING "Arctic Tracker 3"
-#elif DEVICE==T_TWR
+#if defined CONFIG_T_TWR
+#define DEVICE T_TWR
 #define DEVICE_STRING "LilyGo T-TWR-plus"
-#elif DEVICE==ARCTIC4
+#elif defined CONFIG_ARCTIC3
+#define DEVICE_STRING "Arctic Tracker 3"
+#define DEVICE ARCTIC3
+#elif defined CONFIG_ARCTIC4
 #define DEVICE_STRING "Arctic Tracker 4"
+#define DEVICE ARCTIC4
 #endif
+
+
 
 /* Webserver settings */
 #define WEBSERVER_HTTPS 

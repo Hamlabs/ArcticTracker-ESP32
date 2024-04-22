@@ -2,7 +2,7 @@ menu "Arctic Tracker config"
 
     choice ARCTICTRACKER_TARGET
         prompt "Target device"
-        default TARGET_T_TWR
+        default T_TWR
         help
             Select what target hardware device to be supported. 
 
