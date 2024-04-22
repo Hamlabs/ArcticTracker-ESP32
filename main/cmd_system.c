@@ -474,6 +474,8 @@ static int do_adcinfo(int argc, char** argv)
     printf("ADC status not supported yet on T-TWR\n");
 #else
     
+    long val;
+    
 #if !defined(RADIO_DISABLE)
  //   val = adc2_read(RADIO_INPUT);
  //   printf("Radio input: %ld, %d mV\n", val, adc_toVoltage(val));
