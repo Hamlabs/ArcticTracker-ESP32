@@ -10,8 +10,8 @@
 
 
 /* Version of software */
-#define VERSION_SSTRING "3.1"
-#define VERSION_STRING  "v3.1"
+#define VERSION_SSTRING "3.2"
+#define VERSION_STRING  "v3.2"
 
 
 #define FW_NAME "Arctic Tracker"
