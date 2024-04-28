@@ -71,9 +71,11 @@ This will build everything. You may flash the firmware directly from idf.py this
   ```
 
 ## Flashing a binary
-We intend to post pre-compiled binaries with each release and are also available [here](https://arctictracker.no/download/). The problem is that there are more than one way to do it and that the firmware consists of multiple parts: The bootloader, the partition table, the webapp, etc.. The most flexible option is probably to use *esptool* or a similar program, but you will need to know some technical details. It is also possible to convert the binary to the UF2 format using *uf2conv* and use a uf2 bootloader or you may compile it to the *dfu* format and use a *dfu* compatible bootloader.
+We intend to post pre-compiled binaries with each release and are also available [here](https://arctictracker.no/download/). The problem is that there are more than one way to do it and that the firmware consists of multiple parts: The bootloader, the partition table, the webapp, etc.. The most flexible option is probably to use *esptool* or a similar program, but you will need to know some technical details. It is also possible to convert the binary to the UF2 format using *uf2conv* and use a uf2 bootloader.
 
-I am working to get this corrrect soon. Stay tuned.... 
+Download the proper *ArcticTracker_xx.zip* file and unpack it in a proper directory. Go to that directory and use *esptool* or a similar tool (on Windows, we may use the *flash download tool*). The *flash_all.sh* script shows how to use *esptool*. The same parameters can be used in the Windows *flash download tool*. On a Linux system you may just run the *flash_all.sh* script to flash everything. 
+
+You may choose to update only the app (ArcticTracker.bin) or the Webapp (webapp.bin) if you want. Use the the addresses provided. 
 
 
 ## Setup of the tracker - the command shell
