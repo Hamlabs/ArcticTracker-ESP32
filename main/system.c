@@ -149,6 +149,7 @@ void batt_init(void)
     pmu_batt_setup();
     ESP_LOGI(TAG, "Power/battery management enabled - T-TWR board used");
 #else
+    ESP_LOGI(TAG, "No power managment. Old board used");
     gpio_set_direction(BATT_CHG_TEST, GPIO_MODE_INPUT);    
     gpio_set_pull_mode(BATT_CHG_TEST, GPIO_FLOATING);
 #endif

@@ -141,7 +141,7 @@ esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int *size)
     int received = 0;
     if (total_len >= SCRATCH_BUFSIZE) {
         ESP_LOGW(TAG, "rest_get_input: content too long");
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Content too long");
         return ESP_FAIL;
     }
     while (cur_len < total_len) {
@@ -166,7 +166,7 @@ esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int *size)
 
 esp_err_t rest_AUTH(httpd_req_t *req) {
     if (rest_isAuth(req, "", 0) != ESP_OK) {
-        httpd_resp_send_err(req, HTTPD_401_UNAUTHORIZED, "Authorisation failed");
+        httpd_resp_send_err(req, HTTPD_401_UNAUTHORIZED, "Authenticaion failed");
         return ESP_FAIL;
     }
     return ESP_OK;
@@ -188,7 +188,7 @@ esp_err_t rest_JSON_input(httpd_req_t *req,  cJSON **json)
         return ESP_FAIL;
     
     if (rest_isAuth(req, buf, size) != ESP_OK) {
-        httpd_resp_send_err(req, HTTPD_401_UNAUTHORIZED, "Authorisation failed");
+        httpd_resp_send_err(req, HTTPD_401_UNAUTHORIZED, "Authentication failed");
         return ESP_FAIL;
     } 
     
