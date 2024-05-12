@@ -226,7 +226,7 @@ CMD_BYTE_SETTING (_param_maxpause,   "MAXPAUSE",     DFL_MAXPAUSE,    0, 250, NU
 CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",     DFL_MINPAUSE,    0, 250, NULL);
 CMD_BYTE_SETTING (_param_mindist,    "MINDIST",      DFL_MINDIST,     0, 250, NULL);
 CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",   DFL_STATUSTIME,  1, 250, NULL);
-CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 1, 8,   hdl_squelch);
+CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 0, 8,   hdl_squelch);
 CMD_BYTE_SETTING (_param_miclevel,   "TRX_MICLEVEL", DFL_TRX_MICLEVEL,1, 8,   hdl_miclevel);
 CMD_BYTE_SETTING (_param_repeat,     "REPEAT",       DFL_REPEAT,      0, 4,   NULL);
 

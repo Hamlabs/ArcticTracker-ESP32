@@ -300,7 +300,7 @@ static void button_init() {
     if (menu_is_active())
         menu_select();
     else
-        menu_activate(); 
+        menu_activate();
  }
 
  
@@ -333,10 +333,10 @@ static void button_init() {
     /* Buzzer */
     buzzer_init(); 
 
-    /* LEDs m*/
+    /* LEDs */
     led_init();
     
-    /* LCD display */  
+    /* Display */  
     disp_init();
     sleepMs(100);
     disp_backlight();

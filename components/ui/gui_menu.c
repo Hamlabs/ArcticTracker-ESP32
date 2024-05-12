@@ -90,18 +90,25 @@ static void menu_show(int st, int sel)
     for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) 
         disp_writeText(4, 2+i*11, items[st+i].mc_name); 
 #else
+    
     disp_box(2, sel*11+2, 97+10, 12, true);
+    
     int i;
-    char item[30];
-    for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) {
-        bool on = (bool) get_byte_param(items[st+i].mc_param, false);
+    char item[32];
+    bool on = false; 
+    
+    for (i=0; i < MIN(nitems, MAX_VISIBLE); i++) {
+        if (items[st+i].mc_param != NULL) 
+           on = (bool) get_byte_param(items[st+i].mc_param, false);
+        
         sprintf(item, "%s  %s", items[st+i].mc_name, 
-                (items[st+i].mc_param==NULL? "": (!on ? "On" : "Off")));
-        disp_writeText(5, 4+i*11, item); 
+            (items[st+i].mc_param==NULL ? "" : (!on ? "On" : "Off")));
+        
+         int ypos = 4+i*11;
+         disp_writeText(5, ypos, item); 
     }
 #endif
-    
-   disp_flush();
+    disp_flush();
 }
 
 

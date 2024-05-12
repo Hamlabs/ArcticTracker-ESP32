@@ -289,9 +289,8 @@ void disp_writeText(int x, int y, const char * strp)
     x += 2;
 #endif
     
-    
   uint8_t i;
-  if (y+8 > DISPLAY_HEIGHT)
+  if (y+8 > DISPLAY_HEIGHT && x >= DISPLAY_WIDTH)
       return;
   
   /* y offset within a single row */
@@ -344,7 +343,7 @@ void disp_init()
     spi_init(); 
     lcd_init();
 #elif DISPLAY_TYPE == 1
-    i2c_master_init(&_dev_, DISP_SDA_PIN, DISP_SCL_PIN, DISP_RESET_PIN); // S3 hangs here !!
+    i2c_master_init(&_dev_, DISP_SDA_PIN, DISP_SCL_PIN, DISP_RESET_PIN);
     i2c_init(&_dev_, DISPLAY_WIDTH, DISPLAY_HEIGHT);
     i2c_contrast(&_dev_, backlightLevel); 
     
