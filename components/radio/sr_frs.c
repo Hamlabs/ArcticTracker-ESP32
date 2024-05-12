@@ -1,6 +1,6 @@
 #include "defines.h"
 
-#if !defined(RADIO_DISABLE) && DEVICE != T_TWR
+#if !defined(RADIO_DISABLE) && DEVICE != T_TWR && DEVICE != ARCTIC4
 
 #include <stdio.h>
 #include "config.h"

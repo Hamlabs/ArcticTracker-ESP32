@@ -1,4 +1,4 @@
-
+#include "defines.h"
 #include <stdio.h>
 #include "driver/i2c.h"
 #include "esp_log.h"
@@ -22,7 +22,7 @@ static const char *TAG = "pmu";
 
 #define WRITE_BIT                       I2C_MASTER_WRITE            /*!< I2C master write */
 #define READ_BIT                        I2C_MASTER_READ             /*!< I2C master read */
-#define ACK_CHECK_EN                    0x1                         /*!< I2C master will check ack from slave*/
+#define ACK_CHECK_EN                    0x1                         /*!< I2C master will check ack from slave */
 #define ACK_CHECK_DIS                   0x0                         /*!< I2C master will not check ack from slave */
 #define ACK_VAL                         (i2c_ack_type_t)0x0         /*!< I2C ack value */
 #define NACK_VAL                        (i2c_ack_type_t)0x1         /*!< I2C nack value */
@@ -62,17 +62,29 @@ esp_err_t pmu_init()
     /* Don't change these VDDs */
     PMU.setDC3Voltage(3400);
     PMU.setALDO2Voltage(3300);
-    PMU.setALDO4Voltage(3300); // GPS
+        // Optional output Vx-1 on ARCTIC4
+    PMU.setALDO4Voltage(3300); 
+        // GPS on T-TWR
     PMU.setBLDO1Voltage(3300);
+        // VREFADC on ARCTIC4
+    
+    
     
     /* The following supply voltages can be controlled by the user
      * 1400~3700mV,100mV/step, 24steps */
     PMU.setDC5Voltage(3300);
+      // Optional output Vx-2 on ARCTIC4
   
     /* 500~3500mV, 100mV/step, 31steps */
     PMU.setALDO1Voltage(3300);
+       // GPS on ARCTIC4
+    
     PMU.setALDO3Voltage(3300);
+       // Not used on ARCTIC4
+    
     PMU.setBLDO2Voltage(3300);
+       // Not used on ARCTIC4
+    
     return ESP_OK;
 }
 
@@ -88,6 +100,15 @@ void pmu_power_setup()
      * DC1 ESP32S3 Core VDD , Don't change */
     PMU.enableDC1();
 
+#if DEVICE == ARCTIC4
+    PMU.disableDC5();  // Optional Vx-2
+    PMU.enableALDO1(); // GPS
+    PMU.disableALDO3();
+    PMU.disableBLDO2();
+    PMU.enableBLDO1();
+    PMU.disableALDO2(); // Optional Vx-1
+    
+#else
     /* External pin power supply */
     PMU.enableDC5();
     PMU.enableALDO1();
@@ -102,10 +123,12 @@ void pmu_power_setup()
 
     /* BLDO1 MIC VDD */
     PMU.enableBLDO1();
-
+    
+#endif
+        
     /* DC3 Radio & Pixels VDD */
     PMU.enableDC3();
-
+    
     /* power off when not in use */
     PMU.disableDC2();
     PMU.disableDC4();
@@ -164,15 +187,26 @@ void pmu_batt_setup()
 
 void pmu_gps_on(bool on) 
 {
+#if DEVICE == ARCTIC4
     if (on)
         PMU.enableALDO4();
     else
         PMU.disableALDO4();
+#else
+        if (on)
+        PMU.enableALDO1();
+    else
+        PMU.disableALDO1();
+#endif
 }
 
 
 bool pmu_dc3_isOn() {
     return PMU.isEnableDC3();
+}
+
+bool pmu_dc5_isOn() {
+    return PMU.isEnableDC5();
 }
 
 

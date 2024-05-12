@@ -17,12 +17,13 @@ extern bool blink_both;
 #define BLINK_BATTLOW        rgbLED_setBlink(1, 7, 0, 0, 100, 2100)
 #define BLINK_BATTCRITICAL   rgbLED_setBlink(1, 7, 0, 0, 100, 500)
 #define BLINK_FWUPGRADE      rgbLED_setBlink(1, 0, 2, 40, 80, 80)
+
 #else
 #define BLINK_GPS_SEARCHING  led_setBlink(500, 500, false)
 #define BLINK_NORMAL         led_setBlink(30, 2000, false)
-#define BLINK_CHARGE         led_setBlink(30, 2000, false)
-#define BLINK_BATTLOW        led_setBlink(30, 2000, false)
-#define BLINK_BATTCRITICAL   led_setBlink(30, 2000, false)
+#define BLINK_CHARGE        
+#define BLINK_BATTLOW        
+#define BLINK_BATTCRITICAL 
 #define BLINK_FWUPGRADE      led_setBlink(50, 50, true)
 #endif
 
@@ -30,6 +31,9 @@ extern bool blink_both;
 #if DEVICE == T_TWR
 #define BEEP_FREQ 1800
 #define BEEP_ALT_FREQ 2000
+#elif  DEVICE == ARCTIC4 
+#define BEEP_FREQ 2750
+#define BEEP_ALT_FREQ 2900
 #else
 #define BEEP_FREQ 2800
 #define BEEP_ALT_FREQ 3050
@@ -52,9 +56,14 @@ void rgbLED_setBlink(uint8_t lvl, uint16_t r, uint16_t g, uint16_t b, uint16_t l
 void rgbLED_down();
 
 #else
-
+#if DEVICE == ARCTIC4
+#define tx_led_on()  gpio_set_level(LED_TX_PIN, 0)
+#define tx_led_off() gpio_set_level(LED_TX_PIN, 1)
+#else
 #define tx_led_on()  gpio_set_level(LED_TX_PIN, 1)
 #define tx_led_off() gpio_set_level(LED_TX_PIN, 0)
+#endif
+
 void led_setBlink(uint16_t len, uint16_t interv, bool both );
 
 #endif

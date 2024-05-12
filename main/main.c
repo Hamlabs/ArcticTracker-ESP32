@@ -177,6 +177,7 @@ static void startup(void* arg)
     FBQ* oq = hdlc_init_encoder(afsk_tx_init());
    
     gps_init(GPS_UART);
+     
     radio_init();
     tracker_init(oq);
     tracklog_init();
@@ -203,7 +204,12 @@ void app_main()
     gpio_iomux_out(40, 1, false);
     gpio_iomux_out(41, 1, false);
     gpio_iomux_in(15, 1);
-#else    
+#elif DEVICE == ARCTIC4
+    gpio_iomux_out(8, 1, false);
+    gpio_iomux_out(41, 1, false); // FUNC_MTDI_GPIO41
+    gpio_iomux_out(42, 1, false); // FUNC_MTMS_GPIO42
+    gpio_iomux_out(39, 1, false); // FUNC_MTCK_GPIO39
+#else
     gpio_iomux_out(39, 1, false); // FUNC_MTCK_GPIO39
     gpio_iomux_out(40, 1, false); // FUNC_MTDO_GPIO40
     gpio_iomux_out(41, 1, false); // FUNC_MTDI_GPIO41
@@ -231,6 +237,6 @@ void app_main()
         
     /* Put this on CPU #1 or we may run out of interrupts */
     xTaskCreatePinnedToCore(&startup, "Startup thread", 
-        3500, NULL, NORMALPRIO+1, NULL, 1);
+       5096, NULL, NORMALPRIO+1, NULL, 1);
     run_console();   
 }

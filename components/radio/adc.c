@@ -19,7 +19,7 @@ static uint16_t dcoffset = 0;
 // FIXME: Use new ADC driver and continous ADC mode for sampling RX
 
 
-#if DEVICE == T_TWR
+#if DEVICE == T_TWR || DEVICE == ARCTIC4
 
 #define ATTEN ADC_ATTEN_DB_0
 

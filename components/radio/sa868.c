@@ -1,6 +1,7 @@
 #include "defines.h"
 
-#if !defined(RADIO_DISABLE) && DEVICE == T_TWR
+
+#if !defined(RADIO_DISABLE) && (DEVICE == T_TWR || DEVICE == ARCTIC4)
 #include <stdio.h>
 #include <string.h>
 #include "config.h"
@@ -15,7 +16,6 @@
 
 #define rx_led_on(x) /* Placeholder */
 #define rx_led_off(x) 
-
 
 static bool     _on = false;
 static bool     _sq_on = false;
@@ -54,6 +54,8 @@ static void _squelch_handler(void* arg);
  bool sa8_isLowTxPower(void); 
  void sa8_wait_channel_ready(void);
  bool sa8_setFilter(bool eemp, bool highpass, bool lowpass);
+ bool sa8_setTail(int tail);
+ 
  
 /*
  * Serial driver config
@@ -98,21 +100,30 @@ void sa8_init(uart_port_t uart)
     ESP_ERROR_CHECK(uart_param_config(uart, &_serialConfig));
     ESP_ERROR_CHECK(uart_driver_install(uart, RADIO_BUF_SIZE, RADIO_BUF_SIZE, 0, NULL, 0));
     ESP_ERROR_CHECK(uart_set_pin(uart, RADIO_PIN_TXD, RADIO_PIN_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
-    
+
     gpio_set_direction(RADIO_PIN_PTT,     GPIO_MODE_OUTPUT); 
     gpio_set_direction(RADIO_PIN_PD,      GPIO_MODE_OUTPUT);
-    gpio_set_direction(RADIO_PIN_PWR,     GPIO_MODE_OUTPUT);
-    gpio_set_direction(RADIO_PIN_TXSEL,   GPIO_MODE_OUTPUT);
     gpio_set_direction(RADIO_PIN_SQUELCH, GPIO_MODE_INPUT);
     gpio_set_level(RADIO_PIN_PTT, 1);
+    
+#if DEVICE == T_TWR
+    /* On T_TWR, route audio from ESP32 to mic-input on radio module */
+    gpio_set_direction(RADIO_PIN_TXSEL, GPIO_MODE_OUTPUT); 
     gpio_set_level(RADIO_PIN_TXSEL, 1);
-            
+    gpio_set_direction(RADIO_PIN_LOWPWR, GPIO_MODE_OUTPUT);
+
+#elif DEVICE == ARCTIC4
+    gpio_set_direction(RADIO_PIN_PWRON, GPIO_MODE_OUTPUT);
+    gpio_set_level(RADIO_PIN_PWRON, 1);
+#endif
+    
     radio_mutex = mutex_create();
     ptt_mutex = mutex_create();
     tx_off = cond_create();
     radio_rdy = cond_create();
     chan_rdy = cond_create();
-    sa8_setLowTxPower(true);
+//    sa8_setLowTxPower(true);
+    
     
     /* Squelch input. Pin interrupt */
     gpio_set_intr_type(RADIO_PIN_SQUELCH, GPIO_INTR_ANYEDGE);
@@ -141,8 +152,9 @@ static void _initialize()
         (pmu_dc3_isOn() ? "ON":"OFF"), _txfreq, _rxfreq);
     _widebw = 0;  /* Set to 1 for wide bandwidth */
     
-    sa8_setFilter(false, false, false);
+    sa8_setFilter(true, true, true);
     sa8_setVolume(6);
+    sa8_setTail(0);
     _setGroupParm();
     cond_set(tx_off);
    
@@ -177,6 +189,20 @@ static void IRAM_ATTR _squelch_handler(void* arg)
 
 
 
+/******************************************************
+ * Wait for reply from radio module
+ ******************************************************/
+
+static void waitReply(char* reply) {
+    reply[0] = '\0';
+    while (reply[0] == '\0') {
+        sleepMs(100);
+        readline(_serial, reply, 15);
+    }
+    ESP_LOGD(TAG, "Reply: %s", reply);
+}
+    
+    
 
 /******************************************************
  * Return true if radio is on
@@ -185,6 +211,7 @@ static void IRAM_ATTR _squelch_handler(void* arg)
 bool sa8_is_on(void) {
     return (count >= 1); 
 }
+
 
 
 /******************************************************
@@ -351,8 +378,29 @@ bool sa8_setSquelch(uint8_t sq)
 {
     _squelch = sq;
     if (_squelch > 8)
-       _squelch = 0; 
+       _squelch = 8; 
     return _setGroupParm();
+}
+
+
+
+/***********************************************
+ * Get RSSI level
+ ***********************************************/
+
+int sa8_getRSSI()
+{
+    char buf[32];
+    if (!_on)
+        return 0;
+    
+    char reply[16];
+    int rssi;
+    int len = sprintf(buf, "AT+RSSI?\r\n");
+    uart_write_bytes(_serial, buf, len);
+    waitReply(reply);
+    sscanf(reply, "RSSI=%d", &rssi);
+    return rssi;
 }
 
 
@@ -372,7 +420,7 @@ bool sa8_setVolume(uint8_t vol)
     int len = sprintf(buf, "AT+DMOSETVOLUME=%1d\r\n", vol);
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
-    readline(_serial, reply, 15);
+    waitReply(reply);
     return (reply[10] == '0');
 }
 
@@ -397,9 +445,11 @@ bool sa8_setMicLevel(uint8_t level)
 
 bool sa8_setLowTxPower(bool on)
 {
+#if (DEVICE==T_TWR)
     ESP_LOGD(TAG, "SetLowTxPower: %s", (on ? "on" : "off"));
     _lowPower = on;
-    gpio_set_level(RADIO_PIN_PWR, (on? 0 : 1) );
+    gpio_set_level(RADIO_PIN_LOWPWR, (on? 0 : 1) );
+#endif
     return false; 
 }
 
@@ -432,11 +482,30 @@ bool sa8_setFilter(bool emp, bool highpass, bool lowpass)
     if (!_on)
         return true;
     char reply[16];
-    int len = sprintf(buf, "AT+DMOSETFILTER=%1d,%1d,%1d\r\n", 
+    int len = sprintf(buf, "AT+SETFILTER=%1d,%1d,%1d\r\n", 
         (emp ? 1:0), (highpass ? 1:0), (lowpass ? 1:0)  );
-    ESP_LOGD(TAG, "Reply: %s", buf);
+    ESP_LOGD(TAG, "Request: %s", buf);
     uart_write_bytes(_serial, buf, len);
-    readline(_serial, reply, 15);
+    waitReply(reply);
+    return (reply[14] == '0');
+}
+
+
+
+/************************************************
+ * Set tail 
+ ************************************************/
+
+bool sa8_setTail(int tail)
+{
+    char buf[32];
+    if (!_on)
+        return true;
+    char reply[16];
+    int len = sprintf(buf, "AT+SETTAIL=%1d\r\n", tail);
+    ESP_LOGD(TAG, "Request: %s", buf);
+    uart_write_bytes(_serial, buf, len);
+    waitReply(reply);
     return (reply[14] == '0');
 }
 
@@ -447,10 +516,9 @@ static bool _handshake()
     char buf[32];
     char reply[16];
     int len = sprintf(buf, "AT+DMOCONNECT\r\n");
-    ESP_LOGD(TAG, "%s", buf);
+    ESP_LOGD(TAG, "Request: %s", buf);
     uart_write_bytes(_serial, buf, len);
-    readline(_serial, reply, 15);
-    ESP_LOGD(TAG, "Reply: '%s'", reply);
+    waitReply(reply);
     return (reply[12] == '0');
 }
 
@@ -473,8 +541,7 @@ static bool _setGroupParm()
             _widebw, txbuf, rxbuf, _tcxcss, _squelch, _rcxcss);
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
-    readline(_serial, reply, 15);
-    ESP_LOGD(TAG, "Reply: '%s'", reply);
+    waitReply(reply);
     return (reply[13] == '0');
 }
 

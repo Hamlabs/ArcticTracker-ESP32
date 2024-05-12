@@ -42,6 +42,9 @@
 #define DEVICE ARCTIC4
 #endif
 
+#if DEVICE == T_TWR || DEVICE == ARCTIC4
+#define USE_PMU 1
+#endif
 
 
 /* Webserver settings */
@@ -92,8 +95,11 @@
 #define HDLC_DECODER_QUEUE_SIZE  16
 #define HDLC_ENCODER_QUEUE_SIZE  16
 
-/* Radio module */
-// #define RADIO_DISABLE
+
+
+/***************************************************
+ * Radio module 
+ ***************************************************/
 
 #if !defined(RADIO_DISABLE)
 
@@ -105,7 +111,7 @@
 #define RADIO_PIN_RXD       48
 #define RADIO_PIN_PTT       41
 #define RADIO_PIN_PD        40
-#define RADIO_PIN_PWR       38
+#define RADIO_PIN_LOWPWR    38
 #define RADIO_PIN_TXSEL     17 
 #define RADIO_PIN_SQUELCH   15
 
@@ -117,8 +123,24 @@
 #define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
 #define TONE_SDELTA_PIN  18
 
-#else
+#elif DEVICE == ARCTIC4
+#define RADIO_UART          UART_NUM_0
+#define RADIO_PIN_TXD       44 
+#define RADIO_PIN_RXD       43
+#define RADIO_PIN_PTT       42
+#define RADIO_PIN_PD        41
+#define RADIO_PIN_PWRON      9
+#define RADIO_PIN_SQUELCH   40
 
+/* Radio audio input */
+#define RADIO_INPUT         ADC1_CHANNEL_0  // IO1 
+
+/* Tone generation (for AFSK) */
+#define TONE_SDELTA_ENABLE
+#define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
+#define TONE_SDELTA_PIN      2
+
+#else
 #define RADIO_UART          UART_NUM_0
 #define RADIO_PIN_PTT       38
 #define RADIO_PIN_TXP       40
@@ -138,32 +160,43 @@
 
 
 
-#if device != T_TWR
+/*********************************************
+ * ADC And battery charget test for Arctic
+ *********************************************/ 
+
+#if DEVICE != T_TWR && DEVICE != ARCTIC4
 
 /* Misc. ADC inputs */
 #define X1_ADC_INPUT        ADC1_CHANNEL_4
 #define BATT_ADC_INPUT      ADC2_CHANNEL_7
 
+#if DEVICE == ARCTIC3
 /* Batt charger */
 #define BATT_CHG_TEST     12
-
+#endif
 #endif
 
 
 
-/* GPS */
+/***********************************************
+ * GPS 
+ ***********************************************/
+
 #if DEVICE == T_TWR
 #define GPS_UART        UART_NUM_1
 #define GPS_TXD_PIN     6
 #define GPS_RXD_PIN     5
-#else
+
+#else /* The same for ARCTIC3 and ARCTIC4 */
 #define GPS_UART        UART_NUM_1
 #define GPS_TXD_PIN     17
 #define GPS_RXD_PIN     18
 #endif
 
 
-/* DISPLAY CONFIG: 
+
+/*******************************************************************
+ * DISPLAY CONFIG: 
  * DISPLAY_TYPE is either 0=NOKIA (SPI) or 1=SSD1306 (I2C)
  * -1 to disable
  * SSD1306_HEIGHT and SSD1306_WIDTH should be set according to the 
@@ -173,7 +206,7 @@
  * 128x32  (0.91") half height 
  * 72x40   (0.42") e.g. DM-OLED042-647 from DisplayModule 
  * 
- */
+ *******************************************************************/
 
 #define DISPLAY_TYPE     1
 #define SSD1306_WIDTH  128
@@ -196,10 +229,16 @@
 #if DEVICE == T_TWR
 #define DISP_SDA_PIN     8
 #define DISP_SCL_PIN     9
+
+#elif DEVICE == ARCTIC4
+#define DISP_SDA_PIN    21
+#define DISP_SCL_PIN    47
+
 #else
 #define DISP_SDA_PIN     9
 #define DISP_SCL_PIN    10
 #endif
+
 
 /* SPI setup. FIXME: Is this needed? */
 #if DEVICE != T_TWR
@@ -209,7 +248,11 @@
 #define SPI_PIN_CLK     12
 #endif
 
-/* LEDs and buttons */
+
+/********************************************
+ * LEDs and buttons 
+ ********************************************/
+
 #if DEVICE == T_TWR
 
 #define NEOPIXEL_PIN    42
@@ -217,21 +260,40 @@
 #define ENC_PUSH_PIN    21
 #define ENC_A_PIN       47
 #define ENC_B_PIN       46
+
+#elif DEVICE == ARCTIC4
+#define LED_STATUS_PIN  38
+#define LED_TX_PIN      39
+#define BUTTON_PIN       4 /* Same as X1_PIN */
+
 #else
 #define LED_STATUS_PIN  41
 #define LED_TX_PIN      42
 #define BUTTON_PIN       0
 #endif
 
-/* Buzzer */
+
+/*********************************************
+ * Buzzer 
+ *********************************************/
+
 #if DEVICE == T_TWR
 #define BUZZER_PIN      -1
+
+#elif DEVICE == ARCTIC4
+#define BUZZER_PIN       8
+
 #else
 #define BUZZER_PIN      45
 #endif
+
 #define BUZZER_TIMERGRP  0
 #define BUZZER_TIMERIDX  0
 
+
+/**********************************************
+ * AFSK generation 
+ **********************************************/
 
 #define AFSK_MARK        1200
 #define AFSK_SPACE       2200
@@ -245,18 +307,34 @@
 #define TONE_TIMERIDX    1
 
 
-/* Stack sizes for tasks */
+/**********************************************
+ * Extra pins
+ **********************************************/
+
+#if DEVICE == ARCTIC4
+#define X1_PIN 4
+#define X2_PIN 5
+#define X3_PIN 6
+#define X4_PIN 7
+#endif
+
+
+/**********************************************
+ * Tasks: 
+ * Stack sizes and allocation to cores 
+ **********************************************/
+
 #define STACK_AUTOCON        4000
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 3100
 #define STACK_HDLC_RXDECODER 3100
 #define STACK_AFSK_RXDECODER 3000
 #define STACK_NMEALISTENER   3600
-#define STACK_LEDBLINKER     1800
-#define STACK_UI_SRV         3500
+#define STACK_LEDBLINKER     2800
+#define STACK_UI_SRV         3800
 #define STACK_TRACKER        3800
 #define STACK_MONITOR        3000
-#define STACK_GUI            3000
+#define STACK_GUI            3200
 #define STACK_HLIST          1000
 #define STACK_DIGI           3200
 #define STACK_TCP_REC        3000
@@ -285,7 +363,13 @@
 #define CORE_TRACKLOG       1
 #define CORE_TRACKLOGPOST   1
 
+/* Default task priority */
+#define NORMALPRIO 5
 
+
+/*********************************************
+ *  Misc. 
+ *********************************************/
 
 #define BBUF_SIZE 4096
 
@@ -300,9 +384,6 @@
 #define REGEX_HOSTNAME "[0-9a-zA-Z\\-\\_\\.]+"
 #define REGEX_URL      "http(s?):\\/\\/[0-9a-zA-Z\\-\\_\\.\\/]+"
 #define REGEX_FPATH    "[0-9a-zA-Z\\-\\_\\.\\/]+"
-
-#define NORMALPRIO 5
-
 
 
 #define min(x,y) (x<y? x : y)

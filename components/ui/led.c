@@ -126,7 +126,16 @@ void led_setBlink(uint16_t len, uint16_t interv, bool both ) {
 
 #endif
 
-    
+
+#if DEVICE == ARCTIC4
+#define ARCTIC_LED_OFF 1
+#define ARCTIC_LED_ON 0
+#else
+#define ARCTIC_LED_ON 1
+#define ARCTIC_LED_OFF 0
+#endif
+
+
 /*********************************************************************
  * Main thread. LED blinking to indicate  things
  *********************************************************************/
@@ -159,13 +168,13 @@ static void led_thread(void* arg)
     }
 #else
     while (1) {
-        gpio_set_level(LED_STATUS_PIN, 1);
+        gpio_set_level(LED_STATUS_PIN, ARCTIC_LED_ON);
         if (blink_both)
-            gpio_set_level(LED_TX_PIN, 0);
+            gpio_set_level(LED_TX_PIN, ARCTIC_LED_OFF);
         sleepMs(blink_length);
-        gpio_set_level(LED_STATUS_PIN, 0);
+        gpio_set_level(LED_STATUS_PIN, ARCTIC_LED_OFF);
         if (blink_both)
-            gpio_set_level(LED_TX_PIN, 1);
+            gpio_set_level(LED_TX_PIN, ARCTIC_LED_ON);
         sleepMs(blink_interval);
     }
 #endif
@@ -181,8 +190,8 @@ void led_init() {
 #else
     gpio_set_direction(LED_STATUS_PIN,  GPIO_MODE_OUTPUT);
     gpio_set_direction(LED_TX_PIN,  GPIO_MODE_OUTPUT);
-    gpio_set_level(LED_STATUS_PIN, 0);
-    gpio_set_level(LED_TX_PIN, 0);
+    gpio_set_level(LED_STATUS_PIN, ARCTIC_LED_OFF);
+    gpio_set_level(LED_TX_PIN, ARCTIC_LED_OFF);
 #endif
     
     /* LED blinker thread */

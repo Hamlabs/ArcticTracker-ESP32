@@ -25,7 +25,7 @@
 #include "gps.h"
 #include "esp_crt_bundle.h"
 #include "tracker.h"
-#if DEVICE == T_TWR 
+#if defined USE_PMU
 #include "pmu.h"
 #endif
 
@@ -143,11 +143,11 @@ esp_err_t firmware_upgrade()
 
 void batt_init(void)
 {
-#if DEVICE == T_TWR
+#if defined USE_PMU
     pmu_init();
     pmu_power_setup();
     pmu_batt_setup();
-    ESP_LOGI(TAG, "Power/battery management enabled - T-TWR board used");
+    ESP_LOGI(TAG, "Power/battery management enabled - Arctic-4 or T-TWR board used");
 #else
     ESP_LOGI(TAG, "No power managment. Old board used");
     gpio_set_direction(BATT_CHG_TEST, GPIO_MODE_INPUT);    
@@ -156,26 +156,13 @@ void batt_init(void)
 }
 
 
-static bool charging = false;
 bool batt_charge(void)
 {
-#if DEVICE == T_TWR
-    bool chg = pmu_isCharging();
+#if defined USE_PMU
+    return pmu_isCharging();
 #else
-    bool chg = (gpio_get_level(BATT_CHG_TEST) == 1);
+    return (gpio_get_level(BATT_CHG_TEST) == 1);
 #endif
-    if (chg == charging)
-        return chg;
-    
-    if (chg) {
-        tracker_off();
-        gps_off();
-    }
-    else if (GET_BYTE_PARAM("TRACKER.on")) {
-        tracker_on();
-        gps_on();
-    }
-    return chg;
 }
 
 
@@ -184,7 +171,7 @@ bool batt_charge(void)
 
 int16_t batt_voltage(void) 
 {
-#if DEVICE == T_TWR
+#if defined USE_PMU
     return pmu_getBattVoltage();
 #else
     return adc_batt();
@@ -193,7 +180,7 @@ int16_t batt_voltage(void)
 
 
 
-#if DEVICE != T_TWR
+#if !defined USE_PMU
 /* Charging profile for 2S LiPo battery */
 static const uint16_t volt2s[] = 
 { 8400, 8300, 8220, 8160, 8050, 7970, 7910, 7830, 7750, 7710, 7670, 
@@ -203,7 +190,7 @@ static const uint16_t volt2s[] =
   
 int16_t batt_percent(void) 
 {
-#if DEVICE == T_TWR
+#if defined USE_PMU
     return pmu_getBattPercent();
 #else
     uint8_t p = 100;
