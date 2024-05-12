@@ -33,7 +33,7 @@ void wait_channel_ready(void) {}
  * Maybe we an simplify this.
  */
 
-#if DEVICE == T_TWR
+#if DEVICE == T_TWR || DEVICE == ARCTIC4
  bool sa8_is_on(void);
  void sa8_require(void);
  void sa8_release(void);
