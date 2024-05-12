@@ -432,6 +432,53 @@ static int do_tone(int argc, char** argv)
 }
 
 
+extern void _beep(int freq, int duration); 
+
+static int do_beep(int argc, char** argv) {
+    if (argc<=1) {
+        printf("beep command needs one argument (freq)\n");
+        return 0;
+    }
+    int freq = 0;
+    sscanf(argv[1], "%d", &freq);
+    _beep(freq, 2000);
+    return 0;
+}
+
+
+
+/********************************************************************************
+ * RSSI - signal strength
+ ********************************************************************************/
+
+extern int sa8_getRSSI();
+
+bool run_rssi = true; 
+static void showrssi(void* arg) 
+{
+    while (run_rssi) {
+        int rssi = sa8_getRSSI(); 
+        printf("%3d ", rssi);
+        for (int j=0; j<rssi; j=j+2)
+           printf("*");
+        printf("\n");
+        sleepMs(50);
+    }
+    sleepMs(100);
+    vTaskDelete(NULL);
+}
+
+static int do_rssi(int argc, char** argv)
+{   
+    run_rssi = true;
+    xTaskCreatePinnedToCore(&showrssi, "RSSI thread", 
+       4096, NULL, NORMALPRIO+1, NULL, 1);
+    getchar();
+    run_rssi = false;
+    return 0;
+}
+
+
 
 /********************************************************************************
  * PTT on
@@ -470,8 +517,8 @@ static int do_fwupgrade(int argc, char** argv)
 
 static int do_adcinfo(int argc, char** argv)
 {
-#if DEVICE == T_TWR
-    printf("ADC status not supported yet on T-TWR\n");
+#if DEVICE == T_TWR || DEVICE == ARCTIC4
+    printf("ADC status not supported on T-TWR or Arctic Tracker 4\n");
 #else
     
     long val;
@@ -553,6 +600,7 @@ void register_system()
     ADD_CMD("adc",       &do_adcinfo,     "Read ADC", "");
     ADD_CMD("adcref",    &_param_adcref,  "ADC reference value (millivolts)", "[<val>]");
 #endif
+    ADD_CMD("rssi",      &do_rssi,        "Signal strength", "");
     ADD_CMD("vbatt",     &do_vbatt,       "Read battery voltage", "");
     ADD_CMD("shutdown",  &do_shutdown,    "Shut down system (put in deep sleep)", "");
 }
