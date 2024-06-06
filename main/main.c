@@ -112,6 +112,8 @@ void run_console()
      * This can be customized, made dynamic, etc.
      */
     const char* prompt = LOG_COLOR_I "cmd> " LOG_RESET_COLOR;
+   
+    linenoise("(press <enter> to start)");
 
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();
@@ -234,9 +236,13 @@ void app_main()
     rest_start(HTTP_PORT, HTTPS_PORT, "/");
     ui_init();
     batt_init(); // Move this first? Move i2c initialization out of display code
-        
+
     /* Put this on CPU #1 or we may run out of interrupts */
     xTaskCreatePinnedToCore(&startup, "Startup thread", 
        5096, NULL, NORMALPRIO+1, NULL, 1);
+    
+    while(!usb_serial_jtag_is_connected())
+        sleepMs(1000);
+    sleepMs(2500);
     run_console();   
 }
