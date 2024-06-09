@@ -458,12 +458,12 @@ static void showrssi(void* arg)
 {
     while (run_rssi) {
         int rssi = sa8_getRSSI(); 
-        printf("%3d ", rssi);
+        printf("%c %3d ", (radio_getSquelch() ? '+' : ' '), rssi);
         for (int j=0; j<rssi; j=j+2)
            printf("*");
         printf("\n");
         sleepMs(50);
-    }
+    } 
     sleepMs(100);
     vTaskDelete(NULL);
 }

@@ -1,5 +1,5 @@
 /*
- * Read and process NMEA data from gps 
+ * Read and process NMEA data from gnss module
  * By LA7ECA, ohanssen@acm.org
  */
 
@@ -54,7 +54,11 @@ static SemaphoreHandle_t enc_idle; // Binary semaphore
 
 
 static uart_config_t _serialConfigGps = {
+#if DEVICE == ARCTIC4
+    .baud_rate  = 115200,
+#else
     .baud_rate  = 9600,
+#endif
     .data_bits  = UART_DATA_8_BITS,
     .parity     = UART_PARITY_DISABLE,
     .stop_bits  = UART_STOP_BITS_1,
@@ -114,7 +118,7 @@ static void nmeaListener(void* arg)
   char* argv[16];
   uint8_t argc;
   sleepMs(5000);
-  ESP_LOGI(TAG, "GPS listener starts..");
+  ESP_LOGI(TAG, "NMEA listener starts..");
   
   while (1) {
     int checksum = 0; 
@@ -191,15 +195,14 @@ void gps_mon_off(void)
 
 void gps_on()
 {
- //  clear_port(GPSON);
-    ESP_LOGD(TAG, "GPS on is called");
+    ESP_LOGD(TAG, "GNSS on is initiated");
     notify_fix(false);
 }
 
 
 void gps_off()
 { 
-   //  set_port(GPSON);
+   ESP_LOGD(TAG, "GNSS OFF");
    BLINK_NORMAL;
 }
 
@@ -337,7 +340,7 @@ static void nmea2time( time_t* t, const char* timestr, const char* datestr)
 void notify_fix(bool lock)  
 {
    if (lock != is_fixed)
-       ESP_LOGI(TAG, "GPS state: %s", (lock ? "FIXED" : "SEARCHING"));
+       ESP_LOGI(TAG, "GNSS state: %s", (lock ? "FIXED" : "SEARCHING"));
    if (!lock) 
        BLINK_GPS_SEARCHING;
    else {
@@ -382,7 +385,6 @@ static void do_rmc(uint8_t argc, char** argv)
     nmea2time(&gps_current_time, argv[1], argv[9]);
     
     if (*argv[2] != 'A') { 
-       ESP_LOGD(TAG, "RMC does not indicate 'A'");
        notify_fix(false);          /* Ignore if receiver not in lock */
        lock_cnt = 4;
        return;
@@ -393,6 +395,7 @@ static void do_rmc(uint8_t argc, char** argv)
          return;
       }
     
+    ESP_LOGD(TAG, "GNSS FIX detected");
     lock_cnt = 1;
     notify_fix(true);
    
