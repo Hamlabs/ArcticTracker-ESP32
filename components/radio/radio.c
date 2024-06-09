@@ -41,6 +41,7 @@ void wait_channel_ready(void) {}
  void sa8_init(uart_port_t uart);
  bool sa8_setFreq(uint32_t txfreq, uint32_t rxfreq);
  bool sa8_setSquelch(uint8_t sq);
+ bool sa8_getSquelch();
  void sa8_on(bool on);
  void sa8_PTT(bool on);
  void sa8_PTT_I(bool on);
@@ -59,6 +60,7 @@ void wait_channel_ready(void) {}
  void radio_init() { sa8_init(RADIO_UART); }
  bool radio_setFreq(uint32_t txfreq, uint32_t rxfreq) { return sa8_setFreq(txfreq, rxfreq); }
  bool radio_setSquelch(uint8_t sq) { return sa8_setSquelch(sq); }
+ bool radio_getSquelch() { return sa8_getSquelch(); }
  void radio_on(bool on) { sa8_on(on); }
  void radio_PTT(bool on) { sa8_PTT(on); }
  void radio_PTT_I(bool on) { sa8_PTT_I(on); }

@@ -32,6 +32,7 @@ static int count = 0;
   
 static bool _handshake(void);
 static bool _setGroupParm(void);
+static bool _getVersion(void);
 static void _initialize(void);
 static void _squelch_handler(void* arg);
  
@@ -44,6 +45,7 @@ static void _squelch_handler(void* arg);
  
  bool sa8_setFreq(uint32_t txfreq, uint32_t rxfreq);
  bool sa8_setSquelch(uint8_t sq);
+ bool sa8_getSquelch();
  void sa8_on(bool on);
  void sa8_PTT(bool on);
  void sa8_PTT_I(bool on);
@@ -105,6 +107,7 @@ void sa8_init(uart_port_t uart)
     gpio_set_direction(RADIO_PIN_PD,      GPIO_MODE_OUTPUT);
     gpio_set_direction(RADIO_PIN_SQUELCH, GPIO_MODE_INPUT);
     gpio_set_level(RADIO_PIN_PTT, 1);
+    gpio_set_level(RADIO_PIN_PD, 0);
     
 #if DEVICE == T_TWR
     /* On T_TWR, route audio from ESP32 to mic-input on radio module */
@@ -140,20 +143,24 @@ void sa8_init(uart_port_t uart)
  
 static void _initialize()
 {  
-    sleepMs(400);
+    sleepMs(500);
     _handshake();
     sleepMs(50);
   
+    _getVersion();
+    
     /* Get parameters from NVS flash */
     _txfreq = get_i32_param("TXFREQ", DFL_TXFREQ);
     _rxfreq = get_i32_param("RXFREQ", DFL_RXFREQ);
     _squelch = get_byte_param("TRX_SQUELCH", DFL_TRX_SQUELCH);
+    
     ESP_LOGI(TAG, "_initialize: %s, txfreq=%ld, rxfreq=%ld", 
         (pmu_dc3_isOn() ? "ON":"OFF"), _txfreq, _rxfreq);
+    
     _widebw = 0;  /* Set to 1 for wide bandwidth */
     
     sa8_setFilter(true, true, true);
-    sa8_setVolume(6);
+    sa8_setVolume(8);
     sa8_setTail(0);
     _setGroupParm();
     cond_set(tx_off);
@@ -385,6 +392,17 @@ bool sa8_setSquelch(uint8_t sq)
 
 
 /***********************************************
+ * Return true if squelch is open
+ ***********************************************/
+
+bool sa8_getSquelch() 
+{
+    return !gpio_get_level(RADIO_PIN_SQUELCH);
+}
+
+
+
+/***********************************************
  * Get RSSI level
  ***********************************************/
 
@@ -511,6 +529,26 @@ bool sa8_setTail(int tail)
 
 
 
+/****************************************************
+ * Ask for module version (set log to debug to see) 
+ ****************************************************/
+
+static bool _getVersion()
+{
+    char buf[32];
+    if (!_on)
+        return true;
+    char reply[16];
+    int len = sprintf(buf, "AT+VERSION\r\n");
+    ESP_LOGD(TAG, "Request: %s", buf);
+    uart_write_bytes(_serial, buf, len);
+    waitReply(reply);
+    waitReply(reply);
+    return (reply[14] == '0');
+}
+
+
+
 static bool _handshake()
 {
     char buf[32];
@@ -537,7 +575,7 @@ static bool _setGroupParm()
     sprintf(txbuf, "%lu.%04lu", _txfreq/10000, _txfreq%10000);
     sprintf(rxbuf, "%lu.%04lu", _rxfreq/10000, _rxfreq%10000);
 
-    int len = sprintf(buf, "AT+DMOSETGROUP=%1d,%s,%s,%s,%1d,%s\r\n",
+    int len = sprintf(buf, "AT+DMOSETGROUP=%1d,%s,%s,%s,%01d,%s\r\n",
             _widebw, txbuf, rxbuf, _tcxcss, _squelch, _rcxcss);
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);

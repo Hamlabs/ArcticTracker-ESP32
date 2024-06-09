@@ -11,7 +11,8 @@
  void radio_wait_enabled();
  void radio_init();
  bool radio_setFreq(uint32_t txfreq, uint32_t rxfreq);
- bool radio_setSquelch(uint8_t sq);
+ bool radio_setSquelch(uint8_t sq); 
+ bool radio_getSquelch();
  void radio_on(bool on);
  void radio_PTT(bool on);
  void radio_PTT_I(bool on);
