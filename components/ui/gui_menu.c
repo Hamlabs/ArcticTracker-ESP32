@@ -34,6 +34,7 @@ static void mhandle_wifi(void*);
 static void mhandle_softAp(void* x);
 static void mhandle_fwupgrade(void*); 
 static void mhandle_shutdown(void*);
+static void mhandle_restart(void*);
 static void mhandle_tracklog(void* x);
 
 static const MenuCommand items[] = 
@@ -45,7 +46,7 @@ static const MenuCommand items[] =
     { "Igate +|-",       mhandle_igate,     NULL, NULL },
     { "Digipeater +|-",  mhandle_digi,      NULL, NULL },
     { "Firmware upgr.",  mhandle_fwupgrade, NULL, NULL },
-    { "Shut down..",     mhandle_shutdown,  NULL, NULL }
+    { "Restart..",       mhandle_restart,  NULL, NULL }
 };
 static int nitems = 7;
 #else
@@ -57,7 +58,7 @@ static int nitems = 7;
     { "Track log",        mhandle_tracklog,  NULL, "TRKLOG.on" },
     { "Backlight",        mhandle_dispBl,    NULL, NULL },
     { "Firmware upgrade", mhandle_fwupgrade, NULL, NULL },
-    { "Shut down..",      mhandle_shutdown,  NULL, NULL }
+    { "Restart..",        mhandle_restart,   NULL, NULL }
 };
 static int nitems = 9; 
 #endif
@@ -323,6 +324,10 @@ static void mhandle_fwupgrade(void* x) {
     firmware_upgrade(); 
 }
 
+static void mhandle_restart(void* x) {
+    esp_restart();
+}
+    
 static void mhandle_shutdown(void* x) {
     disp_clear(); 
     disp_flush();
