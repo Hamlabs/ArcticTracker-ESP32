@@ -56,7 +56,6 @@ static int nitems = 7;
     { "Igate",            mhandle_igate,     NULL, "IGATE.on" },
     { "Digipeater",       mhandle_digi,      NULL, "DIGIPEATER.on" },
     { "Track log",        mhandle_tracklog,  NULL, "TRKLOG.on" },
-    { "Backlight",        mhandle_dispBl,    NULL, NULL },
     { "Firmware upgrade", mhandle_fwupgrade, NULL, NULL },
     { "Restart..",        mhandle_restart,   NULL, NULL }
 };
@@ -273,11 +272,6 @@ void gui_welcome()
 /**********************************************************
  * Menu command handlers
  **********************************************************/
-
-
-static void mhandle_dispBl(void* x) {
-    disp_toggleBacklight(); 
-}
 
 static void mhandle_send(void* x) {
     tracker_posReport(); 

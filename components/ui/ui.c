@@ -249,7 +249,7 @@ static void button_init() {
         ( void * ) 0, bphandler
     );  
     bhtimer = xTimerCreate ( 
-        "Button hold", pdMS_TO_TICKS(800),  pdFALSE,
+        "Button hold", pdMS_TO_TICKS(1000),  pdFALSE,
         ( void * ) 0, holdhandler
     );
 
@@ -306,15 +306,20 @@ static void button_init() {
  
  
  static void click_handler(void* p, bool up) {
-    disp_backlight();      
+    bool dim = disp_isDimmed();
+    disp_backlight();  
+    if (dim) {
+        ESP_LOGI(TAG, "Display is dimmed. Just turn it on");
+        return;
+    }
     beep(20); 
     if (menu_is_active()) {
         if (up) menu_increment();
         else menu_decrement();
     }
     else {
-        if (up) status_prev(); 
-        else status_next();
+        if (up) status_next(); 
+        else status_prev();
     }
  }
 

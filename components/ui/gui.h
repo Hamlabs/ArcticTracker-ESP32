@@ -37,6 +37,7 @@
  void disp_setPopup();
  bool disp_popupActive();
  void disp_sleepmode(bool);
+ bool disp_isDimmed();
  void disp_init();
  void disp_setBoldFont(bool on);
  

@@ -334,7 +334,7 @@ void disp_writeText(int x, int y, const char * strp)
 
 static TimerHandle_t bltimer, sltimer;
 static int backlightLevel = BL_HIGH;
-
+static bool _dimmed = false;
 
    
 void disp_init() 
@@ -351,11 +351,11 @@ void disp_init()
     uint32_t cnt = 0;
     uint32_t cnt2 = 0;
     bltimer = xTimerCreate ( 
-        "DispLightTimer", pdMS_TO_TICKS(60000),  pdFALSE,
+        "DispLightTimer", pdMS_TO_TICKS(120000),  pdFALSE,
         ( void * ) &cnt, blhandler
     );    
     sltimer = xTimerCreate ( 
-        "DispSleepTimer", pdMS_TO_TICKS(190000),  pdFALSE,
+        "DispSleepTimer", pdMS_TO_TICKS(240000),  pdFALSE,
         ( void * ) &cnt2, slhandler
     ); 
 #endif  
@@ -369,6 +369,7 @@ static BaseType_t hpw = pdFALSE;
 
 static void blhandler(TimerHandle_t timer) {
     i2c_contrast(&_dev_, 1);
+    _dimmed = true;
     if (sltimer != NULL)
         xTimerStartFromISR(sltimer, &hpw);
 }
@@ -385,6 +386,7 @@ void disp_backlight()
 #elif DISPLAY_TYPE == 1
     disp_sleepmode(false);
     i2c_contrast(&_dev_, backlightLevel);
+    _dimmed = false;
     if (bltimer != NULL) 
         xTimerStartFromISR(bltimer, &hpw);
     
@@ -412,7 +414,9 @@ void disp_sleepmode(bool on) {
 }
 
 
-
+bool disp_isDimmed() {
+    return _dimmed;
+}
    
 /********************************************************
  * Synchronise buffer to physical screen
