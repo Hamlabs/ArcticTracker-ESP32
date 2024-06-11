@@ -14,13 +14,7 @@
 #include "gui.h"
 
 
-/********************************CONFIG FOR NOKIA DISPLAY************************************/
-#if DISPLAY_TYPE == 0
-
-#include "disp_nokia.h"
-
 /*******************************Config for SSD1306 displays**********************************/
-#elif DISPLAY_TYPE == 1
 
 #include "ssd1306.h"
 
@@ -33,14 +27,7 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int
 static void blhandler(TimerHandle_t timer);
 static void slhandler(TimerHandle_t timer);
 
-/************************************** Not defined ******************************************/
 
-#else
-
-#define DISPLAY_HEIGHT 8
-#define DISPLAY_WIDTH 8
-
-#endif
 
 /*********************************************************************************************/
 
@@ -261,6 +248,18 @@ const uint8_t Font8x7[][7] = {
 static uint8_t *font = (uint8_t*) Font8x5; 
 static uint8_t font_width = 5;
 
+/* Print fonts in double height */
+static bool font_higher = false;
+static bool font_xspace = false; 
+
+
+
+
+void disp_setHighFont(bool on, bool xspace) {
+    font_higher = on;
+    font_xspace = (on && xspace);
+}
+
    
 void disp_setBoldFont(bool on) {
     if (on) {
@@ -270,6 +269,24 @@ void disp_setBoldFont(bool on) {
     else {
         font = (uint8_t*) Font8x5; 
         font_width = 5; 
+    }
+}
+
+
+
+
+// Function to spread bits of b0 to up to 3 rows
+void spread_bits(uint8_t b0, uint8_t offset, uint8_t dest[]) {
+    // Clear dest initially
+    dest[0]=0; dest[1]=0; dest[2]=0;
+
+    for (int i = 0; i < 8; i++) {
+        if (b0 & (1 << i)) {
+            uint8_t target1 = (2*i+offset) / 8;
+            uint8_t target2 = (2*i+1+offset) / 8; 
+            dest[target1] |= (1 << ((2*i+offset)%8)); 
+            dest[target2] |= (1 << ((2*i+1)+offset)%8);
+        }
     }
 }
 
@@ -312,6 +329,21 @@ void disp_writeText(int x, int y, const char * strp)
          x--;
      
      /* For each 8-bit part of character */
+     if (font_higher) { 
+     for ( i = 0; i < font_width; i++ ) {
+         if (x < DISPLAY_WIDTH-1) {
+            uint8_t rows[3];
+            spread_bits(font[ftindex+i], offset+1, rows);
+            buffer[y/8][x] ^= rows[0];
+            buffer[y/8+1][x] ^= rows[1];
+            if (rows[2])
+               buffer[y/8+2][x] ^= rows[2];
+            x++;
+         }
+     }
+     if (font_xspace) x++;
+     }
+     else
      for ( i = 0; i < font_width; i++ ) {
          if (x < DISPLAY_WIDTH-1) {
             buffer[y/8][x] ^= (font[ftindex+i] << offset);   
@@ -320,6 +352,10 @@ void disp_writeText(int x, int y, const char * strp)
             x++; 
          }
      }
+     
+     
+     
+     
      if (c == '.'  || c==',' || c==':' || c==';' || c== '1' || c=='l' || c == 'I' || c=='i' || c == 'j' || c == ' ')
          x--;
      strp++;
@@ -339,10 +375,6 @@ static bool _dimmed = false;
    
 void disp_init() 
 { 
-#if DISPLAY_TYPE == 0
-    spi_init(); 
-    lcd_init();
-#elif DISPLAY_TYPE == 1
     i2c_master_init(&_dev_, DISP_SDA_PIN, DISP_SCL_PIN, DISP_RESET_PIN);
     i2c_init(&_dev_, DISPLAY_WIDTH, DISPLAY_HEIGHT);
     i2c_contrast(&_dev_, backlightLevel); 
@@ -358,7 +390,6 @@ void disp_init()
         "DispSleepTimer", pdMS_TO_TICKS(240000),  pdFALSE,
         ( void * ) &cnt2, slhandler
     ); 
-#endif  
 }
 
     
@@ -381,16 +412,14 @@ static void slhandler(TimerHandle_t timer) {
 
 void disp_backlight() 
 { 
-#if DISPLAY_TYPE == 0
-    lcd_backlight();
-#elif DISPLAY_TYPE == 1
     disp_sleepmode(false);
     i2c_contrast(&_dev_, backlightLevel);
-    _dimmed = false;
+     
+    if (_dimmed && sltimer != NULL)
+        xTimerStopFromISR(sltimer, pdFALSE);
     if (bltimer != NULL) 
         xTimerStartFromISR(bltimer, &hpw);
-    
-#endif
+    _dimmed = false;
 }  
 
 
@@ -425,19 +454,10 @@ bool disp_isDimmed() {
 void disp_flush() 
 {
     uint16_t i;
-#if DISPLAY_TYPE == 0
-    uint16_t j;
-    lcd_setPosXY(0,0);
-#endif
     for (i = 0; i < DISPLAY_HEIGHT/8; i++) 
         if (changed[i]) {
-            changed[i] = false;
-#if DISPLAY_TYPE == 0 
-            for (j = 0; j < DISPLAY_WIDTH; j++) 
-                lcd_writeByte(buffer[i][j], LCD_SEND_DATA);
-#elif DISPLAY_TYPE == 1        
+            changed[i] = false;      
             i2c_display_image(&_dev_, i, 0, buffer[i], DISPLAY_WIDTH+4);
-#endif
         }
 }
 
@@ -586,19 +606,6 @@ void disp_box(int x, int y, int width, int height, bool fill)
 
 void disp_battery(int x, int y, int lvl) 
 {
-#if DISPLAY_TYPE == 0
-    disp_vLine(x,y,6);
-    disp_hLine(x,y,11);
-    disp_hLine(x,y+6,11);
-    disp_vLine(x+10,y,2);
-    disp_vLine(x+10,y+5,2);
-    
-    if (lvl >= 1) disp_box(x+1,y+1,3,5, true);
-    if (lvl >= 2) disp_box(x+4,y+1,2,5, true);
-    if (lvl >= 3) disp_box(x+6,y+1,2,5, true);
-    if (lvl >= 4) disp_box(x+8,y+1,2,5, true);
-    disp_vLine(x+11,y+2,3);
-#else
     disp_vLine(x,y,8);
     disp_hLine(x,y,12);
     disp_hLine(x,y+8,12);
@@ -611,7 +618,6 @@ void disp_battery(int x, int y, int lvl)
     if (lvl >= 4) disp_box(x+10,y+2,2,5, true);
     disp_vLine(x+13,y+2,5);
     disp_vLine(x+14,y+2,5);
-#endif
 }
 
 
@@ -624,19 +630,12 @@ void disp_flag(int x, int y, char *sign, bool on)
 {
     if (!on) return; 
     
-disp_setBoldFont(true);    
-#if DISPLAY_TYPE == 0
-    disp_box(x, y, 7, 11, on); 
-    int offs = 1;
-    if (sign[0] == 'i')
-        offs = 2;
-#else  
+    disp_setBoldFont(true);    
     disp_box(x, y, 9, 11, on); 
     int offs = 1;
     if (sign[0] == 'i')
         offs = 3;
 
-#endif  
     if (on)
         disp_writeText(x+offs, y+2, sign);
     disp_setPixel(x,y, false);
@@ -664,19 +663,10 @@ void disp_label(int x, int y, char* lbl)
 
 void disp_frame() 
 {
-#if DISPLAY_TYPE == 0
-   disp_hLine(1,0,82);
-   disp_hLine(1,44,83);
-   disp_hLine(3,45,82);
-   disp_vLine(0,0,45);
-   disp_vLine(82,0,45);
-   disp_vLine(83,3,41);
-#else
    disp_hLine(1,0,110);   // top
    disp_hLine(1,59,110);  // bottom
    disp_vLine(0,0,59);    //left
    disp_vLine(110,0,59);  // right
-#endif   
 }
 
 

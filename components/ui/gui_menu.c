@@ -26,7 +26,6 @@ typedef struct {
 
 
 /* Handler functions (defined below) */
-static void mhandle_dispBl(void*);
 static void mhandle_send(void*);
 static void mhandle_igate(void*); 
 static void mhandle_digi(void*); 
@@ -39,17 +38,6 @@ static void mhandle_tracklog(void* x);
 
 static const MenuCommand items[] = 
 {
-#if DISPLAY_TYPE == 0
-    { "Send report",     mhandle_send,      NULL, NULL },
-    { "SoftAp +|-",      mhandle_softAp,    NULL, NULL },
-    { "WIFI +|-",        mhandle_wifi,      NULL, NULL },
-    { "Igate +|-",       mhandle_igate,     NULL, NULL },
-    { "Digipeater +|-",  mhandle_digi,      NULL, NULL },
-    { "Firmware upgr.",  mhandle_fwupgrade, NULL, NULL },
-    { "Restart..",       mhandle_restart,  NULL, NULL }
-};
-static int nitems = 7;
-#else
     { "Send pos report",  mhandle_send,      NULL, NULL },
     { "Soft Ap",          mhandle_softAp,    NULL, "SOFTAP.on" },
     { "WIFI",             mhandle_wifi,      NULL, "WIFI.on" },
@@ -59,8 +47,7 @@ static int nitems = 7;
     { "Firmware upgrade", mhandle_fwupgrade, NULL, NULL },
     { "Restart..",        mhandle_restart,   NULL, NULL }
 };
-static int nitems = 9; 
-#endif
+static int nitems = 8; 
 
 
 
@@ -83,14 +70,6 @@ static void menu_show(int st, int sel)
 {     
     disp_clear();
     disp_frame(); 
-   
-#if DISPLAY_TYPE == 0
-    disp_box(0, sel*11, 83, 12, true);
-    int i;
-    for (i=0; i < MIN(nitems,MAX_VISIBLE); i++) 
-        disp_writeText(4, 2+i*11, items[st+i].mc_name); 
-#else
-    
     disp_box(2, sel*11+2, 97+10, 12, true);
     
     int i;
@@ -107,7 +86,6 @@ static void menu_show(int st, int sel)
          int ypos = 4+i*11;
          disp_writeText(5, ypos, item); 
     }
-#endif
     disp_flush();
 }
 
@@ -239,13 +217,7 @@ void gui_welcome()
 {
   disp_clear();
   
-#if DISPLAY_TYPE == 0
-  disp_circle(40,24,10);
-  disp_line(40,2,40,55);
-  disp_line(14,24,66,24);
-  disp_writeText(2,7,"Arctic");
-  disp_writeText(43,36, "Tracker");
-#elif DISPLAY_HEIGHT >= 64
+#if DISPLAY_HEIGHT >= 64
   disp_circle(60,30,10);
   disp_line(60,4,60,56);
   disp_line(35,30,84,30);

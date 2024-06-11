@@ -40,6 +40,8 @@
  bool disp_isDimmed();
  void disp_init();
  void disp_setBoldFont(bool on);
+ void disp_setHighFont(bool on, bool xspace);
+ 
  
  void gui_menu(const char* items[], int sel);
  void gui_welcome(void);
