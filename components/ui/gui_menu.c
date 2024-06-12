@@ -162,7 +162,7 @@ bool charging = false;
 static void gui_thread (void* arg) 
 {
     while (true) {
-        sleepMs(5000);
+        sleepMs(1000);
              
         if (batt_charge() && !charging)
             { beeps("-.-.  "); blipUp(); }
