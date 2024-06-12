@@ -17,7 +17,7 @@
 #include "tracklogger.h"
 
 
-#define NSCREENS 8
+#define NSCREENS 9
 
 #if DISPLAY_HEIGHT >= 64
 
@@ -49,7 +49,7 @@ static void status_screen4(void);
 static void status_screen5(void);
 static void status_screen6(void);
 static void status_screen7(void);
-
+static void status_screen8(void);
 
 void status_init() {
     gui_mutex = xSemaphoreCreateMutex();
@@ -79,6 +79,8 @@ void status_show() {
                  break;  
         case 7:  status_screen7(); 
                  break;       
+        case 8:  status_screen8(); 
+                 break;   
     }
     mutex_unlock(gui_mutex);
 }
@@ -307,5 +309,24 @@ static void status_screen7() {
     disp_writeText(0, LINE1, (GET_BYTE_PARAM("TRKLOG.on") ? "Enabled" : "Disabled"));
     disp_writeText(0, LINE2, buf); 
     disp_writeText(0, LINE3, tracklog_status());
+    disp_flush();
+}
+
+/****************************************************************
+ * 8. Time
+ ****************************************************************/
+
+static void status_screen8() {
+    disp_clear();
+    status_heading("TIME");
+    char buf[24];
+    disp_setBoldFont(true);
+    disp_setHighFont(true, true); 
+    sprintf(buf, "%s", time2str(buf, getTime()));   
+    disp_writeText(10, LINE2, buf); 
+    disp_setHighFont(false, false); 
+    sprintf(buf, "%s", date2str(buf, getTime()));   
+    disp_writeText(10, LINE4, buf); 
+    disp_setBoldFont(false);
     disp_flush();
 }

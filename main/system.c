@@ -344,7 +344,7 @@ char* datetime2str(char* buf, time_t time)
         case 12: sprintf(buf, "Dec"); break;
         default:  sprintf(buf, "???"); ;
     }
-    sprintf(buf+3, " %02u %02u:%02u UT", tm->tm_mday, 
+    sprintf(buf+3, " %02u %02u:%02u UTC", tm->tm_mday, 
         (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min);
     return buf;
 }
