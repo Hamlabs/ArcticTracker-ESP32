@@ -9,13 +9,7 @@
 #include "system.h"
 
 #include "afsk.h"
-
-#if defined(TONE_ADC_ENABLE)
-#include "driver/dac.h"
-#endif
-#if defined(TONE_SDELTA_ENABLE)
-#include "driver/sigmadelta.h"
-#endif
+#include "driver/sdm.h"
 
 /* 
  * It would be optimal to use the least common multiplier (LCM) of 
@@ -23,7 +17,8 @@
  * frequency (resolution) of the timer. 211.2 KHz.
  */
 
-#define TONE_RESOLUTION 211200 
+#define TONE_RESOLUTION 10000000
+// #define TONE_RESOLUTION 211200 
 #define FREQ2CNT(f) TONE_RESOLUTION/(f) 
 #define TONE_CNT FREQ2CNT(AFSK_MARK*STEPS)
 
@@ -32,18 +27,28 @@
 
 static clock_t toneclk;
 
-static bool _toneHigh = false;
+static bool _toneHigh = true;
 static bool _on = false; 
-static uint8_t sine[STEPS] = 
-    {125, 173, 213, 240, 250, 240, 213, 173, 125, 77,  37,  10,  0,   10,  37,  77};   
-    
+
+static int8_t sine[STEPS] = 
+    {-3, 45, 85, 112, 122, 112, 85, 45, -3, -51, -91, -118,  -128,  -118, -91,  -51};   
+
 /* 80% */
 static uint8_t sine2[STEPS] = 
-    {125, 163, 196, 217, 225, 217, 196, 163, 125, 87,  54,  33,  25,  33,  54,  87};
-   
+    {2, 36, 68, 90, 98, 90, 68, 36, -2, -41,  -73,  -94,  -102,  -94,  -73,  -41};
+    
+/* 50% */
+static uint8_t sine3[STEPS] = 
+    {2, 23, 43, 56, 61, 56, 43, 23, 2, -26,  -46,  -59,  -64,  -59,  -46,  -26};
+
+    
     
 static bool sinewave(struct gptimer_t * t, const gptimer_alarm_event_data_t * a, void * arg); 
     
+static sdm_channel_handle_t sdm_chan = NULL;
+
+
+
  
     
 /*****************************************************************
@@ -54,15 +59,13 @@ volatile uint8_t i = 0;
 volatile uint16_t cnt = 0;
 volatile bool high = false;
 
+
+/* ISR */
+
 static bool sinewave(struct gptimer_t * t, const gptimer_alarm_event_data_t * a, void * arg) 
 {
-#if defined(TONE_ADC_ENABLE)
-    dac_output_voltage(TONE_DAC_CHAN, sine[i]);
-#endif
-#if defined(TONE_SDELTA_ENABLE)
+    sdm_channel_set_pulse_density(sdm_chan, sine[i]);
     
-    sigmadelta_set_duty(TONE_SDELTA_CHAN, (_toneHigh ? sine[i]-128 : sine2[i]-128));
-#endif
     i++;
     if (i >= STEPS) 
         i=0;
@@ -78,23 +81,15 @@ void tone_init() {
     if (!_inited) {
         clock_init(&toneclk, TONE_RESOLUTION, TONE_CNT, sinewave, NULL);
         _inited = true;
-      
-#if defined(TONE_ADC_ENABLE)
-        /* DAC in ESP32 */
-        dac_output_enable(TONE_DAC_CHAN);
-        dac_output_voltage(TONE_DAC_CHAN, 0);
-#endif
-#if defined(TONE_SDELTA_ENABLE)  
-        /* Sigma delta method */
-        sigmadelta_config_t sigmadelta_cfg = {
-            .channel = TONE_SDELTA_CHAN,
-            .sigmadelta_prescale = 5,
-            .sigmadelta_duty = 0,
-            .sigmadelta_gpio = TONE_SDELTA_PIN,
+
+        sdm_config_t config = {
+            .clk_src = SDM_CLK_SRC_DEFAULT,
+            .gpio_num = TONE_SDELTA_PIN,
+            .sample_rate_hz = TONE_RESOLUTION,
         };
-        sigmadelta_config(&sigmadelta_cfg);
-        sigmadelta_set_duty(TONE_SDELTA_CHAN, 0);
-#endif        
+        ESP_ERROR_CHECK(sdm_new_channel(&config, &sdm_chan));
+        /* Enable the sdm channel */
+        ESP_ERROR_CHECK(sdm_channel_enable(sdm_chan));      
     }
 }
 
@@ -114,7 +109,6 @@ void tone_start() {
  * Set the frequency of the tone to mark or space. 
  * argument to true to set it to MARK. Otherwise, SPACE. 
  **************************************************************************/
-// FIXME: May be called from ISR
 
 void tone_setHigh(bool hi) 
 {
@@ -144,24 +138,8 @@ void tone_stop() {
         return;
     _on = false;
     clock_stop(toneclk);
-#if defined(TONE_ADC_ENABLE)
-    dac_output_voltage(TONE_DAC_CHAN, 0);
-#endif
-#if defined(TONE_SDELTA_ENABLE) 
-    sigmadelta_set_duty(TONE_SDELTA_CHAN, 0);
-#endif
+    sdm_channel_set_pulse_density(sdm_chan, 0);
 }
-
-#if !defined(TONE_ADC_ENABLE) && !defined(TONE_SDELTA_ENABLE)
-
-void tone_init() {}
-void tone_start() {}
-void tone_setHigh(bool hi) {}
-void tone_toggle() {}
-void tone_stop() {}
-
-#endif
-
 
 
 
