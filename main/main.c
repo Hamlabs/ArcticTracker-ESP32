@@ -187,7 +187,9 @@ static void startup(void* arg)
     igate_init(); 
     
     mon_init();
-    sleepMs(100);
+    sleepMs(10000);
+    time_init();   
+    sleepMs(1000);
     vTaskDelete(NULL);
 }
 

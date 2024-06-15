@@ -278,17 +278,30 @@ static void initialize_sntp(void)
  * Set the real time clock if wifi is connected. 
  *******************************************************************************/
 
+static void set_time(time_t t) {
+    struct timeval tv; 
+    tv.tv_sec = t; 
+    tv.tv_usec = 0;
+    settimeofday(&tv, NULL);
+}
+
 void time_init()
 {
-    if (getTime() <= 30000000) {
-        if (wifi_isConnected()) {
-            ESP_LOGI(TAG, "Time is not set yet. Getting time over SNTP.");
-            initialize_sntp();
-        }
-        // FIXME: Get time from GPS if available? 
-    } 
-    else
-        ESP_LOGI(TAG, "Time is already set.");
+    if (gps_is_fixed()) {
+        ESP_LOGI(TAG, "Getting time from fixed GNSS.");
+        set_time(gps_get_time());
+    }
+    else if (wifi_isConnected()) {
+        ESP_LOGI(TAG, "Getting time over SNTP.");
+        initialize_sntp();
+    }
+    else {
+        /* if time not set by other means, use GNSS even if not in fix */
+        ESP_LOGI(TAG, "Getting time from GNSS.");
+        time_t t = gps_get_time();
+        if (getTime() <= 1000000000 && t != 0) 
+            set_time(t);
+    }
 }
 
 
@@ -305,6 +318,8 @@ time_t getTime() {
         time(&now);
     return now;
 }
+
+
 
 
 /*******************************************************************************

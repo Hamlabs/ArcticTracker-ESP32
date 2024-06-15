@@ -35,6 +35,7 @@ time_t gps_current_time = 0;
 static void do_rmc (uint8_t, char**);
 static void do_gga (uint8_t, char**);
 static void do_gsa (uint8_t, char**);
+static void do_gsv (uint8_t, char**);
 static void notify_fix (bool);
 static void nmeaListener(void* arg);
 
@@ -155,6 +156,8 @@ static void nmeaListener(void* arg)
       do_gga(argc, argv);   
     else if (strncmp("GSA", argv[0]+3, 3) == 0)
       do_gsa(argc, argv);
+    else if (strncmp("GSV", argv[0]+3, 3) == 0)
+      do_gsv(argc, argv); 
   }
 }
 
@@ -166,8 +169,10 @@ static void nmeaListener(void* arg)
 
 posdata_t*  gps_get_pos()
    { return &gps_current_pos; }
+   
 time_t gps_get_time()
    { return gps_current_time; } 
+   
 float gps_get_pdop()
    { return pdop; }
   
@@ -334,7 +339,7 @@ static void nmea2time( time_t* t, const char* timestr, const char* datestr)
 
  
 /****************************************************************
- * handle changes in GPS lock - mainly change LED blinking
+ * handle changes in GPS fix - mainly change LED blinking
  ****************************************************************/
 
 void notify_fix(bool lock)  
@@ -346,6 +351,8 @@ void notify_fix(bool lock)
    else {
        if (!is_fixed) {
           SIGNAL_FIX;
+          time_init();
+          /* FIXME: Maybe we should suspend SNTP here */
        }     
        BLINK_NORMAL;
    }
@@ -367,9 +374,59 @@ bool gps_wait_fix(uint16_t timeout)
 }         
 
 
-       
-       
-       
+
+/****************************************************************
+ * Handle GSV line
+ ****************************************************************/
+
+static void get_sysname(char* name, char syst) 
+{
+   switch (syst) {
+      case 'P': strcpy(name, "GPS"); break;
+      case 'L': strcpy(name, "Glonass"); break;
+      case 'A': strcpy(name, "Galileo"); break;
+      case 'B': strcpy(name, "BeiDou"); break;
+      case 'Q': strcpy(name, "QZSS"); break;
+      default: strcpy(name, "Unknown"); 
+   }
+}
+
+
+uint8_t str2num(char* str) {
+   if (strlen(str) == 0)
+      return 0;
+   return atoi(str);
+}
+
+
+
+
+static void do_gsv(uint8_t argc, char** argv)
+{
+   if (argc < 8)     
+       return;
+   uint8_t nmsg = atoi(argv[1]);
+   uint8_t msgno = atoi(argv[2]);
+   uint8_t nsats = atoi(argv[3]);
+   char system = argv[0][2];
+   for (int i=0; i<nsats; i++) {
+      if (argc < 4+4*i+4)
+         break;
+      char sysname[16]; 
+      get_sysname(sysname, system); 
+      uint8_t prn = str2num(argv[4+4*i]);
+      uint8_t elev = str2num(argv[4+4*i+1]);
+      uint8_t asimuth = str2num(argv[4+4*i+2]);
+      uint8_t signal = str2num(argv[4+4*i+3]);
+      if (signal > 0) 
+         ESP_LOGI(TAG, "Satellite: prn=%2d, elevation=%3d, asimuth=%4d, signal=%3d -- %s", 
+            prn, elev, asimuth, signal, sysname);
+   }
+}       
+
+
+
+
 /****************************************************************
  * Handle RMC line
  ****************************************************************/
@@ -378,14 +435,14 @@ static void do_rmc(uint8_t argc, char** argv)
 {
     static uint8_t lock_cnt = 4;    
     char tbuf[9];
-    if (argc < 13 || argc > 14)                 /* Ignore if wrong format */
+    if (argc < 13 || argc > 14)      /* Ignore if wrong format */
        return;
     
     /* get timestamp */
     nmea2time(&gps_current_time, argv[1], argv[9]);
     
     if (*argv[2] != 'A') { 
-       notify_fix(false);          /* Ignore if receiver not in lock */
+       notify_fix(false);            /* Ignore if receiver not in fix */
        lock_cnt = 4;
        return;
     }
@@ -437,6 +494,7 @@ static void do_rmc(uint8_t argc, char** argv)
 }
 
 
+
 /******************************************* 
  * Get altitude from GGA line
  *******************************************/
@@ -448,6 +506,7 @@ static void do_gga(uint8_t argc, char** argv)
    else
       altitude = -1; 
 }
+
 
 
 /******************************************* 
