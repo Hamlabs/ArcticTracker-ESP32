@@ -29,6 +29,7 @@ void systemShutdown(void);
 typedef struct tm tm_t; 
 extern void time_init(); 
 bool   getUTC(tm_t *timeinfo);
+bool   getLocaltime(tm_t *timeinfo);
 time_t getTime();
 char*  datetime2str(char*, time_t);
 char*  time2str (char*, time_t);

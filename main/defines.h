@@ -384,7 +384,7 @@
 #define REGEX_HOSTNAME "[0-9a-zA-Z\\-\\_\\.]+"
 #define REGEX_URL      "http(s?):\\/\\/[0-9a-zA-Z\\-\\_\\.\\/]+"
 #define REGEX_FPATH    "[0-9a-zA-Z\\-\\_\\.\\/]+"
-
+#define REGEX_TIMEZONE ".*"
 
 #define min(x,y) (x<y? x : y)
 #define max(x,y) (x>y? x : y)

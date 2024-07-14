@@ -375,16 +375,25 @@ static int do_log(int argc, char** argv)
 static int do_time(int argc, char** argv)
 {
     struct tm timeinfo;
+    
+    if (getLocaltime(&timeinfo)) {
+        char strftime_buf[64];
+        strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+        printf("%s Local time\n", strftime_buf);
+    }
+    
     if (getUTC(&timeinfo)) {
         char strftime_buf[64];
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         printf("%s UTC\n", strftime_buf);
         printf("Seconds: %lld\n", getTime());
     }
+    
     else
         printf("Time is not set\n");
     return 0;
 }
+
 
 
 
@@ -568,7 +577,17 @@ static int do_reset(int argc, char** argv) {
 
 
 
-CMD_U16_SETTING  (_param_adcref, "ADC.REF",  1100, 0, 3300);
+CMD_U16_SETTING  (_param_adcref,  "ADC.REF",  1100, 0, 3300);
+CMD_STR_SETTING  (_param_timezone,"TIMEZONE",   64, DFL_TIMEZONE,   REGEX_TIMEZONE);
+
+/* 
+ * The format of the timezone is according to POSIX TZ format:
+ *    "std offset[dst[offset][,start[/time],end[/time]]]" or
+ *    "[+|-]hh[:mm[:ss]]"
+ * 
+ * For Norway, use the string: 
+ *     "CET-1CEST,M3.5.0/02:00:00,M10.5.0/03:00:00"
+ */
 
 
 
@@ -592,6 +611,7 @@ void register_system()
     ADD_CMD("tasks",     &do_tasks,       "Get information about running tasks", NULL);
     ADD_CMD("log",       &do_log,         "Set loglevel (for debugging/development)", "<tag> | * [<level>|delete]") ;
     ADD_CMD("time",      &do_time,        "Get date and time", NULL);
+    ADD_CMD("timezone",  &_param_timezone,"Set timezone", NULL);
     ADD_CMD("nmea",      &do_nmea,        "Monitor GPS NMEA datastream", "[raw]");
     ADD_CMD("tone",      &do_tone,        "tone generator test", "");
     ADD_CMD("ptt",       &do_ptt,         "Transmitter on", "");

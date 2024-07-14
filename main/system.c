@@ -278,6 +278,8 @@ static void initialize_sntp(void)
  * Set the real time clock if wifi is connected. 
  *******************************************************************************/
 
+static bool sntp_initialized = false; 
+
 static void set_time(time_t t) {
     struct timeval tv; 
     tv.tv_sec = t; 
@@ -285,15 +287,23 @@ static void set_time(time_t t) {
     settimeofday(&tv, NULL);
 }
 
+
 void time_init()
-{
+{    
+    char tz[64];
+    GET_STR_PARAM("TIMEZONE", tz, 64);
+    setenv("TZ", tz, 1);
+    tzset();
+    
+    
     if (gps_is_fixed()) {
         ESP_LOGI(TAG, "Getting time from fixed GNSS.");
         set_time(gps_get_time());
     }
-    else if (wifi_isConnected()) {
+    else if (wifi_isConnected() && !sntp_initialized) {
         ESP_LOGI(TAG, "Getting time over SNTP.");
-        initialize_sntp();
+        initialize_sntp(); 
+        sntp_initialized = true;
     }
     else {
         /* if time not set by other means, use GNSS even if not in fix */
@@ -329,11 +339,21 @@ time_t getTime() {
 bool getUTC(struct tm *timeinfo)
 {
     time_t now = getTime();
-    if (now < 30000000)
+    if (now < 3000000)
+        return false; 
+    gmtime_r(&now, timeinfo);
+    return true; 
+}
+
+bool getLocaltime(struct tm *timeinfo)
+{
+    time_t now = getTime();
+    if (now < 3000000)
         return false; 
     localtime_r(&now, timeinfo);
     return true; 
 }
+
 
 
 
@@ -343,7 +363,7 @@ bool getUTC(struct tm *timeinfo)
 
 char* datetime2str(char* buf, time_t time)
 {
-    struct tm *tm = gmtime(&time);
+    struct tm *tm = localtime(&time);
     switch (tm->tm_mon+1) {
         case  1: sprintf(buf, "Jan"); break;
         case  2: sprintf(buf, "Feb"); break;
@@ -367,7 +387,7 @@ char* datetime2str(char* buf, time_t time)
 
 char* time2str(char* buf, time_t time)
 {
-    struct tm *tm = gmtime(&time);
+    struct tm *tm = localtime(&time);
     sprintf(buf, "%02u:%02u:%02u", 
       (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min, (uint8_t) tm->tm_sec );
     return buf;
@@ -376,7 +396,7 @@ char* time2str(char* buf, time_t time)
  
 char* date2str(char* buf, time_t time)
 {
-    struct tm *tm = gmtime(&time);
+    struct tm *tm = localtime(&time);
     sprintf(buf, "%02hu-%02hu-%4hu", (uint8_t) tm->tm_mday, (uint8_t) tm->tm_mon+1, (uint16_t) tm->tm_year+1900);
     return buf;
 }

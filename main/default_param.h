@@ -11,6 +11,8 @@
 #define DFL_IGATE_HOST   "aprs.no"
 #define DFL_IGATE_USER   "NOCALL"
 #define DFL_IGATE_FILTER ""
+#define DFL_TIMEZONE     ""
+
 
 #define DFL_REPEAT           0
 #define DFL_TRKLOG_INT       5
