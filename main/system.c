@@ -261,6 +261,15 @@ void systemShutdown(void)
 
 
 
+/*******************************************************************************
+ * TIME MANAGEMENT
+ *******************************************************************************/
+
+static bool sntp_initialized = false; 
+static mutex_t time_mutex;
+
+
+
 /******************************************************************************
  * Get time from NTP
  ******************************************************************************/
@@ -275,10 +284,9 @@ static void initialize_sntp(void)
 
 
 /*******************************************************************************
- * Set the real time clock if wifi is connected. 
+ * Set the real time clock from GPS or from SNTP (if WIFI is connected)
  *******************************************************************************/
 
-static bool sntp_initialized = false; 
 
 static void set_time(time_t t) {
     struct timeval tv; 
@@ -288,8 +296,15 @@ static void set_time(time_t t) {
 }
 
 
-void time_init()
+void time_init() 
+{
+    time_mutex = mutex_create();
+}
+
+
+void time_update()
 {    
+    mutex_lock(time_mutex);
     char tz[64];
     GET_STR_PARAM("TIMEZONE", tz, 64);
     setenv("TZ", tz, 1);
@@ -312,6 +327,30 @@ void time_init()
         if (getTime() <= 1000000000 && t != 0) 
             set_time(t);
     }
+    mutex_unlock(time_mutex);
+}
+
+
+/*************************************************************
+ * Convert time-struct to calendar time.
+ * Make sure we interpret it as UTC (GMT) time by setting the 
+ * time zone. 
+ *************************************************************/
+
+time_t timegm(struct tm *tm)
+{
+    mutex_lock(time_mutex);
+    setenv("TZ", "GMT0", 1);
+    tzset();
+    
+    time_t t = mktime(tm);
+        
+    char tz[64];
+    GET_STR_PARAM("TIMEZONE", tz, 64);
+    setenv("TZ", tz, 1);
+    tzset();
+    mutex_unlock(time_mutex);
+    return t;
 }
 
 
@@ -341,7 +380,9 @@ bool getUTC(struct tm *timeinfo)
     time_t now = getTime();
     if (now < 3000000)
         return false; 
+    mutex_lock(time_mutex);
     gmtime_r(&now, timeinfo);
+    mutex_unlock(time_mutex);
     return true; 
 }
 
@@ -350,7 +391,9 @@ bool getLocaltime(struct tm *timeinfo)
     time_t now = getTime();
     if (now < 3000000)
         return false; 
+    mutex_lock(time_mutex);
     localtime_r(&now, timeinfo);
+    mutex_unlock(time_mutex);
     return true; 
 }
 
@@ -363,7 +406,9 @@ bool getLocaltime(struct tm *timeinfo)
 
 char* datetime2str(char* buf, time_t time)
 {
+    mutex_lock(time_mutex);
     struct tm *tm = localtime(&time);
+    mutex_unlock(time_mutex);
     switch (tm->tm_mon+1) {
         case  1: sprintf(buf, "Jan"); break;
         case  2: sprintf(buf, "Feb"); break;
@@ -387,7 +432,9 @@ char* datetime2str(char* buf, time_t time)
 
 char* time2str(char* buf, time_t time)
 {
+    mutex_lock(time_mutex);
     struct tm *tm = localtime(&time);
+    mutex_unlock(time_mutex);
     sprintf(buf, "%02u:%02u:%02u", 
       (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min, (uint8_t) tm->tm_sec );
     return buf;
@@ -396,7 +443,9 @@ char* time2str(char* buf, time_t time)
  
 char* date2str(char* buf, time_t time)
 {
+    mutex_lock(time_mutex);
     struct tm *tm = localtime(&time);
+    mutex_unlock(time_mutex);
     sprintf(buf, "%02hu-%02hu-%4hu", (uint8_t) tm->tm_mday, (uint8_t) tm->tm_mon+1, (uint16_t) tm->tm_year+1900);
     return buf;
 }

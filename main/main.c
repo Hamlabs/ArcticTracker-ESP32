@@ -177,7 +177,8 @@ static void startup(void* arg)
     afsk_init(); 
     hdlc_init_decoder(afsk_rx_init());
     FBQ* oq = hdlc_init_encoder(afsk_tx_init());
-   
+    
+    time_init();
     gps_init(GPS_UART);
      
     radio_init();
@@ -188,7 +189,7 @@ static void startup(void* arg)
     
     mon_init();
     sleepMs(10000);
-    time_init();   
+    time_update();   
     sleepMs(1000);
     vTaskDelete(NULL);
 }

@@ -27,7 +27,9 @@ void systemShutdown(void);
 
 /* Time */
 typedef struct tm tm_t; 
-extern void time_init(); 
+void   time_init(); 
+void   time_update(); 
+time_t timegm(struct tm *tm);
 bool   getUTC(tm_t *timeinfo);
 bool   getLocaltime(tm_t *timeinfo);
 time_t getTime();

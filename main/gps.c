@@ -313,22 +313,6 @@ char* pos2str_long(char* buf, posdata_t *pos)
 }  
     
 
-time_t _timegm(struct tm *tm)
-{
-    // Normalize the tm structure
-    time_t t = mktime(tm);
-    
-    // Get the local time offset from UTC
-    struct tm local_tm;
-    gmtime_r(&t, &local_tm);
-
-    // Calculate the difference between the local time and UTC time
-    time_t diff = mktime(&local_tm) - t;
-
-    // Adjust the time_t value to get the UTC time
-    return t - diff;
-}
-
        
 /*****************************************************************
  * Convert date/time NMEA fields (timestamp + date)
@@ -348,7 +332,7 @@ static void nmea2time( time_t* t, const char* timestr, const char* datestr)
     tm.tm_min = min;
     tm.tm_sec = sec; 
     
-    *t = _timegm(&tm);
+    *t = timegm(&tm);
 }
 
 
@@ -367,7 +351,7 @@ void notify_fix(bool lock)
    else {
        if (!is_fixed) {
           SIGNAL_FIX;
-          time_init();
+          time_update();
           /* FIXME: Maybe we should suspend SNTP here */
        }     
        BLINK_NORMAL;

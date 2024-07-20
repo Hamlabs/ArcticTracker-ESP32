@@ -111,7 +111,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t ebase,
         xEventGroupClearBits(wifi_event_group, DISCONNECTED_BIT);
         status = "Connected";
         connected = true; 
-        time_init(); 
+        time_update(); 
     }
     else if (eid == WIFI_EVENT_STA_CONNECTED) {
         ESP_LOGD(TAG, "STA Connect event");
@@ -441,6 +441,7 @@ bool wifi_isEnabled(void)
  ********************************************************************************/
 bool wifi_isConnected(void)
    { return connected; }
+   
    
 void wifi_waitConnected(void)
 {
