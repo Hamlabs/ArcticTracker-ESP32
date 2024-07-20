@@ -113,7 +113,8 @@ static void status_heading(char* label) {
     disp_flag(32,0, "i", wifi_isConnected() );
     disp_flag(44,0, "g", wifi_isConnected() && GET_BYTE_PARAM("IGATE.on")); 
     disp_flag(56,0, "d", GET_BYTE_PARAM("DIGIPEATER.on"));
-    disp_flag(68,0, "c", batt_charge());
+    disp_flag(68,0, "p", batt_charge());
+    disp_flag(80,0, "F", gps_is_fixed());
 #endif
     
     uint16_t batt = batt_percent();
@@ -210,13 +211,20 @@ static void status_screen3() {
     
     disp_clear();
     status_heading("WIFI");
-    
     disp_writeText(0, LINE1, wifi_getStatus());
+    
     disp_writeText(0, LINE2, wifi_getConnectedAp(buf));
-    disp_setBoldFont(true);
-    disp_writeText(0, LINE3, wifi_getIpAddr(buf)); 
-    disp_setBoldFont(false);
-    disp_writeText(0, LINE4, mdns_hostname(buf)); 
+    disp_writeText(0, LINE3, mdns_hostname(buf)); 
+
+    if (wifi_isConnected()) {
+        disp_setBoldFont(true);
+        disp_setHighFont(true, false); 
+        disp_writeText(0, LINE4, wifi_getIpAddr(buf)); 
+        disp_setHighFont(false, false); 
+        disp_setBoldFont(false);
+    }
+    else
+        disp_writeText(0, LINE4, "-");
     disp_flush();
 }
 
@@ -255,20 +263,26 @@ static void status_screen5() {
  
     uint16_t batt = batt_status(b1, b2);
     uint8_t bp = batt_percent();
+    if (bp==255)
+        bp = 0;
     
     sprintf(buf, "%1.02f V  %d %c%c", ((float)batt)/1000, bp, '%', '\0');
 
     disp_writeText(0, LINE1, buf);
     disp_writeText(0, LINE2, b1);
+    
     disp_setBoldFont(true);
     disp_setHighFont(true, false); 
     
-    if (batt_charge() ) {
-        disp_writeText(0, LINE3, "Charging...");
+    if (batt_voltage() == 0 ) {
+        disp_writeText(0, LINE4, "No battery!");
+    }
+    else if (batt_charge() ) {
+        disp_writeText(0, LINE4, "Charging...");
         chg_cnt = 50;
     }
-    else if (batt_voltage() >= 8240 && chg_cnt > 0) {
-        disp_writeText(0, LINE3, "Charge complete!");
+    else if (bp >= 99 && chg_cnt > 0) {
+        disp_writeText(0, LINE4, "Charge complete!");
         chg_cnt--; 
     }
     else if (strlen(b2) > 1)
