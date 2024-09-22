@@ -33,9 +33,9 @@ time_t timegm(struct tm *tm);
 bool   getUTC(tm_t *timeinfo);
 bool   getLocaltime(tm_t *timeinfo);
 time_t getTime();
-char*  datetime2str(char*, time_t);
-char*  time2str (char*, time_t);
-char*  date2str (char*, time_t);
+char*  datetime2str(char*, time_t, bool local);
+char*  time2str (char*, time_t, bool local);
+char*  date2str (char*, time_t, bool local);
 
 /* Hardware timer - as periodic clocks */
 

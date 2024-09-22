@@ -40,7 +40,7 @@ static void notify_fix (bool);
 static void nmeaListener(void* arg);
 
 /* Local variables */
-static char buf[NMEA_BUFSIZE+1];
+static char buf[NMEA_BUFSIZE+2];
 static bool monitor_pos, monitor_raw; 
 static bool is_fixed = false;
 static float altitude = -1;
@@ -133,6 +133,10 @@ static void nmeaListener(void* arg)
     
     if (buf[0] != '$')
       continue;
+     
+    /* For now, ignore PQTM... packets */
+    if (strncmp(buf, "$PQTM", 5) == 0)
+      continue; 
     
     /* Checksum (optional) */
     uint8_t i = 0;
@@ -487,7 +491,7 @@ static void do_rmc(uint8_t argc, char** argv)
     /* If requested, show position on screen */    
     if (monitor_pos) {
       printf("TIME: %s, POS: lat=%f, long=%f, SPEED: %f km/h, COURSE: %u deg\r\n",  
-          time2str(tbuf, gps_current_pos.timestamp), 
+          time2str(tbuf, gps_current_pos.timestamp, false), 
           gps_current_pos.latitude, gps_current_pos.longitude, 
           gps_current_pos.speed*KNOTS2KMH, gps_current_pos.course);
     }

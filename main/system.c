@@ -2,7 +2,7 @@
 
 /*
  * Misc. System related stuff
- * By LA7ECA, ohanssen@acm.org
+ * (c) By LA7ECA, ohanssen@acm.org
  */
 
 #include <time.h>
@@ -404,10 +404,10 @@ bool getLocaltime(struct tm *timeinfo)
  * Time formatting
  ********************************************************************************/
 
-char* datetime2str(char* buf, time_t time)
+char* datetime2str(char* buf, time_t time, bool local)
 {
     mutex_lock(time_mutex);
-    struct tm *tm = localtime(&time);
+    struct tm *tm = (local? localtime(&time) : gmtime(&time));
     mutex_unlock(time_mutex);
     switch (tm->tm_mon+1) {
         case  1: sprintf(buf, "Jan"); break;
@@ -424,16 +424,16 @@ char* datetime2str(char* buf, time_t time)
         case 12: sprintf(buf, "Dec"); break;
         default:  sprintf(buf, "???"); ;
     }
-    sprintf(buf+3, " %02u %02u:%02u UTC", tm->tm_mday, 
-        (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min);
+    sprintf(buf+3, " %02u %02u:%02u %s", tm->tm_mday, 
+        (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min, (local? "" : " UTC"));
     return buf;
 }
 
 
-char* time2str(char* buf, time_t time)
+char* time2str(char* buf, time_t time, bool local)
 {
     mutex_lock(time_mutex);
-    struct tm *tm = localtime(&time);
+    struct tm *tm = (local? localtime(&time) : gmtime(&time));
     mutex_unlock(time_mutex);
     sprintf(buf, "%02u:%02u:%02u", 
       (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min, (uint8_t) tm->tm_sec );
@@ -441,10 +441,10 @@ char* time2str(char* buf, time_t time)
 }
  
  
-char* date2str(char* buf, time_t time)
+char* date2str(char* buf, time_t time, bool local)
 {
     mutex_lock(time_mutex);
-    struct tm *tm = localtime(&time);
+    struct tm *tm = (local? localtime(&time) : gmtime(&time));
     mutex_unlock(time_mutex);
     sprintf(buf, "%02hu-%02hu-%4hu", (uint8_t) tm->tm_mday, (uint8_t) tm->tm_mon+1, (uint16_t) tm->tm_year+1900);
     return buf;

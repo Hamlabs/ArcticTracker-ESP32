@@ -183,7 +183,7 @@ static void status_screen2() {
         disp_writeText(0, LINE1, pos2str_lat(buf, gps_get_pos()));
         disp_writeText(0, LINE2, pos2str_long(buf, gps_get_pos()));
         disp_setBoldFont(false);
-        disp_writeText(0, LINE3, datetime2str(buf, gps_get_time()));
+        disp_writeText(0, LINE3, datetime2str(buf, gps_get_time(), false));
        
         if (gps_get_pdop() > -1) {
             sprintf(buf, "pdop: %1.02f", (float) gps_get_pdop());
@@ -336,10 +336,10 @@ static void status_screen8() {
     char buf[24];
     disp_setBoldFont(true);
     disp_setHighFont(true, true); 
-    sprintf(buf, "%s", time2str(buf, getTime()));   
+    sprintf(buf, "%s", time2str(buf, getTime(), true));   
     disp_writeText(10, LINE2, buf); 
     disp_setHighFont(false, false); 
-    sprintf(buf, "%s", date2str(buf, getTime()));   
+    sprintf(buf, "%s", date2str(buf, getTime(), true));   
     disp_writeText(10, LINE4, buf); 
     disp_setBoldFont(false);
     disp_flush();

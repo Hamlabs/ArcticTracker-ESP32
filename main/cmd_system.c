@@ -1,6 +1,6 @@
 /* 
  * Various system shell commands
- * By LA7ECA, ohanssen@acm.org
+ * (c) By LA7ECA, ohanssen@acm.org
  */
 
 #include <stdio.h>
@@ -70,7 +70,7 @@ static int do_ls(int argc, char** argv) {
         while ((ep = readdir (dp)) != NULL) {
             sprintf(tpath, "%s/%s", path, ep->d_name); 
             stat(tpath, &sb);
-            datetime2str(tstr, sb.st_mtime);
+            datetime2str(tstr, sb.st_mtime, true);
             if (S_ISDIR(sb.st_mode))
                 printf("%9s  %sC  %s\n", "<DIR>", tstr, ep->d_name);
             else    
