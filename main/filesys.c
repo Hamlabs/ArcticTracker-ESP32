@@ -140,12 +140,13 @@ bool changeWD(char* wd) {
  **************************************************/
 
 void getPath(char* path, char* fname, bool allowroot) {
+    int n; 
     if (allowroot && *fname == '/')
-        sprintf(path, "%s", fname);
+        n = sprintf(path, "%s", fname);
     else if (strncmp(fname, FATFS_PATH, 7) == 0)
-        sprintf(path, fname);
+        n = sprintf(path, fname);
     else
-        sprintf(path, "%s/%s", workingdir, fname);
+        n = sprintf(path, "%s/%s", workingdir, fname);
 }
 
 

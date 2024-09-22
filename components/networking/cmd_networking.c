@@ -223,8 +223,10 @@ int do_apAlt(int argc, char** argv)
         if (i<0 || i>6) 
             printf("Index out of range: %s\n", argv[1]);
         else if (argc == 2) {
-            wifi_getApAlt(i, &alt);
-            printf("ssid='%s' passwd='%s'\n", alt.ssid, alt.passwd);
+            if (wifi_getApAlt(i, &alt))
+                printf("ssid='%s' passwd='%s'\n", alt.ssid, alt.passwd);
+            else
+                printf("Not set\n");
         }
         else if (argc == 3 && strcasecmp(argv[2], "delete")==0) {
             wifi_deleteApAlt(i);
@@ -283,7 +285,7 @@ CMD_STR_SETTING (_param_fwcert,    "FW.CERT",     BBUF_SIZE, "", NULL);
 
 void register_wifi()
 {
-    ADD_CMD("mdns",       &do_mdns,          "Scan for MDNS services", NULL);  
+    ADD_CMD("mdns",       &do_mdns,          "Scan for MDNS services", "<type>");  
     ADD_CMD("wifi-scan",  &do_scan,          "Scan for wifi access points", NULL);  
     ADD_CMD("wifi-info",  &do_info,          "Info about WIFI connection", NULL);
     ADD_CMD("wifi",       &_param_wifi,      "WIFI On/Off setting", "[on|off]");
