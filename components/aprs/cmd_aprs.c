@@ -191,14 +191,11 @@ void hdl_trkpost(bool on) {
         tracklog_post_start();
 }
 
-
-#if DEVICE==T_TWR
-
 void hdl_txlow(bool on) {
     radio_setLowTxPower(on);
 }
 
-#endif
+
 
 
 // Radio and APRS settings
@@ -251,10 +248,8 @@ CMD_BOOL_SETTING (_param_rbeep_on,   "REPORT.BEEP.on", NULL);
 CMD_BOOL_SETTING (_param_xturn_on,   "EXTRATURN.on",   NULL);
 CMD_BOOL_SETTING (_param_igtrack_on, "IGATE.TRACK.on", NULL);
 CMD_BOOL_SETTING (_param_txmon_on,   "TXMON.on",       NULL);
-
-#if DEVICE==T_TWR
 CMD_BOOL_SETTING (_param_txlow_on,   "TXLOW.on",       hdl_txlow);
-#endif
+
 
 
 /********************************************************************************
@@ -316,10 +311,7 @@ void register_aprs()
     ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport in turns", "[on|off]");
     ADD_CMD("igtrack",    &_param_igtrack_on,  "Send posreports directly to APRS/IS when available", "[on|off]");   
     ADD_CMD("txmon",      &_param_txmon_on,    "Tx monitor", "[on|off]");
-    
-#if DEVICE==T_TWR
     ADD_CMD("txlow",      &_param_txlow_on,    "Tx power low", "[on|off]");
-#endif    
 }
 
 

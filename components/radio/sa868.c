@@ -157,7 +157,7 @@ static void _initialize()
     ESP_LOGI(TAG, "_initialize: %s, txfreq=%ld, rxfreq=%ld", 
         (pmu_dc3_isOn() ? "ON":"OFF"), _txfreq, _rxfreq);
     
-    _widebw = 0;  /* Set to 1 for wide bandwidth */
+    _widebw = 1;  /* Set to 1 for wide bandwidth */
     
     sa8_setFilter(true, true, true);
     sa8_setVolume(8);
@@ -463,10 +463,13 @@ bool sa8_setMicLevel(uint8_t level)
 
 bool sa8_setLowTxPower(bool on)
 {
-#if (DEVICE==T_TWR)
     ESP_LOGD(TAG, "SetLowTxPower: %s", (on ? "on" : "off"));
     _lowPower = on;
+#if (DEVICE==T_TWR)
     gpio_set_level(RADIO_PIN_LOWPWR, (on? 0 : 1) );
+    return true;
+#elif (DEVICE==ARCTIC4)
+    return _setGroupParm();
 #endif
     return false; 
 }
@@ -576,7 +579,7 @@ static bool _setGroupParm()
     sprintf(rxbuf, "%lu.%04lu", _rxfreq/10000, _rxfreq%10000);
 
     int len = sprintf(buf, "AT+DMOSETGROUP=%1d,%s,%s,%s,%01d,%s\r\n",
-            _widebw, txbuf, rxbuf, _tcxcss, _squelch, _rcxcss);
+            (_lowPower? 1 : 0), txbuf, rxbuf, _tcxcss, _squelch, _rcxcss);
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
     waitReply(reply);
