@@ -43,6 +43,7 @@ static char* get_origin(httpd_req_t *req);
 
 void rest_cors_enable(httpd_req_t *req) {
     httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", get_origin(req));   
+    httpd_resp_set_hdr(req, "Vary", "Origin");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Arctic-Nonce, Arctic-Hmac, Authorization");
@@ -83,8 +84,9 @@ static char* get_origin(httpd_req_t *req) {
         return buf;
     }
     /* Check it and return it if it matches */
-    if (trex_match(rex, origin))
+    if (trex_match(rex, origin)) 
         strcpy(buf, origin);
+    
     trex_free(rex);
     return buf;
 }

@@ -181,7 +181,7 @@ int do_info(int argc, char** argv)
             esp_netif_ip_info_t  ipinfo = wifi_getIpInfo();
             char buf[40];
             printf("  Connected to: %s\n", (char*) wifi_getConnectedAp(buf));
-            printf("    IP address: %s\n", ip4addr_ntoa(&ipinfo.ip) );
+            printf("    IP address: %s\n", ip4addr_ntoa((ip4_addr_t*) &ipinfo.ip) );
             printf(" mDNS hostname: %s\n", mdns_hostname(buf));
         }
         uint8_t mac[6];
