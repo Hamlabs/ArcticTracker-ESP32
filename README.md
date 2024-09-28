@@ -40,7 +40,7 @@ It is fairly complete now. The following features are implemented:
 ## REST API and security
 A REST API is provided for external apps (typically). It mainly has methods for reading and updating settings. A strong authentication scheme based on SHA256 HMAC is used. A web-browser-based client is under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) that are on the same LAN. This is still somewhat work-in-progress...
 
-A [web-client is here](https://github.com/Hamlabs/ArcticTracker-Webapp): This is also contained in the tracker itself to allow configuration using the softAP mode. 
+A [web-client is here](https://github.com/Hamlabs/ArcticTracker-Webapp): This is also contained in the tracker itself to allow configuration using the softAP mode. A smartphone app is under way. 
 
 The webserver uses HTTPS (SSL/TLS). In the current version, a self-signed certificate is embedded in the firmware. This means that you will need to accept an exception for this certificate in the browser the first time you access the tracker. Also, if the private key is embedded into published firmware code, it can (for skilled hackers) be exposed. This doesn't affect the authentication scheme though. For stronger security consider building your firmware yourself and be sure to create a new certificate.
 
