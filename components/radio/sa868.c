@@ -20,7 +20,6 @@
 static bool     _on = false;
 static bool     _sq_on = false;
 static bool     _lowPower = false;
-static uint8_t  _widebw; 
 static int32_t  _txfreq;       // TX frequency in 100 Hz units
 static int32_t  _rxfreq;       // RX frequency in 100 Hz units
 static uint8_t  _squelch;      // Squelch level (0-8 where 0 is open)
@@ -157,10 +156,9 @@ static void _initialize()
     ESP_LOGI(TAG, "_initialize: %s, txfreq=%ld, rxfreq=%ld", 
         (pmu_dc3_isOn() ? "ON":"OFF"), _txfreq, _rxfreq);
     
-    _widebw = 1;  /* Set to 1 for wide bandwidth */
     
-    sa8_setFilter(true, true, true);
-    sa8_setVolume(8);
+    sa8_setFilter(true, false, false);
+    sa8_setVolume(6);
     sa8_setTail(0);
     _setGroupParm();
     cond_set(tx_off);
@@ -203,7 +201,7 @@ static void IRAM_ATTR _squelch_handler(void* arg)
 static void waitReply(char* reply) {
     reply[0] = '\0';
     while (reply[0] == '\0') {
-        sleepMs(100);
+        sleepMs(10);
         readline(_serial, reply, 15);
     }
     ESP_LOGD(TAG, "Reply: %s", reply);

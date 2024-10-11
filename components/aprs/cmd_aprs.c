@@ -27,7 +27,6 @@ void   register_aprs(void);
    
 
 
-
 /********************************************************************************
  * AFSK generator testing
  ********************************************************************************/
@@ -143,12 +142,17 @@ static int do_trput(int argc, char* argv[])
 
 void hdl_squelch(uint8_t sq) {
     radio_setSquelch(sq);
+    afsk_setSquelchOff(sq==0 ? true : false);
+    if (sq==0)
+        afsk_rx_nextFrame();
 }
 
 void hdl_miclevel(uint8_t ml) {
     radio_setMicLevel(ml); 
 }
-
+void hdl_volume(uint8_t vol) {
+    radio_setVolume(vol); 
+}
 
 
 void hdl_radio(bool on) {
@@ -225,6 +229,7 @@ CMD_BYTE_SETTING (_param_mindist,    "MINDIST",      DFL_MINDIST,     0, 250, NU
 CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",   DFL_STATUSTIME,  1, 250, NULL);
 CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 0, 8,   hdl_squelch);
 CMD_BYTE_SETTING (_param_miclevel,   "TRX_MICLEVEL", DFL_TRX_MICLEVEL,1, 8,   hdl_miclevel);
+CMD_BYTE_SETTING (_param_volume,     "TRX_VOLUME",   DFL_TRX_VOLUME,  1, 8,   hdl_volume);
 CMD_BYTE_SETTING (_param_repeat,     "REPEAT",       DFL_REPEAT,      0, 4,   NULL);
 
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
@@ -289,7 +294,8 @@ void register_aprs()
     ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
     ADD_CMD("miclevel",   &_param_miclevel,    "Miclevel setting (1-8)",            "[<val>]");
-        
+    ADD_CMD("volume",     &_param_miclevel,    "RX audio level setting (1-8)",      "[<val>]");
+            
     ADD_CMD("timestamp",  &_param_timestamp,   "Timestamp setting",  "[on|off]");
     ADD_CMD("compress",   &_param_compress,    "Compress setting",  "[on|off]");
     ADD_CMD("altitude",   &_param_altitude,    "Altitude setting",  "[on|off]");

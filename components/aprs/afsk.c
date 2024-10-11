@@ -3,6 +3,7 @@
 #include "defines.h"
 #include "afsk.h"
 #include "system.h"
+#include "config.h"
 
 
 
@@ -13,6 +14,7 @@
 
 
 /* Common stuff for afsk-RX and afsk-TX. */
+static bool    squelchOff = false; 
 static bool    rxMode = false; 
 static bool    txOn = false; 
 static int     rxEnable = 0;
@@ -23,16 +25,29 @@ void afsk_rxSampler(void *arg);
 void afsk_txBitClock(void *arg);
 
 
+bool afsk_isRxMode() {
+    return rxMode;
+}
+
+
+bool afsk_isSquelchOff() {
+    return squelchOff; 
+}
+
+
+void afsk_setSquelchOff(bool off) {
+    squelchOff = off;
+}
+
+
 /*********************************************************
  * ISR for clock
  *********************************************************/
 
-
-
 static bool afsk_sampler(struct gptimer_t * t, const gptimer_alarm_event_data_t * a, void * arg) 
 {   
     if (rxMode)
-        rxSampler_isr(arg); 
+     ; //   rxSampler_isr(arg); 
     else
         afsk_txBitClock(arg); 
     return true;
@@ -48,6 +63,8 @@ void afsk_init()
 {
     afskmx = mutex_create();
     clock_init(&afskclk, AFSK_RESOLUTION, AFSK_CNT, afsk_sampler, NULL);
+    if (GET_BYTE_PARAM("TRX_SQUELCH") == 0)
+        afsk_setSquelchOff(true);
 }
 
 
@@ -59,6 +76,7 @@ void afsk_init()
 void afsk_rx_enable() {
     rxEnable++; 
 }
+
 void afsk_rx_disable() {
     if (rxEnable > 0)
        rxEnable--; 
@@ -68,27 +86,32 @@ void afsk_rx_disable() {
 /**********************************************************
  * Turn receiving on and off
  * These are called from ISR handlers when squelch opens
+ * FIXME: To be called when signal detected (software-dcd)
  **********************************************************/
  
 void afsk_rx_start() {
     if (!rxEnable) 
         return;
-    afsk_PTT(false); 
-    if (txOn) 
-        clock_stop(afskclk);     
+            
+    /* If transmitter is on, turn it off */ 
+    if (txOn) {
+        afsk_PTT(false); 
+        clock_stop(afskclk);   
+        txOn = false;
+    }
     rxMode = true; 
-    txOn = false;
-    clock_set_interval(afskclk, FREQ2CNT(AFSK_SAMPLERATE));
-    clock_start(afskclk);
+    afsk_rx_nextFrame(); 
 }
 
    
 void afsk_rx_stop() {
     if (!rxEnable)
         return;
-    if (rxMode) 
-        clock_stop(afskclk);  
     rxMode=false; 
+}
+
+
+void afsk_rx_nextFrame() {
     rxSampler_nextFrame(); 
     afsk_rx_newFrame();
 }
@@ -100,10 +123,7 @@ void afsk_rx_stop() {
  ***********************************************************/
  
 void afsk_tx_start() {
-    mutex_lock(afskmx);
-    if (rxMode) 
-        clock_stop(afskclk);
-    
+    mutex_lock(afskmx);    
     clock_set_interval(afskclk, FREQ2CNT(AFSK_BITRATE));
     clock_start(afskclk);
     txOn = true; 
@@ -124,8 +144,8 @@ void afsk_tx_start() {
     afsk_PTT(false); 
     txOn = false; 
     if (rxMode) {
-        clock_set_interval(afskclk, FREQ2CNT(AFSK_SAMPLERATE));
-        clock_start(afskclk);
+     //   clock_set_interval(afskclk, FREQ2CNT(AFSK_SAMPLERATE));
+     //   clock_start(afskclk);
     }
     mutex_unlock(afskmx);
  }

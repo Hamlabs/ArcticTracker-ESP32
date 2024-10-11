@@ -1,4 +1,5 @@
 /* 
+ * Arctic Tracker
  * Initialize application and command shell.  
  * Based on shell example (see ESP-ISP)
 */
@@ -226,7 +227,6 @@ void app_main()
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
     logLevel_init();
-    adc_init(); 
     initialize_console();
     
     /* Register commands */

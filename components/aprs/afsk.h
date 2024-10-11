@@ -36,10 +36,18 @@
  void afsk_rx_enable(void); 
  void afsk_rx_disable(void);
  void afsk_rx_newFrame(void); 
+ void afsk_rx_nextFrame(void);
  void afsk_PTT(bool on);
- 
+ bool afsk_dcd(int8_t sample);
+ void afsk_dcd_reset();
+ bool afsk_isRxMode(); 
+ bool afsk_isSquelchOff();
+ void afsk_setSquelchOff(bool off);
+
  void   rxSampler_init();
+ int    rxSampler_getFrame();
  int8_t rxSampler_get();
+ void   rxSampler_put(int8_t saample);
  bool   rxSampler_eof();
  void   rxSampler_reset();
  void   rxSampler_nextFrame();

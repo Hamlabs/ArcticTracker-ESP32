@@ -30,7 +30,7 @@
 #define TRANSITION_FOUND(bits) BITS_DIFFER((bits), (bits) >> 1)
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
-#define FIR_MAX_TAPS 16
+#define FIR_MAX_TAPS 60
 
 
 /* Queue of decoded bits. To be used by HDLC packet decoder */
@@ -63,12 +63,6 @@ typedef struct AfskRx
 static AfskRx afsk;
 
 
-static void add_bit(bool bit);
-static void afsk_process_sample(int8_t curr_sample, float f1, float f2);
-static void afsk_rxdecoder(void* arg);
-
-
-   
 
 /************************************************
  * FIR filtering 
@@ -84,13 +78,29 @@ typedef struct FIR
 
 enum fir_filters
 {
+  FIR_NONE=-1,
   FIR_1200_BP=0,
   FIR_2200_BP=1,
-  FIR_1200_LP=2,
-  FIR_PREEMP=3,
-  FIR_DEEMP=4
+  FIR_12_22_BP=2,
+  FIR_1200_LP=3,
+  FIR_PREEMP=4,
+  FIR_DEEMP=5
 };
 
+
+/************************************************
+ * Static functions
+ ************************************************/
+
+static void add_bit(bool bit);
+static void afsk_process_sample(int8_t curr_sample, float f1, float f2);
+static void afsk_rxdecoder(void* arg);
+static void doFrame(float f1, float f2, enum fir_filters f);
+
+   
+
+
+// Tool for designing filters: http://t-filter.engineerjs.com/
 
 static FIR fir_table[] =
 {
@@ -103,6 +113,7 @@ static FIR fir_table[] =
       0,
     },
   },
+  
   [FIR_2200_BP] = {
     .taps = 11,
     .coef = {
@@ -112,6 +123,19 @@ static FIR fir_table[] =
       0,
     },
   },
+  
+  [FIR_12_22_BP] = {
+    .taps = 53,
+    .coef = {
+      -1,-2,0,2,2,-1,-1,0,0,-3,-2,3,7,3,-6,-7,-1,3,0,0,9,11,-5,-23,-16,13,
+      30,13,-16,-23,-5,11,9,0,0,3,-1,-7,-6,3,7,3,-2,-3,0,0,-1,-1,2,2,0,-2,-1
+
+    },
+    .mem = {
+      0,
+    },
+  },
+  
   [FIR_1200_LP] = {
     .taps = 8,
     .coef = {
@@ -145,6 +169,8 @@ static FIR fir_table[] =
 
 static int8_t fir_filter(int8_t s, enum fir_filters f)
 {
+  if (f==FIR_NONE)
+    return s;
   int8_t Q = fir_table[f].taps - 1;
   int8_t *B = fir_table[f].coef;
   int16_t *Bmem = fir_table[f].mem;
@@ -188,20 +214,44 @@ fifo_t* afsk_rx_init()
 
 
 
-/*******************************************
-  Process the samples to decode frame 
- *******************************************/
 
-static void doFrame(float f1, float f2) {
-    rxSampler_reset();
-    while (!rxSampler_eof())
-        afsk_process_sample(rxSampler_get(), f1, f2);
-    
+/************************************************
+  DCD 
+  Return true if there is a AFSK signal present
+ ************************************************/
+
+#define SIGNAL_THRESHOLD 60
+
+static uint16_t flevel = 0, ndcd=0;
+static bool prev_dcd=false, prev2_dcd=false, dcd=false, result=false;
+
+bool afsk_dcd(int8_t inp) {
+  
     /* 
-     * Add 0-samples after the end of the frame to flush filters
-     */
-    for (int i=0; i<16; i++)
-        afsk_process_sample(0, 1, 1);
+     * Put the sample into the bandpass filter. Also put it into a FIFO
+     * giving the same delay as the filter.
+     */ 
+    int8_t fsample = fir_filter(inp, FIR_12_22_BP);
+    flevel = flevel * 0.5 + (fsample * fsample) * 0.5; 
+ /*   
+    printf("%u ", flevel);
+    if (ndcd++ > 30) {
+      ndcd=0;
+      printf("\n");
+    } */
+    dcd = (flevel > SIGNAL_THRESHOLD);
+    if (!dcd && !prev_dcd && !prev2_dcd)
+      result = false; 
+    else if (dcd && prev_dcd && prev2_dcd)
+      result = true; 
+    prev2_dcd = prev_dcd;
+    prev_dcd = dcd;
+    
+    return result; 
+}
+
+
+void afsk_dcd_reset() {
 }
 
 
@@ -218,38 +268,67 @@ float balance() {
     return res;
 }
 
+
+
+void print_samples();
+
 static void afsk_rxdecoder(void* arg) 
 {
     while (true) {
-        sem_down(afsk_frames);
+        /* Wait for squelch to be opened */
+        if (!afsk_isSquelchOff())
+            sem_down(afsk_frames);
+      
+        /* Get the frame from ADC sampler */
+        int n = rxSampler_getFrame();
         hdlc_next_frame();
-        balance();
-        doFrame(1, 1);
-        float bal = balance();
-        sleepMs(10);
-        if (bal >= 1)
-            doFrame(1, bal);
-        else
-            doFrame(1/bal, 1);
+        
+        /* Decode the frame */
+        print_samples();
+        doFrame(1, 1,  FIR_NONE);
+        doFrame(1, 1,  FIR_PREEMP); 
+        doFrame(1, 1,  FIR_DEEMP);
         sleepMs(10);
     }
 }
 
 
+/* Signal that we can start to receive a frame */
 void afsk_rx_newFrame() {
     sem_up(afsk_frames);
 }
 
 
 
+/*******************************************
+  Process the samples to decode a frame 
+ *******************************************/
+
+static void doFrame(float f1, float f2, enum fir_filters filt) {
+    rxSampler_reset();
+    while (!rxSampler_eof()) {     
+        int8_t sample = rxSampler_get();
+        int8_t filtered = fir_filter(sample, filt);
+        afsk_process_sample(filtered, f1, f2);
+    }
+    /* 
+     * Add 0-samples after the end of the frame to flush filters
+     */
+    for (int i=0; i<16; i++)
+        afsk_process_sample(0, 1, 1);
+}
+
+
+
 /***************************************************************
-  This routine should be called 9600
-  times each second to analyze samples taken from
-  the physical medium. 
+  This routine should be called for each sample taken from 
+  the radio receiver audio. 
 ****************************************************************/
 
 static void afsk_process_sample(int8_t curr_sample, float filt0, float filt1) 
-{ 
+{
+    
+  
     afsk.iirY[0] = fir_filter(curr_sample, FIR_1200_BP);
     afsk.iirY[1] = fir_filter(curr_sample, FIR_2200_BP);
     

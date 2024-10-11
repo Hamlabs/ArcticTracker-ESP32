@@ -33,7 +33,12 @@
 
 #if defined CONFIG_T_TWR
 #define DEVICE T_TWR
+#define T_TWR_VER 20
 #define DEVICE_STRING "LilyGo T-TWR-plus"
+#elif defined CONFIG_T_TWR_21
+#define DEVICE T_TWR
+#define T_TWR_VER 21
+#define DEVICE_STRING "LilyGo T-TWR-plus 2.1"
 #elif defined CONFIG_ARCTIC3
 #define DEVICE_STRING "Arctic Tracker 3"
 #define DEVICE ARCTIC3
@@ -122,6 +127,11 @@
 #define TONE_SDELTA_ENABLE
 #define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
 #define TONE_SDELTA_PIN  18
+
+#if T_TWR_VER == 21
+#define RADIO_PIN_SQUELCH  2
+
+#endif
 
 #elif DEVICE == ARCTIC4
 #define RADIO_UART          UART_NUM_0
@@ -328,12 +338,12 @@
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 3100
 #define STACK_HDLC_RXDECODER 3100
-#define STACK_AFSK_RXDECODER 3000
+#define STACK_AFSK_RXDECODER 3600
 #define STACK_NMEALISTENER   3600
 #define STACK_LEDBLINKER     2800
 #define STACK_UI_SRV         3800
 #define STACK_TRACKER        3800
-#define STACK_MONITOR        3000
+#define STACK_MONITOR        3200
 #define STACK_GUI            3200
 #define STACK_HLIST          1000
 #define STACK_DIGI           3200

@@ -18,27 +18,104 @@
  * (when sampling rate is 9600 Hz)
  */ 
 #define RX_SAMPLE_BUF_SIZE 100000
+#define ADC_FRAGMENT_SIZE 1024 /* 256 samples */
 
+static uint8_t *raw_sample_buf;
 static int8_t* sample_buffer; 
 static int8_t* start;      // Start of frame
 static int8_t* curr;       // Current read position
 static int8_t* end_frame;  // End of frame
 static int8_t* curr_put;   // Next pos of input
 static int8_t* buf_end;    // End of buffer
+static uint16_t length; 
+
+static adcsampler_t adc;
 
 
 
-void rxSampler_init() {
+
+void rxSampler_init() 
+{
+    adcsampler_init( &adc, RADIO_INPUT);
+    adcsampler_calibrate(adc);
+    
+    raw_sample_buf = malloc(ADC_FRAGMENT_SIZE);
     sample_buffer = malloc(RX_SAMPLE_BUF_SIZE);
     start = curr = end_frame = curr_put = sample_buffer;
     buf_end = sample_buffer + RX_SAMPLE_BUF_SIZE-1;
 }
 
 
+extern uint32_t adcsampler_nullpoint;
+
+/* 
+ * Get the next frame (or sequence of frames?) from ADC 
+ */
+int rxSampler_getFrame()
+{
+    int nresults = 0;
+    bool dcd = false; 
+    bool breakout = false; 
+    rxSampler_nextFrame();
+        
+    /* Start sampling */   
+    adcsampler_start(adc);
+    while (afsk_isRxMode() || afsk_isSquelchOff()) {
+        /* Get raw fragment from ADC */
+        int len = adcsampler_read(adc, raw_sample_buf, ADC_FRAGMENT_SIZE);   
+        if (len == -1) 
+            continue;
+        
+        /* Convert its content and add it to frame */
+        for (int i = 0; i < len; i += ADC_RESULT_BYTES) {
+            adc_digi_output_data_t  *p = ADC_RESULT(raw_sample_buf,i);
+            if (ADC_DATA_VALID(p)) { 
+                int8_t sample = (int8_t) ((ADC_GET_DATA(p) - adcsampler_nullpoint) / 16);     
+                
+                if (afsk_dcd(sample)) {
+                    rxSampler_put(sample);
+                    nresults++;
+                }
+                else 
+                    breakout = true;
+            }
+        }
+        if (breakout && nresults < 700) {
+            if (nresults > 0) {
+                rxSampler_nextFrame();
+                nresults = 0;
+            }
+            breakout = false; 
+        }
+        else if (breakout)
+            break;
+        
+    }
+    printf("\n");
+    /* Stop sampling */
+    adcsampler_stop(adc);
+    return nresults;
+}
+
+
+
+void rxSampler_put(int8_t sample) {
+    if (curr_put != start-1 && 
+        (curr_put != buf_end+1 || start != sample_buffer))
+    {
+        *curr_put = sample;
+        length++;
+        if (curr_put++ == buf_end-1)
+            curr_put = sample_buffer;
+    } 
+}
+
+
+
 /* Get next sample */
 int8_t rxSampler_get() {
     register int8_t x = *curr;
-    if (curr++ == buf_end)
+    if (curr++ == buf_end-1)
         curr = sample_buffer;
     return x;
 }
@@ -46,7 +123,7 @@ int8_t rxSampler_get() {
 
 /* Return true if read has reached end of frame */
 bool rxSampler_eof() {
-    return (curr == end_frame);        
+    return (curr == curr_put);        
 }
 
 
@@ -58,42 +135,33 @@ void rxSampler_reset() {
 
 /* Ready for next frame */
 void rxSampler_nextFrame() {
-    start = curr = end_frame;
-    end_frame = curr_put;
+    start = curr;
+    length = 0;
 }
+
+
+int rxSampler_length() {
+    return length;
+}
+
 
 
 void print_samples() {
     rxSampler_reset();
-    int8_t * ptr; 
-    for (ptr = start; ptr < end_frame; ptr++)
-        printf("%d ", *ptr); 
-    printf("\n");
-    rxSampler_nextFrame();
+    int8_t * ptr;
+    int i=0;
+    
+    printf("*** FRAME: %u samples ***\n", rxSampler_length());
+    /*
+    for (ptr = start; ptr < end_frame; ptr++) {
+        int8_t val = *ptr;
+        printf("%4d, ", val);
+        if (++i > 30) {
+            printf("\n");
+            i=0;
+        }
+    }
+    printf("\n\n");
+    */
 }
-            
-            
-/*****************************
- * Sampler ISR 
- *****************************/
-
-#if DEVICE == T_TWR
-#define DIVISOR 6
-#else
-#define DIVISOR 14
-#endif
-
-
-void rxSampler_isr(void *arg) 
-{
-    /* Get a sample from the ADC */
-    if (curr_put != start-1 && 
-        (curr_put != buf_end+1 || start != sample_buffer))
-    {
-        *curr_put = (int8_t) (radio_adc_sample()/DIVISOR);
-        if (curr_put++ == buf_end-1)
-            curr_put = sample_buffer;
-    } 
-}
-
 
