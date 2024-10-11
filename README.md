@@ -85,8 +85,12 @@ The command-shell let you configure everything and is useful in developing and d
 
 The tracker is also able to function as its own access point (*'softap'* command). Info about ip-address, etc. is shown on the display so you can connect your browser to it. 
 
-## Future work
-When planning a version 4 tracker we consider moving on to exploring LoRa and FSK modes on 70 cm. However, in Norway, there are legal issues with spread-spectrum modes on HAM-radio on the 70cm band, so it may have to wait. There are also some other VHF-modules around that can be interesting to look at without a separate PA module: The SR-FRS-2WVS (2 watts), the SA-868 (2 watts) is used by the T-TWR device and is supported already. The SA868 comes with a programmable version and I wonder if it could be somehow optimized a bit for APRS? 
+## Issues and work in progress
+When planning a version 4 tracker we consider moving on to exploring LoRa and FSK modes on 70 cm. However, in Norway, there are legal issues with spread-spectrum modes on HAM-radio on the 70cm band, so it may have to wait a bit. A version 4 for VHF/plain old APRS is being tested and work is in progress with the software.
+
+Receiving packets is more complicated than transmitting and involve some DSP work and sampling from the ADC. I hope that this will work reasonably well in a update coming soon. There seems to be an issue with te squelch of the SA-868 (needing a very strong signal to open even at the lowest setting) but it may be better outside my shack where there is less computer noise.
+
+The SA868 comes with a programmable version and I wonder if it could used and maybe optimized a bit for APRS? 
 
 I am open for ideas and contributions :)
  
