@@ -13,11 +13,13 @@
 #include "radio.h"
 #include "system.h"
 
+#define TAG "afsk-rx"
+
 /* 
- * 100 kilobytes can contain 10 seconds of transmission 
+ * 200 kilobytes can contain 20 seconds of transmission 
  * (when sampling rate is 9600 Hz)
  */ 
-#define RX_SAMPLE_BUF_SIZE 100000
+#define RX_SAMPLE_BUF_SIZE 200000
 #define ADC_FRAGMENT_SIZE 1024 /* 256 samples */
 
 static uint8_t *raw_sample_buf;
@@ -54,12 +56,10 @@ extern uint32_t adcsampler_nullpoint;
 int rxSampler_getFrame()
 {
     int nresults = 0;
-    bool dcd = false; 
     bool breakout = false; 
     rxSampler_nextFrame();
         
     /* Start sampling */   
-    adcsampler_start(adc);
     while (afsk_isRxMode() || afsk_isSquelchOff()) {
         /* Get raw fragment from ADC */
         int len = adcsampler_read(adc, raw_sample_buf, ADC_FRAGMENT_SIZE);   
@@ -76,11 +76,12 @@ int rxSampler_getFrame()
                     rxSampler_put(sample);
                     nresults++;
                 }
-                else 
+                else if (nresults > 0)
                     breakout = true;
             }
         }
-        if (breakout && nresults < 700) {
+        /* APRS packets of less than 1500 samples are invalid */
+        if (breakout && nresults < 1500) {
             if (nresults > 0) {
                 rxSampler_nextFrame();
                 nresults = 0;
@@ -91,12 +92,24 @@ int rxSampler_getFrame()
             break;
         
     }
-    printf("\n");
-    /* Stop sampling */
-    adcsampler_stop(adc);
     return nresults;
 }
 
+
+
+static bool running = false; 
+
+void rxSampler_start() {
+    if (!running)
+        adcsampler_start(adc);
+    running = true;
+}
+
+void rxSampler_stop() {
+    if (running)
+        adcsampler_stop(adc);
+    running = false; 
+}
 
 
 void rxSampler_put(int8_t sample) {
@@ -150,9 +163,7 @@ void print_samples() {
     rxSampler_reset();
     int8_t * ptr;
     int i=0;
-    
-    printf("*** FRAME: %u samples ***\n", rxSampler_length());
-    /*
+
     for (ptr = start; ptr < end_frame; ptr++) {
         int8_t val = *ptr;
         printf("%4d, ", val);
@@ -162,6 +173,5 @@ void print_samples() {
         }
     }
     printf("\n\n");
-    */
 }
 

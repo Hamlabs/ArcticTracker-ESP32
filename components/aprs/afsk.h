@@ -45,6 +45,9 @@
  void afsk_setSquelchOff(bool off);
 
  void   rxSampler_init();
+ void   rxSampler_start(); 
+ void   rxSampler_stop();
+ int    rxSampler_length();
  int    rxSampler_getFrame();
  int8_t rxSampler_get();
  void   rxSampler_put(int8_t saample);

@@ -463,7 +463,7 @@ char* date2str(char* buf, time_t time, bool local)
  */
 static char* logtags[] = {
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
-    "esp-tls", "radio", "ui", "hdlc_enc", "hdlc-dec", "gps", "uart", "digi", "igate",
+    "esp-tls", "radio", "ui", "afsk-rx", "hdlc-enc", "hdlc-dec", "gps", "uart", "digi", "igate",
     "tcp-cli", "trackstore", "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", 
     "httpd_uri", "httpd_parse", "mdns", "gptimer"
 };

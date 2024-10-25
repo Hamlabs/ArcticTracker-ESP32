@@ -91,6 +91,7 @@ static void hdlc_rxdecoder (void* arg)
    
    /* Sync to next flag */
    flag_sync:
+   ESP_LOGD(TAG, "Flag sync"); 
    do {  
       bit = get_bit ();
    }  while (bit != HDLC_FLAG);
@@ -98,6 +99,7 @@ static void hdlc_rxdecoder (void* arg)
    
    /* Sync to next frame */
    frame_sync:
+   ESP_LOGD(TAG, "Frame sync"); 
    do {     
       bit = get_bit ();
    }  while (bit == HDLC_FLAG);
@@ -140,16 +142,16 @@ static void hdlc_rxdecoder (void* arg)
    
    if (length > AX25_HDR_LEN(0)+2 && crc_match(&fbuf, length, &rcrc)) 
    {     
-      ESP_LOGI(TAG, "Valid frame received. seq=%d, length=%d", tag_seq, length); 
-      
-      /* Ignore if it is a duplicate */
-      if (tag_seq == prev_seq && rcrc == prev_crc) {
+      /* Ignore if it is a duplicate of the previous frame*/
+      if (tag_seq == prev_seq) {
+          ESP_LOGI(TAG, "Duplicate frame received. seq=%d, length=%d", tag_seq, length); 
           fbuf_release(&fbuf); 
           fbuf_new(&fbuf);
           goto frame_sync;
       }
+      else
+          ESP_LOGI(TAG, "VALID frame received. length=%d", length);
       prev_seq = tag_seq;
-      prev_crc = rcrc;
       
       /* Send packets to subscribers, if any. 
        * Note that every receiver should release the buffers after use. 
@@ -167,9 +169,9 @@ static void hdlc_rxdecoder (void* arg)
          fbuf_release(&fbuf); 
       fbuf_new(&fbuf);
    }
-   else {
+   else if (length > AX25_HDR_LEN(0)+2)
        ESP_LOGI(TAG, "Invalid frame received. length=%d", length);
-   }
+   
    goto frame_sync; // Two consecutive frames may share the same flag
 }
 

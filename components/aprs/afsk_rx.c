@@ -16,6 +16,8 @@
 #include "radio.h"
 #include "system.h"
 
+#define TAG "afsk-rx"
+
 
 #define SAMPLESPERBIT (AFSK_SAMPLERATE / AFSK_BITRATE)   // How many DAC/ADC samples constitute one bit (8).
 
@@ -93,9 +95,9 @@ enum fir_filters
  ************************************************/
 
 static void add_bit(bool bit);
-static void afsk_process_sample(int8_t curr_sample, float f1, float f2);
+static void afsk_process_sample(int8_t curr_sample);
 static void afsk_rxdecoder(void* arg);
-static void doFrame(float f1, float f2, enum fir_filters f);
+static void doFrame(enum fir_filters f);
 
    
 
@@ -104,6 +106,7 @@ static void doFrame(float f1, float f2, enum fir_filters f);
 
 static FIR fir_table[] =
 {
+   /* 1200 Hz bandpass filter */
   [FIR_1200_BP] = {
     .taps = 11,
     .coef = {
@@ -114,6 +117,7 @@ static FIR fir_table[] =
     },
   },
   
+  /* 2200 Hz bandpass filter */
   [FIR_2200_BP] = {
     .taps = 11,
     .coef = {
@@ -124,18 +128,19 @@ static FIR fir_table[] =
     },
   },
   
+   /* 1200-2200 Hz bandpass filter */
   [FIR_12_22_BP] = {
     .taps = 53,
     .coef = {
       -1,-2,0,2,2,-1,-1,0,0,-3,-2,3,7,3,-6,-7,-1,3,0,0,9,11,-5,-23,-16,13,
       30,13,-16,-23,-5,11,9,0,0,3,-1,-7,-6,3,7,3,-2,-3,0,0,-1,-1,2,2,0,-2,-1
-
     },
     .mem = {
       0,
     },
   },
   
+  /* Lowpass filter to 1200 Hz */
   [FIR_1200_LP] = {
     .taps = 8,
     .coef = {
@@ -145,6 +150,8 @@ static FIR fir_table[] =
       0,
     },
   },  
+  
+  /* Pre-emphasis filter */
   [FIR_PREEMP] = {
     .taps = 5,
     .coef = {
@@ -154,6 +161,8 @@ static FIR fir_table[] =
       0,
     },
   },  
+  
+  /* De-emphasis filter */
   [FIR_DEEMP] = {
     .taps = 5,
     .coef = {
@@ -166,7 +175,9 @@ static FIR fir_table[] =
 };
 
 
-
+/*
+ * FIR filter function. Apply sample to the given filter
+ */
 static int8_t fir_filter(int8_t s, enum fir_filters f)
 {
   if (f==FIR_NONE)
@@ -218,27 +229,22 @@ fifo_t* afsk_rx_init()
 /************************************************
   DCD 
   Return true if there is a AFSK signal present
+  FIXME: This still need some work.. 
  ************************************************/
 
-#define SIGNAL_THRESHOLD 60
+#define SIGNAL_THRESHOLD 45
 
 static uint16_t flevel = 0, ndcd=0;
 static bool prev_dcd=false, prev2_dcd=false, dcd=false, result=false;
 
 bool afsk_dcd(int8_t inp) {
-  
+    
     /* 
-     * Put the sample into the bandpass filter. Also put it into a FIFO
-     * giving the same delay as the filter.
+     * Put the sample into the bandpass filter.
      */ 
     int8_t fsample = fir_filter(inp, FIR_12_22_BP);
     flevel = flevel * 0.5 + (fsample * fsample) * 0.5; 
- /*   
-    printf("%u ", flevel);
-    if (ndcd++ > 30) {
-      ndcd=0;
-      printf("\n");
-    } */
+
     dcd = (flevel > SIGNAL_THRESHOLD);
     if (!dcd && !prev_dcd && !prev2_dcd)
       result = false; 
@@ -251,6 +257,8 @@ bool afsk_dcd(int8_t inp) {
 }
 
 
+
+
 void afsk_dcd_reset() {
 }
 
@@ -260,34 +268,29 @@ void afsk_dcd_reset() {
   Decoding thread
  *******************************************/
 
-uint32_t nsamples = 0;
-uint32_t tone22=0, tone12=0;
-float balance() {
-    double res = ((double) tone12 / nsamples) / ((double) tone22 / nsamples);
-    tone22=0; tone12=0; nsamples = 0;
-    return res;
-}
-
-
-
 void print_samples();
 
 static void afsk_rxdecoder(void* arg) 
 {
     while (true) {
         /* Wait for squelch to be opened */
-        if (!afsk_isSquelchOff())
+        if (!afsk_isSquelchOff()) {
+            rxSampler_stop(); 
             sem_down(afsk_frames);
+        }
       
         /* Get the frame from ADC sampler */
+        rxSampler_start(); 
         int n = rxSampler_getFrame();
+        ESP_LOGI(TAG, "Frame: %d samples", n); 
         hdlc_next_frame();
         
         /* Decode the frame */
-        print_samples();
-        doFrame(1, 1,  FIR_NONE);
-        doFrame(1, 1,  FIR_PREEMP); 
-        doFrame(1, 1,  FIR_DEEMP);
+        doFrame(FIR_NONE);
+        sleepMs(5);
+        doFrame(FIR_PREEMP);
+        sleepMs(5);
+        doFrame(FIR_DEEMP);
         sleepMs(10);
     }
 }
@@ -300,22 +303,25 @@ void afsk_rx_newFrame() {
 
 
 
-/*******************************************
-  Process the samples to decode a frame 
- *******************************************/
+/***************************************************
+  Process the samples to decode the current frame. 
+  A FIR-filter may be used before the decoding. 
+  FIR_NONE means no filtering. 
+ ***************************************************/
 
-static void doFrame(float f1, float f2, enum fir_filters filt) {
+static void doFrame(enum fir_filters filt) {
     rxSampler_reset();
+    ESP_LOGD(TAG, "Decode frame: filter=%d", (int) filt); 
     while (!rxSampler_eof()) {     
         int8_t sample = rxSampler_get();
         int8_t filtered = fir_filter(sample, filt);
-        afsk_process_sample(filtered, f1, f2);
+        afsk_process_sample(filtered);
     }
     /* 
      * Add 0-samples after the end of the frame to flush filters
      */
     for (int i=0; i<16; i++)
-        afsk_process_sample(0, 1, 1);
+        afsk_process_sample(0);
 }
 
 
@@ -325,23 +331,13 @@ static void doFrame(float f1, float f2, enum fir_filters filt) {
   the radio receiver audio. 
 ****************************************************************/
 
-static void afsk_process_sample(int8_t curr_sample, float filt0, float filt1) 
+static void afsk_process_sample(int8_t sample) 
 {
+    afsk.iirY[0] = fir_filter(sample, FIR_1200_BP);
+    afsk.iirY[1] = fir_filter(sample, FIR_2200_BP);
     
-  
-    afsk.iirY[0] = fir_filter(curr_sample, FIR_1200_BP);
-    afsk.iirY[1] = fir_filter(curr_sample, FIR_2200_BP);
-    
-    afsk.iirY[0] = (int8_t) (afsk.iirY[0]);
-    afsk.iirY[1] = (int8_t) (afsk.iirY[1]); 
-    
-    afsk.iirY[0] = ABS(afsk.iirY[0]) * filt0;
-    afsk.iirY[1] = ABS(afsk.iirY[1]) * filt1;
-    
-    tone12 += afsk.iirY[0];
-    tone22 += afsk.iirY[1];
-    nsamples++;
-    
+    afsk.iirY[0] = ABS(afsk.iirY[0]);
+    afsk.iirY[1] = ABS(afsk.iirY[1]);
     
     afsk.sampled_bits <<= 1;
     afsk.sampled_bits |= (fir_filter(afsk.iirY[1] - afsk.iirY[0], FIR_1200_LP) > 0 ? 1 : 0);

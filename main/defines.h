@@ -95,7 +95,7 @@
 
 
 /* Queues for AFSK encoder/decoder */
-#define AFSK_RX_QUEUE_SIZE       16
+#define AFSK_RX_QUEUE_SIZE       32
 #define AFSK_TX_QUEUE_SIZE      256
 #define HDLC_DECODER_QUEUE_SIZE  16
 #define HDLC_ENCODER_QUEUE_SIZE  16
