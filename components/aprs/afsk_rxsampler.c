@@ -22,14 +22,19 @@
 #define RX_SAMPLE_BUF_SIZE 200000
 #define ADC_FRAGMENT_SIZE 1024 /* 256 samples */
 
+
 static uint8_t *raw_sample_buf;
 static int8_t* sample_buffer; 
 static int8_t* start;      // Start of frame
+static int8_t* wstart;     // Start of frame under writing
 static int8_t* curr;       // Current read position
+static int8_t* curr_put;   // Current write position
 static int8_t* end_frame;  // End of frame
-static int8_t* curr_put;   // Next pos of input
 static int8_t* buf_end;    // End of buffer
-static uint16_t length; 
+static uint16_t length = 0; 
+static uint16_t wlength = 0; 
+
+
 
 static adcsampler_t adc;
 
@@ -41,9 +46,9 @@ void rxSampler_init()
     adcsampler_init( &adc, RADIO_INPUT);
     adcsampler_calibrate(adc);
     
-    raw_sample_buf = malloc(ADC_FRAGMENT_SIZE);
+    raw_sample_buf = malloc(ADC_FRAGMENT_SIZE);   
     sample_buffer = malloc(RX_SAMPLE_BUF_SIZE);
-    start = curr = end_frame = curr_put = sample_buffer;
+    start = wstart = curr = end_frame = curr_put = sample_buffer;
     buf_end = sample_buffer + RX_SAMPLE_BUF_SIZE-1;
 }
 
@@ -105,6 +110,7 @@ void rxSampler_start() {
     running = true;
 }
 
+
 void rxSampler_stop() {
     if (running)
         adcsampler_stop(adc);
@@ -114,10 +120,10 @@ void rxSampler_stop() {
 
 void rxSampler_put(int8_t sample) {
     if (curr_put != start-1 && 
-        (curr_put != buf_end+1 || start != sample_buffer))
+        (curr_put != buf_end+1 || wstart != sample_buffer))
     {
         *curr_put = sample;
-        length++;
+        wlength++;
         if (curr_put++ == buf_end-1)
             curr_put = sample_buffer;
     } 
@@ -136,7 +142,7 @@ int8_t rxSampler_get() {
 
 /* Return true if read has reached end of frame */
 bool rxSampler_eof() {
-    return (curr == curr_put);        
+    return (length == 0 || curr == curr_put || (curr != start && curr == wstart));      
 }
 
 
@@ -148,9 +154,17 @@ void rxSampler_reset() {
 
 /* Ready for next frame */
 void rxSampler_nextFrame() {
-    start = curr;
-    length = 0;
+    wstart = curr_put;
+    wlength = 0;
 }
+
+
+/* Set read to last frame written */
+void rxSampler_readLast() {
+    curr = start = wstart;
+    length = wlength;
+}
+
 
 
 int rxSampler_length() {

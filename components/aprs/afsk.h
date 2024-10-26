@@ -54,6 +54,7 @@
  bool   rxSampler_eof();
  void   rxSampler_reset();
  void   rxSampler_nextFrame();
+ void   rxSampler_readLast();
  void   rxSampler_isr();
   
 #endif

@@ -232,7 +232,7 @@ fifo_t* afsk_rx_init()
   FIXME: This still need some work.. 
  ************************************************/
 
-#define SIGNAL_THRESHOLD 45
+#define SIGNAL_THRESHOLD 40
 
 static uint16_t flevel = 0, ndcd=0;
 static bool prev_dcd=false, prev2_dcd=false, dcd=false, result=false;
@@ -282,6 +282,7 @@ static void afsk_rxdecoder(void* arg)
         /* Get the frame from ADC sampler */
         rxSampler_start(); 
         int n = rxSampler_getFrame();
+        rxSampler_readLast();
         ESP_LOGI(TAG, "Frame: %d samples", n); 
         hdlc_next_frame();
         
