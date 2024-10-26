@@ -124,7 +124,6 @@ void sa8_init(uart_port_t uart)
     tx_off = cond_create();
     radio_rdy = cond_create();
     chan_rdy = cond_create();
-//    sa8_setLowTxPower(true);
     
     
     /* Squelch input. Pin interrupt */
@@ -157,7 +156,7 @@ static void _initialize()
         (pmu_dc3_isOn() ? "ON":"OFF"), _txfreq, _rxfreq);
     
     
-    sa8_setFilter(true, false, false);
+    sa8_setFilter(true, true, true);
     sa8_setVolume(6);
     sa8_setTail(0);
     _setGroupParm();

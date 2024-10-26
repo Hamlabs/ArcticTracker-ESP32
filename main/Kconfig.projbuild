@@ -8,6 +8,8 @@ menu "Arctic Tracker config"
 
         config T_TWR
             bool "LilyGo T-TWR Plus 2.0"
+        config T_TWR_21
+            bool "LilyGo T-TWR Plus 2.1"
         config ARCTIC3
             bool "Arctic Tracker v3"
         config ARCTIC4

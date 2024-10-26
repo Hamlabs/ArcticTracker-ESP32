@@ -39,13 +39,13 @@ static void mhandle_tracklog(void* x);
 static const MenuCommand items[] = 
 {
     { "Send pos report",  mhandle_send,      NULL, NULL },
+    { "Restart..",        mhandle_restart,   NULL, NULL },
     { "Soft Ap",          mhandle_softAp,    NULL, "SOFTAP.on" },
     { "WIFI",             mhandle_wifi,      NULL, "WIFI.on" },
     { "Igate",            mhandle_igate,     NULL, "IGATE.on" },
     { "Digipeater",       mhandle_digi,      NULL, "DIGIPEATER.on" },
     { "Track log",        mhandle_tracklog,  NULL, "TRKLOG.on" },
-    { "Firmware upgrade", mhandle_fwupgrade, NULL, NULL },
-    { "Restart..",        mhandle_restart,   NULL, NULL }
+    { "Firmware upgrade", mhandle_fwupgrade, NULL, NULL }
 };
 static int nitems = 8; 
 

@@ -153,7 +153,12 @@ void hdl_miclevel(uint8_t ml) {
 void hdl_volume(uint8_t vol) {
     radio_setVolume(vol); 
 }
-
+void hdl_txfreq(int32_t freq) {
+    radio_setFreq(freq, -1); 
+}
+void hdl_rxfreq(int32_t freq) {
+    radio_setFreq(-1, freq); 
+}
 
 void hdl_radio(bool on) {
     if ((radio_is_on() && on) || (!radio_is_on() && !on))
@@ -235,8 +240,8 @@ CMD_BYTE_SETTING (_param_repeat,     "REPEAT",       DFL_REPEAT,      0, 4,   NU
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",   DFL_IGATE_PORT,  1, 65535);
 CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",   0,               0, 65535);
-CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000);
-CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      1440000, 1460000);
+CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000, hdl_txfreq);
+CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      1440000, 1460000, hdl_rxfreq);
 
 CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
 CMD_BOOL_SETTING (_param_tracklog_on,"TRKLOG.on",      hdl_tracklog);

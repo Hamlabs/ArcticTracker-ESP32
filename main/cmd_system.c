@@ -555,10 +555,11 @@ static int do_adcinfo(int argc, char** argv)
 static int do_vbatt(int argc, char** argv)
 {
     int16_t batt = batt_voltage();
+    int16_t percent = batt_percent();
     if (batt == -1)
         printf("Battery voltage not available\n");
     else
-        printf("Battery voltage: %1.02f V\n", ((double) batt)/1000);
+        printf("Battery voltage: %1.02f V (%d %%)\n", ((double) batt)/1000, percent);
     return 0;
 }
 

@@ -4,3 +4,6 @@
 [submodule "components/espfs"]
 	path = components/espfs
 	url = git@github.com:jkent/esp32-espfs.git
+[submodule "components/C_AXP202X_Library"]
+	path = components/C_AXP202X_Library
+	url = https://github.com/tixlegeek/C_AXP202X_Library.git

@@ -181,7 +181,7 @@ void wifi_init(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     
     
-    wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on"));
+    wifi_enable_softAp(false && GET_BYTE_PARAM("SOFTAP.on"));
     
     esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
     scanDone = cond_create();

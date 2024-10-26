@@ -65,7 +65,8 @@ esp_err_t pmu_init()
         // Optional output Vx-1 on ARCTIC4
     PMU.setALDO4Voltage(3300); 
         // GPS on T-TWR
-    PMU.setBLDO1Voltage(3300);
+    PMU.setBLDO1Voltage(1800);
+        // Set to 1800 if ADC_ATTEN_DB_6
         // VREFADC on ARCTIC4
     
     
@@ -161,7 +162,7 @@ void pmu_batt_setup()
   /* Set constant current charge current limit
    * ! Please pay attention to add a suitable heat sink above the PMU when setting the charging current to 1A
    */
-  PMU.setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_700MA);
+  PMU.setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_800MA);
 
   /* Set stop charging termination current */
   PMU.setChargerTerminationCurr(XPOWERS_AXP2101_CHG_ITERM_150MA);

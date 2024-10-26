@@ -8,3 +8,5 @@ set(EXTRA_COMPONENT_DIRS ../esp32/XPowersLib)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(ArcticTracker)
+idf_build_set_property(COMPILE_OPTIONS "-Wno-unused-function" APPEND)
+

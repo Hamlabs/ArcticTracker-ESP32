@@ -326,6 +326,7 @@ static void status_screen7() {
     disp_flush();
 }
 
+
 /****************************************************************
  * 8. Time
  ****************************************************************/
@@ -344,3 +345,15 @@ static void status_screen8() {
     disp_setBoldFont(false);
     disp_flush();
 }
+
+
+/****************************************************************
+ * 9. Radio monitor
+ ****************************************************************/
+
+static void status_screen9() {
+    disp_clear();
+    status_heading("RADIO");
+    disp_flush();
+}
+
