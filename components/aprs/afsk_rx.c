@@ -86,7 +86,9 @@ enum fir_filters
   FIR_12_22_BP=2,
   FIR_1200_LP=3,
   FIR_PREEMP=4,
-  FIR_DEEMP=5
+  FIR_DEEMP=5,
+  FIR_1200_BP2=6,
+  FIR_2200_BP2=7,
 };
 
 
@@ -127,18 +129,18 @@ static FIR fir_table[] =
       0,
     },
   },
-  
-   /* 1200-2200 Hz bandpass filter */
+
+  /* 1200-2200 Hz bandpass filter */
   [FIR_12_22_BP] = {
-    .taps = 53,
+    .taps = 30,
     .coef = {
-      -1,-2,0,2,2,-1,-1,0,0,-3,-2,3,7,3,-6,-7,-1,3,0,0,9,11,-5,-23,-16,13,
-      30,13,-16,-23,-5,11,9,0,0,3,-1,-7,-6,3,7,3,-2,-3,0,0,-1,-1,2,2,0,-2,-1
+        3,4,-2,-5,-3,1,-2,-3,7,19,8,-24,-37,-4,38,38,-4,-37,-24,8,19,7,-3,-2,1,-3,-5,-2,4,3
     },
     .mem = {
       0,
     },
   },
+  
   
   /* Lowpass filter to 1200 Hz */
   [FIR_1200_LP] = {
@@ -172,6 +174,30 @@ static FIR fir_table[] =
       0,
     },
   },
+  
+
+  /* 1200 Hz bandpass filter */
+  [FIR_1200_BP2] = {
+    .taps = 40,
+    .coef = {
+       -1,-1,0,1,3,3,0,-4,-6,-5,1,7,10,6,-2,-10,-12,-6,5,12,12,5,-6,-12,-10,-2,6,10,7,1,-5,-6,-4,0,3,3,1,0,-1,-1
+    },
+    .mem = {
+      0,
+    },
+  },
+  
+  /* 2200 Hz bandpass filter */
+  [FIR_2200_BP2] = {
+    .taps = 40,
+    .coef = {
+      -1,0,2,1,-2,-1,3,3,-3,-5,3,6,-1,-8,-1,9,3,-8,-5,7,7,-5,-8,3,9,-1,-8,-1,6,3,-5,-3,3,3,-1,-2,1,2,0,-1
+    },
+    .mem = {
+      0,
+    },
+  },
+  
 };
 
 
@@ -232,15 +258,20 @@ fifo_t* afsk_rx_init()
   FIXME: This still need some work.. 
  ************************************************/
 
-#define SIGNAL_THRESHOLD 40
+#if DEVICE == T_TWR
+#define SIGNAL_THRESHOLD 25
+#else
+#define SIGNAL_THRESHOLD 75
+#endif
+
 
 static uint16_t flevel = 0, ndcd=0;
 static bool prev_dcd=false, prev2_dcd=false, dcd=false, result=false;
 
 bool afsk_dcd(int8_t inp) {
-    
+
     /* 
-     * Put the sample into the bandpass filter.
+     * Put the sample through the bandpass filter.
      */ 
     int8_t fsample = fir_filter(inp, FIR_12_22_BP);
     flevel = flevel * 0.5 + (fsample * fsample) * 0.5; 
@@ -274,7 +305,7 @@ static void afsk_rxdecoder(void* arg)
 {
     while (true) {
         /* Wait for squelch to be opened */
-        if (!afsk_isSquelchOff()) {
+        if (!afsk_isSquelchOff() && !radio_getSquelch() ) {
             rxSampler_stop(); 
             sem_down(afsk_frames);
         }

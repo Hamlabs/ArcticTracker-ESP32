@@ -13,8 +13,12 @@
 #define READ_LEN        128    // set the size of the ADC conversion frame, in bytes.
 #define SAMPLE_FREQ     9600
 
+#if DEVICE == T_TWR
+#define ADC_ATTEN       ADC_ATTEN_DB_12
+#else
 #define ADC_ATTEN       ADC_ATTEN_DB_6
-#define ADC_UNIT        ADC_UNIT_1               // UNIT_1 or UNIT_2
+#endif
+
 #define ADC_BIT_WIDTH   ADC_BITWIDTH_12          // the bitwidth of the raw conversion result. 9, 10, 11, 12 or 13
 #define ADC_CONV_MODE   ADC_CONV_SINGLE_UNIT_1
 #define ADC_OUTPUT_TYPE ADC_DIGI_OUTPUT_FORMAT_TYPE2
@@ -61,10 +65,11 @@ uint32_t adcsampler_nullpoint = 2048;
     - number of channels to initialize
  **************************************************************************************/
 
-void adcsampler_init( adcsampler_t *handle, uint8_t channel)
+void adcsampler_init( adcsampler_t *handle, uint8_t ionr)
 {
-  //  uint8_t channel; 
-  //  ESP_ERROR_CHECK( adc_continuous_io_to_channel(ADC_UNIT, ionr)
+    adc_unit_t unit;
+    adc_channel_t channel;
+    ESP_ERROR_CHECK( adc_continuous_io_to_channel(ionr, &unit, &channel) );
     data_ready = sem_create(0);
     
     
@@ -94,7 +99,7 @@ void adcsampler_init( adcsampler_t *handle, uint8_t channel)
     /* Set up channel */
     pattern[0].atten = ADC_ATTEN;
     pattern[0].channel = channel & 0x7;   // the IO corresponding ADC channel number
-    pattern[0].unit = ADC_UNIT;           // the ADC that the IO is subordinate to.
+    pattern[0].unit = unit;               // the ADC that the IO is subordinate to.
     pattern[0].bit_width = ADC_BIT_WIDTH; // the bitwidth of the raw conversion result.
     
     dig_cfg.adc_pattern = pattern;
@@ -154,6 +159,8 @@ void adcsampler_calibrate(adcsampler_t handle)
     }
     adcsampler_stop(handle);
     adcsampler_nullpoint = sum / nresults; 
+    printf("*** nullpoint = %ld\n", adcsampler_nullpoint);
+    
 }
 
 

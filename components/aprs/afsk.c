@@ -46,9 +46,7 @@ void afsk_setSquelchOff(bool off) {
 
 static bool afsk_sampler(struct gptimer_t * t, const gptimer_alarm_event_data_t * a, void * arg) 
 {   
-    if (rxMode)
-     ; //   rxSampler_isr(arg); 
-    else
+    if (!rxMode)
         afsk_txBitClock(arg); 
     return true;
 }
@@ -86,7 +84,6 @@ void afsk_rx_disable() {
 /**********************************************************
  * Turn receiving on and off
  * These are called from ISR handlers when squelch opens
- * FIXME: To be called when signal detected (software-dcd)
  **********************************************************/
  
 void afsk_rx_start() {
@@ -143,10 +140,6 @@ void afsk_tx_start() {
         clock_stop(afskclk); 
     afsk_PTT(false); 
     txOn = false; 
-    if (rxMode) {
-     //   clock_set_interval(afskclk, FREQ2CNT(AFSK_SAMPLERATE));
-     //   clock_start(afskclk);
-    }
     mutex_unlock(afskmx);
  }
  

@@ -54,6 +54,13 @@ void rxSampler_init()
 
 
 extern uint32_t adcsampler_nullpoint;
+uint8_t divisor = 16;
+
+
+static int8_t convertSample(uint32_t smpl) {
+    return (int8_t) ((smpl - adcsampler_nullpoint) / divisor); 
+}
+
 
 /* 
  * Get the next frame (or sequence of frames?) from ADC 
@@ -63,9 +70,9 @@ int rxSampler_getFrame()
     int nresults = 0;
     bool breakout = false; 
     rxSampler_nextFrame();
-        
+
     /* Start sampling */   
-    while (afsk_isRxMode() || afsk_isSquelchOff()) {
+    while (radio_getSquelch() || afsk_isSquelchOff()) {
         /* Get raw fragment from ADC */
         int len = adcsampler_read(adc, raw_sample_buf, ADC_FRAGMENT_SIZE);   
         if (len == -1) 
@@ -75,8 +82,7 @@ int rxSampler_getFrame()
         for (int i = 0; i < len; i += ADC_RESULT_BYTES) {
             adc_digi_output_data_t  *p = ADC_RESULT(raw_sample_buf,i);
             if (ADC_DATA_VALID(p)) { 
-                int8_t sample = (int8_t) ((ADC_GET_DATA(p) - adcsampler_nullpoint) / 16);     
-                
+                int8_t sample = convertSample(ADC_GET_DATA(p));   
                 if (afsk_dcd(sample)) {
                     rxSampler_put(sample);
                     nresults++;
@@ -84,7 +90,8 @@ int rxSampler_getFrame()
                 else if (nresults > 0)
                     breakout = true;
             }
-        }
+        }    
+
         /* APRS packets of less than 1500 samples are invalid */
         if (breakout && nresults < 1500) {
             if (nresults > 0) {
