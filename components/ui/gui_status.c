@@ -15,9 +15,10 @@
 #include "tracker.h"
 #include "trackstore.h"
 #include "tracklogger.h"
+#include "radio.h"
 
 
-#define NSCREENS 9
+#define NSCREENS 10
 
 #if DISPLAY_HEIGHT >= 64
 
@@ -50,6 +51,7 @@ static void status_screen5(void);
 static void status_screen6(void);
 static void status_screen7(void);
 static void status_screen8(void);
+static void status_screen9(void);
 
 void status_init() {
     gui_mutex = xSemaphoreCreateMutex();
@@ -61,7 +63,8 @@ void status_init() {
  ****************************************************************/
 
 void status_show() {
-    mutex_lock(gui_mutex);
+    mutex_lock(gui_mutex);  
+    gui_setPause(1000); 
     switch (current) {
         case 0:  gui_welcome();
                  break;
@@ -80,7 +83,9 @@ void status_show() {
         case 7:  status_screen7(); 
                  break;       
         case 8:  status_screen8(); 
-                 break;   
+                 break;  
+        case 9:  status_screen9(); 
+                 break;  
     }
     mutex_unlock(gui_mutex);
 }
@@ -171,10 +176,82 @@ static void status_screen1() {
 
 
 /****************************************************************
- * 2. GPS position status
+ * 2. Radio monitor
  ****************************************************************/
+extern int sa8_getRSSI();
 
 static void status_screen2() {
+    char buf[32];   
+    disp_clear();
+    status_heading("RXTX");
+    
+    if (radio_is_on() && radio_tx_is_on()) {
+        gui_setPause(250); 
+        disp_setBoldFont(true);
+        disp_setHighFont(true, false);
+        sprintf(buf, "Transmitting..");
+        disp_writeText(0, LINE2, buf);
+        disp_setHighFont(false, false);
+        disp_setBoldFont(false);
+    }
+    else if (radio_is_on()) {
+        gui_setPause(250); 
+        int rssi=sa8_getRSSI();
+        int nrssi = (rssi-16) / 8;
+        if (nrssi > 14)
+            nrssi = 14;
+        disp_setBoldFont(true);
+        disp_setHighFont(true, false);
+        int i = 0;
+        memset(buf, 0, 24);
+        for (i=0; i<nrssi; i++)
+            buf[i] = '}'+1;
+        disp_writeText(0, LINE1, buf);
+        disp_setBoldFont(false);
+        disp_setHighFont(false, false);
+    
+        sprintf(buf, "RSSI: %3d  %s", rssi, (radio_getSquelch() ? "[SQ]" : "")); 
+        disp_writeText(0, LINE3, buf);
+        int32_t f = get_i32_param("RXFREQ", DFL_RXFREQ);
+        sprintf(buf, "RX: %03ld.%03ld MHz%c", f/10000, (f/10)%1000, '\0');
+        disp_writeText(0, LINE4, buf);
+    }
+    else {
+        gui_setPause(2000); 
+        disp_setBoldFont(true);
+        sprintf(buf, "Radio is OFF");
+        disp_writeText(0, LINE2, buf);
+        disp_setBoldFont(false);
+    }
+    disp_flush();
+}
+
+
+/****************************************************************
+ * 3. Time
+ ****************************************************************/
+
+static void status_screen3() {
+    disp_clear();
+    status_heading("TIME");
+    char buf[24];
+    disp_setBoldFont(true);
+    disp_setHighFont(true, true); 
+    sprintf(buf, "%s", time2str(buf, getTime(), true));   
+    disp_writeText(10, LINE2, buf); 
+    disp_setHighFont(false, false); 
+    sprintf(buf, "%s", date2str(buf, getTime(), true));   
+    disp_writeText(10, LINE4, buf); 
+    disp_setBoldFont(false);
+    disp_flush();
+}
+
+
+/****************************************************************
+ * 4. GPS position status
+ ****************************************************************/
+
+static void status_screen4() {
     char buf[24];
     disp_clear();
     status_heading("GNSS");
@@ -203,10 +280,10 @@ static void status_screen2() {
 
 
 /****************************************************************
- * 3. WIFI status
+ * 5. WIFI status
  ****************************************************************/
 
-static void status_screen3() {
+static void status_screen5() {
     char buf[24]; 
     
     disp_clear();
@@ -230,10 +307,10 @@ static void status_screen3() {
 
 
 /****************************************************************
- * 4. WIFI softap status
+ * 6. WIFI softap status
  ****************************************************************/
 
-static void status_screen4() {
+static void status_screen6() {
     char buf[24]; 
     
     disp_clear();
@@ -250,12 +327,12 @@ static void status_screen4() {
 
 
 /****************************************************************
- * 5. Battery status
+ * 7. Battery status
  ****************************************************************/
 
 int chg_cnt = 0;
 
-static void status_screen5() {
+static void status_screen7() {
     char b1[16], b2[16];
     b2[0] = '\0';
     disp_clear();
@@ -295,10 +372,10 @@ static void status_screen5() {
 
 
 /****************************************************************
- * 6. Firmware status
+ * 8. Firmware status
  ****************************************************************/
 
-static void status_screen6() {
+static void status_screen8() {
     disp_clear();
     status_heading("SYST");
  
@@ -311,10 +388,10 @@ static void status_screen6() {
 
 
 /****************************************************************
- * 7. Track log upload status
+ * 9. Track log upload status
  ****************************************************************/
 
-static void status_screen7() {
+static void status_screen9() {
     disp_clear();
     status_heading("TRKL");
     char buf[24];
@@ -326,34 +403,4 @@ static void status_screen7() {
     disp_flush();
 }
 
-
-/****************************************************************
- * 8. Time
- ****************************************************************/
-
-static void status_screen8() {
-    disp_clear();
-    status_heading("TIME");
-    char buf[24];
-    disp_setBoldFont(true);
-    disp_setHighFont(true, true); 
-    sprintf(buf, "%s", time2str(buf, getTime(), true));   
-    disp_writeText(10, LINE2, buf); 
-    disp_setHighFont(false, false); 
-    sprintf(buf, "%s", date2str(buf, getTime(), true));   
-    disp_writeText(10, LINE4, buf); 
-    disp_setBoldFont(false);
-    disp_flush();
-}
-
-
-/****************************************************************
- * 9. Radio monitor
- ****************************************************************/
-
-static void status_screen9() {
-    disp_clear();
-    status_heading("RADIO");
-    disp_flush();
-}
 

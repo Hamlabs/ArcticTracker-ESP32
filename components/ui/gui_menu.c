@@ -158,11 +158,12 @@ void menu_end()
  // FIXME Move to ui.c and rename to service Thread
  
 bool charging = false;
+int gui_pause = 1000;
 
 static void gui_thread (void* arg) 
 {
     while (true) {
-        sleepMs(1000);
+        sleepMs(gui_pause);
              
         if (batt_charge() && !charging)
             { beeps("-.-.  "); blipUp(); }
@@ -172,12 +173,15 @@ static void gui_thread (void* arg)
     
         if (!menu_is_active() && !disp_popupActive())
             status_show();
-         
- //        igate_on(GET_BYTE_PARAM("IGATE.on"));
- //        digipeater_on(GET_BYTE_PARAM("DIGIPEATER.on"));
     }
 }
- 
+
+
+void gui_setPause(int n) {
+    gui_pause = n;
+}
+
+
  
 void menu_init()
 {
