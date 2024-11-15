@@ -6,6 +6,7 @@
 #include "esp_adc/adc_continuous.h"
 
  bool radio_is_on(); 
+ bool radio_tx_is_on(); 
  void radio_require(); 
  void radio_release(); 
  void radio_wait_enabled();

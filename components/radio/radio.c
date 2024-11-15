@@ -9,6 +9,7 @@
 
 /* dummy functions */
 bool radio_is_on() { return false; }
+bool radio_tx_is_on() { return false; }
 void radio_require() {}
 void radio_release() {}
 void radio_wait_enabled() {}
@@ -35,6 +36,7 @@ void wait_channel_ready(void) {}
 
 #if DEVICE == T_TWR || DEVICE == ARCTIC4
  bool sa8_is_on(void);
+ bool sa8_tx_is_on(void); 
  void sa8_require(void);
  void sa8_release(void);
  void sa8_wait_enabled(void);
@@ -54,6 +56,7 @@ void wait_channel_ready(void) {}
  void sa8_wait_tx_off(void);
   
  bool radio_is_on() { return sa8_is_on(); }
+ bool radio_tx_is_on() { return sa8_tx_is_on(); }
  void radio_require() { sa8_require(); }
  void radio_release() { sa8_release(); }
  void radio_wait_enabled() { sa8_wait_enabled(); }
@@ -92,6 +95,7 @@ void wait_channel_ready(void) {}
  void frs_wait_tx_off(void);
   
  bool radio_is_on() { return frs_is_on(); }
+ bool radio_tx_is_on() { return frs_is_on(); }
  void radio_require() { frs_require(); }
  void radio_release() { frs_release(); }
  void radio_wait_enabled() { frs_wait_enabled(); }
