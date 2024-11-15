@@ -121,16 +121,16 @@
 #define RADIO_PIN_SQUELCH   15
 
 /* Radio audio input */
-#define RADIO_INPUT         ADC1_CHANNEL_0  // IO1 
+#define RADIO_INPUT          1  
 
 /* Tone generation (for AFSK) */
 #define TONE_SDELTA_ENABLE
-#define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
-#define TONE_SDELTA_PIN  18
+#define TONE_SDELTA_CHAN    SIGMADELTA_CHANNEL_0
+#define TONE_SDELTA_PIN     18
 
 #if T_TWR_VER == 21
-#define RADIO_PIN_SQUELCH  2
-
+#define RADIO_PIN_SQUELCH    2
+#define RADIO_PIN_MICSEL    17
 #endif
 
 #elif DEVICE == ARCTIC4
@@ -143,11 +143,11 @@
 #define RADIO_PIN_SQUELCH   40
 
 /* Radio audio input */
-#define RADIO_INPUT         ADC1_CHANNEL_0  // IO1 
+#define RADIO_INPUT          1 
 
 /* Tone generation (for AFSK) */
 #define TONE_SDELTA_ENABLE
-#define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
+#define TONE_SDELTA_CHAN    SIGMADELTA_CHANNEL_0
 #define TONE_SDELTA_PIN      2
 
 #else
@@ -158,7 +158,7 @@
 #define RADIO_PIN_SQUELCH   13
 
 /* Radio audio input */
-#define RADIO_INPUT         ADC2_CHANNEL_3
+#define RADIO_INPUT         ADC2_CHANNEL_3 // FIXME
 
 /* Tone generation (for AFSK) */
 #define TONE_SDELTA_ENABLE
@@ -177,8 +177,8 @@
 #if DEVICE != T_TWR && DEVICE != ARCTIC4
 
 /* Misc. ADC inputs */
-#define X1_ADC_INPUT        ADC1_CHANNEL_4
-#define BATT_ADC_INPUT      ADC2_CHANNEL_7
+#define X1_ADC_INPUT        ADC1_CHANNEL_4 
+#define BATT_ADC_INPUT      ADC2_CHANNEL_7 
 
 #if DEVICE == ARCTIC3
 /* Batt charger */
@@ -344,12 +344,12 @@
 #define STACK_UI_SRV         3800
 #define STACK_TRACKER        3800
 #define STACK_MONITOR        3200
-#define STACK_GUI            3200
-#define STACK_HLIST          1000
+#define STACK_GUI            3400
+#define STACK_HLIST          1500
 #define STACK_DIGI           3200
 #define STACK_TCP_REC        3000
 #define STACK_IGATE          4000
-#define STACK_IGATE_RADIO    3500
+#define STACK_IGATE_RADIO    3700
 #define STACK_TRACKLOG       3500
 #define STACK_TRACKLOGPOST   3900
 #define STACK_HTTPD          5500

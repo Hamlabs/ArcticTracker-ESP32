@@ -203,18 +203,24 @@ static void startup(void* arg)
 
 void app_main()
 {       
-    /* Change function of somee pins through IO mux to be GPIO */
+    /* Change function of somee pins through IO mux to be GPIO 
+     * FIXME: Use macros from defines.h to identify GPIOs
+     */
 #if DEVICE==T_TWR
-    gpio_iomux_in (39, U0RXD_IN_IDX); 
-    gpio_iomux_out(48, U0TXD_OUT_IDX, false); 
-    gpio_iomux_out(40, 1, false);
-    gpio_iomux_out(41, 1, false);
-    gpio_iomux_in(15, 1);
+    gpio_iomux_in (RADIO_PIN_TXD,    U0RXD_IN_IDX); 
+    gpio_iomux_out(RADIO_PIN_RXD,    U0TXD_OUT_IDX, false); 
+    gpio_iomux_out(RADIO_PIN_PD,      1, false);
+    gpio_iomux_out(RADIO_PIN_PTT,     1, false);
+//    gpio_iomux_in (RADIO_PIN_SQUELCH, 1);
+    gpio_iomux_in (1,3);
+#if T_TWR_VER == 21
+    gpio_iomux_out(RADIO_PIN_MICSEL,  1, false);
+#endif
 #elif DEVICE == ARCTIC4
-    gpio_iomux_out(8, 1, false);
-    gpio_iomux_out(41, 1, false); // FUNC_MTDI_GPIO41
-    gpio_iomux_out(42, 1, false); // FUNC_MTMS_GPIO42
-    gpio_iomux_out(39, 1, false); // FUNC_MTCK_GPIO39
+    gpio_iomux_out(BUZZER_PIN,    1, false);
+    gpio_iomux_out(RADIO_PIN_PD,  1, false); // FUNC_MTDI_GPIO41
+    gpio_iomux_out(RADIO_PIN_PTT, 1, false); // FUNC_MTMS_GPIO42
+    gpio_iomux_out(LED_TX_PIN,    1, false); // FUNC_MTCK_GPIO39
 #else
     gpio_iomux_out(39, 1, false); // FUNC_MTCK_GPIO39
     gpio_iomux_out(40, 1, false); // FUNC_MTDO_GPIO40
@@ -222,7 +228,6 @@ void app_main()
     gpio_iomux_out(42, 1, false); // FUNC_MTMS_GPIO42
     gpio_iomux_in (18, U1RXD_IN_IDX); 
 #endif
-
     fbuf_init();
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();
@@ -234,6 +239,7 @@ void app_main()
     register_system();
     register_wifi();
     register_aprs();
+    
     wifi_init();
     fatfs_init();
     rest_start(HTTP_PORT, HTTPS_PORT, "/");
