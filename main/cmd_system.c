@@ -292,9 +292,31 @@ static int do_sysinfo(int argc, char** argv)
            size_flash, " MB"
     );
     printf("  revision nr:   %d\n", info.revision);
+    
+    printf("\nPower Management Unit:\n\n");
+    pmu_printInfo();
     return 0;
 }
 
+
+
+
+/********************************************************************************
+ * Dump info on GPIO configuration
+ ********************************************************************************/
+
+static int do_ioconfig(int argc, char** argv) {
+    if (argc<=1) {
+        printf("ioconfig command needs GPIO number as argument\n");
+        return 0;
+    }
+    int n; 
+    sscanf(argv[1],"%d", &n);
+    if (n<0 || n>48)
+        return 0;
+    gpio_dump_io_configuration(stdout, 0x01 << n);
+    return 0;
+}
 
 
 /********************************************************************************
@@ -548,6 +570,8 @@ static int do_adcinfo(int argc, char** argv)
 
 
 
+
+
 /********************************************************************************
  * Read battery voltage
  ********************************************************************************/
@@ -598,6 +622,7 @@ CMD_STR_SETTING  (_param_timezone,"TIMEZONE",   64, DFL_TIMEZONE,   REGEX_TIMEZO
 
 void register_system()
 {
+    
     ADD_CMD("trk-reset", &do_reset,       "Reset track storage", NULL);  
     ADD_CMD("ls",        &do_ls,          "List files", NULL);  
     ADD_CMD("mkdir",     &do_mkdir,       "Create directory", "<path>");
@@ -608,20 +633,21 @@ void register_system()
     ADD_CMD("read",      &do_read,        "Read from file", "<path>");
     ADD_CMD("free",      &do_free,        "Get the total size of heap memory available", NULL);
     ADD_CMD("sysinfo",   &do_sysinfo,     "System info", NULL);    
-    ADD_CMD("restart",   &do_restart,     "Restart the program", NULL);
+    ADD_CMD("restart",   &do_restart,     "Restart the system", NULL);
     ADD_CMD("tasks",     &do_tasks,       "Get information about running tasks", NULL);
-    ADD_CMD("log",       &do_log,         "Set loglevel (for debugging/development)", "<tag> | * [<level>|delete]") ;
+    ADD_CMD("log",       &do_log,         "Set loglevel (for debugging/testing)", "<tag> | * [<level>|delete]") ;
     ADD_CMD("time",      &do_time,        "Get date and time", NULL);
-    ADD_CMD("timezone",  &_param_timezone,"Set timezone", NULL);
+    ADD_CMD("timezone",  &_param_timezone,"Set timezone", "<tz-string>");
     ADD_CMD("nmea",      &do_nmea,        "Monitor GPS NMEA datastream", "[raw]");
-    ADD_CMD("tone",      &do_tone,        "tone generator test", "");
+    ADD_CMD("tone",      &do_tone,        "Tone generator test", "");
     ADD_CMD("ptt",       &do_ptt,         "Transmitter on", "");
     ADD_CMD("fw-upgrade", &do_fwupgrade,  "Firmware upgrade (OTA)", "");
-#if DEVICE != T_TWR
+#if DEVICE != T_TWR && DEVICE != ARCTIC4
     ADD_CMD("adc",       &do_adcinfo,     "Read ADC", "");
     ADD_CMD("adcref",    &_param_adcref,  "ADC reference value (millivolts)", "[<val>]");
 #endif
     ADD_CMD("rssi",      &do_rssi,        "Signal strength", "");
     ADD_CMD("vbatt",     &do_vbatt,       "Read battery voltage", "");
-    ADD_CMD("shutdown",  &do_shutdown,    "Shut down system (put in deep sleep)", "");
+    ADD_CMD("shutdown",  &do_shutdown,    "Shut down system", "");
+    ADD_CMD("ioconfig",  &do_ioconfig,    "Show info on GPIO configuration", "<gpio>");
 }

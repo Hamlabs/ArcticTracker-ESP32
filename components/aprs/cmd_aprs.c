@@ -150,15 +150,19 @@ void hdl_squelch(uint8_t sq) {
 void hdl_miclevel(uint8_t ml) {
     radio_setMicLevel(ml); 
 }
+
 void hdl_volume(uint8_t vol) {
     radio_setVolume(vol); 
 }
+
 void hdl_txfreq(int32_t freq) {
     radio_setFreq(freq, -1); 
 }
+
 void hdl_rxfreq(int32_t freq) {
     radio_setFreq(-1, freq); 
 }
+
 
 void hdl_radio(bool on) {
     if ((radio_is_on() && on) || (!radio_is_on() && !on))
@@ -271,8 +275,8 @@ void register_aprs()
     ADD_CMD("teston",     &do_teston,          "HDLC encoder test", "<byte>");
     ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
     ADD_CMD("listen",     &do_listen,          "Monitor radio channel", "");
-    ADD_CMD("trklog-get", &do_trget,           "Get track record", "");      
-    ADD_CMD("trklog-put", &do_trput,           "Put track record", "");  
+    ADD_CMD("trklog-get", &do_trget,           "Get tracklog record", "");      
+    ADD_CMD("trklog-put", &do_trput,           "Put tracklog record", "");  
     
     ADD_CMD("mycall",     &_param_mycall,      "My callsign", "[<callsign>]");
     ADD_CMD("dest",       &_param_dest,        "APRS destination address", "[<addr>]");
@@ -298,8 +302,8 @@ void register_aprs()
     ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
-    ADD_CMD("miclevel",   &_param_miclevel,    "Miclevel setting (1-8)",            "[<val>]");
-    ADD_CMD("volume",     &_param_miclevel,    "RX audio level setting (1-8)",      "[<val>]");
+
+    ADD_CMD("volume",     &_param_volume,      "RX audio level setting (1-8)",      "[<val>]");
             
     ADD_CMD("timestamp",  &_param_timestamp,   "Timestamp setting",  "[on|off]");
     ADD_CMD("compress",   &_param_compress,    "Compress setting",  "[on|off]");
@@ -321,7 +325,7 @@ void register_aprs()
     ADD_CMD("reportbeep", &_param_rbeep_on,    "Beep when report is sent", "[on|off]");
     ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport in turns", "[on|off]");
     ADD_CMD("igtrack",    &_param_igtrack_on,  "Send posreports directly to APRS/IS when available", "[on|off]");   
-    ADD_CMD("txmon",      &_param_txmon_on,    "Tx monitor", "[on|off]");
+    ADD_CMD("txmon",      &_param_txmon_on,    "Tx monitor (show TX packets)", "[on|off]");
     ADD_CMD("txlow",      &_param_txlow_on,    "Tx power low", "[on|off]");
 }
 

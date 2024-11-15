@@ -23,9 +23,7 @@ fw-upgrade  Firmware upgrade (OTA)
 
 vbatt       Read battery voltage
 shutdown    Shut down system (put in deep sleep)
-   
-adc         Read ADC (not on T-TWR)
-adcref      ADC reference value (millivolts) (not on T-TWR)
+
 
 
 ########################### 
@@ -84,7 +82,6 @@ turnlimit   Threshold for change of direction
 txfreq      TX frequency (100 Hz units)"
 rxfreq      RX frequency (100 Hz units)
 squelch     Squelch setting (1-8)
-miclevel    Miclevel setting (1-8)
 
 timestamp   Timestamp setting
 compress    Compress setting

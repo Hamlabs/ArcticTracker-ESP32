@@ -252,6 +252,7 @@ void app_main()
     
     while(!usb_serial_jtag_is_connected())
         sleepMs(1000);
-    sleepMs(2500);
+
+    sleepMs(3500);
     run_console();   
 }

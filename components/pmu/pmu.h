@@ -19,7 +19,7 @@ void      pmu_disableShutdown(bool on);
 void      pmu_dc3_on(bool on);
 bool      pmu_dc3_isOn();
 void      pmu_printInfo();
-
+void      pmu_shutdown();
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,4 @@
 
-
 /*
  * Misc. System related stuff
  * (c) By LA7ECA, ohanssen@acm.org
@@ -255,7 +254,11 @@ void systemShutdown(void)
     blipDown();
     sleepMs(50);
     radio_on(false); 
+#if defined USE_PMU
+    pmu_shutdown();
+#else
     esp_deep_sleep_start();
+#endif
 }
 
 
