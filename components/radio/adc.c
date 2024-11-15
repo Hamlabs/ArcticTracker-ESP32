@@ -158,9 +158,7 @@ void adcsampler_calibrate(adcsampler_t handle)
         }
     }
     adcsampler_stop(handle);
-    adcsampler_nullpoint = sum / nresults; 
-    printf("*** nullpoint = %ld\n", adcsampler_nullpoint);
-    
+    adcsampler_nullpoint = sum / nresults;  
 }
 
 
