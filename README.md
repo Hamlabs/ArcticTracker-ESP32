@@ -14,7 +14,7 @@ See http://www.hamlabs.no for some blogging about this project and on the [port 
 ## Supported hardware
 
 * [_LilyGo T-TWR-plus 2.0_](https://www.lilygo.cc/products/t-twr-plus?variant=42911934185653). Put a wire between the SQL output of the radio module and the IO15 pin (and maybe also a 1nF capacitor between IO15 and GND to suppress RF pickup). 
-* [_Arctic Tracker hardware_](http://hamlabs.no/2023/01/10/arctic_third_round/): A working hardware prototype was built and demonstrated. A updated PCB layout has been produced. 5 trackers have been made and tested.
+* [_Arctic Tracker hardware_](http://hamlabs.no/2023/01/10/arctic_third_round/): A working hardware prototype was built and demonstrated. A updated PCB layout has been produced. Several trackers have been made and tested.
 
 ## Implemented features
 
