@@ -27,6 +27,8 @@ static const char *TAG = "pmu";
 #define ACK_VAL                         (i2c_ack_type_t)0x0         /*!< I2C ack value */
 #define NACK_VAL                        (i2c_ack_type_t)0x1         /*!< I2C nack value */
 
+#define PMU_LOWBAT_SHUTDOWN  5
+
 
 
 static int pmu_register_read(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len);
@@ -108,6 +110,7 @@ void pmu_power_setup()
     PMU.disableBLDO2();
     PMU.enableBLDO1();
     PMU.disableALDO2(); // Optional Vx-1
+    PMU.enableDC3();
     
 #else
     /* External pin power supply */
@@ -127,11 +130,9 @@ void pmu_power_setup()
     
 #endif
         
-    /* DC3 Radio & Pixels VDD */
-    PMU.enableDC3();
-    
     /* power off when not in use */
     PMU.disableDC2();
+    PMU.disableDC3();
     PMU.disableDC4();
     PMU.disableCPUSLDO();
     PMU.disableDLDO1();
@@ -147,7 +148,8 @@ void pmu_power_setup()
 void pmu_batt_setup() 
 {    
   /* It is necessary to disable the detection function of the TS pin on the board
-   * without the battery temperature detection function, otherwise it will cause abnormal charging */
+   * without the battery temperature detection function, otherwise it will cause abnormal charging 
+   */
   PMU.disableTSPinMeasure();
 
   /* Enable internal ADC detection */
@@ -170,15 +172,11 @@ void pmu_batt_setup()
   /* Set charge cut-off voltage */
   PMU.setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V2);
   
-  /* Get charging target current */
-  const uint16_t currTable[] = {
-      0, 0, 0, 0, 100, 125, 150, 175, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
-  uint8_t val = PMU.getChargerConstantCurr();
+  /* Shut down if battery is lower than 5% */
+  PMU.setLowBatShutdownThreshold(PMU_LOWBAT_SHUTDOWN);
   
-  /* Get charging target voltage */
-  const uint16_t tableVoltage[] = {
-      0, 4000, 4100, 4200, 4350, 4400, 255};
-  val = PMU.getChargeTargetVoltage();
+  PMU.fuelGaugeControl(true, true);
+//  PMU.resetGaugeBesides();
 }
 
 
@@ -202,9 +200,18 @@ void pmu_gps_on(bool on)
 }
 
 
+void pmu_dc3_on(bool on) {
+    if (on)
+        PMU.enableDC3(); 
+    else
+        PMU.disableDC3();
+}
+
+
 bool pmu_dc3_isOn() {
     return PMU.isEnableDC3();
 }
+
 
 bool pmu_dc5_isOn() {
     return PMU.isEnableDC5();
@@ -253,8 +260,60 @@ bool pmu_isCharging() {
 bool pmu_isVbusIn() {
     return PMU.isVbusIn();
 }
+
+
+/*****************************************************
+ * Temporarily disable automatic shutdown
+ *****************************************************/
+
+void pmu_disableShutdown(bool on) {
+   PMU.setLowBatShutdownThreshold(on ? 0 : PMU_LOWBAT_SHUTDOWN);
+}
+
+
+/*****************************************************
+ * Print status information on console
+ *****************************************************/
+void pmu_printInfo()
+{
+    printf("Charging:        %s\n", (PMU.isCharging() ? "YES" : "NO"));
+    printf("Discharge:       %s\n", (PMU.isDischarge() ? "YES" : "NO"));
+    printf("Standby:         %s\n", (PMU.isStandby() ? "YES" : "NO"));
+    printf("Vbus In:         %s\n", (PMU.isVbusIn() ? "YES" : "NO"));
+    printf("Vbus Good:       %s\n", (PMU.isVbusGood() ? "YES" : "NO"));
+    printf("Charger Status:  ");
+    uint8_t charge_status = PMU.getChargerStatus();
+    if (charge_status == XPOWERS_AXP2101_CHG_TRI_STATE) {
+        printf("tri charge");
+    } else if (charge_status == XPOWERS_AXP2101_CHG_PRE_STATE) {
+        printf("pre charge");
+    } else if (charge_status == XPOWERS_AXP2101_CHG_CC_STATE) {
+        printf("constant charge");
+    } else if (charge_status == XPOWERS_AXP2101_CHG_CV_STATE) {
+        printf("constant voltage");
+    } else if (charge_status == XPOWERS_AXP2101_CHG_DONE_STATE) {
+        printf("charge done");
+    } else if (charge_status == XPOWERS_AXP2101_CHG_STOP_STATE) {
+        printf("not charging");
+    }
+    printf("\n");
+
+    printf("Batt Voltage:    %d mV\n", PMU.getBattVoltage()); 
+    printf("Vbus Voltage:    %d mV\n", PMU.getVbusVoltage());
+    printf("System Voltage:  %d mV\n", PMU.getSystemVoltage());
+
+    // The battery percentage may be inaccurate at first use, the PMU will automatically
+    // learn the battery curve and will automatically calibrate the battery percentage
+    // after a charge and discharge cycle
+    if (PMU.isBatteryConnect()) {
+        printf("Battery Percent: %d %%\n", PMU.getBatteryPercent());
+    }
+    printf("Shutdown thresh: %d %%\n", PMU.getLowBatShutdownThreshold());
     
-    
+}
+
+
+
 /****************************************************************************************
  * Read a sequence of bytes from a pmu registers
  ****************************************************************************************/

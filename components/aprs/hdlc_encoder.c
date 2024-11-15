@@ -12,7 +12,7 @@
 #include "config.h"
 #include "ax25.h"
 #include "ui.h"
-
+#include "pmu.h"
 
 #define TAG "hdlc-enc"
 
@@ -130,12 +130,18 @@ static void hdlc_txencoder (void* arg)
            break;
       } 
       tx_led_on();
+#if DEVICE == ARCTIC4
+      pmu_disableShutdown(true);
+#endif
       hdlc_encode_frames();
       hdlc_idle = true; 
       SIGNAL_IDLE;
       sleepMs(50);
       wait_tx_off();
       tx_led_off();
+#if DEVICE == ARCTIC4
+      pmu_disableShutdown(false); 
+#endif
   }
 }
 

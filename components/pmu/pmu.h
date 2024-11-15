@@ -15,7 +15,10 @@ uint16_t  pmu_getBattVoltage(void);
 uint16_t  pmu_getBattPercent(void);
 float     pmu_getTemperature(void);
 bool      pmu_isCharging();
+void      pmu_disableShutdown(bool on);
+void      pmu_dc3_on(bool on);
 bool      pmu_dc3_isOn();
+void      pmu_printInfo();
 
 
 #ifdef __cplusplus
