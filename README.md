@@ -14,7 +14,7 @@ See http://www.hamlabs.no for some blogging about this project and on the [port 
 ## Supported hardware
 
 * [_LilyGo T-TWR-plus 2.0_](https://www.lilygo.cc/products/t-twr-plus?variant=42911934185653). Put a wire between the SQL output of the radio module and the IO15 pin (and maybe also a 1nF capacitor between IO15 and GND to suppress RF pickup). 
-* [_Arctic Tracker hardware_](http://hamlabs.no/2023/01/10/arctic_third_round/): A working hardware prototype was built and demonstrated. A updated PCB layout has been produced. 5 trackers have been made and tested.
+* [_Arctic Tracker hardware_](http://hamlabs.no/2023/01/10/arctic_third_round/): A working hardware prototype was built and demonstrated. A updated PCB layout has been produced. Several trackers have been made and tested.
 
 ## Implemented features
 
@@ -86,9 +86,9 @@ The command-shell let you configure everything and is useful in developing and d
 The tracker is also able to function as its own access point (*'softap'* command). Info about ip-address, etc. is shown on the display so you can connect your browser to it. 
 
 ## Issues and work in progress
-When planning a version 4 tracker we consider moving on to exploring LoRa and FSK modes on 70 cm. However, in Norway, there are legal issues with spread-spectrum modes on HAM-radio on the 70cm band, so it may have to wait a bit. A version 4 for VHF/plain old APRS is being tested and work is in progress with the software.
+When working with a version 4 tracker we will also move on to exploring LoRa APRS (and possibly FSK modes) on 70 cm.  In Norway it is now legal to use up to 200 Khz bandwith from 433.600 to 434 MHz, so an Arctic Tracker 4 UHF PCB (with a LoRa module) is underway. A version 4 for VHF/plain old APRS is being tested and it looks promising. I hope to publish some on this soon. 
 
-Receiving packets is more complicated than transmitting and involve some DSP work and sampling from the ADC. I hope that this will work reasonably well in a update coming soon. There seems to be an issue with te squelch of the SA-868 (needing a very strong signal to open even at the lowest setting) but it may be better outside my shack where there is less computer noise.
+Receiving packets is more complicated than transmitting and involve some DSP work and sampling from the ADC. This seems to work reasonably well, though it still somewhat work-in-progress. It can work without the squelch signal now. At least in my setup it seems the SA-868 need a rather strong signal to open the squelch even at the lowest settin (it may be better outside my shack where there is less computer noise).
 
 The SA868 comes with a programmable version and I wonder if it could used and maybe optimized a bit for APRS? 
 
