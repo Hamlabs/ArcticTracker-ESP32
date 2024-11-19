@@ -1,3 +1,4 @@
+
 /*
  * AFSK Demodulation. 
  * 
@@ -5,10 +6,10 @@
  *    Originally by Develer S.r.l. (http://www.develer.com/), GPLv2 licensed.
  * 
  */
-
-      
-#include <string.h>
 #include "defines.h"
+#if !defined(ARCTIC4_UHF)
+
+#include <string.h>
 #include "afsk.h"
 #include "hdlc.h"
 #include "ui.h"
@@ -445,4 +446,6 @@ static void add_bit(bool bit)
         bit_count = 0;
     }
 }
+
+#endif
 

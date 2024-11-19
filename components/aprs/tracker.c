@@ -269,11 +269,13 @@ void tracker_off()
 
 static void activate_tx()
 {
+#if !defined(ARCTIC4_UHF)
       if (hdlc_enc_packets_waiting()) {
          radio_require(); 
          sleepMs(100);
          radio_release();
       }
+#endif
 }
 
 

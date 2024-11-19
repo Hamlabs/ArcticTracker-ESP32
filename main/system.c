@@ -83,9 +83,11 @@ esp_err_t firmware_upgrade()
         ESP_LOGW(TAG, "Wifi not connected - cannot update");
         return ESP_OK; 
     }
+#if !defined(ARCTIC4_UHF)
     afsk_rx_stop(); 
     afsk_tx_stop();
     radio_on(false);
+#endif
     disp_backlight();
     gui_fwupgrade();
     sleepMs(500);
@@ -173,7 +175,8 @@ int16_t batt_voltage(void)
 #if defined USE_PMU
     return pmu_getBattVoltage();
 #else
-    return adc_batt();
+    return 0;
+    // FIXME: ADC reading required - see earlier versions
 #endif
 }
 
@@ -464,14 +467,23 @@ char* date2str(char* buf, time_t time, bool local)
  * Managed log-tags. If you want to control logging of a component, add
  * its tag(s) to this list.
  */
+#if defined(ARCTIC4_UHF)
 static char* logtags[] = {
+    "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
+    "esp-tls", "radio", "ui", "gps", "uart", "digi", "igate", "tcp-cli", "trackstore", 
+    "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", "httpd_uri", "httpd_parse", "mdns", "gptimer"
+#define NLOGTAGS 26
+};
+#else
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "afsk-rx", "hdlc-enc", "hdlc-dec", "gps", "uart", "digi", "igate",
     "tcp-cli", "trackstore", "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", 
     "httpd_uri", "httpd_parse", "mdns", "gptimer"
-};
+#define NLOGTAGS 29
+#endif
 
-#define NLOGTAGS 28
+
+    
 
 uint8_t lglv_dfl = ESP_LOG_NONE;
 

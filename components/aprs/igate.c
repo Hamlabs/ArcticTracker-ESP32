@@ -142,12 +142,14 @@ static void igate_main(void* arg)
             get_str_param("IGATE.FILTER", filter, CRED_LENGTH, DFL_IGATE_FILTER);      
             igate_login(uname, pass, filter);
 
-            
             /* Start child thread to listen for frames from radio or tracker */
             xTaskCreatePinnedToCore(&igate_radio, "Igate Radio", 
                 STACK_IGATE_RADIO, NULL, NORMALPRIO, NULL, CORE_IGATE_RADIO);
+    
+#if !defined(ARCTIC4_UHF)
             hdlc_subscribe_rx(&rxqueue, 2);
-       
+#endif
+           
             /* Listen for data from APRS/IS server */
             while (_igate_on) {
                 int len = inet_read(frame, FRAME_LEN); 
@@ -161,8 +163,9 @@ static void igate_main(void* arg)
             _igate_run = false; 
             fbq_signal(&rxqueue);
             sleepMs(50);
+#if !defined(ARCTIC4_UHF)
             hdlc_subscribe_rx(NULL, 2);
-       
+ #endif      
             /* Connection failure. Wait for 2 minutes */
             if (_igate_on) {
                 ESP_LOGW(TAG, "Connection failed");
@@ -210,14 +213,17 @@ void igate_activate(bool m)
         hlist_start();
     
         /* Turn on radio and decoder */
+#if !defined(ARCTIC4_UHF)
         radio_require();
         afsk_rx_enable();
+#endif
     } 
     if (tstop) {
         /* Turn off radio and decoder */
+#if !defined(ARCTIC4_UHF)       
         afsk_rx_disable();
         radio_release();
-    
+#endif
         /* Close internet connection */
         inet_close(); 
         sleepMs(100);

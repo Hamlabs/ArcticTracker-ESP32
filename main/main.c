@@ -175,10 +175,12 @@ static void startup(void* arg)
 {
     sleepMs(2000);
     trackstore_start();
+    FBQ* oq = NULL;
+#if !defined(ARCTIC4_UHF)
     afsk_init(); 
     hdlc_init_decoder(afsk_rx_init());
-    FBQ* oq = hdlc_init_encoder(afsk_tx_init());
-    
+    oq = hdlc_init_encoder(afsk_tx_init());
+#endif
     time_init();
     gps_init(GPS_UART);
      

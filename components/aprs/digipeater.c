@@ -100,27 +100,35 @@ void digipeater_activate(bool m)
  
     if (tstart) {
         ESP_LOGI(TAG, "starting.."); 
+        
         /* Subscribe to RX packets and start treads */
+#if !defined(ARCTIC4_UHF)
         hdlc_subscribe_rx(mq, 1);
+#endif
         xTaskCreatePinnedToCore(&digipeater, "Digipeater", 
             STACK_DIGI, NULL, NORMALPRIO, &digithr, CORE_DIGI);
         hlist_start();
       
         /* Turn on radio and enable RX */
+#if !defined(ARCTIC4_UHF)
         radio_require();
         afsk_rx_enable();
+#endif
     } 
     if (tstop) {
         ESP_LOGI(TAG, "stopping..");
         
         /* Turn off radio and disable RX */
+#if !defined(ARCTIC4_UHF)
         afsk_rx_disable();
         radio_release();
-      
+#endif    
         /* Unsubscribe to RX packets and stop threads */
         fbq_signal(&rxqueue);   
         digithr = NULL;
+#if !defined(ARCTIC4_UHF)
         hdlc_subscribe_rx(NULL, 1);
+#endif
     }
 }
 

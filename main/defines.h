@@ -32,24 +32,32 @@
  */
 
 #if defined CONFIG_T_TWR
-#define DEVICE T_TWR
-#define T_TWR_VER 20
-#define DEVICE_STRING "LilyGo T-TWR-plus"
+  #define DEVICE T_TWR
+  #define T_TWR_VER 20
+  #define DEVICE_STRING "LilyGo T-TWR-plus"
+
 #elif defined CONFIG_T_TWR_21
-#define DEVICE T_TWR
-#define T_TWR_VER 21
-#define DEVICE_STRING "LilyGo T-TWR-plus 2.1"
+  #define DEVICE T_TWR
+  #define T_TWR_VER 21
+  #define DEVICE_STRING "LilyGo T-TWR-plus 2.1"
+
 #elif defined CONFIG_ARCTIC3
-#define DEVICE_STRING "Arctic Tracker 3"
-#define DEVICE ARCTIC3
+  #define DEVICE_STRING "Arctic Tracker 3"
+  #define DEVICE ARCTIC3
+
 #elif defined CONFIG_ARCTIC4
-#define DEVICE_STRING "Arctic Tracker 4"
-#define DEVICE ARCTIC4
+  #define DEVICE ARCTIC4
+  #define DEVICE_STRING "Arctic Tracker 4 (VHF-APRS)"
+#elif defined CONFIG_ARCTIC4_UHF
+  #define DEVICE ARCTIC4
+  #define ARCTIC4_UHF
+  #define DEVICE_STRING "Arctic Tracker 4 (UHF-LoRa)"
 #endif
 
 #if DEVICE == T_TWR || DEVICE == ARCTIC4
-#define USE_PMU 1
+  #define USE_PMU 1
 #endif
+
 
 
 /* Webserver settings */
@@ -133,7 +141,11 @@
 #define RADIO_PIN_MICSEL    17
 #endif
 
+
 #elif DEVICE == ARCTIC4
+#if defined ARCTIC4_UHF
+// VHF/APRS version - Use SA868
+
 #define RADIO_UART          UART_NUM_0
 #define RADIO_PIN_TXD       44 
 #define RADIO_PIN_RXD       43
@@ -164,6 +176,25 @@
 #define TONE_SDELTA_ENABLE
 #define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
 #define TONE_SDELTA_PIN  48
+#endif
+
+#else
+/****************************************
+ *  UHF version - LoRa
+ ****************************************/
+#define RADIO_INPUT     -1 // FIXME
+
+#define SPI_HOST        SPI3_HOST
+#define SPI_PIN_MOSI    11
+#define SPI_PIN_MISO    13
+#define SPI_PIN_CLK     12
+
+#define LORA_PIN_CS     10 
+#define LORA_PIN_RST    40
+#define LORA_PIN_BUSY   41
+#define LORA_PIN_DIO1   42 
+#define LORA_PIN_DIO3   43 // Need change in MUX
+#define RADIO_PIN_PWRON  9
 
 #endif
 #endif
@@ -207,7 +238,7 @@
 
 /*******************************************************************
  * DISPLAY CONFIG: 
- * DISPLAY_TYPE is either 0=NOKIA (SPI) or 1=SSD1306 (I2C)
+ * DISPLAY_TYPE is 1=SSD1306 (I2C) (support for 0=Nokia is removed)
  * -1 to disable
  * SSD1306_HEIGHT and SSD1306_WIDTH should be set according to the 
  * actual display used. Known alternatives are: 
@@ -250,13 +281,6 @@
 #endif
 
 
-/* SPI setup. FIXME: Is this needed? */
-#if DEVICE != T_TWR
-#define SPI_HOST        SPI3_HOST
-#define SPI_PIN_MISO    -1
-#define SPI_PIN_MOSI    14 
-#define SPI_PIN_CLK     12
-#endif
 
 
 /********************************************
@@ -399,5 +423,5 @@
 #define min(x,y) (x<y? x : y)
 #define max(x,y) (x>y? x : y)
 
-
 #endif
+

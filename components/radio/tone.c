@@ -2,8 +2,9 @@
  * Generate a tone (sine wave) using the DAC.
  */
 
-
 #include "defines.h"
+#if !defined(ARCTIC4_UHF)
+
 #include <stdbool.h>
 #include <stdint.h>
 #include "system.h"
@@ -142,4 +143,4 @@ void tone_stop() {
 }
 
 
-
+#endif

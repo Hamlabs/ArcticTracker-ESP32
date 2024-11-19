@@ -174,10 +174,24 @@ static void status_screen1() {
 }
 
 
-
 /****************************************************************
  * 2. Radio monitor
  ****************************************************************/
+
+#if defined(ARCTIC4_UHF)
+
+static void status_screen2() {
+    char buf[32];   
+    disp_clear();
+    status_heading("RXTX");
+    sprintf(buf, "LoRa Module..");
+    disp_writeText(0, LINE3, buf);
+    disp_flush();
+    /* TBD */
+}
+
+#else
+
 extern int sa8_getRSSI();
 
 static void status_screen2() {
@@ -225,6 +239,7 @@ static void status_screen2() {
     }
     disp_flush();
 }
+#endif
 
 
 /****************************************************************

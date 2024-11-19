@@ -13,6 +13,9 @@
 #include "esp_log.h"
 #include "driver/gptimer.h"
 #include "driver/adc.h"
+
+
+
 // FIXME: Use continous ADC drivers for receiving frames
 
 
@@ -97,7 +100,11 @@ int16_t batt_status(char* line1, char* line2);
 
 
 #define sleepMs(n)  vTaskDelay(pdMS_TO_TICKS(n))
+#define sleepUs(n)  esp_rom_delay_us(n)
 #define t_yield     taskYIELD
+#define HIGH    1
+#define LOW     0
+
 
 /* Simplified semaphore operations */
 typedef SemaphoreHandle_t semaphore_t;

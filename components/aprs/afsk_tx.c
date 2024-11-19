@@ -6,6 +6,8 @@
  */
 
 #include "defines.h"
+#if !defined(ARCTIC4_UHF)
+
 #include <stdbool.h>
 #include <stdint.h>
 #include "afsk.h"
@@ -116,5 +118,6 @@ QueueHandle_t afsk_tx_init()
     return oq;
 }
  
-
+ 
+#endif
  

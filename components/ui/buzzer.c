@@ -81,9 +81,14 @@ void beeps(char* s)
 /**************************************
  * Init buzzer
  **************************************/
+#if BUZZER_PIN != -1
 static clock_t buzzer;
+#endif
 
-void buzzer_init() {
+
+void buzzer_init() {   
+    
+    
 #if BUZZER_PIN != -1
     gpio_set_direction(BUZZER_PIN,  GPIO_MODE_OUTPUT);
     clock_init(&buzzer, BUZZ_RESOLUTION, BUZZ_CNT, buzzer_isr, NULL);

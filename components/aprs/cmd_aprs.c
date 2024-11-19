@@ -27,6 +27,8 @@ void   register_aprs(void);
    
 
 
+#if !defined(ARCTIC4_UHF)
+
 /********************************************************************************
  * AFSK generator testing
  ********************************************************************************/
@@ -77,6 +79,8 @@ static int do_testpacket(int argc, char** argv)
     return 0;
 }
 
+#endif
+
 
 /****************************************************************************
  * Monitor radio communications
@@ -88,18 +92,23 @@ static int do_listen(int argc, char* argv[])
   (void) argc; 
   
   printf("**** MONITOR RADIO CHANNEL ****\n");
+  
+#if !defined(ARCTIC4_UHF)
   radio_require();
   afsk_rx_enable();
+#endif
   mon_activate(true);
   getchar();
   sleepMs(1000);
   mon_activate(false);
+#if !defined(ARCTIC4_UHF)
   afsk_rx_disable(); 
   radio_release();
+#endif
   sleepMs(100);
-  
   return 0;
 }
+
 
 
 
@@ -140,6 +149,9 @@ static int do_trput(int argc, char* argv[])
  * setting changes. 
  *****************************************************************/
 
+#if !defined(ARCTIC4_UHF)
+
+
 void hdl_squelch(uint8_t sq) {
     radio_setSquelch(sq);
     afsk_setSquelchOff(sq==0 ? true : false);
@@ -155,16 +167,15 @@ void hdl_volume(uint8_t vol) {
     radio_setVolume(vol); 
 }
 
-void hdl_txfreq(int32_t freq) {
-    radio_setFreq(freq, -1); 
+void hdl_txlow(bool on) {
+    radio_setLowTxPower(on);
 }
 
-void hdl_rxfreq(int32_t freq) {
-    radio_setFreq(-1, freq); 
-}
+#endif
 
 
 void hdl_radio(bool on) {
+#if !defined(ARCTIC4_UHF)
     if ((radio_is_on() && on) || (!radio_is_on() && !on))
         return;
     if (on) { 
@@ -175,7 +186,20 @@ void hdl_radio(bool on) {
         printf("*** Radio off ***\n");
         radio_release();
     }
+#endif
+   // TBD for LoRa module
 }
+
+
+
+void hdl_txfreq(int32_t freq) {
+    radio_setFreq(freq, -1); 
+}
+
+void hdl_rxfreq(int32_t freq) {
+    radio_setFreq(-1, freq); 
+}
+
 
 void hdl_tracklog(bool on) {
     if (on) 
@@ -204,9 +228,6 @@ void hdl_trkpost(bool on) {
         tracklog_post_start();
 }
 
-void hdl_txlow(bool on) {
-    radio_setLowTxPower(on);
-}
 
 
 
@@ -226,28 +247,18 @@ CMD_STR_SETTING  (_param_comment,    "REP.COMMENT",  40, DFL_REP_COMMENT,  NULL)
 CMD_STR_SETTING  (_param_igate_host, "IGATE.HOST",   64, DFL_IGATE_HOST,   REGEX_HOSTNAME);
 CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",   9,  DFL_IGATE_USER,   REGEX_AXADDR);
 CMD_STR_SETTING  (_param_igate_filt, "IGATE.FILTER", 32, DFL_IGATE_FILTER, ".*");
-
 CMD_BYTE_SETTING (_param_trklogint,  "TRKLOG.INT",   DFL_TRKLOG_INT,  0, 60,  NULL);
 CMD_BYTE_SETTING (_param_trklogttl,  "TRKLOG.TTL",   DFL_TRKLOG_TTL,  0, 250, NULL);
-CMD_BYTE_SETTING (_param_txdelay,    "TXDELAY",      DFL_TXDELAY,     0, 250, NULL);
-CMD_BYTE_SETTING (_param_txtail,     "TXTAIL",       DFL_TXTAIL,      0, 250, NULL);
 CMD_BYTE_SETTING (_param_maxframe,   "MAXFRAME",     DFL_MAXFRAME,    1, 7,   NULL);
 CMD_BYTE_SETTING (_param_maxpause,   "MAXPAUSE",     DFL_MAXPAUSE,    0, 250, NULL);
 CMD_BYTE_SETTING (_param_minpause,   "MINPAUSE",     DFL_MINPAUSE,    0, 250, NULL);
 CMD_BYTE_SETTING (_param_mindist,    "MINDIST",      DFL_MINDIST,     0, 250, NULL);
 CMD_BYTE_SETTING (_param_statustime, "STATUSTIME",   DFL_STATUSTIME,  1, 250, NULL);
-CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 0, 8,   hdl_squelch);
-CMD_BYTE_SETTING (_param_miclevel,   "TRX_MICLEVEL", DFL_TRX_MICLEVEL,1, 8,   hdl_miclevel);
-CMD_BYTE_SETTING (_param_volume,     "TRX_VOLUME",   DFL_TRX_VOLUME,  1, 8,   hdl_volume);
 CMD_BYTE_SETTING (_param_repeat,     "REPEAT",       DFL_REPEAT,      0, 4,   NULL);
-
 CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",   DFL_IGATE_PORT,  1, 65535);
 CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",   0,               0, 65535);
-CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000, hdl_txfreq);
-CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      1440000, 1460000, hdl_rxfreq);
 
-CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
 CMD_BOOL_SETTING (_param_tracklog_on,"TRKLOG.on",      hdl_tracklog);
 CMD_BOOL_SETTING (_param_trkpost_on, "TRKLOG.POST.on", hdl_trkpost);
 CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     hdl_tracker);
@@ -262,7 +273,25 @@ CMD_BOOL_SETTING (_param_rbeep_on,   "REPORT.BEEP.on", NULL);
 CMD_BOOL_SETTING (_param_xturn_on,   "EXTRATURN.on",   NULL);
 CMD_BOOL_SETTING (_param_igtrack_on, "IGATE.TRACK.on", NULL);
 CMD_BOOL_SETTING (_param_txmon_on,   "TXMON.on",       NULL);
-CMD_BOOL_SETTING (_param_txlow_on,   "TXLOW.on",       hdl_txlow);
+CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
+
+
+#if defined(ARCTIC4_UHF)
+CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      4330000, 4360000, hdl_txfreq);
+CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      4330000, 4360000, hdl_rxfreq);
+
+#else
+
+CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000, hdl_txfreq);
+CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      1440000, 1460000, hdl_rxfreq);
+CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 0, 8,   hdl_squelch);
+CMD_BYTE_SETTING (_param_miclevel,   "TRX_MICLEVEL", DFL_TRX_MICLEVEL,1, 8,   hdl_miclevel);
+CMD_BYTE_SETTING (_param_volume,     "TRX_VOLUME",   DFL_TRX_VOLUME,  1, 8,   hdl_volume);
+CMD_BYTE_SETTING (_param_txdelay,    "TXDELAY",      DFL_TXDELAY,     0, 250, NULL);
+CMD_BYTE_SETTING (_param_txtail,     "TXTAIL",       DFL_TXTAIL,      0, 250, NULL);
+CMD_BOOL_SETTING (_param_txlow_on,   "TXLOW.on",     hdl_txlow);
+
+#endif
 
 
 
@@ -272,8 +301,7 @@ CMD_BOOL_SETTING (_param_txlow_on,   "TXLOW.on",       hdl_txlow);
 
 void register_aprs()
 {
-    ADD_CMD("teston",     &do_teston,          "HDLC encoder test", "<byte>");
-    ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
+
     ADD_CMD("listen",     &do_listen,          "Monitor radio channel", "");
     ADD_CMD("trklog-get", &do_trget,           "Get tracklog record", "");      
     ADD_CMD("trklog-put", &do_trput,           "Put tracklog record", "");  
@@ -285,10 +313,7 @@ void register_aprs()
     ADD_CMD("osymbol",    &_param_osym,        "APRS symbol for objects (sym-table symbol)", "[<T><S>]");
     ADD_CMD("objectid",   &_param_oid,         "ID prefix for object reports", "<str>");
     ADD_CMD("comment",    &_param_comment,     "APRS posreport comment", "[<text>]");
-    ADD_CMD("txdelay",    &_param_txdelay,     "APRS TXDELAY setting", "[<val>]");
-    ADD_CMD("txtail",     &_param_txtail,      "APRS TXTAIL setting", "[<val>]");
-    ADD_CMD("repeat",     &_param_repeat,      "# Times to repeat posreports (0-3)", "[val]");
-           
+    ADD_CMD("repeat",     &_param_repeat,      "# Times to repeat posreports (0-3)", "[val]");           
     ADD_CMD("trklog-int", &_param_trklogint,   "Interval for track logging (seconds)", "[<val>]");
     ADD_CMD("trklog-ttl", &_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
     ADD_CMD("trklog-key", &_param_serverkey,   "KEY for authenticating tracklog-messages to Polaric Server", "[<key>]");
@@ -301,14 +326,9 @@ void register_aprs()
     ADD_CMD("turnlimit",  &_param_turnlimit,   "Threshold for change of direction", "[<val>]");
     ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
-    ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
-
-    ADD_CMD("volume",     &_param_volume,      "RX audio level setting (1-8)",      "[<val>]");
-            
     ADD_CMD("timestamp",  &_param_timestamp,   "Timestamp setting",  "[on|off]");
     ADD_CMD("compress",   &_param_compress,    "Compress setting",  "[on|off]");
     ADD_CMD("altitude",   &_param_altitude,    "Altitude setting",  "[on|off]");
-    
     ADD_CMD("digi",       &_param_digipeater,  "Digipeater setting", "[on|off]"); 
     ADD_CMD("igate",      &_param_igate,       "Igate setting", "[on|off]");
     ADD_CMD("digi-wide1", &_param_digi_wide1,  "Digipeater fill-in mode (WIDE1)", "[on|off]"); 
@@ -317,7 +337,6 @@ void register_aprs()
     ADD_CMD("igate-port", &_param_igate_port,  "Igate server port",  "[<portnr>]");
     ADD_CMD("igate-user", &_param_igate_user,  "Igate server user",  "[<callsign>]");
     ADD_CMD("igate-pass", &_param_igate_pass,  "Igate server passcode",  "[<code>]");
-        
     ADD_CMD("tracklog",   &_param_tracklog_on, "Track logging", "[on|off]"); 
     ADD_CMD("trklog-post",&_param_trkpost_on,  "Track log automatic post to server", "[on|off]");
     ADD_CMD("radio",      &_param_radio_on,    "Radio module power", "[on|off]");
@@ -326,7 +345,16 @@ void register_aprs()
     ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport in turns", "[on|off]");
     ADD_CMD("igtrack",    &_param_igtrack_on,  "Send posreports directly to APRS/IS when available", "[on|off]");   
     ADD_CMD("txmon",      &_param_txmon_on,    "Tx monitor (show TX packets)", "[on|off]");
+
+#if !defined(ARCTIC4_UHF)
+    ADD_CMD("teston",     &do_teston,          "HDLC encoder test", "<byte>");    
+    ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
+    ADD_CMD("txdelay",    &_param_txdelay,     "APRS TXDELAY setting", "[<val>]");
+    ADD_CMD("txtail",     &_param_txtail,      "APRS TXTAIL setting", "[<val>]");
+    ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
+    ADD_CMD("volume",     &_param_volume,      "RX audio level setting (1-8)",      "[<val>]");
     ADD_CMD("txlow",      &_param_txlow_on,    "Tx power low", "[on|off]");
+#endif
 }
 
 

@@ -13,7 +13,9 @@ menu "Arctic Tracker config"
         config ARCTIC3
             bool "Arctic Tracker v3"
         config ARCTIC4
-            bool "Arctic Tracker v4 (APRS-VHF)"
+            bool "Arctic Tracker v4 (VHF-APRS)"
+        config ARCTIC4_UHF
+            bool "Arctic Tracker v4 (UHF-LoRa)"
     endchoice
   
 endmenu

@@ -3,10 +3,11 @@
  * Adapted from the original Polaric Tracker code. 
  * By LA7DJA, LA7ECA and LA3T
  */
+#include "defines.h"
+#if !defined(ARCTIC4_UHF)
 
 #include <stdlib.h>
 #include "crc16.h"
-#include "defines.h"
 #include "system.h"
 #include "config.h"
 #include "hdlc.h"
@@ -226,3 +227,6 @@ void hdlc_init_decoder (fifo_t* s)
   xTaskCreatePinnedToCore(&hdlc_rxdecoder, "HDLC RX decoder", 
         STACK_HDLC_RXDECODER, NULL, NORMALPRIO, NULL, CORE_HDLC_RXDECODER);
 }
+
+
+#endif

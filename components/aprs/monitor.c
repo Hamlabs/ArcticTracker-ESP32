@@ -74,16 +74,20 @@ void mon_activate(bool m)
    
     if (tstart) {
         FBQ* mq = (mon_on? &mon : NULL);
+#if !defined(ARCTIC4_UHF)
         hdlc_subscribe_rx(mq, 0);
         if ( GET_BYTE_PARAM("TXMON.on") )
             hdlc_monitor_tx(mq); 
+#endif
         xTaskCreate(&monitor, "Packet monitor", 
             STACK_MONITOR, NULL, NORMALPRIO, NULL);
     }
     if (tstop) {
         fbq_signal(&mon);
+#if !defined(ARCTIC4_UHF)
         hdlc_monitor_tx(NULL);
         hdlc_subscribe_rx(NULL, 0);
+#endif
     }
 }
 

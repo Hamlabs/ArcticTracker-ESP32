@@ -1,11 +1,9 @@
-#if !defined __RADIO_H__
-#define __RADIO_H__
-  
+
 #include <stdint.h>
 #include "driver/uart.h"
 #include "defines.h"
 
-#if defined(RADIO_DISABLE)
+#if defined(RADIO_DISABLE) || defined(ARCTIC4_UHF)
 
 /* dummy functions */
 bool radio_is_on() { return false; }
@@ -27,14 +25,12 @@ bool radio_isLowTxPower(void) { return true; }
 void wait_channel_ready(void) {}
 
 
-#else
-
+#elif DEVICE == T_TWR || DEVICE == ARCTIC4
 /*
  * FIXME: The two implementations sa8 and frs are rather similar. 
- * Maybe we an simplify this.
+ * Maybe we can simplify this.
  */
 
-#if DEVICE == T_TWR || DEVICE == ARCTIC4
  bool sa8_is_on(void);
  bool sa8_tx_is_on(void); 
  void sa8_require(void);
@@ -74,7 +70,8 @@ void wait_channel_ready(void) {}
  bool radio_isLowTxPower(void) { return sa8_isLowTxPower(); }
  void wait_channel_ready(void) { sa8_wait_channel_ready(); }
  void wait_tx_off(void)  {sa8_wait_tx_off();}
-#else
+
+ #else
  
  bool frs_is_on(void);
  void frs_require(void);
@@ -115,7 +112,4 @@ void wait_channel_ready(void) {}
  
 #endif
 
-#endif
  
- 
-#endif

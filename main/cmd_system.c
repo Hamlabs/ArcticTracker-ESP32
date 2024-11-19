@@ -442,6 +442,24 @@ static int do_nmea(int argc, char** argv)
 
 
 
+
+extern void _beep(int freq, int duration); 
+
+static int do_beep(int argc, char** argv) {
+    if (argc<=1) {
+        printf("beep command needs one argument (freq)\n");
+        return 0;
+    }
+    int freq = 0;
+    sscanf(argv[1], "%d", &freq);
+    _beep(freq, 2000);
+    return 0;
+}
+
+
+
+#if !defined(ARCTIC4_UHF)
+
 /********************************************************************************
  * Tone generator testing
  ********************************************************************************/
@@ -461,21 +479,6 @@ static int do_tone(int argc, char** argv)
     radio_release();
     return 0;
 }
-
-
-extern void _beep(int freq, int duration); 
-
-static int do_beep(int argc, char** argv) {
-    if (argc<=1) {
-        printf("beep command needs one argument (freq)\n");
-        return 0;
-    }
-    int freq = 0;
-    sscanf(argv[1], "%d", &freq);
-    _beep(freq, 2000);
-    return 0;
-}
-
 
 
 /********************************************************************************
@@ -526,7 +529,7 @@ static int do_ptt(int argc, char** argv)
     return 0;
 }
 
-
+#endif
 
 /********************************************************************************
  * OTA Firmware upgrade
@@ -538,36 +541,6 @@ static int do_fwupgrade(int argc, char** argv)
     ESP_ERROR_CHECK(firmware_upgrade());
     return 0;
 }
-
-
-
-
-/********************************************************************************
- * Read ADC inputs
- ********************************************************************************/
-
-static int do_adcinfo(int argc, char** argv)
-{
-#if DEVICE == T_TWR || DEVICE == ARCTIC4
-    printf("ADC status not supported on T-TWR or Arctic Tracker 4\n");
-#else
-    
-    long val;
-    
-#if !defined(RADIO_DISABLE)
- //   val = adc2_read(RADIO_INPUT);
- //   printf("Radio input: %ld, %d mV\n", val, adc_toVoltage(val));
-#endif
-    val = adc1_read(BATT_ADC_INPUT);
-    printf(" BATT input: %ld, %d mV\n", val, adc_toVoltage(val));
-    val = adc1_read(X1_ADC_INPUT);
-    printf("   X1 input: %ld, %d mV\n", val, adc_toVoltage(val));
-#endif
-    
-    printf("\n");
-    return 0;
-}
-
 
 
 
@@ -622,7 +595,6 @@ CMD_STR_SETTING  (_param_timezone,"TIMEZONE",   64, DFL_TIMEZONE,   REGEX_TIMEZO
 
 void register_system()
 {
-    
     ADD_CMD("trk-reset", &do_reset,       "Reset track storage", NULL);  
     ADD_CMD("ls",        &do_ls,          "List files", NULL);  
     ADD_CMD("mkdir",     &do_mkdir,       "Create directory", "<path>");
@@ -639,15 +611,14 @@ void register_system()
     ADD_CMD("time",      &do_time,        "Get date and time", NULL);
     ADD_CMD("timezone",  &_param_timezone,"Set timezone", "<tz-string>");
     ADD_CMD("nmea",      &do_nmea,        "Monitor GPS NMEA datastream", "[raw]");
-    ADD_CMD("tone",      &do_tone,        "Tone generator test", "");
-    ADD_CMD("ptt",       &do_ptt,         "Transmitter on", "");
-    ADD_CMD("fw-upgrade", &do_fwupgrade,  "Firmware upgrade (OTA)", "");
-#if DEVICE != T_TWR && DEVICE != ARCTIC4
-    ADD_CMD("adc",       &do_adcinfo,     "Read ADC", "");
-    ADD_CMD("adcref",    &_param_adcref,  "ADC reference value (millivolts)", "[<val>]");
-#endif
-    ADD_CMD("rssi",      &do_rssi,        "Signal strength", "");
     ADD_CMD("vbatt",     &do_vbatt,       "Read battery voltage", "");
     ADD_CMD("shutdown",  &do_shutdown,    "Shut down system", "");
     ADD_CMD("ioconfig",  &do_ioconfig,    "Show info on GPIO configuration", "<gpio>");
+    ADD_CMD("fw-upgrade",&do_fwupgrade,   "Firmware upgrade (OTA)", "");
+    
+#if !defined(ARCTIC4_UHF)
+    ADD_CMD("tone",      &do_tone,        "Tone generator test", "");
+    ADD_CMD("ptt",       &do_ptt,         "Transmitter on", "");
+    ADD_CMD("rssi",      &do_rssi,        "Signal strength", "");
+#endif
 }

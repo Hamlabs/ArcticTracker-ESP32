@@ -2,9 +2,10 @@
  * Enchode HDLC (AX.25) frames.
  * By LA7ECA, ohanssen@acm.org and LA3T
  */
+#include "defines.h"
+#if !defined(ARCTIC4_UHF)
 
 #include "crc16.h"
-#include "defines.h"
 #include <stdlib.h>
 #include "hdlc.h"
 #include "system.h"
@@ -255,3 +256,5 @@ static void hdlc_encode_frames()
     }   
  }
  
+ 
+#endif

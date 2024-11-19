@@ -1,6 +1,10 @@
 
-#include <stdbool.h>
+
 #include "defines.h"
+
+#if !defined(ARCTIC4_UHF)
+
+#include <stdbool.h>
 #include "afsk.h"
 #include "system.h"
 #include "config.h"
@@ -144,3 +148,4 @@ void afsk_tx_start() {
  }
  
  
+#endif
