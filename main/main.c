@@ -218,6 +218,8 @@ void app_main()
 #if T_TWR_VER == 21
     gpio_iomux_out(RADIO_PIN_MICSEL,  1, false);
 #endif
+#elif defined(ARCTIC4_UHF) 
+    
 #elif DEVICE == ARCTIC4
     gpio_iomux_out(BUZZER_PIN,    1, false);
     gpio_iomux_out(RADIO_PIN_PD,  1, false); // FUNC_MTDI_GPIO41
@@ -230,6 +232,7 @@ void app_main()
     gpio_iomux_out(42, 1, false); // FUNC_MTMS_GPIO42
     gpio_iomux_in (18, U1RXD_IN_IDX); 
 #endif
+    
     fbuf_init();
     gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     config_open();

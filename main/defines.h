@@ -119,6 +119,9 @@
 #define RADIO_BUF_SIZE      256
 
 #if DEVICE == T_TWR
+/****************************************
+ *  T-TWR device
+ ****************************************/
 #define RADIO_UART          UART_NUM_0
 #define RADIO_PIN_TXD       39 
 #define RADIO_PIN_RXD       48
@@ -142,43 +145,7 @@
 #endif
 
 
-#elif DEVICE == ARCTIC4
-#if defined ARCTIC4_UHF
-// VHF/APRS version - Use SA868
-
-#define RADIO_UART          UART_NUM_0
-#define RADIO_PIN_TXD       44 
-#define RADIO_PIN_RXD       43
-#define RADIO_PIN_PTT       42
-#define RADIO_PIN_PD        41
-#define RADIO_PIN_PWRON      9
-#define RADIO_PIN_SQUELCH   40
-
-/* Radio audio input */
-#define RADIO_INPUT          1 
-
-/* Tone generation (for AFSK) */
-#define TONE_SDELTA_ENABLE
-#define TONE_SDELTA_CHAN    SIGMADELTA_CHANNEL_0
-#define TONE_SDELTA_PIN      2
-
-#else
-#define RADIO_UART          UART_NUM_0
-#define RADIO_PIN_PTT       38
-#define RADIO_PIN_TXP       40
-#define RADIO_PIN_PD        39
-#define RADIO_PIN_SQUELCH   13
-
-/* Radio audio input */
-#define RADIO_INPUT         ADC2_CHANNEL_3 // FIXME
-
-/* Tone generation (for AFSK) */
-#define TONE_SDELTA_ENABLE
-#define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
-#define TONE_SDELTA_PIN  48
-#endif
-
-#else
+#elif defined ARCTIC4_UHF
 /****************************************
  *  UHF version - LoRa
  ****************************************/
@@ -196,8 +163,47 @@
 #define LORA_PIN_DIO3   43 // Need change in MUX
 #define RADIO_PIN_PWRON  9
 
+
+#elif DEVICE == ARCTIC4
+/***************************************
+ *  VHF/APRS version - Use SA868
+ ***************************************/
+#define RADIO_UART          UART_NUM_0
+#define RADIO_PIN_TXD       44 
+#define RADIO_PIN_RXD       43
+#define RADIO_PIN_PTT       42
+#define RADIO_PIN_PD        41
+#define RADIO_PIN_PWRON      9
+#define RADIO_PIN_SQUELCH   40
+
+/* Radio audio input */
+#define RADIO_INPUT          1 
+
+/* Tone generation (for AFSK) */
+#define TONE_SDELTA_ENABLE
+#define TONE_SDELTA_CHAN    SIGMADELTA_CHANNEL_0
+#define TONE_SDELTA_PIN      2
+
+#else
+/***************************************
+ *  Old Arctic 3
+ ***************************************/
+#define RADIO_UART          UART_NUM_0
+#define RADIO_PIN_PTT       38
+#define RADIO_PIN_TXP       40
+#define RADIO_PIN_PD        39
+#define RADIO_PIN_SQUELCH   13
+
+/* Radio audio input */
+#define RADIO_INPUT         ADC2_CHANNEL_3 // FIXME
+
+/* Tone generation (for AFSK) */
+#define TONE_SDELTA_ENABLE
+#define TONE_SDELTA_CHAN SIGMADELTA_CHANNEL_0
+#define TONE_SDELTA_PIN  48
+
 #endif
-#endif
+#endif //  !defined(RADIO_DISABLE)
 
 
 
