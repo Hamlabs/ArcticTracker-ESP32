@@ -409,10 +409,9 @@ static void do_gsv(uint8_t argc, char** argv)
 {
    if (argc < 8)     
        return;
-   uint8_t nmsg = atoi(argv[1]);
-   uint8_t msgno = atoi(argv[2]);
    uint8_t nsats = atoi(argv[3]);
    char system = argv[0][2];
+   
    for (int i=0; i<nsats; i++) {
       if (argc < 4+4*i+4)
          break;
