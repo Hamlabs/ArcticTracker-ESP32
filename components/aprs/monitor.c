@@ -17,7 +17,8 @@ void mon_init()
 }
 
 
-
+extern void loraprs_subscribe_rx(fbq_t* q, uint8_t i);
+extern void loraprs_monitor_tx(mq);
 
 /******************************************************************************
  *  Monitor thread 
@@ -74,7 +75,11 @@ void mon_activate(bool m)
    
     if (tstart) {
         FBQ* mq = (mon_on? &mon : NULL);
-#if !defined(ARCTIC4_UHF)
+#if defined(ARCTIC4_UHF)
+        loraprs_subscribe_rx(mq, 0);
+        if ( GET_BYTE_PARAM("TXMON.on") )
+            loraprs_monitor_tx(mq); 
+#else
         hdlc_subscribe_rx(mq, 0);
         if ( GET_BYTE_PARAM("TXMON.on") )
             hdlc_monitor_tx(mq); 
@@ -82,9 +87,14 @@ void mon_activate(bool m)
         xTaskCreate(&monitor, "Packet monitor", 
             STACK_MONITOR, NULL, NORMALPRIO, NULL);
     }
+    
+    
     if (tstop) {
         fbq_signal(&mon);
-#if !defined(ARCTIC4_UHF)
+        
+#if defined(ARCTIC4_UHF)
+        loraprs_subscribe_rx(NULL, 0);
+#else
         hdlc_monitor_tx(NULL);
         hdlc_subscribe_rx(NULL, 0);
 #endif

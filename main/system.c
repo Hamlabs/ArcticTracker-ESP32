@@ -471,8 +471,9 @@ char* date2str(char* buf, time_t time, bool local)
 static char* logtags[] = {
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "gps", "uart", "digi", "igate", "tcp-cli", "trackstore", 
-    "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", "httpd_uri", "httpd_parse", "mdns", "gptimer"
-#define NLOGTAGS 26
+    "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", "httpd_uri", "httpd_parse", "mdns", 
+    "gptimer", "lora", "lora-aprs", "spi"
+#define NLOGTAGS 29
 };
 #else
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",

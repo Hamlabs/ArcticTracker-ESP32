@@ -314,7 +314,7 @@ static int do_ioconfig(int argc, char** argv) {
     sscanf(argv[1],"%d", &n);
     if (n<0 || n>48)
         return 0;
-    gpio_dump_io_configuration(stdout, 0x01 << n);
+    gpio_dump_io_configuration(stdout,((uint64_t)0x01) << n);
     return 0;
 }
 
@@ -456,6 +456,42 @@ static int do_beep(int argc, char** argv) {
     return 0;
 }
 
+/********************************************************************************
+ * RSSI - signal strength
+ ********************************************************************************/
+
+bool run_rssi = true; 
+static void showrssi(void* arg) 
+{
+    while (run_rssi) {
+        int rssi = radio_getRssi(); 
+#if defined(ARCTIC4_UHF)
+        printf("-%3.1f dBm ", (float)rssi/2);
+        for (int j=255; j>rssi; j=j-2)
+           printf("*");
+#else
+        printf("%c %3d ", (radio_getSquelch() ? '+' : ' '), rssi);
+        for (int j=0; j<rssi; j=j+2)
+           printf("*");
+#endif
+        printf("\n");
+        sleepMs(100);
+    } 
+    sleepMs(100);
+    vTaskDelete(NULL);
+}
+
+
+static int do_rssi(int argc, char** argv)
+{   
+    run_rssi = true;
+    xTaskCreatePinnedToCore(&showrssi, "RSSI thread", 
+       4096, NULL, NORMALPRIO+1, NULL, 1);
+    getchar();
+    run_rssi = false;
+    return 0;
+}
+
 
 
 #if !defined(ARCTIC4_UHF)
@@ -481,36 +517,6 @@ static int do_tone(int argc, char** argv)
 }
 
 
-/********************************************************************************
- * RSSI - signal strength
- ********************************************************************************/
-
-extern int sa8_getRSSI();
-
-bool run_rssi = true; 
-static void showrssi(void* arg) 
-{
-    while (run_rssi) {
-        int rssi = sa8_getRSSI(); 
-        printf("%c %3d ", (radio_getSquelch() ? '+' : ' '), rssi);
-        for (int j=0; j<rssi; j=j+2)
-           printf("*");
-        printf("\n");
-        sleepMs(50);
-    } 
-    sleepMs(100);
-    vTaskDelete(NULL);
-}
-
-static int do_rssi(int argc, char** argv)
-{   
-    run_rssi = true;
-    xTaskCreatePinnedToCore(&showrssi, "RSSI thread", 
-       4096, NULL, NORMALPRIO+1, NULL, 1);
-    getchar();
-    run_rssi = false;
-    return 0;
-}
 
 
 
@@ -615,10 +621,10 @@ void register_system()
     ADD_CMD("shutdown",  &do_shutdown,    "Shut down system", "");
     ADD_CMD("ioconfig",  &do_ioconfig,    "Show info on GPIO configuration", "<gpio>");
     ADD_CMD("fw-upgrade",&do_fwupgrade,   "Firmware upgrade (OTA)", "");
+    ADD_CMD("rssi",      &do_rssi,        "Signal strength", "");
     
 #if !defined(ARCTIC4_UHF)
     ADD_CMD("tone",      &do_tone,        "Tone generator test", "");
     ADD_CMD("ptt",       &do_ptt,         "Transmitter on", "");
-    ADD_CMD("rssi",      &do_rssi,        "Signal strength", "");
 #endif
 }

@@ -170,21 +170,26 @@ void run_console()
 
 void register_aprs(); 
 
+/* FIXME: Move to header file */
+extern FBQ* loraprs_init_encoder();
+extern void loraprs_init_decoder();
 
 static void startup(void* arg) 
 {
     sleepMs(2000);
     trackstore_start();
     FBQ* oq = NULL;
-#if !defined(ARCTIC4_UHF)
+    radio_init();  
+#if defined(ARCTIC4_UHF)
+    loraprs_init_decoder();
+    oq = loraprs_init_encoder();
+#else
     afsk_init(); 
     hdlc_init_decoder(afsk_rx_init());
     oq = hdlc_init_encoder(afsk_tx_init());
 #endif
     time_init();
     gps_init(GPS_UART);
-     
-    radio_init();
     tracker_init(oq);
     tracklog_init();
     digipeater_init(oq);
@@ -219,7 +224,9 @@ void app_main()
     gpio_iomux_out(RADIO_PIN_MICSEL,  1, false);
 #endif
 #elif defined(ARCTIC4_UHF) 
-    
+    gpio_iomux_in (42,3);
+    gpio_iomux_out (44,1, false);    
+    gpio_iomux_out(LED_TX_PIN,    1, false); // FUNC_MTCK_GPIO39
 #elif DEVICE == ARCTIC4
     gpio_iomux_out(BUZZER_PIN,    1, false);
     gpio_iomux_out(RADIO_PIN_PD,  1, false); // FUNC_MTDI_GPIO41

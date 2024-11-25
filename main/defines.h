@@ -107,7 +107,7 @@
 #define AFSK_TX_QUEUE_SIZE      256
 #define HDLC_DECODER_QUEUE_SIZE  16
 #define HDLC_ENCODER_QUEUE_SIZE  16
-
+#define LORA_ENCODER_QUEUE_SIZE  16
 
 
 /***************************************************
@@ -160,7 +160,7 @@
 #define LORA_PIN_RST    40
 #define LORA_PIN_BUSY   41
 #define LORA_PIN_DIO1   42 
-#define LORA_PIN_DIO3   43 // Need change in MUX
+#define LORA_PIN_DIO3   44 // Need change in MUX
 #define RADIO_PIN_PWRON  9
 
 
@@ -359,6 +359,9 @@
 #endif
 
 
+
+
+
 /**********************************************
  * Tasks: 
  * Stack sizes and allocation to cores 
@@ -383,7 +386,8 @@
 #define STACK_TRACKLOG       3500
 #define STACK_TRACKLOGPOST   3900
 #define STACK_HTTPD          5500
-
+#define STACK_LORA_RXDECODER 4100
+#define STACK_LORA_TXENCODER 4100
     
 #define CORE_AUTOCON        0
 #define CORE_NMEALISTENER   1
@@ -402,6 +406,9 @@
 #define CORE_IGATE_RADIO    0
 #define CORE_TRACKLOG       1
 #define CORE_TRACKLOGPOST   1
+#define CORE_LORA_RXDECODER 0
+#define CORE_LORA_TXENCODER 1
+
 
 /* Default task priority */
 #define NORMALPRIO 5

@@ -21,7 +21,7 @@
 #include "igate.h"
 #include "trackstore.h"
 #include "tracklogger.h"
-
+#include "lora1268.h"
 
 void   register_aprs(void);
    
@@ -48,15 +48,21 @@ static int do_teston(int argc, char** argv)
     return 0;
 }
 
+#endif
 
 /********************************************************************************
  * Send test aprs packet
  ********************************************************************************/
+fbq_t* loraprs_get_encoder_queue();
 
 static int do_testpacket(int argc, char** argv)
 {
     FBUF packet;    
+#if defined(ARCTIC4_UHF)
+    fbq_t* outframes = loraprs_get_encoder_queue();
+#else
     fbq_t* outframes = hdlc_get_encoder_queue();
+#endif
     char from[11], to[11];
     char *dbuf = malloc(71); 
   
@@ -79,7 +85,6 @@ static int do_testpacket(int argc, char** argv)
     return 0;
 }
 
-#endif
 
 
 /****************************************************************************
@@ -149,8 +154,31 @@ static int do_trput(int argc, char* argv[])
  * setting changes. 
  *****************************************************************/
 
-#if !defined(ARCTIC4_UHF)
+#if defined(ARCTIC4_UHF)
 
+void hdl_lora_sf(uint8_t sf) {
+    uint8_t cr = get_byte_param("LORA_CR", DFL_LORA_CR);
+    lora_SetModulationParams(sf, SX126X_LORA_BW_125_0, cr-4, (sf>=11 ? 1:0)); 
+}
+
+
+void hdl_lora_cr(uint8_t cr) {
+    uint8_t sf = get_byte_param("LORA_SF", DFL_LORA_SF);
+    lora_SetModulationParams(sf, SX126X_LORA_BW_125_0, cr-4, (sf>=11 ? 1:0)); 
+}
+
+
+void hdl_freq(int32_t freq) {
+    printf("Please restart to let change take effect\n");
+}
+
+void hdl_txpower(uint8_t po) {
+    lora_setTxPower(po);
+}
+
+
+
+#else
 
 void hdl_squelch(uint8_t sq) {
     radio_setSquelch(sq);
@@ -171,11 +199,19 @@ void hdl_txlow(bool on) {
     radio_setLowTxPower(on);
 }
 
+void hdl_txfreq(int32_t freq) {
+    radio_setFreq(freq, -1); 
+}
+
+void hdl_rxfreq(int32_t freq) {
+    radio_setFreq(-1, freq); 
+}
+
+
 #endif
 
 
 void hdl_radio(bool on) {
-#if !defined(ARCTIC4_UHF)
     if ((radio_is_on() && on) || (!radio_is_on() && !on))
         return;
     if (on) { 
@@ -186,19 +222,8 @@ void hdl_radio(bool on) {
         printf("*** Radio off ***\n");
         radio_release();
     }
-#endif
-   // TBD for LoRa module
 }
 
-
-
-void hdl_txfreq(int32_t freq) {
-    radio_setFreq(freq, -1); 
-}
-
-void hdl_rxfreq(int32_t freq) {
-    radio_setFreq(-1, freq); 
-}
 
 
 void hdl_tracklog(bool on) {
@@ -234,8 +259,8 @@ void hdl_trkpost(bool on) {
 
 // Radio and APRS settings
 
-CMD_USTR_SETTING (_param_mycall,     "MYCALL",       9,  DFL_MYCALL,       REGEX_AXADDR);
-CMD_USTR_SETTING (_param_dest,       "DEST",         9,  DFL_DEST,         REGEX_AXADDR);
+CMD_USTR_SETTING (_param_mycall,     "MYCALL",       10, DFL_MYCALL,       REGEX_AXADDR);
+CMD_USTR_SETTING (_param_dest,       "DEST",         10, DFL_DEST,         REGEX_AXADDR);
 CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",     70, DFL_DIGIPATH,     REGEX_DIGIPATH);
 
 CMD_STR_SETTING  (_param_trklogurl,  "TRKLOG.URL",   64, DFL_TRKLOG_URL,   REGEX_URL);
@@ -277,9 +302,10 @@ CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
 
 
 #if defined(ARCTIC4_UHF)
-CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      4330000, 4360000, hdl_txfreq);
-CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      4330000, 4360000, hdl_rxfreq);
-
+CMD_I32_SETTING  (_param_freq,       "FREQ",           DFL_FREQ,           433000000, 436000000, hdl_freq);
+CMD_BYTE_SETTING (_param_lora_sf,    "LORA_SF",        DFL_LORA_SF,        7, 12,  hdl_lora_sf);
+CMD_BYTE_SETTING (_param_lora_cr,    "LORA_CR",        DFL_LORA_CR,        5, 8,   hdl_lora_cr);
+CMD_BYTE_SETTING (_param_txpower,    "TXPOWER",        DFL_TXPOWER,        0, 6,   hdl_txpower);
 #else
 
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000, hdl_txfreq);
@@ -324,8 +350,6 @@ void register_aprs()
     ADD_CMD("mindist",    &_param_mindist,     "Tracking min distance (meters)",    "[<val>]");
     ADD_CMD("statustime", &_param_statustime,  "Status report time (10 sec units)", "[<val>]");
     ADD_CMD("turnlimit",  &_param_turnlimit,   "Threshold for change of direction", "[<val>]");
-    ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
-    ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("timestamp",  &_param_timestamp,   "Timestamp setting",  "[on|off]");
     ADD_CMD("compress",   &_param_compress,    "Compress setting",  "[on|off]");
     ADD_CMD("altitude",   &_param_altitude,    "Altitude setting",  "[on|off]");
@@ -345,15 +369,22 @@ void register_aprs()
     ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport in turns", "[on|off]");
     ADD_CMD("igtrack",    &_param_igtrack_on,  "Send posreports directly to APRS/IS when available", "[on|off]");   
     ADD_CMD("txmon",      &_param_txmon_on,    "Tx monitor (show TX packets)", "[on|off]");
-
+    ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
+    
 #if !defined(ARCTIC4_UHF)
     ADD_CMD("teston",     &do_teston,          "HDLC encoder test", "<byte>");    
-    ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
     ADD_CMD("txdelay",    &_param_txdelay,     "APRS TXDELAY setting", "[<val>]");
     ADD_CMD("txtail",     &_param_txtail,      "APRS TXTAIL setting", "[<val>]");
     ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
     ADD_CMD("volume",     &_param_volume,      "RX audio level setting (1-8)",      "[<val>]");
     ADD_CMD("txlow",      &_param_txlow_on,    "Tx power low", "[on|off]");
+    ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
+    ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
+#else
+    ADD_CMD("lora-sf",    &_param_lora_sf,     "LoRa spreading factor (7-12)",      "[<val>]");
+    ADD_CMD("lora-cr",    &_param_lora_cr,     "LoRa coding rate (5-8)",            "[<val>]");
+    ADD_CMD("txpower",    &_param_txpower,     "Tx power (1-6)",                    "[<val>]");
+    ADD_CMD("freq",       &_param_freq,        "TX/RX frequency (Hz)",              "[<val>]");
 #endif
 }
 

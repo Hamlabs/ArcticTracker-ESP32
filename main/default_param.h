@@ -2,7 +2,7 @@
 
 #define DFL_MYCALL       "NOCALL"
 #define DFL_TRKLOG_URL   "https://localhost/trklog"
-#define DFL_DEST         "APAR31"
+#define DFL_DEST         "APAR33"
 #define DFL_DIGIPATH     ""
 #define DFL_SYMBOL       "/["
 #define DFL_OBJ_SYMBOL   "/["
@@ -14,6 +14,8 @@
 #define DFL_TIMEZONE     ""
 
 
+#define DFL_LORA_SF          9
+#define DFL_LORA_CR          7
 #define DFL_REPEAT           0
 #define DFL_TRKLOG_INT       5
 #define DFL_TRKLOG_TTL      24
@@ -32,3 +34,5 @@
 #define DFL_IGATE_PORT   14580 
 #define DFL_TXFREQ     1448000
 #define DFL_RXFREQ     1448000
+#define DFL_FREQ     433775000
+#define DFL_TXPOWER         13

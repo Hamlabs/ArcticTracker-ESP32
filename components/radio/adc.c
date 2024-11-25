@@ -1,5 +1,7 @@
 
 #include "defines.h"
+#if !defined(ARCTIC4_UHF)
+
 #include "esp_adc/adc_continuous.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -196,3 +198,5 @@ void adcsampler_stop(adcsampler_t handle) {
 void adcsampler_deinit(adcsampler_t handle)  {
     ESP_ERROR_CHECK( adc_continuous_deinit(handle) );
 }
+
+#endif

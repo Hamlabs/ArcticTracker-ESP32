@@ -4,9 +4,10 @@
  * 
  */
 
-      
-#include <string.h>
 #include "defines.h"
+#if !defined(ARCTIC4_UHF)
+
+#include <string.h>
 #include "afsk.h"
 #include "ui.h"
 #include "fifo.h"
@@ -196,3 +197,4 @@ void print_samples() {
     printf("\n\n");
 }
 
+#endif
