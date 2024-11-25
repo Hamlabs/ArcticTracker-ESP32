@@ -267,9 +267,11 @@ static void rf2inet(FBUF *frame)
       
     /* Write header in plain text -> newHdr */
     fbuf_new(&newHdr);
-    fbuf_putstr(&newHdr, addr2str(buf, &from)); 
+    addr2str(buf, &from);
+    fbuf_putstr(&newHdr, buf); 
     fbuf_putstr(&newHdr, ">");
-    fbuf_putstr(&newHdr, addr2str(buf, &to));
+    addr2str(buf, &to);
+    fbuf_putstr(&newHdr, buf);
     
     if (ndigis > 0) {
         fbuf_putstr(&newHdr, ",");
@@ -279,7 +281,8 @@ static void rf2inet(FBUF *frame)
         fbuf_putstr(&newHdr, "*");
     else {
         fbuf_putstr(&newHdr, ",qAR,");
-        fbuf_putstr(&newHdr, addr2str(buf, &mycall));  
+        addr2str(buf, &mycall); 
+        fbuf_putstr(&newHdr, buf);  
     }
     fbuf_putstr(&newHdr, ":");
   

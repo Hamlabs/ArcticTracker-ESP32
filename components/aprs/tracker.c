@@ -647,9 +647,9 @@ static void send_header(FBUF* packet, bool no_tx)
     addr_t from, to; 
     char call[10];
     
-    get_str_param("MYCALL", call, 9, DFL_MYCALL); 
+    get_str_param("MYCALL", call, 10, DFL_MYCALL); 
     str2addr(&from, call, false); 
-    get_str_param("DEST", call, 9, DFL_DEST);
+    get_str_param("DEST", call, 10, DFL_DEST);
     str2addr(&to, call, false); 
 
     addr_t digis[7];
