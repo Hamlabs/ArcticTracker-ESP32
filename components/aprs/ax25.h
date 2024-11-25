@@ -48,7 +48,7 @@ typedef struct {
 
 bool    addrCmp(addr_t*, addr_t*);
 addr_t* addr(addr_t*, char*, uint8_t); 
-char*   addr2str(char*, const addr_t*);
+int     addr2str(char*, const addr_t*);
 void    str2addr(addr_t* a, const char* str, bool d);
 char*   digis2str(char*, uint8_t, addr_t[], bool);
 uint8_t str2digis(addr_t* digis, char* str);
@@ -62,10 +62,14 @@ void ax25_encode_header( FBUF*, addr_t*, addr_t*, addr_t[], uint8_t,
 uint8_t ax25_decode_header(FBUF*, addr_t*, addr_t*, addr_t[],
                         uint8_t*, uint8_t*);
 
+/* Encode frame from string */
+void ax25_str2frame(FBUF* b, char* str, uint8_t len); 
+int ax25_frame2str(char *buf, FBUF* b);
 
 /* Display information about frame on standard output */
 void ax25_display_frame(FBUF *);
 void ax25_display_addr(addr_t*);
+
 
 /* Monitor */
 void mon_init();

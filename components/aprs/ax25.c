@@ -51,15 +51,15 @@ void str2addr(addr_t* addr, const char* string, bool digi)
 /*************************************************************************
  * Convert AX.25 address field into string
  * Format: <callsign>-<ssid> 
+ * Returns number of characters written
  **************************************************************************/
 
-char* addr2str(char* string, const addr_t* addr)
+int addr2str(char* string, const addr_t* addr)
 {
     if (addr->ssid == 0)
-        sprintf(string, "%s", addr->callsign);
+        return sprintf(string, "%s", addr->callsign);
     else
-        sprintf(string, "%s-%d", addr->callsign, addr->ssid);
-    return string;
+        return sprintf(string, "%s-%d", addr->callsign, addr->ssid);
 }
 
 
@@ -145,9 +145,11 @@ bool ax25_search_digis(addr_t* digis, int ndigis, char *argv[])
    while (true) {
      if (argv[i] == NULL)
        break;
-     for (uint8_t j=0; j<ndigis; j++)
-       if (strncmp(argv[i], addr2str(buf, &digis[j]), strlen(argv[i])) == 0)
-          return true;
+     for (uint8_t j=0; j<ndigis; j++) {
+        addr2str(buf, &digis[j]);
+        if (strncmp(argv[i], buf, strlen(argv[i])) == 0)
+           return true;
+     }
      i++;
    }
    return false;
@@ -314,5 +316,55 @@ void ax25_display_frame(FBUF *b)
        }
     }
 
+}
+
+/**************************************************************************
+ * Decode an AX.25 frame to a text string
+ **************************************************************************/
+
+int ax25_frame2str(char *buf, FBUF* b) {
+    int len = 0;
+    fbuf_reset(b);
+    addr_t to, from;
+    addr_t digis[7];
+    uint8_t ctrl;
+    uint8_t pid;
+    uint8_t ndigis = ax25_decode_header(b, &from, &to, digis, &ctrl, &pid);
+    len += addr2str(buf, &from);
+    buf[len++] = '>';
+    len += addr2str(buf+len, &to);
+    for (int i=0; i<ndigis; i++) {
+        buf[len++]=',';
+        len += addr2str(buf+len, &digis[i]);
+    }
+    if (ctrl==FTYPE_UI) {
+        buf[len++] = ':';
+        int dlen = fbuf_length(b) - AX25_HDR_LEN(ndigis);
+        for (int j=0;j<dlen; j++)
+            buf[len++] = fbuf_getChar(b);
+        buf[len]='\0';
+    }
+    return len;
+}
+
+
+/**************************************************************************
+ * Encode an AX.25 frame from a text string
+ **************************************************************************/
+
+void ax25_str2frame(FBUF* b, char* str, uint8_t len) 
+{
+    int p1 = strcspn(str, ">");
+    int p2 = strcspn(str, ",");
+    int p3 = strcspn(str, ":");
+    str[len] = str[p1] = str[p2] = str[p3] = '\0';
+    
+    char* from = str;
+    char* to = str+p1+1;
+    char* via = str+p2+1;
+    char* text = str+p3+1;
+
+    ax25_aprs_header(b, from, to, via);
+    fbuf_putstr(b, text);
 }
 
