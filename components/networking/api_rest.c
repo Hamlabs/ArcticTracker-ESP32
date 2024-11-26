@@ -42,7 +42,6 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     cJSON_AddStringToObject(root, "ap", wifi_getConnectedAp(buf));
     cJSON_AddStringToObject(root, "ipaddr", wifi_getIpAddr(buf));
     cJSON_AddStringToObject(root, "mdns", mdns_hostname(buf));
-    
     cJSON_AddBoolToObject(root, "softap", wifi_softAp_isEnabled());
     
     int16_t vbatt = batt_voltage();
@@ -61,7 +60,8 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     batt_status(st1, st2);
     sprintf(buf, "%s %s", st1, st2);
     cJSON_AddStringToObject(root, "battstatus", buf);
-    
+    cJSON_AddStringToObject(root, "device", DEVICE_STRING);
+    cJSON_AddStringToObject(root, "version", VERSION_STRING);
     return rest_JSON_send(req, root);
 }
 
@@ -95,13 +95,21 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
     cJSON_AddNumberToObject(root, "mindist",   get_byte_param("MINDIST", DFL_MINDIST));
     cJSON_AddNumberToObject(root, "repeat",    get_byte_param("REPEAT", DFL_REPEAT));
     cJSON_AddNumberToObject(root, "turnlimit", get_u16_param("TURNLIMIT", DFL_TURNLIMIT));
-    cJSON_AddNumberToObject(root, "txfreq",    get_i32_param("TXFREQ", DFL_TXFREQ));
-    cJSON_AddNumberToObject(root, "rxfreq",    get_i32_param("RXFREQ", DFL_RXFREQ));
    
     cJSON_AddBoolToObject(root, "timestamp", get_byte_param("TIMESTAMP.on", 0));
     cJSON_AddBoolToObject(root, "compress",  get_byte_param("COMPRESS.on", 0));
     cJSON_AddBoolToObject(root, "altitude", get_byte_param("ALTITUDE.on", 0));
     cJSON_AddBoolToObject(root, "extraturn", get_byte_param("EXTRATURN.on", 0));
+   
+#if defined(ARCTIC4_UHF)
+    cJSON_AddNumberToObject(root, "lora_sf",   get_byte_param("LORA_SF", DFL_LORA_SF));
+    cJSON_AddNumberToObject(root, "lora_cr",   get_byte_param("LORA_CR", DFL_LORA_CR));
+    cJSON_AddNumberToObject(root, "txpower",   get_byte_param("TXPOWER", DFL_TXPOWER));
+    cJSON_AddNumberToObject(root, "freq",      get_i32_param("FREQ", DFL_FREQ));
+#else
+    cJSON_AddNumberToObject(root, "txfreq",    get_i32_param("TXFREQ", DFL_TXFREQ));
+    cJSON_AddNumberToObject(root, "rxfreq",    get_i32_param("RXFREQ", DFL_RXFREQ));
+#endif
     
     return rest_JSON_send(req, root);
 }
@@ -129,14 +137,21 @@ static esp_err_t aprs_put_handler(httpd_req_t *req)
     set_byte_param("MINDIST",  JSON_BYTE(root, "mindist"));
     set_byte_param("REPEAT",   JSON_BYTE(root, "repeat"));
     
-    set_u16_param("TURNLIMIT", JSON_U16(root, "turnlimit"));
-    set_i32_param("TXFREQ",    JSON_INT(root, "txfreq"));
-    set_i32_param("RXFREQ",    JSON_INT(root, "rxfreq"));
-    
     set_byte_param("TIMESTAMP.on", JSON_BOOL(root, "timestamp"));
     set_byte_param("COMPRESS.on",  JSON_BOOL(root, "compress"));
     set_byte_param("ALTITUDE.on",  JSON_BOOL(root, "altitude"));
     set_byte_param("EXTRATURN.on", JSON_BOOL(root, "extraturn"));
+    set_u16_param("TURNLIMIT", JSON_U16(root, "turnlimit"));
+    
+#if defined(ARCTIC4_UHF)
+    set_byte_param("LORA_SF", JSON_BYTE(root, "lora_sf"));
+    set_byte_param("LORA_CR", JSON_BYTE(root, "lora_cr"));  
+    set_byte_param("TXPOWER", JSON_BYTE(root, "txpower")); 
+    set_i32_param("FREQ",     JSON_INT(root, "freq"));
+#else
+    set_i32_param("TXFREQ",    JSON_INT(root, "txfreq"));
+    set_i32_param("RXFREQ",    JSON_INT(root, "rxfreq"));
+#endif
     
     cJSON_Delete(root);
     httpd_resp_sendstr(req, "PUT digi/igate settings successful");
