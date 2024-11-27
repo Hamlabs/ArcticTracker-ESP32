@@ -192,7 +192,7 @@ int do_info(int argc, char** argv)
         printf("        SoftAP: %s\n", (wifi_softAp_isEnabled() ? "On" : "Off"));
         get_str_param("WIFIAP.SSID", buf, 32, default_ssid);
         printf("       AP SSID: %s\n",  buf);     
-        get_str_param("WIFIAP.IP", buf, 16, AP_DEFAULT_IP);
+        get_str_param("WIFIAP.IP", buf, 16, DFL_SOFTAP_IP);
         printf(" AP IP address: %s\n", buf); 
     }
     else
@@ -253,7 +253,7 @@ inline static void _param_wifi_handler(bool x)
    
 static void _param_softap_handler(bool x) {
     char passwd[64];
-    get_str_param("WIFIAP.AUTH", passwd, 64, AP_DEFAULT_PASSWD);
+    get_str_param("WIFIAP.AUTH", passwd, 64, DFL_SOFTAP_PASSWD);
     if (strlen(passwd) < 8) {
         printf("SoftAP password not set or too short\n");
         return;
@@ -273,8 +273,8 @@ CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",   &_param_softap_handler);
 CMD_STR_SETTING (_param_apikey,    "API.KEY",     128, "", NULL);
 CMD_STR_SETTING (_param_apiorig,   "API.ORIGINS", 64, "", NULL);
 CMD_STR_SETTING (_param_ap_ssid,   "WIFIAP.SSID", 32, default_ssid, NULL); 
-CMD_STR_SETTING (_param_ap_auth,   "WIFIAP.AUTH", 64, AP_DEFAULT_PASSWD, NULL);
-CMD_STR_SETTING (_param_ap_ip,     "WIFIAP.IP",   17, AP_DEFAULT_IP, REGEX_IPADDR);
+CMD_STR_SETTING (_param_ap_auth,   "WIFIAP.AUTH", 64, DFL_SOFTAP_PASSWD, NULL);
+CMD_STR_SETTING (_param_ap_ip,     "WIFIAP.IP",   17, DFL_SOFTAP_IP, REGEX_IPADDR);
 CMD_STR_SETTING (_param_fwurl,     "FW.URL",      64, "", NULL);
 CMD_STR_SETTING (_param_fwcert,    "FW.CERT",     BBUF_SIZE, "", NULL);
 

@@ -13,6 +13,9 @@
 #define DFL_IGATE_FILTER ""
 #define DFL_TIMEZONE     ""
 
+#define DFL_SOFTAP_PASSWD  "123456789"
+#define DFL_SOFTAP_IP      "192.168.0.1"
+
 
 #define DFL_LORA_SF          9
 #define DFL_LORA_CR          7

@@ -74,7 +74,7 @@ static void dhcp_enable(bool on)
         // assign a static IP to the network interface
         esp_netif_ip_info_t info;
         memset(&info, 0, sizeof(info));
-        get_str_param("WIFIAP.IP", ip, 16, AP_DEFAULT_IP);
+        get_str_param("WIFIAP.IP", ip, 16, DFL_SOFTAP_IP);
         str2ip(&info.ip, ip);
         str2ip(&info.gw, ip); //ESP acts as router, so gw addr will be its own addr
         str2ip(&info.netmask, "255.255.255.0");
@@ -181,7 +181,7 @@ void wifi_init(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     
     
-    wifi_enable_softAp(false && GET_BYTE_PARAM("SOFTAP.on"));
+    wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on"));
     
     esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
     scanDone = cond_create();
@@ -220,8 +220,9 @@ void wifi_enable_softAp(bool en)
     char passwd[64];
     
     if (en && !softApEnabled) { 
+        ESP_LOGI(TAG, "Turning softap on");
         get_str_param("WIFIAP.SSID", ssid, 32, default_ssid);
-        get_str_param("WIFIAP.AUTH", passwd, 64, AP_DEFAULT_PASSWD);
+        get_str_param("WIFIAP.AUTH", passwd, 64, DFL_SOFTAP_PASSWD);
         
         if (strlen(passwd) < 8) {
             ESP_LOGE(TAG, "SoftAP password not set or too short");
@@ -233,16 +234,17 @@ void wifi_enable_softAp(bool en)
         conf.ap.ssid_len = strlen(ssid);
         strcpy((char*) conf.ap.password, passwd);
         conf.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
-    
+        conf.ap.channel = 1;
+        
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &conf));
         if (ap_netif==NULL)
             ap_netif = esp_netif_create_default_wifi_ap();
         dhcp_enable(true);
         softApEnabled = true;
-        ESP_LOGI(TAG, "wifi_init_softap finished");
     }
-    else if (softApEnabled) {
+    else if (softApEnabled && !en) {
+        ESP_LOGI(TAG, "Turning softap on");
         dhcp_enable(false);
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         softApEnabled = false;
@@ -412,7 +414,7 @@ char* wifi_getApSsid(char* buf) {
 }
 
 char* wifi_getApIp(char* buf) {
-    get_str_param("WIFIAP.IP", buf, 16, AP_DEFAULT_IP);
+    get_str_param("WIFIAP.IP", buf, 16, DFL_SOFTAP_IP);
     return buf; 
 }
  
@@ -513,6 +515,7 @@ bool wifi_join(const char* ssid, const char* pass, int timeout_ms)
 /********************************************************************************
  * Start scanning for APs
  ********************************************************************************/
+
 bool wifi_startScan(void)
 {
     wifi_scan_config_t scanConf = {

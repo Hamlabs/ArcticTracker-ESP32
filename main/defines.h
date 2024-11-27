@@ -66,8 +66,6 @@
 #define HTTPS_PORT    443
 
 /* Default WIFI SOFTAP settings */
-#define AP_DEFAULT_PASSWD ""
-#define AP_DEFAULT_IP     "192.168.0.1"
 #define AP_MAX_CLIENTS    4
 
 /* Time between connect attempts */

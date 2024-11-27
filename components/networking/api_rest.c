@@ -237,7 +237,7 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     get_str_param("WIFIAP.SSID", buf, 32, default_ssid);
     cJSON_AddStringToObject(root, "apssid", buf);
     
-    get_str_param("WIFIAP.AUTH", buf, 64, AP_DEFAULT_PASSWD);
+    get_str_param("WIFIAP.AUTH", buf, 64, DFL_SOFTAP_PASSWD);
     cJSON_AddStringToObject(root, "appass", buf);
 
     get_str_param("FW.URL", buf, 64, DFL_TRKLOG_URL);
