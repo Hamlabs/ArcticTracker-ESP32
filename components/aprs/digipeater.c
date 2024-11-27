@@ -23,6 +23,7 @@
 #include "hdlc.h"
 #include "ui.h"
 #include "radio.h"
+#include "aprs.h"
 #include "heardlist.h"
 #include "digipeater.h"
 #include <string.h>
@@ -102,9 +103,8 @@ void digipeater_activate(bool m)
         ESP_LOGI(TAG, "starting.."); 
         
         /* Subscribe to RX packets and start treads */
-#if !defined(ARCTIC4_UHF)
-        hdlc_subscribe_rx(mq, 1);
-#endif
+        APRS_SUBSCRIBE_RX(mq, 1);
+        
         xTaskCreatePinnedToCore(&digipeater, "Digipeater", 
             STACK_DIGI, NULL, NORMALPRIO, &digithr, CORE_DIGI);
         hlist_start();
@@ -126,9 +126,7 @@ void digipeater_activate(bool m)
         /* Unsubscribe to RX packets and stop threads */
         fbq_signal(&rxqueue);   
         digithr = NULL;
-#if !defined(ARCTIC4_UHF)
-        hdlc_subscribe_rx(NULL, 1);
-#endif
+        APRS_SUBSCRIBE_RX(NULL, 1);
     }
 }
 

@@ -36,6 +36,7 @@
 #include "ax25.h"
 #include "hdlc.h"
 #include "afsk.h"
+#include "aprs.h"
 #include "radio.h"
 #include "heardlist.h"
 #include "tracker.h"
@@ -146,9 +147,7 @@ static void igate_main(void* arg)
             xTaskCreatePinnedToCore(&igate_radio, "Igate Radio", 
                 STACK_IGATE_RADIO, NULL, NORMALPRIO, NULL, CORE_IGATE_RADIO);
     
-#if !defined(ARCTIC4_UHF)
-            hdlc_subscribe_rx(&rxqueue, 2);
-#endif
+            APRS_SUBSCRIBE_RX(&rxqueue, 2);
            
             /* Listen for data from APRS/IS server */
             while (_igate_on) {
@@ -163,9 +162,8 @@ static void igate_main(void* arg)
             _igate_run = false; 
             fbq_signal(&rxqueue);
             sleepMs(50);
-#if !defined(ARCTIC4_UHF)
-            hdlc_subscribe_rx(NULL, 2);
- #endif      
+            APRS_SUBSCRIBE_RX(NULL, 2);
+            
             /* Connection failure. Wait for 2 minutes */
             if (_igate_on) {
                 ESP_LOGW(TAG, "Connection failed");
