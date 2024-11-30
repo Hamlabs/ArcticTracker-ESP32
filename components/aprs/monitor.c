@@ -4,6 +4,8 @@
 #include "ax25.h"
 #include "hdlc.h"
 #include "system.h"
+#include "aprs.h"
+   
    
 static bool mon_on = false;
 static bool mon_ax25 = true; 
@@ -16,9 +18,6 @@ void mon_init()
     fbq_init(&mon, HDLC_DECODER_QUEUE_SIZE);
 }
 
-
-extern void loraprs_subscribe_rx(fbq_t* q, uint8_t i);
-extern void loraprs_monitor_tx(mq);
 
 /******************************************************************************
  *  Monitor thread 
@@ -75,15 +74,11 @@ void mon_activate(bool m)
    
     if (tstart) {
         FBQ* mq = (mon_on? &mon : NULL);
-#if defined(ARCTIC4_UHF)
-        loraprs_subscribe_rx(mq, 0);
-        if ( GET_BYTE_PARAM("TXMON.on") )
-            loraprs_monitor_tx(mq); 
-#else
-        hdlc_subscribe_rx(mq, 0);
-        if ( GET_BYTE_PARAM("TXMON.on") )
-            hdlc_monitor_tx(mq); 
-#endif
+        
+        APRS_SUBSCRIBE_RX(mq, 0);
+        if (GET_BYTE_PARAM("TXMON.on"))
+            APRS_MONITOR_TX(mq);
+
         xTaskCreate(&monitor, "Packet monitor", 
             STACK_MONITOR, NULL, NORMALPRIO, NULL);
     }
@@ -91,13 +86,8 @@ void mon_activate(bool m)
     
     if (tstop) {
         fbq_signal(&mon);
-        
-#if defined(ARCTIC4_UHF)
-        loraprs_subscribe_rx(NULL, 0);
-#else
-        hdlc_monitor_tx(NULL);
-        hdlc_subscribe_rx(NULL, 0);
-#endif
+        APRS_SUBSCRIBE_RX(NULL, 0);
+        APRS_MONITOR_TX(NULL);
     }
 }
 

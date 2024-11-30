@@ -132,7 +132,7 @@ void lora_on(bool on)
 		uint8_t txpo = get_byte_param("TXPOWER", DFL_TXPOWER);
 		
 		ESP_LOGI(TAG, "Lora on: sf=%x, cr=%x", sf, (cr-4));
-		loraBegin((uint32_t) freq, txpo, 0, false );
+		loraBegin((uint32_t) freq, power[txpo], 0, false );
 		lora_config(sf, SX126X_LORA_BW_125_0, cr-4, 8, 0, true, (sf>=11 ? 1:0)); 
 	     	// SF, BW, CR, PAlength, PLlen, CRCon, invertIRQ, optimize
 	}

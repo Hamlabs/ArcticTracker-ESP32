@@ -47,11 +47,11 @@
 
 #elif defined CONFIG_ARCTIC4
   #define DEVICE ARCTIC4
-  #define DEVICE_STRING "Arctic Tracker 4 (VHF-APRS)"
+  #define DEVICE_STRING "Arctic Tracker 4 VHF"
 #elif defined CONFIG_ARCTIC4_UHF
   #define DEVICE ARCTIC4
   #define ARCTIC4_UHF
-  #define DEVICE_STRING "Arctic Tracker 4 (UHF-LoRa)"
+  #define DEVICE_STRING "Arctic Tracker 4 UHF/L"
 #endif
 
 #if DEVICE == T_TWR || DEVICE == ARCTIC4

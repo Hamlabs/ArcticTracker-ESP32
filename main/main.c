@@ -224,8 +224,8 @@ void app_main()
     gpio_iomux_out(RADIO_PIN_MICSEL,  1, false);
 #endif
 #elif defined(ARCTIC4_UHF) 
-    gpio_iomux_in (42,3);
-    gpio_iomux_out (44,1, false);    
+    gpio_iomux_in (LORA_PIN_DIO1, 3);
+    gpio_iomux_out(LORA_PIN_DIO3, 1, false);    
     gpio_iomux_out(LED_TX_PIN,    1, false); // FUNC_MTCK_GPIO39
 #elif DEVICE == ARCTIC4
     gpio_iomux_out(BUZZER_PIN,    1, false);

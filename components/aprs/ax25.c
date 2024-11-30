@@ -77,7 +77,7 @@ char* digis2str(char* string, uint8_t ndigis, addr_t digis[], bool trunc)
      for (uint8_t i=0; i<ndigis; i++)
      {  
         addr2str(buf, &digis[i]);
-        if (trunc) {
+        if (trunc && strlen(buf) > 16) {
            char buf2[11];
            if (strncmp(buf, "WIDE1-1", 7) == 0)
                sprintf(buf2, "W1");

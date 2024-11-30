@@ -22,6 +22,8 @@
 #include "trackstore.h"
 #include "tracklogger.h"
 #include "lora1268.h"
+#include "aprs.h"
+
 
 void   register_aprs(void);
    
@@ -47,22 +49,31 @@ static int do_teston(int argc, char** argv)
     radio_release();
     return 0;
 }
+#else
+
+static int do_heard(int argc, char** argv)
+{
+    char buf[16]; 
+    if (loraprs_last_rssi() == 0)
+        printf("Nothing heard yet\n");
+    else
+        printf("Last heard: %s, RSSI: %d dBm, SNR: %d dB\n", 
+            loraprs_last_heard(buf), loraprs_last_rssi(), loraprs_last_snr());
+    return 0;
+}
+
 
 #endif
 
 /********************************************************************************
  * Send test aprs packet
  ********************************************************************************/
-fbq_t* loraprs_get_encoder_queue();
 
 static int do_testpacket(int argc, char** argv)
 {
     FBUF packet;    
-#if defined(ARCTIC4_UHF)
-    fbq_t* outframes = loraprs_get_encoder_queue();
-#else
-    fbq_t* outframes = hdlc_get_encoder_queue();
-#endif
+    fbq_t* outframes = APRS_GET_ENCODER_QUEUE();
+    
     char from[11], to[11];
     char *dbuf = malloc(71); 
   
@@ -333,7 +344,7 @@ void register_aprs()
     ADD_CMD("trklog-put", &do_trput,           "Put tracklog record", "");  
     
     ADD_CMD("mycall",     &_param_mycall,      "My callsign", "[<callsign>]");
-    ADD_CMD("dest",       &_param_dest,        "APRS destination address", "[<addr>]");
+//    ADD_CMD("dest",       &_param_dest,        "APRS destination address", "[<addr>]");
     ADD_CMD("digipath",   &_param_digipath,    "APRS Digipeater path", "[<addr>, ...]");
     ADD_CMD("symbol",     &_param_symbol,      "APRS symbol (sym-table symbol)", "[<T><S>]");
     ADD_CMD("osymbol",    &_param_osym,        "APRS symbol for objects (sym-table symbol)", "[<T><S>]");
@@ -366,7 +377,7 @@ void register_aprs()
     ADD_CMD("radio",      &_param_radio_on,    "Radio module power", "[on|off]");
     ADD_CMD("tracker",    &_param_tracker_on,  "APRS tracker setting", "[on|off]");
     ADD_CMD("reportbeep", &_param_rbeep_on,    "Beep when report is sent", "[on|off]");
-    ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport in turns", "[on|off]");
+    ADD_CMD("extraturn",  &_param_xturn_on,    "Send extra posreport when changing direction", "[on|off]");
     ADD_CMD("igtrack",    &_param_igtrack_on,  "Send posreports directly to APRS/IS when available", "[on|off]");   
     ADD_CMD("txmon",      &_param_txmon_on,    "Tx monitor (show TX packets)", "[on|off]");
     ADD_CMD("testpacket", &do_testpacket,      "Send test APRS packet", "");
@@ -385,6 +396,7 @@ void register_aprs()
     ADD_CMD("lora-cr",    &_param_lora_cr,     "LoRa coding rate (5-8)",            "[<val>]");
     ADD_CMD("txpower",    &_param_txpower,     "Tx power (1-6)",                    "[<val>]");
     ADD_CMD("freq",       &_param_freq,        "TX/RX frequency (Hz)",              "[<val>]");
+    ADD_CMD("heard",      &do_heard,           "Last heard packet",                 "");
 #endif
 }
 
