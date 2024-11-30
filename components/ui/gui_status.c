@@ -16,7 +16,7 @@
 #include "trackstore.h"
 #include "tracklogger.h"
 #include "radio.h"
-
+#include "aprs.h"
 
 #define NSCREENS 10
 
@@ -153,9 +153,14 @@ static void status_screen1() {
     disp_setHighFont(true, false);
     disp_writeText(0, LINE1, call);
     disp_setHighFont(false, false);
-    
+        
+#if defined(ARCTIC4_UHF)
+    int32_t f = get_i32_param("FREQ", DFL_FREQ);
+    sprintf(buf, "%03ld.%03ld MHz%c", f/1000000, (f/1000)%1000, '\0');
+#else
     int32_t f = get_i32_param("TXFREQ", DFL_TXFREQ);
     sprintf(buf, "%03ld.%03ld MHz%c", f/10000, (f/10)%1000, '\0');
+#endif
     disp_writeText(0, LINE3, buf);
     disp_setBoldFont(false);
         
@@ -182,17 +187,57 @@ static void status_screen1() {
 
 static void status_screen2() {
     char buf[32];   
+    char buf2[10];
     disp_clear();
     status_heading("RXTX");
-    sprintf(buf, "LoRa Module..");
-    disp_writeText(0, LINE3, buf);
+    
+    if (radio_is_on() && loraprs_tx_is_on()) {
+        gui_setPause(250); 
+        disp_setBoldFont(true);
+        disp_setHighFont(true, false);
+        sprintf(buf, "Transmitting..");
+        disp_writeText(0, LINE2, buf);
+        disp_setHighFont(false, false);
+        disp_setBoldFont(false);
+    }
+    else if (radio_is_on()) {
+        gui_setPause(300); 
+        
+        int rssi=radio_getRssi();
+        uint8_t sf = get_byte_param("LORA_SF", DFL_LORA_SF);
+        uint8_t cr = get_byte_param("LORA_CR", DFL_LORA_CR);
+        uint32_t f = get_i32_param("FREQ", DFL_FREQ);
+        
+        disp_setBoldFont(true);
+        disp_setHighFont(true, false);
+        sprintf(buf, "LoRa SF%d/CR%d",sf, cr);
+        disp_writeText(0, LINE1, buf);
+        disp_setBoldFont(false);
+        disp_setHighFont(false, false);
+        sprintf(buf, "%03ld.%03ld MHz%c", f/1000000, (f/1000)%1000, '\0');
+        disp_writeText(0, LINE3, buf);
+        
+        sprintf(buf, "Last RX: %s", loraprs_last_heard(buf2));
+        if (strlen(buf2) > 0) {
+            disp_writeText(0, LINE4, buf);
+            sprintf(buf, "%d dBm, SNR=%d dB", loraprs_last_rssi(), loraprs_last_snr());
+            disp_writeText(0, LINE5, buf);
+        }
+
+    }
+    else {
+        gui_setPause(2000); 
+        disp_setBoldFont(true);
+        sprintf(buf, "Radio is OFF");
+        disp_writeText(0, LINE2, buf);
+        disp_setBoldFont(false);
+    }
     disp_flush();
-    /* TBD */
 }
+    
+    
 
 #else
-
-extern int sa8_getRSSI();
 
 static void status_screen2() {
     char buf[32];   
@@ -210,7 +255,7 @@ static void status_screen2() {
     }
     else if (radio_is_on()) {
         gui_setPause(250); 
-        int rssi=sa8_getRSSI();
+        int rssi=radio_getRssi();
         int nrssi = (rssi-16) / 8;
         if (nrssi > 14)
             nrssi = 14;

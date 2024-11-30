@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <string.h>
 #include "defines.h"
 #include "config.h"
 #include "ax25.h"
@@ -17,17 +18,48 @@ FBQ encoder_queue;
 static FBQ mon;
 static FBQ *txmon = NULL; 
 static FBUF buffer; 
-
 static cond_t packet_rdy;
 
+char  last_packet[256]; 
+int8_t last_rssi;
+int8_t last_snr;
+bool txon = false; 
 
+/* Set packet queue for TX monitoring */
 void loraprs_monitor_tx(FBQ* m)
    { txmon = m; }
    
-
+   
+/* Return queue for packets to TX */
 fbq_t* loraprs_get_encoder_queue()
    { return &encoder_queue; }
    
+   
+/* Return last heard packet */
+char* loraprs_last_packet() {
+    return last_packet;
+}
+
+/* Return last heard callsign */
+char* loraprs_last_heard(char* buf) {
+    int pos =  strcspn(last_packet, ">");
+    strncpy(buf, last_packet, pos);
+    buf[pos] = '\0';
+    return buf;
+}
+   
+int8_t loraprs_last_rssi() {
+    return last_rssi;
+}
+int8_t loraprs_last_snr() {
+    return last_snr;
+}
+
+bool loraprs_tx_is_on() {
+    return txon;
+}
+
+
    
 /***********************************************************
  * Subscribe or unsubscribe to packets from decoder
@@ -78,6 +110,7 @@ static void rxdecoder (void* arg) {
             lora_ClearIrqStatus(SX126X_IRQ_ALL);
             lora_TxOff();
             tx_led_off();
+            txon = false; 
             continue;
         }
         
@@ -96,14 +129,16 @@ static void rxdecoder (void* arg) {
         
         fbuf_new(&frame);
         ax25_str2frame(&frame,  (char*) buf+3, len-3);
-        char bbuf[256];
-        ax25_frame2str(bbuf, &frame);
+        strcpy(last_packet, (char*) buf+3);
+        last_rssi = rssi; last_snr = snr;
         
         if (mqueue[0] || mqueue[1] || mqueue[2]) { 
             if (mqueue[0]) fbq_put( mqueue[0], frame);               // Monitor 
             if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&frame)); // Digipeater 
             if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&frame)); // Igate 
         }
+        if (mqueue[0]==NULL)
+            fbuf_release(&frame); 
     }
 }
 
@@ -133,6 +168,7 @@ static void txencoder (void* arg)
      int len = ax25_frame2str(txbuf+3, &buffer);    
      ESP_LOGI(TAG, "TX packet: %d bytes", len);
      tx_led_on();
+     txon = true;
      lora_SendPacket((uint8_t*) txbuf, len+3);
      if (txmon != NULL)
         fbq_put(txmon, buffer);
