@@ -1,7 +1,8 @@
+#include "defines.h"
 
+#if defined(ARCTIC4_UHF)
 #include <stdlib.h>
 #include <string.h>
-#include "defines.h"
 #include "config.h"
 #include "ax25.h"
 #include "hdlc.h"
@@ -23,6 +24,8 @@ static cond_t packet_rdy;
 char  last_packet[256]; 
 int8_t last_rssi;
 int8_t last_snr;
+time_t last_time; 
+
 bool txon = false; 
 
 /* Set packet queue for TX monitoring */
@@ -51,8 +54,13 @@ char* loraprs_last_heard(char* buf) {
 int8_t loraprs_last_rssi() {
     return last_rssi;
 }
+
 int8_t loraprs_last_snr() {
     return last_snr;
+}
+
+time_t loraprs_last_time() {
+    return last_time;
 }
 
 bool loraprs_tx_is_on() {
@@ -60,7 +68,6 @@ bool loraprs_tx_is_on() {
 }
 
 
-   
 /***********************************************************
  * Subscribe or unsubscribe to packets from decoder
  * packets are put into the given buffer queue.
@@ -131,6 +138,7 @@ static void rxdecoder (void* arg) {
         ax25_str2frame(&frame,  (char*) buf+3, len-3);
         strcpy(last_packet, (char*) buf+3);
         last_rssi = rssi; last_snr = snr;
+        last_time = getTime();
         
         if (mqueue[0] || mqueue[1] || mqueue[2]) { 
             if (mqueue[0]) fbq_put( mqueue[0], frame);               // Monitor 
@@ -213,7 +221,7 @@ FBQ* loraprs_init_encoder()
   return &encoder_queue; 
 }
 
-
+#endif
 
 
 

@@ -130,7 +130,7 @@ void lora_on(bool on)
 		uint8_t cr = get_byte_param("LORA_CR", DFL_LORA_CR);
 		int32_t freq = get_i32_param("FREQ", DFL_FREQ); 
 		uint8_t txpo = get_byte_param("TXPOWER", DFL_TXPOWER);
-		
+	
 		ESP_LOGI(TAG, "Lora on: sf=%x, cr=%x", sf, (cr-4));
 		loraBegin((uint32_t) freq, power[txpo], 0, false );
 		lora_config(sf, SX126X_LORA_BW_125_0, cr-4, 8, 0, true, (sf>=11 ? 1:0)); 
@@ -183,7 +183,7 @@ void lora_release(void)
  ****************************************************************************/
 
 void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, uint16_t preambleLength, uint8_t payloadLen, bool crcOn, bool invertIrq) 
-{		
+{		 
 	setStopRxTimerOnPreambleDetect(false);
 	setLoRaSymbNumTimeout(0); 
 	setPacketType(SX126X_PACKET_TYPE_LORA); // SX126x.ModulationParams.PacketType : MODEM_LORA
@@ -269,6 +269,15 @@ void lora_SetRfFrequency(uint32_t frequency)
 
 void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, uint8_t lowDataRateOptimize)
 {
+	if (codingRate>8) {
+		ESP_LOGE(TAG, "Lora CR setting out of range: %d", codingRate); 
+		codingRate = 1;
+	}
+	if (spreadingFactor>12 || spreadingFactor < 8) {
+		ESP_LOGE(TAG, "Lora CR setting out of range: %d", codingRate);
+		spreadingFactor = 12;
+	}
+	
 	uint8_t data[4];
 	//currently only LoRa supported
 	data[0] = spreadingFactor;
@@ -318,7 +327,7 @@ void lora_SendPacket(uint8_t *pData, int16_t len)
 
 
 /****************************************************************************
- * Turn transmitter off and go to RX mode
+ * Turn transmitter off and go back to RX mode
  ****************************************************************************/
 
 void lora_TxOff() {

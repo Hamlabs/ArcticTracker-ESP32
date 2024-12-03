@@ -467,14 +467,14 @@ char* date2str(char* buf, time_t time, bool local)
  * Managed log-tags. If you want to control logging of a component, add
  * its tag(s) to this list.
  */
-#if defined(ARCTIC4_UHF)
+
 static char* logtags[] = {
+#if defined(ARCTIC4_UHF)   
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "gps", "uart", "digi", "igate", "tcp-cli", "trackstore", 
     "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", "httpd_uri", "httpd_parse", "mdns", 
     "gptimer", "lora", "lora-aprs", "spi"
 #define NLOGTAGS 29
-};
 #else
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "afsk-rx", "hdlc-enc", "hdlc-dec", "gps", "uart", "digi", "igate",
@@ -482,7 +482,7 @@ static char* logtags[] = {
     "httpd_uri", "httpd_parse", "mdns", "gptimer"
 #define NLOGTAGS 29
 #endif
-
+};
 
     
 

@@ -7,6 +7,7 @@ char* loraprs_last_packet();
 char* loraprs_last_heard(char* buf);
 int8_t loraprs_last_rssi();
 int8_t loraprs_last_snr();
+time_t loraprs_last_time();
 void loraprs_subscribe_rx(fbq_t* q, uint8_t i);
 void loraprs_monitor_tx(fbq_t* q); 
 fbq_t* loraprs_get_encoder_queue();

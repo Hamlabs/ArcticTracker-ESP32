@@ -1,7 +1,7 @@
 #include "defines.h"
 
 
-#if !defined(ARCTIC4_UHF) && !defined(RADIO_DISABLE) && (DEVICE == T_TWR || DEVICE == ARCTIC4)
+#if !defined(ARCTIC4_UHF) && !defined(RADIO_DISABLE)
 
 #include <stdio.h>
 #include <string.h>
@@ -58,7 +58,7 @@ static void _squelch_handler(void* arg);
  void sa8_wait_channel_ready(void);
  bool sa8_setFilter(bool eemp, bool highpass, bool lowpass);
  bool sa8_setTail(int tail);
- int sa8_getRSSI();
+ uint8_t sa8_getRssi();
  
 /*
  * Serial driver config
@@ -293,7 +293,7 @@ void sa8_wait_channel_ready()
 {
     /* Wait to radio is on and channel is free */
     // WAIT_CHANNEL_READY; 
-    while (_on && sa8_getRSSI() >= RSSI_THRESHOLD)
+    while (_on && sa8_getRssi() >= RSSI_THRESHOLD)
        sleepMs(200);
 }
 
@@ -428,7 +428,7 @@ bool sa8_getSquelch()
  * Get RSSI level
  ***********************************************/
 
-int sa8_getRSSI()
+uint8_t sa8_getRssi()
 {
     char buf[32];
     if (!_on)

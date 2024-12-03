@@ -217,8 +217,11 @@ static void status_screen2() {
         sprintf(buf, "%03ld.%03ld MHz%c", f/1000000, (f/1000)%1000, '\0');
         disp_writeText(0, LINE3, buf);
         
-        sprintf(buf, "Last RX: %s", loraprs_last_heard(buf2));
+        loraprs_last_heard(buf2);
         if (strlen(buf2) > 0) {
+            char tbuf[9];
+            time2str(tbuf, loraprs_last_time(), true);
+            sprintf(buf, "RX %5s: %s", tbuf, buf2);
             disp_writeText(0, LINE4, buf);
             sprintf(buf, "%d dBm, SNR=%d dB", loraprs_last_rssi(), loraprs_last_snr());
             disp_writeText(0, LINE5, buf);
