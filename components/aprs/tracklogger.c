@@ -6,11 +6,7 @@
 #include "tracker.h"
 #include "networking.h"
 #include "tracklogger.h"
-
-#include "mbedtls/sha256.h"
-#include "mbedtls/base64.h"
-#include "mbedtls/md.h"
-#include "mbedtls/platform.h"
+#include "restapi.h"
 
 
 #define TAG "tracklog"
@@ -157,8 +153,6 @@ static void remove_old() {
 }
 
 
-#define KEY_SIZE 128
-
 /********************************************************
  *  Send positions to server using a HTTP POST call
  *  and JSON.
@@ -168,13 +162,9 @@ int tracklog_post() {
     char call[10];
     char* buf = malloc(KEY_SIZE + JS_CHUNK_SIZE * JS_RECORD_SIZE + JS_HEAD +50);
     char url[64]; 
-    char key[KEY_SIZE];
-    unsigned char hash[32];  
-    char b64hash[45];
     int len = 0, i=0;
     posentry_t pd; 
-    int keylen; 
-    
+
     /* If empty, just return */
     if (trackstore_getEnt(&pd) == NULL)
         return 0;
@@ -182,13 +172,11 @@ int tracklog_post() {
     /* Get settings */
     GET_STR_PARAM("MYCALL", call, 10);
     get_str_param("TRKLOG.URL", url, 64, DFL_TRKLOG_URL);
-    GET_STR_PARAM("TRKLOG.KEY", key, KEY_SIZE);
-    
+
     /* 
      * Serialise as JSON: 
-     *   (call, list of (call, time, lat, lng))
+     *   (call, list-of (call, time, lat, lng))
      */
-    keylen = len = sprintf(buf, "%s", key);
     len += sprintf(buf+len, "{\"call\":\"%s\", \"pos\":[\n", call);
     for (;;) {
         len += sprintf(buf+len, "{\"time\":%lu, \"lat\":%lu, \"lng\":%lu}", pd.time, pd.lat, pd.lng);
@@ -198,23 +186,13 @@ int tracklog_post() {
             break;
         len += sprintf(buf+len, ",\n");
     }
-    len += sprintf(buf+len, "]}"); 
-
+    len += sprintf(buf+len, "]}");
     
-    /* 
-     * Now, before we close the JSON structure we need to compute the SHA-256 hash
-     * and add it. At this stage the buffer contains the key and a complete JSON structure
-     * without the hash. The hash is converted to a base64 format and we use the 24 first 
-     * characters. 
-     */
-    mbedtls_sha256((unsigned char*) buf, len, hash, 0);
-    size_t olen;
-    mbedtls_base64_encode((unsigned char*) b64hash, 45, &olen, hash, 32 );
-    b64hash[24] = 0;
-    len += sprintf(buf+len-1, ",\"mac\":\"%s\"}", b64hash);
+    
     
     /* Post it */
-    int status = http_post(url, "text/json", buf+keylen, len-keylen);
+    int status = rest_post(url, "arctic", buf, len, "TRKLOG.KEY");
+    
     if (status == 200) {
         ESP_LOGI(TAG, "Posted track-log (%d bytes/%d entries) to %s", len, i, url);
         sprintf(statusmsg, "Posted %d reports OK", i);

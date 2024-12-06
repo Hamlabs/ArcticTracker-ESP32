@@ -20,7 +20,7 @@
 
 #define KEY_SIZE 128
 #define SHA256_SIZE 32
-#define SHA256_B64_SIZE 45
+#define SHA256_B64_SIZE 44
 #define HMAC_TRUNC 24
 #define HMAC_SHA256_SIZE 32
 #define HMAC_KEY_SIZE 64
@@ -67,23 +67,41 @@ static void nonce_add(char* n) {
 
 /*******************************************************************************************
  * Add auth headers to client request
+ *   - client - request 
+ *   - service - name of the service or user 
+ *   - data - content
+ *   - dlen - length of the content to use for the hmac
+ *   - key - storage-key for the key to be used for the hmac
  *******************************************************************************************/
 
-void rest_setSecHdrs(esp_http_client_handle_t client, char* data, int dlen)
+void rest_setSecHdrs(esp_http_client_handle_t client, char* service, char* data, int dlen, char* key)
 {
     char hmac[HMAC_B64_SIZE+1];
-    uint8_t bnonce[NONCE_BIN_SIZE];
+    uint8_t bnonce[NONCE_BIN_SIZE+1];
     char nonce[NONCE_SIZE+1];
     size_t olen;
+    char httpauth[HTTPAUTH_SIZE+1];
+    char chash[SHA256_B64_SIZE+1];
+    
+    /* Create nonce */
     esp_fill_random(bnonce, NONCE_BIN_SIZE);
-    mbedtls_base64_encode((unsigned char*) nonce, NONCE_SIZE, &olen, bnonce, NONCE_BIN_SIZE  );
+    mbedtls_base64_encode((unsigned char*) nonce, NONCE_SIZE+1, &olen, bnonce, NONCE_BIN_SIZE  );
+    nonce[NONCE_SIZE] = 0;
     
-    compute_hmac("API.KEY", hmac, HMAC_B64_SIZE, (uint8_t*) nonce, NONCE_SIZE, (uint8_t*) data, dlen);
-    esp_http_client_set_header(client, "Arctic-Nonce", nonce);
-    esp_http_client_set_header(client, "Arctic-Hmac", hmac);
-}
+    /* Create a SHA256 hash of the content */
+    if (dlen > 0)
+        compute_sha256_b64(chash, (uint8_t*) data, dlen ); 
     
+    /* Create hmac */
+    compute_hmac(key, hmac, HMAC_B64_SIZE, (uint8_t*) nonce, NONCE_SIZE, (uint8_t*) chash , (dlen>0 ? SHA256_B64_SIZE : 0));
     
+    /* Set header */
+    sprintf(httpauth, "Arctic-Hmac %s;%s;%s", service, nonce, hmac);
+    esp_http_client_set_header(client, "Authorization", httpauth);
+    
+} 
+
+
 
 /*******************************************************************************************
  * Authenticate a HTTP request using hmac scheme. 
@@ -148,13 +166,13 @@ esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize)
     }
     
     /* Verify HMAC */
-    char phash[SHA256_B64_SIZE];
+    char phash[SHA256_B64_SIZE+1];
     if (plsize > 0) 
         compute_sha256_b64(phash, (uint8_t*) payload, plsize);
     
     compute_hmac("API.KEY", hmac, HMAC_B64_SIZE, 
         (uint8_t*) nonce, NONCE_SIZE, 
-        (uint8_t*) (plsize==0 ? "": phash), (plsize==0 ? 0 : SHA256_B64_SIZE-1));
+        (uint8_t*) (plsize==0 ? "": phash), (plsize==0 ? 0 : SHA256_B64_SIZE));
     
     
     if (strncmp(hmac, rhmac, HMAC_TRUNC) != 0) {
@@ -190,7 +208,7 @@ char* compute_sha256_b64(char* res, uint8_t *data, int len)
     mbedtls_sha256_finish (&ss, hash);
     
     size_t olen;
-    mbedtls_base64_encode((unsigned char*) res, SHA256_B64_SIZE, &olen, hash, SHA256_SIZE);
+    mbedtls_base64_encode((unsigned char*) res, SHA256_B64_SIZE+1, &olen, hash, SHA256_SIZE);
     return res;
 }
 
@@ -221,7 +239,7 @@ char* compute_hmac(const char* keyid, char* res, int hlen, uint8_t* data1, int l
     int keylen = GET_STR_PARAM(keyid, key, KEY_SIZE) -1;
     if (keylen <= 0) {
         /* Key is not set. Generate a random key */
-        ESP_LOGW(TAG, "API Key is not set");
+        ESP_LOGW(TAG, "API Key %s is not set", keyid);
         esp_fill_random(key, KEY_SIZE);
         keylen = KEY_SIZE;
     }

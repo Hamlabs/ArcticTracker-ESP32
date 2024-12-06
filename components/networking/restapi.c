@@ -261,34 +261,34 @@ void rest_stop() {
 
 
 
-
 /***************************************************************************
  * HTTP post with HMAC authentication. 
- *  - URL, data, length-of-data
+ *  - URL, service, data, length-of-data, key
  ***************************************************************************/
 
-esp_err_t rest_post(char* uri, char* data, int dlen) 
+esp_err_t rest_post(char* uri, char* service, char* data, int dlen, char* key) 
 {
     esp_http_client_config_t config = {
         .url = uri,
         .method = HTTP_METHOD_POST, 
-        
+        .user_agent = "ArcticTracker",
         /* We may configure this? See OTA */
         .cert_pem = NULL,
         .crt_bundle_attach = esp_crt_bundle_attach
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     esp_http_client_set_post_field(client, data, dlen);
-    rest_setSecHdrs(client, data, dlen);
+    esp_http_client_set_header(client, "Content-Type", "application/json");
+    rest_setSecHdrs(client, service, data, dlen, key);
     esp_err_t err = esp_http_client_perform(client);
 
     int status = esp_http_client_get_status_code(client);
     if (err == ESP_OK) {
-        ESP_LOGI(TAG, "Status = %d, content_length = %lld",
-            status, esp_http_client_get_content_length(client));
+        long long len = esp_http_client_get_content_length(client);
+        ESP_LOGI(TAG, "Status = %d, content_length = %lld", status, len);
     }
     else
-        ESP_LOGW(TAG,  "HTTP post failed. Status = %d", status);
+        ESP_LOGW(TAG, "HTTP post failed. Status = %d", status);
         
     esp_http_client_cleanup(client);
     return status;
