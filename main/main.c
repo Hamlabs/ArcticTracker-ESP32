@@ -179,9 +179,9 @@ static void startup(void* arg)
     sleepMs(2000);
     trackstore_start();
     FBQ* oq = NULL;
-#if defined(ARCTIC4_UHF)
+#if defined(ARCTIC4_UHF)   
+    radio_init(); 
     loraprs_init_decoder();
-    radio_init();  
     oq = loraprs_init_encoder();
 #else  
     hdlc_init_decoder(afsk_rx_init());

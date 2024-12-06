@@ -114,6 +114,7 @@ void lora_init(void)
 	gpio_reset_pin(LORA_PIN_DIO3);
 	gpio_set_direction(LORA_PIN_DIO3, GPIO_MODE_OUTPUT);
 	gpio_set_level(LORA_PIN_DIO3, 0);	
+	printf("spi_init()\n");
     spi_init();  
 }
 
@@ -274,7 +275,7 @@ void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_
 		codingRate = 1;
 	}
 	if (spreadingFactor>12 || spreadingFactor < 8) {
-		ESP_LOGE(TAG, "Lora CR setting out of range: %d", codingRate);
+		ESP_LOGE(TAG, "Lora SF setting out of range: %d", codingRate);
 		spreadingFactor = 12;
 	}
 	

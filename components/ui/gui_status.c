@@ -221,7 +221,8 @@ static void status_screen2() {
         if (strlen(buf2) > 0) {
             char tbuf[9];
             time2str(tbuf, loraprs_last_time(), true);
-            sprintf(buf, "RX %5s: %s", tbuf, buf2);
+            tbuf[5] = '\0';
+            sprintf(buf, "RX %s: %s", tbuf, buf2);
             disp_writeText(0, LINE4, buf);
             sprintf(buf, "%d dBm, SNR=%d dB", loraprs_last_rssi(), loraprs_last_snr());
             disp_writeText(0, LINE5, buf);
