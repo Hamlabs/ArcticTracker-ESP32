@@ -32,10 +32,10 @@
 #if defined(ARCTIC4_UHF)
  
 void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, 
-        uint16_t preambleLength, uint8_t payloadLen, bool crcOn, bool invertIrq);
+        uint16_t preambleLength, uint8_t payloadLen, bool crcOn, bool invertIrq, uint8_t ldro );
 
 void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, 
-        uint8_t codingRate, uint8_t lowDataRateOptimize);
+        uint8_t codingRate, uint8_t ldro);
 
 void lora_setTxPower(uint8_t lvl);
 void lora_SetRfFrequency(uint32_t frequency);

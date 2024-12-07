@@ -160,7 +160,7 @@ static void remove_old() {
 
 int tracklog_post() {
     char call[10];
-    char* buf = malloc(KEY_SIZE + JS_CHUNK_SIZE * JS_RECORD_SIZE + JS_HEAD +50);
+    char* buf = malloc(JS_CHUNK_SIZE * JS_RECORD_SIZE + JS_HEAD +50);
     char url[64]; 
     int len = 0, i=0;
     posentry_t pd; 

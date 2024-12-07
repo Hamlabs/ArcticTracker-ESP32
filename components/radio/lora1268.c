@@ -114,7 +114,6 @@ void lora_init(void)
 	gpio_reset_pin(LORA_PIN_DIO3);
 	gpio_set_direction(LORA_PIN_DIO3, GPIO_MODE_OUTPUT);
 	gpio_set_level(LORA_PIN_DIO3, 0);	
-	printf("spi_init()\n");
     spi_init();  
 }
 
@@ -134,7 +133,7 @@ void lora_on(bool on)
 	
 		ESP_LOGI(TAG, "Lora on: sf=%x, cr=%x", sf, (cr-4));
 		loraBegin((uint32_t) freq, power[txpo], 0, false );
-		lora_config(sf, SX126X_LORA_BW_125_0, cr-4, 8, 0, true, (sf>=11 ? 1:0)); 
+		lora_config(sf, SX126X_LORA_BW_125_0, cr-4, 8, 0, true, false, (sf>=11 ? 1:0)); 
 	     	// SF, BW, CR, PAlength, PLlen, CRCon, invertIRQ, optimize
 	}
 	_on = on;
@@ -183,12 +182,12 @@ void lora_release(void)
  *      crc-on, invert-irq
  ****************************************************************************/
 
-void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, uint16_t preambleLength, uint8_t payloadLen, bool crcOn, bool invertIrq) 
+void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, 
+	uint16_t preambleLength, uint8_t payloadLen, bool crcOn, bool invertIrq, uint8_t ldro) 
 {		 
 	setStopRxTimerOnPreambleDetect(false);
 	setLoRaSymbNumTimeout(0); 
 	setPacketType(SX126X_PACKET_TYPE_LORA); // SX126x.ModulationParams.PacketType : MODEM_LORA
-	uint8_t ldro = 0; // LowDataRateOptimize OFF
 	lora_SetModulationParams(spreadingFactor, bandwidth, codingRate, ldro);
 	
 	PacketParams[0] = (preambleLength >> 8) & 0xFF;
@@ -268,7 +267,7 @@ void lora_SetRfFrequency(uint32_t frequency)
  *  Set Modulation Parameters
  ****************************************************************************/
 
-void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, uint8_t lowDataRateOptimize)
+void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, uint8_t ldro)
 {
 	if (codingRate>8) {
 		ESP_LOGE(TAG, "Lora CR setting out of range: %d", codingRate); 
@@ -284,7 +283,7 @@ void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_
 	data[0] = spreadingFactor;
 	data[1] = bandwidth;
 	data[2] = codingRate;
-	data[3] = lowDataRateOptimize;
+	data[3] = ldro;
 	writeCommand(SX126X_CMD_SET_MODULATION_PARAMS, data, 4); // 0x8B
 }
 
