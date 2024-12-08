@@ -316,15 +316,26 @@ static void afsk_rxdecoder(void* arg)
         int n = rxSampler_getFrame();
         rxSampler_readLast();
         ESP_LOGI(TAG, "Frame: %d samples", n); 
+        if (n <= 2500)
+           continue;
         hdlc_next_frame();
         
         /* Decode the frame */
         doFrame(FIR_NONE);
         sleepMs(5);
+        ESP_LOGD(TAG, "Decode attempt 1: %s", (hdlc_isSuccess() ? "YES": "NO"));
+        if (hdlc_isSuccess())
+          continue;
+        
         doFrame(FIR_PREEMP);
         sleepMs(5);
+        ESP_LOGD(TAG, "Decode attempt 2: %s", (hdlc_isSuccess() ? "YES": "NO"));
+        if (hdlc_isSuccess())
+          continue;
+        
         doFrame(FIR_DEEMP);
         sleepMs(10);
+        ESP_LOGD(TAG, "Decode attempt 3: %s", (hdlc_isSuccess() ? "YES": "NO"));
     }
 }
 
@@ -344,7 +355,6 @@ void afsk_rx_newFrame() {
 
 static void doFrame(enum fir_filters filt) {
     rxSampler_reset();
-    ESP_LOGD(TAG, "Decode frame: filter=%d", (int) filt); 
     while (!rxSampler_eof()) {     
         int8_t sample = rxSampler_get();
         int8_t filtered = fir_filter(sample, filt);

@@ -29,7 +29,12 @@ static uint16_t prev_crc = 0;
 
 static uint8_t get_bit (void); 
 static bool crc_match(FBUF*, uint8_t, uint16_t *crc);
+static bool success = false; 
 
+
+
+
+bool hdlc_isSuccess() {return success;}
 
 
 /***********************************************************
@@ -153,6 +158,7 @@ static void hdlc_rxdecoder (void* arg)
       else
           ESP_LOGI(TAG, "VALID frame received. length=%d", length);
       prev_seq = tag_seq;
+      success = true; 
       
       /* Send packets to subscribers, if any. 
        * Note that every receiver should release the buffers after use. 
@@ -210,6 +216,7 @@ bool crc_match(FBUF* b, uint8_t length, uint16_t *crc)
 
 void hdlc_next_frame() {
     tag_seq = (tag_seq + 1) % 65000; 
+    success = false; 
 }
 
 

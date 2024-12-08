@@ -13,6 +13,7 @@
 #define HDLC_FLAG 0x7E
 #define MAX_HDLC_FRAME_SIZE 289 // including FCS field
 
+bool hdlc_isSuccess(); 
 void hdlc_wait_idle(void);
 void hdlc_monitor_tx(FBQ* m);
 void hdlc_test_on(uint8_t b);
