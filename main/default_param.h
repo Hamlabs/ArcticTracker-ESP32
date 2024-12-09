@@ -30,6 +30,15 @@
 #define DFL_MINPAUSE        20
 #define DFL_MINDIST        100
 #define DFL_STATUSTIME      30
+
+#if DEVICE == T_TWR
+#define DFL_TRX_VOLUME       6
+#define DFL_SOFTSQ          17
+#else
+#define DFL_TRX_VOLUME       7
+#define DFL_SOFTSQ         110
+#endif
+
 #define DFL_TRX_SQUELCH      1
 #define DFL_TRX_MICLEVEL     6
 #define DFL_TRX_VOLUME       6

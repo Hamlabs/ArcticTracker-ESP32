@@ -198,6 +198,10 @@ void hdl_squelch(uint8_t sq) {
         afsk_rx_nextFrame();
 }
 
+void hdl_softsq(int32_t sq) {
+    afsk_setSoftSq((uint16_t) sq); 
+}
+
 void hdl_miclevel(uint8_t ml) {
     radio_setMicLevel(ml); 
 }
@@ -321,6 +325,7 @@ CMD_BYTE_SETTING (_param_txpower,    "TXPOWER",        DFL_TXPOWER,        0, 6,
 
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000, hdl_txfreq);
 CMD_I32_SETTING  (_param_rxfreq,     "RXFREQ",       DFL_RXFREQ,      1440000, 1460000, hdl_rxfreq);
+CMD_I32_SETTING  (_param_softsq,     "SOFTSQ",       DFL_SOFTSQ,      0, 4000,  hdl_softsq);
 CMD_BYTE_SETTING (_param_squelch,    "TRX_SQUELCH",  DFL_TRX_SQUELCH, 0, 8,   hdl_squelch);
 CMD_BYTE_SETTING (_param_miclevel,   "TRX_MICLEVEL", DFL_TRX_MICLEVEL,1, 8,   hdl_miclevel);
 CMD_BYTE_SETTING (_param_volume,     "TRX_VOLUME",   DFL_TRX_VOLUME,  1, 8,   hdl_volume);
@@ -387,6 +392,7 @@ void register_aprs()
     ADD_CMD("txdelay",    &_param_txdelay,     "APRS TXDELAY setting", "[<val>]");
     ADD_CMD("txtail",     &_param_txtail,      "APRS TXTAIL setting", "[<val>]");
     ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
+    ADD_CMD("softsq",     &_param_softsq,      "Soft Squelch setting",              "[<val>]");
     ADD_CMD("volume",     &_param_volume,      "RX audio level setting (1-8)",      "[<val>]");
     ADD_CMD("txlow",      &_param_txlow_on,    "Tx power low", "[on|off]");
     ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");

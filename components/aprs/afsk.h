@@ -44,6 +44,8 @@
  bool afsk_isSquelchOff();
  void afsk_setSquelchOff(bool off);
 
+ void afsk_setSoftSq(uint16_t sq);
+
  void   rxSampler_init();
  void   rxSampler_start(); 
  void   rxSampler_stop();
@@ -56,5 +58,6 @@
  void   rxSampler_nextFrame();
  void   rxSampler_readLast();
  void   rxSampler_isr();
-  
+ void   rxSampler_adjNull(int delta);
+ 
 #endif

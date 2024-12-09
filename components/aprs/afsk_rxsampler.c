@@ -40,13 +40,10 @@ static uint16_t wlength = 0;
 static adcsampler_t adc;
 
 
-
-
 void rxSampler_init() 
 {
     adcsampler_init( &adc, RADIO_INPUT);
     adcsampler_calibrate(adc);
-    
     raw_sample_buf = malloc(ADC_FRAGMENT_SIZE);   
     sample_buffer = malloc(RX_SAMPLE_BUF_SIZE);
     start = wstart = curr = end_frame = curr_put = sample_buffer;
@@ -60,6 +57,11 @@ uint8_t divisor = 16;
 
 static int8_t convertSample(uint32_t smpl) {
     return (int8_t) ((smpl - adcsampler_nullpoint) / divisor); 
+}
+
+
+void rxSampler_adjNull(int delta) {
+    adcsampler_nullpoint += delta;
 }
 
 
@@ -93,8 +95,8 @@ int rxSampler_getFrame()
             }
         }    
 
-        /* APRS packets of less than 1500 samples are invalid */
-        if (breakout && nresults < 1500) {
+        /* APRS packets of less than 2000 samples are invalid */
+        if (breakout && nresults < 2700) {
             if (nresults > 0) {
                 rxSampler_nextFrame();
                 nresults = 0;
@@ -127,7 +129,7 @@ void rxSampler_stop() {
 
 
 void rxSampler_put(int8_t sample) {
-    if (curr_put != start-1 && 
+    if (curr_put != wstart-1 && 
         (curr_put != buf_end+1 || wstart != sample_buffer))
     {
         *curr_put = sample;
@@ -179,22 +181,5 @@ int rxSampler_length() {
     return length;
 }
 
-
-
-void print_samples() {
-    rxSampler_reset();
-    int8_t * ptr;
-    int i=0;
-
-    for (ptr = start; ptr < end_frame; ptr++) {
-        int8_t val = *ptr;
-        printf("%4d, ", val);
-        if (++i > 30) {
-            printf("\n");
-            i=0;
-        }
-    }
-    printf("\n\n");
-}
 
 #endif

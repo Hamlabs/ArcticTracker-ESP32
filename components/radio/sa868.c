@@ -25,6 +25,7 @@ static bool     _lowPower = false;
 static int32_t  _txfreq;       // TX frequency in 100 Hz units
 static int32_t  _rxfreq;       // RX frequency in 100 Hz units
 static uint8_t  _squelch;      // Squelch level (0-8 where 0 is open)
+static uint8_t  _vol;
 
 static char*    _tcxcss = "0000"; 
 static char*    _rcxcss = "0000";
@@ -169,13 +170,14 @@ static void _initialize()
     _txfreq = get_i32_param("TXFREQ", DFL_TXFREQ);
     _rxfreq = get_i32_param("RXFREQ", DFL_RXFREQ);
     _squelch = get_byte_param("TRX_SQUELCH", DFL_TRX_SQUELCH);
+    _vol = get_byte_param("TRX_VOLUME", DFL_TRX_VOLUME);
     
     ESP_LOGI(TAG, "_initialize: %s, txfreq=%ld, rxfreq=%ld", 
         (pmu_dc3_isOn() ? "ON":"OFF"), _txfreq, _rxfreq);
     
     
-    sa8_setFilter(true, true, true);
-    sa8_setVolume(6);
+    sa8_setFilter(true, false, false);
+    sa8_setVolume(_vol);
     sa8_setTail(0);
     _setGroupParm();
     cond_set(tx_off);

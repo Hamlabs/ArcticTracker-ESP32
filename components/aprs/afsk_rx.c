@@ -16,6 +16,7 @@
 #include "fifo.h"
 #include "radio.h"
 #include "system.h"
+#include "config.h"
 
 #define TAG "afsk-rx"
 
@@ -42,6 +43,7 @@ static fifo_t iq;
 
 /* Semaphore to signal availability of afsk frames */
 static semaphore_t afsk_frames; 
+static uint16_t softsq;
 
 
 /*********************************************************
@@ -101,7 +103,7 @@ static void add_bit(bool bit);
 static void afsk_process_sample(int8_t curr_sample);
 static void afsk_rxdecoder(void* arg);
 static void doFrame(enum fir_filters f);
-
+static void checkFrame();
    
 
 
@@ -247,7 +249,8 @@ fifo_t* afsk_rx_init()
   xTaskCreatePinnedToCore(&afsk_rxdecoder, "AFSK RX decoder", 
         STACK_AFSK_RXDECODER, NULL, NORMALPRIO, NULL, CORE_AFSK_RXDECODER);
 
-  return &iq;
+  softsq = (uint16_t) get_i32_param("SOFTSQ", DFL_SOFTSQ);
+  return&iq;
 }
 
 
@@ -259,11 +262,10 @@ fifo_t* afsk_rx_init()
   FIXME: This still need some work.. 
  ************************************************/
 
-#if DEVICE == T_TWR
-#define SIGNAL_THRESHOLD 25
-#else
-#define SIGNAL_THRESHOLD 75
-#endif
+
+void afsk_setSoftSq(uint16_t sq)
+{ softsq = sq; }
+
 
 
 static uint16_t flevel = 0, ndcd=0;
@@ -277,7 +279,7 @@ bool afsk_dcd(int8_t inp) {
     int8_t fsample = fir_filter(inp, FIR_12_22_BP);
     flevel = flevel * 0.5 + (fsample * fsample) * 0.5; 
 
-    dcd = (flevel > SIGNAL_THRESHOLD);
+    dcd = (flevel > softsq);
     if (!dcd && !prev_dcd && !prev2_dcd)
       result = false; 
     else if (dcd && prev_dcd && prev2_dcd)
@@ -315,10 +317,9 @@ static void afsk_rxdecoder(void* arg)
         rxSampler_start(); 
         int n = rxSampler_getFrame();
         rxSampler_readLast();
-        ESP_LOGI(TAG, "Frame: %d samples", n); 
-        if (n <= 2500)
-           continue;
+        
         hdlc_next_frame();
+        checkFrame(); 
         
         /* Decode the frame */
         doFrame(FIR_NONE);
@@ -343,6 +344,44 @@ static void afsk_rxdecoder(void* arg)
 /* Signal that we can start to receive a frame */
 void afsk_rx_newFrame() {
     sem_up(afsk_frames);
+}
+
+
+
+/***************************************************
+  Get some information about samples in a frame. 
+  Also do some balancing. 
+ ***************************************************/
+
+static void checkFrame() {
+  int nsamples = 0;
+  int psamples = 0;
+  int msamples = 0;
+  int topsamples = 0;
+  int botsamples = 0;
+  int ltopsamples = 0;
+  int lbotsamples = 0;
+  
+  rxSampler_reset();
+  while (!rxSampler_eof()) {     
+        int8_t sample = rxSampler_get();
+        nsamples++;
+        if (sample>0) psamples++;
+        if (sample<0) msamples++;
+        if (sample > 100) topsamples++;
+        if (sample < -100) botsamples++;
+        if (sample > 25) ltopsamples++;
+        if (sample < -25) lbotsamples++;
+  }
+  if (nsamples == 0) {
+    ESP_LOGW(TAG, "Frame is empty");
+    return;
+  }
+  
+  rxSampler_adjNull( msamples>psamples ? -3 : 3);
+  ESP_LOGI(TAG, "samples=%d, pos=%d, neg=%d, top=%d (%d %%), bot=%d (%d %%), ltop=%d (%d %%), lbot=%d (%d %%)",
+      nsamples, psamples, msamples, topsamples, 100*topsamples/nsamples, botsamples, 100*botsamples/nsamples,
+      ltopsamples, 100*ltopsamples/nsamples, lbotsamples, 100*lbotsamples/nsamples);
 }
 
 
