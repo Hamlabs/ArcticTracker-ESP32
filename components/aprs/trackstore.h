@@ -5,7 +5,7 @@
 
 #define MAX_UINT16     65535
 #define BLOCK_SIZE     256
-#define MAX_BLOCKS     256
+#define MAX_BLOCKS     512
 #define POS_RESOLUTION 100000
 
 /* 

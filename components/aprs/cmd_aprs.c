@@ -266,6 +266,8 @@ void hdl_igate(bool on) {
 void hdl_trkpost(bool on) {
     if (on)
         tracklog_post_start();
+    else
+        tracklog_post_stop();
 }
 
 

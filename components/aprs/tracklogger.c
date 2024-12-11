@@ -14,6 +14,7 @@
 
 static TaskHandle_t tracklogt = NULL; 
 static TaskHandle_t trackpostt = NULL; 
+static bool tracklog_running = false; 
 static bool trackpost_running = false;
 static char statusmsg[32];
 static int  posted=0;
@@ -37,28 +38,18 @@ void tracklog_init()
 
 
 /********************************************************
- *  Turn on tracklogger 
+ *  Turn on or off tracklogger 
  ********************************************************/
 
 void tracklog_on() {
-    if (tracklogt != NULL)
+    if (tracklog_running)
         return;
     xTaskCreatePinnedToCore(&tracklog, "Track logger", 
         STACK_TRACKLOG, NULL, NORMALPRIO, &tracklogt, CORE_TRACKLOG);
 }
 
 
-
-/********************************************************
- *  Turn off tracklogger 
- ********************************************************/
-
 void tracklog_off() {
-    if (tracklogt == NULL)
-        return;
-    ESP_LOGI(TAG, "Stopping tracklogger task");
-    vTaskDelete( tracklogt );
-    tracklogt = NULL;
 }
 
 
@@ -83,23 +74,17 @@ int tracklog_nPosted() {
 
 void tracklog_post_start() 
 {  
-    if (trackpostt != NULL)
+    if (trackpost_running)
         return;
     if (GET_BYTE_PARAM("TRKLOG.POST.on") && !trackpost_running && wifi_isConnected())        
-        trackpostt = xTaskCreatePinnedToCore(&post_loop, "Trklog POSTer",
+        xTaskCreatePinnedToCore(&post_loop, "Trklog POSTer",
             STACK_TRACKLOGPOST, NULL, NORMALPRIO, &trackpostt, CORE_TRACKLOGPOST);
 }
-
 
 
  
 void tracklog_post_stop() 
 {
-    if (trackpostt == NULL)
-        return;
-    ESP_LOGI(TAG, "Stopping tracklogger post task");
-    vTaskDelete( trackpostt );
-    trackpostt = NULL;
 }
 
 
@@ -113,6 +98,7 @@ void tracklog_post_stop()
 static void tracklog(void* arg) {
     sleepMs(10000);    
     ESP_LOGI(TAG, "Starting tracklog task");
+    tracklog_running = true;
     gps_on();  
     while (get_byte_param("TRKLOG.on", 0)) {
         uint8_t interv = get_byte_param("TRKLOG.INT", DFL_TRKLOG_INT); 
@@ -124,7 +110,7 @@ static void tracklog(void* arg) {
     }
     gps_off(); 
     ESP_LOGI(TAG, "Stopping tracklog task");
-    tracklogt = NULL;
+    tracklog_running = false; 
     vTaskDelete(NULL);
 }
 
@@ -191,16 +177,21 @@ int tracklog_post() {
     
     
     /* Post it */
-    int status = rest_post(url, "arctic", buf, len, "TRKLOG.KEY");
+    for (int i=0; i<3; i++) {
+        int status = rest_post(url, "arctic", buf, len, "TRKLOG.KEY");
     
-    if (status == 200) {
-        ESP_LOGI(TAG, "Posted track-log (%d bytes/%d entries) to %s", len, i, url);
-        sprintf(statusmsg, "Posted %d reports OK", i);
-        posted += i;
-    }
-    else {
-        ESP_LOGW(TAG, "Post of track-log failed. Status=%d", status);
-        sprintf(statusmsg, "Post failed. code=%d", status);
+        if (status == 200) {
+            ESP_LOGI(TAG, "Posted track-log (%d bytes/%d entries) to %s", len, i, url);
+            sprintf(statusmsg, "Posted %d reports OK", i);
+            posted += i;
+            break;
+        }
+        else {
+            ESP_LOGW(TAG, "Post of track-log failed. Status=%d", status);
+            sprintf(statusmsg, "Post failed. code=%d", status);
+            /* Wait one minute */
+            sleepMs(1000 * 60);
+        }
     }
     free(buf);
     return i;
@@ -219,15 +210,15 @@ static void post_loop()
     while (wifi_isConnected() && GET_BYTE_PARAM("TRKLOG.POST.on")) {
         int n = tracklog_post();
         if (n == 0)
-            sleepMs(1000 * 120);
-        else if (n < 16) 
-            sleepMs(1000 * 60);
+            sleepMs(1000 * 240);
+        else if (n < 24) 
+            sleepMs(1000 * 90);
         else
             sleepMs(1000 * 20);
     }
     trackpost_running = false;
     ESP_LOGI(TAG, "Stopping trklog POST task");   
-    sprintf(statusmsg, "POST task stopped");
+    sprintf(statusmsg, "POST task stopped");   
     vTaskDelete(NULL);
 }
 
