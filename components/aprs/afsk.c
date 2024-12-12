@@ -50,8 +50,7 @@ void afsk_setSquelchOff(bool off) {
 
 static bool afsk_sampler(struct gptimer_t * t, const gptimer_alarm_event_data_t * a, void * arg) 
 {   
-    if (!rxMode)
-        afsk_txBitClock(arg); 
+    afsk_txBitClock(arg); 
     return true;
 }
 
@@ -97,7 +96,7 @@ void afsk_rx_start() {
     /* If transmitter is on, turn it off */ 
     if (txOn) {
         afsk_PTT(false); 
-        clock_stop(afskclk);   
+//        clock_stop(afskclk);   
         txOn = false;
     }
     rxMode = true; 
@@ -108,6 +107,7 @@ void afsk_rx_start() {
 void afsk_rx_stop() {
     if (!rxEnable)
         return;
+//    clock_start(afskclk);
     rxMode=false; 
 }
 

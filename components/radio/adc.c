@@ -17,8 +17,10 @@
 
 #if DEVICE == T_TWR
 #define ADC_ATTEN       ADC_ATTEN_DB_12
+uint32_t adcsampler_nullpoint = 700;
 #else
 #define ADC_ATTEN       ADC_ATTEN_DB_6
+uint32_t adcsampler_nullpoint = 2048;
 #endif
 
 #define ADC_BIT_WIDTH   ADC_BITWIDTH_12          // the bitwidth of the raw conversion result. 9, 10, 11, 12 or 13
@@ -55,8 +57,6 @@ Output type:
     
 
 static semaphore_t data_ready; 
-uint32_t adcsampler_nullpoint = 2048; 
-
 
 
 

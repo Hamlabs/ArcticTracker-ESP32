@@ -43,7 +43,7 @@ static adcsampler_t adc;
 void rxSampler_init() 
 {
     adcsampler_init( &adc, RADIO_INPUT);
-    adcsampler_calibrate(adc);
+//    adcsampler_calibrate(adc);
     raw_sample_buf = malloc(ADC_FRAGMENT_SIZE);   
     sample_buffer = malloc(RX_SAMPLE_BUF_SIZE);
     start = wstart = curr = end_frame = curr_put = sample_buffer;
@@ -63,6 +63,7 @@ static int8_t convertSample(uint32_t smpl) {
 void rxSampler_adjNull(int delta) {
     adcsampler_nullpoint += delta;
 }
+
 
 
 /* 

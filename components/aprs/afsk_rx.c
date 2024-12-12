@@ -316,6 +316,8 @@ static void afsk_rxdecoder(void* arg)
         /* Get the frame from ADC sampler */
         rxSampler_start(); 
         int n = rxSampler_getFrame();
+        if (n==0)
+          continue;
         rxSampler_readLast();
         
         hdlc_next_frame();

@@ -177,7 +177,7 @@ int tracklog_post() {
     
     
     /* Post it */
-    for (int i=0; i<3; i++) {
+    for (int j=0; j<3; j++) {
         int status = rest_post(url, "arctic", buf, len, "TRKLOG.KEY");
     
         if (status == 200) {
