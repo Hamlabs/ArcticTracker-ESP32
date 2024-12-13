@@ -10,8 +10,8 @@
 
 
 /* Version of software */
-#define VERSION_SSTRING "3.3"
-#define VERSION_STRING  "v3.3"
+#define VERSION_SSTRING "4.0"
+#define VERSION_STRING  "v4.0"
 
 
 #define FW_NAME "Arctic Tracker"
@@ -369,7 +369,7 @@
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 3100
 #define STACK_HDLC_RXDECODER 3100
-#define STACK_AFSK_RXDECODER 3600
+#define STACK_AFSK_RXDECODER 3800
 #define STACK_NMEALISTENER   3600
 #define STACK_LEDBLINKER     2800
 #define STACK_UI_SRV         3800
@@ -394,7 +394,7 @@
 #define CORE_UI_SRV         0
 #define CORE_GUI            1
 #define CORE_AFSK_RXDECODER 0
-#define CORE_HDLC_RXDECODER 0
+#define CORE_HDLC_RXDECODER 1
 #define CORE_HDLC_TXENCODER 1
 #define CORE_HDLC_TEST      1
 #define CORE_HLIST          0
