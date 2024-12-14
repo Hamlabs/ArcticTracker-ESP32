@@ -9,12 +9,14 @@ is available: For easy configuration, for pushing APRS data, etc. It can also fu
 It is based on the earlier Arctic Tracker (v.2) prototype which used an ESP32. This was again based on the even earlier 
 Arctic Tracker (v.1) prototype which used a Teensy 3 MCU module and a ESP-8266 module (with NodeMCU). 
 
-See http://www.hamlabs.no for some blogging about this project and on the [port to the T-TWR](http://hamlabs.no/2024/03/22/arctic-tracker-software-on-lilygo-t-twr-plus/) in particular.
+See http://www.hamlabs.no for some blogging about this project and on the including port to the [T-TWR](http://hamlabs.no/2024/03/22/arctic-tracker-software-on-lilygo-t-twr-plus/).
 
 ## Supported hardware
 
-* [_LilyGo T-TWR-plus 2.0_](https://www.lilygo.cc/products/t-twr-plus?variant=42911934185653). Put a wire between the SQL output of the radio module and the IO15 pin (and maybe also a 1nF capacitor between IO15 and GND to suppress RF pickup). 
-* [_Arctic Tracker hardware_](http://hamlabs.no/2023/01/10/arctic_third_round/): A working hardware prototype was built and demonstrated. A updated PCB layout has been produced. Several trackers have been made and tested.
+* [_LilyGo T-TWR-plus 2.0_](https://www.lilygo.cc/products/t-twr-plus?variant=42911934185653).
+* [_LilyGo T-TWR-plus 2.1_](https://lilygo.cc/products/t-twr-rev2-1).
+* Arctic Tracker 4
+* Arctic Tracker 4 UHF (LoRa APRS)
 
 ## Implemented features
 
@@ -32,10 +34,10 @@ It is fairly complete now. The following features are implemented:
 * Add highly compressed earlier position reports to packets. This can improve trails significantly.
   See [how this is done here](http://hamlabs.no/2020/11/02/improving-trails-with-arctic-tracker/). 
 * Digipeater and igate. 
-* Firmware upgrades over the air (OTA).
 * Basic information on battery and charging.
 * Track logging. Store positions in flash memory e.g. every 5 seconds and upload to a REST
-  API on a Polaric Server when network is available. 
+  API on a Polaric Server when network is available. '
+* Firmware upgrades over the air (OTA) is still "work in progress"..
 
 ## REST API and security
 A REST API is provided for external apps (typically). It mainly has methods for reading and updating settings. A strong authentication scheme based on SHA256 HMAC is used. A web-browser-based client is under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) that are on the same LAN. This is still somewhat work-in-progress...
