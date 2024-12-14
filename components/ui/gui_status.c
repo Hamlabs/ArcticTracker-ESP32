@@ -116,8 +116,8 @@ static void status_heading(char* label) {
 #if DISPLAY_HEIGHT >= 64
     disp_label(0,0, label);
     disp_flag(32,0, "i", wifi_isConnected() );
-    disp_flag(44,0, "g", wifi_isConnected() && GET_BYTE_PARAM("IGATE.on")); 
-    disp_flag(56,0, "d", GET_BYTE_PARAM("DIGIPEATER.on"));
+    disp_flag(44,0, "g", wifi_isConnected() && GET_BOOL_PARAM("IGATE.on", DFL_IGATE_ON)); 
+    disp_flag(56,0, "d", GET_BOOL_PARAM("DIGIPEATER.on", DFL_DIGIPEATER_ON));
     disp_flag(68,0, "p", batt_charge());
     disp_flag(80,0, "F", gps_is_fixed());
 #endif
@@ -461,7 +461,7 @@ static void status_screen9() {
     char buf[24];
     
     sprintf(buf, "Reports stored: %d", trackstore_nEntries());
-    disp_writeText(0, LINE1, (GET_BYTE_PARAM("TRKLOG.on") ? "Enabled" : "Disabled"));
+    disp_writeText(0, LINE1, (GET_BOOL_PARAM("TRKLOG.on", DFL_TRKLOG_ON) ? "Enabled" : "Disabled"));
     disp_writeText(0, LINE2, buf); 
     disp_writeText(0, LINE3, tracklog_status());
     disp_flush();

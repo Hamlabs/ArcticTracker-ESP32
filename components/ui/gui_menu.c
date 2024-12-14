@@ -22,6 +22,7 @@ typedef struct {
   menucmd_t       mc_func;
   void           *mc_arg;
   char           *mc_param;
+  bool            mc_dfl;
 } MenuCommand;
 
 
@@ -38,14 +39,14 @@ static void mhandle_tracklog(void* x);
 
 static const MenuCommand items[] = 
 {
-    { "Send pos report",  mhandle_send,      NULL, NULL },
-    { "Restart..",        mhandle_restart,   NULL, NULL },
-    { "Soft Ap",          mhandle_softAp,    NULL, "SOFTAP.on" },
-    { "WIFI",             mhandle_wifi,      NULL, "WIFI.on" },
-    { "Igate",            mhandle_igate,     NULL, "IGATE.on" },
-    { "Digipeater",       mhandle_digi,      NULL, "DIGIPEATER.on" },
-    { "Track log",        mhandle_tracklog,  NULL, "TRKLOG.on" },
-    { "Firmware upgrade", mhandle_fwupgrade, NULL, NULL }
+    { "Send pos report",  mhandle_send,      NULL, NULL, false },
+    { "Restart..",        mhandle_restart,   NULL, NULL, false },
+    { "Soft Ap",          mhandle_softAp,    NULL, "SOFTAP.on",     DFL_SOFTAP_ON },
+    { "WIFI",             mhandle_wifi,      NULL, "WIFI.on",       DFL_WIFI_ON },
+    { "Igate",            mhandle_igate,     NULL, "IGATE.on",      DFL_IGATE_ON },
+    { "Digipeater",       mhandle_digi,      NULL, "DIGIPEATER.on", DFL_DIGIPEATER_ON },
+    { "Track log",        mhandle_tracklog,  NULL, "TRKLOG.on",     DFL_TRKLOG_ON },
+    { "Firmware upgrade", mhandle_fwupgrade, NULL, NULL, false }
 };
 static int nitems = 8; 
 
@@ -78,7 +79,7 @@ static void menu_show(int st, int sel)
     
     for (i=0; i < MIN(nitems, MAX_VISIBLE); i++) {
         if (items[st+i].mc_param != NULL) 
-           on = (bool) get_byte_param(items[st+i].mc_param, false);
+           on = (bool) GET_BOOL_PARAM(items[st+i].mc_param, items[st+i].mc_dfl);
         
         sprintf(item, "%s  %s", items[st+i].mc_name, 
             (items[st+i].mc_param==NULL ? "" : (!on ? "On" : "Off")));
@@ -254,25 +255,25 @@ static void mhandle_send(void* x) {
 }
 
 static void mhandle_igate(void* x) {
-    bool isOn = get_byte_param("IGATE.on", 0);
+    bool isOn = GET_BOOL_PARAM("IGATE.on", DFL_IGATE_ON);
     set_byte_param("IGATE.on", !isOn);
     igate_activate( !isOn ); 
 }
 
 static void mhandle_digi(void* x) {
-    bool isOn = get_byte_param("DIGIPEATER.on", 0); 
+    bool isOn = GET_BOOL_PARAM("DIGIPEATER.on", DFL_DIGIPEATER_ON); 
     set_byte_param("DIGIPEATER.on", !isOn); 
     digipeater_activate( !isOn ); 
 }
 
 static void mhandle_softAp(void* x) {
-    bool isOn = get_byte_param("SOFTAP.on", 0);
+    bool isOn = GET_BOOL_PARAM("SOFTAP.on", DFL_SOFTAP_ON);
     set_byte_param("SOFTAP.on", !isOn);
     wifi_enable_softAp( !isOn ); 
 }
 
 static void mhandle_tracklog(void* x) {
-    bool isOn = get_byte_param("TRKLOG.on", 0) && get_byte_param("TRKLOG.POST.on", 0) ;
+    bool isOn = GET_BOOL_PARAM("TRKLOG.on", DFL_TRKLOG_ON) && GET_BOOL_PARAM("TRKLOG.POST.on", DFL_TRKLOG_POST_ON) ;
     if (isOn) {
         tracklog_off();
         set_byte_param("TRKLOG.POST.on", 0);
@@ -285,7 +286,7 @@ static void mhandle_tracklog(void* x) {
 }
 
 static void mhandle_wifi(void* x) {
-    bool isOn = get_byte_param("WIFI.on", 0);
+    bool isOn = GET_BOOL_PARAM("WIFI.on", DFL_WIFI_ON);
     set_byte_param("WIFI.on", !isOn);
     wifi_enable( !isOn ); 
 }

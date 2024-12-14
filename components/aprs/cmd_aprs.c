@@ -301,21 +301,21 @@ CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",   DFL_IGATE_PORT,  1, 65535);
 CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",   0,               0, 65535);
 
-CMD_BOOL_SETTING (_param_tracklog_on,"TRKLOG.on",      hdl_tracklog);
-CMD_BOOL_SETTING (_param_trkpost_on, "TRKLOG.POST.on", hdl_trkpost);
-CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     hdl_tracker);
-CMD_BOOL_SETTING (_param_timestamp,  "TIMESTAMP.on",   NULL);
-CMD_BOOL_SETTING (_param_compress,   "COMPRESS.on",    NULL);
-CMD_BOOL_SETTING (_param_altitude,   "ALTITUDE.on",    NULL);
-CMD_BOOL_SETTING (_param_digipeater, "DIGIPEATER.on",  hdl_digipeater); 
-CMD_BOOL_SETTING (_param_igate,      "IGATE.on",       hdl_igate);
-CMD_BOOL_SETTING (_param_digi_wide1, "DIGI.WIDE1.on",  NULL);
-CMD_BOOL_SETTING (_param_digi_sar,   "DIGI.SAR.on",    NULL);
-CMD_BOOL_SETTING (_param_rbeep_on,   "REPORT.BEEP.on", NULL);
-CMD_BOOL_SETTING (_param_xturn_on,   "EXTRATURN.on",   NULL);
-CMD_BOOL_SETTING (_param_igtrack_on, "IGATE.TRACK.on", NULL);
-CMD_BOOL_SETTING (_param_txmon_on,   "TXMON.on",       NULL);
-CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       hdl_radio);
+CMD_BOOL_SETTING (_param_tracklog_on,"TRKLOG.on",      DFL_TRKLOG_ON,      hdl_tracklog);
+CMD_BOOL_SETTING (_param_trkpost_on, "TRKLOG.POST.on", DFL_TRKLOG_POST_ON, hdl_trkpost);
+CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     DFL_TRACKER_ON,     hdl_tracker);
+CMD_BOOL_SETTING (_param_timestamp,  "TIMESTAMP.on",   DFL_TIMESTAMP_ON,   NULL);
+CMD_BOOL_SETTING (_param_compress,   "COMPRESS.on",    DFL_COMPRESS_ON,    NULL);
+CMD_BOOL_SETTING (_param_altitude,   "ALTITUDE.on",    DFL_ALTITUDE_ON,    NULL);
+CMD_BOOL_SETTING (_param_digipeater, "DIGIPEATER.on",  DFL_DIGIPEATER_ON,  hdl_digipeater); 
+CMD_BOOL_SETTING (_param_igate,      "IGATE.on",       DFL_IGATE_ON,       hdl_igate);
+CMD_BOOL_SETTING (_param_digi_wide1, "DIGI.WIDE1.on",  DFL_DIGI_WIDE1_ON,  NULL);
+CMD_BOOL_SETTING (_param_digi_sar,   "DIGI.SAR.on",    DFL_DIGI_SAR_ON,    NULL);
+CMD_BOOL_SETTING (_param_rbeep_on,   "REPORT.BEEP.on", DFL_REPORT_BEEP_ON, NULL);
+CMD_BOOL_SETTING (_param_xturn_on,   "EXTRATURN.on",   DFL_EXTRATURN_ON,   NULL);
+CMD_BOOL_SETTING (_param_igtrack_on, "IGATE.TRACK.on", DFL_IGATE_TRACK_ON, NULL);
+CMD_BOOL_SETTING (_param_txmon_on,   "TXMON.on",       DFL_TXMON_ON,       NULL);
+CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       DFL_RADIO_ON,       hdl_radio);
 
 
 #if defined(ARCTIC4_UHF)
@@ -333,7 +333,7 @@ CMD_BYTE_SETTING (_param_miclevel,   "TRX_MICLEVEL", DFL_TRX_MICLEVEL,1, 8,   hd
 CMD_BYTE_SETTING (_param_volume,     "TRX_VOLUME",   DFL_TRX_VOLUME,  1, 8,   hdl_volume);
 CMD_BYTE_SETTING (_param_txdelay,    "TXDELAY",      DFL_TXDELAY,     0, 250, NULL);
 CMD_BYTE_SETTING (_param_txtail,     "TXTAIL",       DFL_TXTAIL,      0, 250, NULL);
-CMD_BOOL_SETTING (_param_txlow_on,   "TXLOW.on",     hdl_txlow);
+CMD_BOOL_SETTING (_param_txlow_on,   "TXLOW.on",     DFL_TXLOW_ON,    hdl_txlow);
 
 #endif
 

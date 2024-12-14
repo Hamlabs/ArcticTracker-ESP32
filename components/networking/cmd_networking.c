@@ -16,7 +16,7 @@
 #include "system.h"
 #include "linenoise/linenoise.h"
 #include "restapi.h"
-
+#include "mbedtls/base64.h"
 
 static void   showScan(void);
 
@@ -268,15 +268,15 @@ inline static void _param_httpd_handler(bool x) {
    
    
    
-CMD_BOOL_SETTING(_param_wifi,      "WIFI.on",     &_param_wifi_handler);
-CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",   &_param_softap_handler);
-CMD_STR_SETTING (_param_apikey,    "API.KEY",     128, "", NULL);
-CMD_STR_SETTING (_param_apiorig,   "API.ORIGINS", 64, "", NULL);
-CMD_STR_SETTING (_param_ap_ssid,   "WIFIAP.SSID", 32, default_ssid, NULL); 
-CMD_STR_SETTING (_param_ap_auth,   "WIFIAP.AUTH", 64, DFL_SOFTAP_PASSWD, NULL);
-CMD_STR_SETTING (_param_ap_ip,     "WIFIAP.IP",   17, DFL_SOFTAP_IP, REGEX_IPADDR);
-CMD_STR_SETTING (_param_fwurl,     "FW.URL",      64, "", NULL);
-CMD_STR_SETTING (_param_fwcert,    "FW.CERT",     BBUF_SIZE, "", NULL);
+CMD_BOOL_SETTING(_param_wifi,      "WIFI.on",      DFL_WIFI_ON,   &_param_wifi_handler);
+CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",    DFL_SOFTAP_ON, &_param_softap_handler);
+CMD_STR_SETTING (_param_apikey,    "API.KEY",      128, DFL_API_KEY, NULL);
+CMD_STR_SETTING (_param_apiorig,   "API.ORIGINS",  64,  DFL_API_ORIGINS, NULL);
+CMD_STR_SETTING (_param_ap_ssid,   "WIFIAP.SSID",  32,  default_ssid, NULL); 
+CMD_STR_SETTING (_param_ap_auth,   "WIFIAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
+CMD_STR_SETTING (_param_ap_ip,     "WIFIAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);
+CMD_STR_SETTING (_param_fwurl,     "FW.URL",       64,  "", NULL);
+CMD_STR_SETTING (_param_fwcert,    "FW.CERT",      BBUF_SIZE, "", NULL);
 
 
 /********************************************************************************

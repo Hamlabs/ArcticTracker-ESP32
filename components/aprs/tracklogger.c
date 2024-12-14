@@ -31,7 +31,7 @@ static void remove_old();
 
 void tracklog_init()
 {
-    if (GET_BYTE_PARAM("TRKLOG.on"))
+    if (GET_BOOL_PARAM("TRKLOG.on", DFL_TRKLOG_ON))
         tracklog_on();
 }
 
@@ -76,7 +76,7 @@ void tracklog_post_start()
 {  
     if (trackpost_running)
         return;
-    if (GET_BYTE_PARAM("TRKLOG.POST.on") && !trackpost_running && wifi_isConnected())        
+    if (GET_BOOL_PARAM("TRKLOG.POST.on", DFL_TRKLOG_POST_ON) && !trackpost_running && wifi_isConnected())        
         xTaskCreatePinnedToCore(&post_loop, "Trklog POSTer",
             STACK_TRACKLOGPOST, NULL, NORMALPRIO, &trackpostt, CORE_TRACKLOGPOST);
 }
@@ -100,7 +100,7 @@ static void tracklog(void* arg) {
     ESP_LOGI(TAG, "Starting tracklog task");
     tracklog_running = true;
     gps_on();  
-    while (get_byte_param("TRKLOG.on", 0)) {
+    while (GET_BOOL_PARAM("TRKLOG.on", DFL_TRKLOG_ON)) {
         uint8_t interv = get_byte_param("TRKLOG.INT", DFL_TRKLOG_INT); 
         if (interv==0) interv=10;
         sleepMs(interv * 1000);
@@ -207,7 +207,7 @@ static void post_loop()
     ESP_LOGI(TAG, "Starting trklog POST task");
     sprintf(statusmsg, "POST task running");
     trackpost_running = true;
-    while (wifi_isConnected() && GET_BYTE_PARAM("TRKLOG.POST.on")) {
+    while (wifi_isConnected() && GET_BOOL_PARAM("TRKLOG.POST.on", DFL_TRKLOG_POST_ON)) {
         int n = tracklog_post();
         if (n == 0)
             sleepMs(1000 * 240);

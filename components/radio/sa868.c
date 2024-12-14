@@ -152,7 +152,7 @@ void sa8_init(uart_port_t uart)
     #endif
     
     sleepMs(200);
-    if (get_byte_param("RADIO.on", 0)>0)
+    if (GET_BOOL_PARAM("RADIO.on", DFL_RADIO_ON))
         sa8_require();
 }
   

@@ -121,7 +121,7 @@ void frs_init(uart_port_t uart)
     gpio_intr_enable(RADIO_PIN_SQUELCH);  
     
     sleepMs(500);
-    if (get_byte_param("RADIO.on", 0)>0)
+    if (GET_BOOL_PARAM("RADIO.on", DFL_RADIO_ON))
         frs_require();
 }
   

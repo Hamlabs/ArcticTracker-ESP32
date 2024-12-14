@@ -181,7 +181,7 @@ void wifi_init(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     
     
-    wifi_enable_softAp(GET_BYTE_PARAM("SOFTAP.on"));
+    wifi_enable_softAp(GET_BOOL_PARAM("SOFTAP.on", DFL_SOFTAP_ON));
     
     esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
     scanDone = cond_create();
@@ -196,7 +196,7 @@ void wifi_init(void)
     
     // Now we need to set mode, the config and start it
     
-    if (GET_BYTE_PARAM("WIFI.on"))
+    if (GET_BOOL_PARAM("WIFI.on", DFL_WIFI_ON))
         wifi_enable(true);
     
     mdns_start(ident);

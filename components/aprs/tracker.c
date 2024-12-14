@@ -168,7 +168,7 @@ static void tracker(void* arg)
     gps_on();    
     if (!TRACKER_TRX_ONDEMAND)
        radio_require();
-    while (GET_BYTE_PARAM("TRACKER.on"))
+    while (GET_BOOL_PARAM("TRACKER.on", DFL_TRACKER_ON))
     {
        /*
         * Wait for a fix on position. But with timeout to allow status and 
@@ -194,7 +194,7 @@ static void tracker(void* arg)
          */  
         if (gps_is_fixed()) {
            if (should_update(&prev_pos_gps, &prev_pos, &gps_current_pos)) {
-              if (GET_BYTE_PARAM("REPORT.BEEP.on")) 
+              if (GET_BOOL_PARAM("REPORT.BEEP.on", DFL_REPORT_BEEP_ON)) 
                  { beep(10); }
             
               report_station_position(&gps_current_pos, false);
@@ -233,7 +233,7 @@ void tracker_init(FBQ *q)
     outframes = q; 
     prev_pos.timestamp=0;
     prev_pos_gps.timestamp=0;
-    if (GET_BYTE_PARAM("TRACKER.on"))
+    if (GET_BOOL_PARAM("TRACKER.on", DFL_TRACKER_ON))
         tracker_on();
 }
 
@@ -324,7 +324,7 @@ static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* curre
          * If previous gps-pos hasn't been reported already and most of the course change
          * has happened the last period, we may add it to the transmission 
 	     */
-        if ( GET_BYTE_PARAM("EXTRATURN.on") != 0 &&
+        if ( GET_BOOL_PARAM("EXTRATURN.on", DFL_EXTRATURN_ON) &&
                 prev_gps->timestamp != prev->timestamp && course >= 0 && 
                 prev_gps_course >= 0 &&
                 course_change(course, prev_gps_course, turn_limit*0.5)
@@ -449,12 +449,12 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     /* APRS Position report body
      * with Timestamp if the parameter is set 
      */
-    uint8_t tstamp = GET_BYTE_PARAM("TIMESTAMP.on");
+    uint8_t tstamp = GET_BOOL_PARAM("TIMESTAMP.on", DFL_TIMESTAMP_ON);
     fbuf_putChar(&packet, (tstamp ? '/' : '!')); 
     if (tstamp)
        send_timestamp(&packet, pos);
     send_pos_report(&packet, pos, sym[1], sym[0], 
-       (GET_BYTE_PARAM("COMPRESS.on") != 0), false ); 
+       (GET_BOOL_PARAM("COMPRESS.on", DFL_COMPRESS_ON)), false ); 
        
     /* 
      * Add extra reports from buffer 
@@ -463,7 +463,7 @@ static void report_station_position(posdata_t* pos, bool no_tx)
         xreport_send(&packet, pos);
        
     /* Re-send report in later transmissions */
-    uint8_t repeat = GET_BYTE_PARAM("REPEAT"); 
+    uint8_t repeat = get_byte_param("REPEAT", DFL_REPEAT); 
     if (!no_tx && repeat > 0) {
         xreport_queue(*pos, 1);
         if (repeat>1)
@@ -487,7 +487,7 @@ static void report_station_position(posdata_t* pos, bool no_tx)
      *   send it on radio if no_tx flag is set
      *   put it on igate-queue (if igate is active)
      */
-    uint8_t igtrack = GET_BYTE_PARAM("IGATE.TRACK.on"); 
+    uint8_t igtrack = GET_BOOL_PARAM("IGATE.TRACK.on", DFL_IGATE_TRACK_ON); 
     
     if (!no_tx) 
        fbq_put(outframes, fbuf_newRef(&packet));
@@ -523,7 +523,7 @@ static void report_object_position(posdata_t* pos, char* id, bool add)
     send_timestamp(&packet, pos);
     get_str_param("OBJ.SYMBOL", osym, 2, DFL_OBJ_SYMBOL); 
     send_pos_report(&packet, pos, osym[1], osym[0],
-        (GET_BYTE_PARAM("COMPRESS.on") != 0), true);
+        (GET_BOOL_PARAM("COMPRESS.on", DFL_COMPRESS_ON)), true);
     
     /* Comment field may be added later */
 
@@ -573,7 +573,7 @@ static void send_pos_report(FBUF* packet, posdata_t* pos,
        fbuf_putstr (packet, pbuf); 
 
        /* Altitude */
-       if (pos->altitude >= 0 && GET_BYTE_PARAM("ALTITUDE.on")) {
+       if (pos->altitude >= 0 && GET_BOOL_PARAM("ALTITUDE.on", DFL_ALTITUDE_ON)) {
            uint16_t altd = (uint16_t) round(pos->altitude * FEET2M);
            sprintf(pbuf,"/A=%06u%c", altd, '\0');
            fbuf_putstr(packet, pbuf);
@@ -620,7 +620,7 @@ static void send_latlong_compressed(FBUF* packet, double pos, bool is_longitude)
 static void send_csT_compressed(FBUF* packet, posdata_t* pos)
 /* FIXME: Special case where there is no course/speed ? */
 {
-    if (pos->altitude >= 0 && GET_BYTE_PARAM("ALTITUDE.on")) {
+    if (pos->altitude >= 0 && GET_BOOL_PARAM("ALTITUDE.on", DFL_ALTITUDE_ON)) {
        /* Send altitude */
        uint32_t alt =  (uint32_t) log1002((double)pos->altitude * FEET2M);
        fbuf_putChar(packet, (char) (lround(alt / 91) + ASCII_BASE));

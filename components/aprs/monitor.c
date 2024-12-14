@@ -76,7 +76,7 @@ void mon_activate(bool m)
         FBQ* mq = (mon_on? &mon : NULL);
         
         APRS_SUBSCRIBE_RX(mq, 0);
-        if (GET_BYTE_PARAM("TXMON.on"))
+        if (GET_BOOL_PARAM("TXMON.on", DFL_TXMON_ON))
             APRS_MONITOR_TX(mq);
 
         xTaskCreate(&monitor, "Packet monitor", 

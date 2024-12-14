@@ -31,6 +31,7 @@
 #define DFL_MINPAUSE        20
 #define DFL_MINDIST        100
 #define DFL_STATUSTIME      30
+#define DFL_REPEAT           0
 
 #if DEVICE == T_TWR
 #define DFL_TRX_VOLUME       6
@@ -48,3 +49,25 @@
 #define DFL_RXFREQ     1448000
 #define DFL_FREQ     433775000
 #define DFL_TXPOWER          4
+
+#define DFL_TRKLOG_ON      false
+#define DFL_TRKLOG_POST_ON false
+#define DFL_TRACKER_ON     true
+#define DFL_TIMESTAMP_ON   true
+#define DFL_COMPRESS_ON    true
+#define DFL_ALTITUDE_ON    false
+#define DFL_DIGIPEATER_ON  false
+#define DFL_DIGI_WIDE1_ON  true
+#define DFL_DIGI_SAR_ON    false
+#define DFL_IGATE_ON       false
+#define DFL_IGATE_TRACK_ON false
+#define DFL_REPORT_BEEP_ON false
+#define DFL_EXTRATURN_ON   false
+#define DFL_TXMON_ON       true
+#define DFL_RADIO_ON       true
+#define DFL_TXLOW_ON       false
+
+#define DFL_WIFI_ON        false
+#define DFL_SOFTAP_ON      false
+
+

@@ -96,10 +96,10 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
     cJSON_AddNumberToObject(root, "repeat",    get_byte_param("REPEAT", DFL_REPEAT));
     cJSON_AddNumberToObject(root, "turnlimit", get_u16_param("TURNLIMIT", DFL_TURNLIMIT));
    
-    cJSON_AddBoolToObject(root, "timestamp", get_byte_param("TIMESTAMP.on", 0));
-    cJSON_AddBoolToObject(root, "compress",  get_byte_param("COMPRESS.on", 0));
-    cJSON_AddBoolToObject(root, "altitude", get_byte_param("ALTITUDE.on", 0));
-    cJSON_AddBoolToObject(root, "extraturn", get_byte_param("EXTRATURN.on", 0));
+    cJSON_AddBoolToObject(root, "timestamp", GET_BOOL_PARAM("TIMESTAMP.on", DFL_TIMESTAMP_ON));
+    cJSON_AddBoolToObject(root, "compress",  GET_BOOL_PARAM("COMPRESS.on", DFL_COMPRESS_ON));
+    cJSON_AddBoolToObject(root, "altitude", GET_BOOL_PARAM("ALTITUDE.on", DFL_ALTITUDE_ON));
+    cJSON_AddBoolToObject(root, "extraturn", GET_BOOL_PARAM("EXTRATURN.on", DFL_EXTRATURN_ON));
    
 #if defined(ARCTIC4_UHF)
     cJSON_AddNumberToObject(root, "lora_sf",   get_byte_param("LORA_SF", DFL_LORA_SF));
@@ -172,10 +172,10 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
     CHECK_AUTH(req);
     
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddBoolToObject(root, "digiOn", get_byte_param("DIGIPEATER.on", 0));
-    cJSON_AddBoolToObject(root, "wide1", get_byte_param("DIGI.WIDE1.on", 0));
-    cJSON_AddBoolToObject(root, "sar", get_byte_param("DIGI.SAR.on", 0));
-    cJSON_AddBoolToObject(root, "igateOn", get_byte_param("IGATE.on", 0));
+    cJSON_AddBoolToObject(root, "digiOn", GET_BOOL_PARAM("DIGIPEATER.on", DFL_DIGIPEATER_ON));
+    cJSON_AddBoolToObject(root, "wide1", GET_BOOL_PARAM("DIGI.WIDE1.on", DFL_DIGI_WIDE1_ON));
+    cJSON_AddBoolToObject(root, "sar", GET_BOOL_PARAM("DIGI.SAR.on", DFL_DIGI_SAR_ON));
+    cJSON_AddBoolToObject(root, "igateOn", GET_BOOL_PARAM("IGATE.on", DFL_IGATE_ON));
     cJSON_AddNumberToObject(root, "port", get_u16_param("IGATE.PORT", DFL_IGATE_PORT));
     cJSON_AddNumberToObject(root, "passcode", get_u16_param("IGATE.PASS", 0));
      
@@ -311,8 +311,8 @@ static esp_err_t trklog_get_handler(httpd_req_t *req)
     CHECK_AUTH(req);
     
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddBoolToObject(root, "trklog_on", get_byte_param("TRKLOG.on", 0));
-    cJSON_AddBoolToObject(root, "trkpost_on", get_byte_param("TRKLOG.POST.on", 0));
+    cJSON_AddBoolToObject(root, "trklog_on", GET_BOOL_PARAM("TRKLOG.on", DFL_TRKLOG_ON));
+    cJSON_AddBoolToObject(root, "trkpost_on", GET_BOOL_PARAM("TRKLOG.POST.on", DFL_TRKLOG_POST_ON));
     cJSON_AddNumberToObject(root, "interv", get_byte_param("TRKLOG.INT", DFL_TRKLOG_INT));
     cJSON_AddNumberToObject(root, "ttl", get_byte_param("TRKLOG.TTL", DFL_TRKLOG_TTL));
 
@@ -338,11 +338,11 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
 
     
     set_byte_param("TRKLOG.on", JSON_BOOL(root, "trklog_on"));
-    if (get_byte_param("TRKLOG.on", 0))
+    if (GET_BOOL_PARAM("TRKLOG.on", DFL_TRKLOG_ON))
         tracklog_on();
     
     set_byte_param("TRKLOG.POST.on", JSON_BOOL(root, "trkpost_on"));
-    if (get_byte_param("TRKLOG.POST.on", 0))
+    if (GET_BOOL_PARAM("TRKLOG.POST.on", DFL_TRKLOG_ON))
         tracklog_post_start();
         
     set_byte_param("TRKLOG.INT", JSON_BYTE(root, "interv"));

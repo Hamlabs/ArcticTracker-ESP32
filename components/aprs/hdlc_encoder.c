@@ -201,6 +201,7 @@ static void hdlc_encode_frames()
             /* 
              * Put packet on monitor queue, if active
              */
+            ESP_LOGI(TAG, "Put frame on monitor queue");
             fbq_put(mqueue, buffer);
         }
         else {

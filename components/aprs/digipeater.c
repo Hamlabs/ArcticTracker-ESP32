@@ -81,7 +81,7 @@ void digipeater_init(fbq_t* out)
 {
     fbq_init(&rxqueue, HDLC_DECODER_QUEUE_SIZE);
     outframes = out;
-    if (get_byte_param("DIGIPEATER.on", 0))
+    if (GET_BOOL_PARAM("DIGIPEATER.on", DFL_DIGIPEATER_ON))
         digipeater_activate(true);
 }
 
@@ -167,14 +167,14 @@ static void check_frame(FBUF *f)
        return;
 
    /* Check if the WIDE1-1 alias is next in the list */
-   if (get_byte_param("DIGI.WIDE1.on", 0) 
+   if (GET_BOOL_PARAM("DIGI.WIDE1.on", DFL_DIGI_WIDE1_ON) 
            && strncasecmp("WIDE1", digis[i].callsign, 5) == 0 && digis[i].ssid == 1)
        widedigi = true; 
   
    /* Look for SAR alias in the rest of the path 
     * NOTE: Don't use SAR-preemption if packet has been digipeated by others first 
     */    
-   if (get_byte_param("DIGI.SAR.on", 0) && i<=0)
+   if (GET_BOOL_PARAM("DIGI.SAR.on", DFL_DIGI_SAR_ON) && i<=0)
      for (j=i; j<ndigis; j++)
        if (strncasecmp("SAR", digis[j].callsign, 3) == 0) 
           { sar_pos = j; break; } 

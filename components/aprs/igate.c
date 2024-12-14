@@ -184,7 +184,7 @@ static void igate_main(void* arg)
 
 void igate_init() {
     fbq_init(&rxqueue, HDLC_DECODER_QUEUE_SIZE);
-    if (get_byte_param("IGATE.on", 0))
+    if (GET_BOOL_PARAM("IGATE.on", DFL_IGATE_ON))
         igate_activate(true);
 }
 

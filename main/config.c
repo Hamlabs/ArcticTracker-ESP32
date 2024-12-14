@@ -316,11 +316,11 @@ char* param_parseI32(const char* key, char* val, int32_t llimit, int32_t ulimit,
  * Generic getter/setter command handler for boolean settings 
  ********************************************************************************/
 
-int param_setting_bool(int argc, char** argv, const char* key)
+int param_setting_bool(int argc, char** argv, const char* key, bool dfl)
 {
     char buf[64];
     if (argc < 2)
-        printf("%s\n", param_printBool(key, buf));
+        printf("%s\n", param_printBool(key, dfl, buf));
     else 
         printf("%s\n", param_parseBool(key, argv[1], buf));
     return 0;
@@ -333,9 +333,9 @@ int param_setting_bool(int argc, char** argv, const char* key)
  * Produce and return string representation of boolean setting 
  **********************************************************************/
 
-char* param_printBool(const char* key, char* buf) 
+char* param_printBool(const char* key, bool dfl, char* buf) 
 {
-    if (GET_BYTE_PARAM(key))
+    if (get_byte_param(key, dfl))
         sprintf(buf, "ON");
     else 
         sprintf(buf, "OFF");

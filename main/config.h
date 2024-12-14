@@ -29,12 +29,12 @@ int   param_setting_u16(int argc, char** argv,
                 const char* key, uint16_t dfl, uint16_t llimit, uint16_t ulimit );
 int   param_setting_i32(int argc, char** argv, 
                 const char* key, int32_t dfl, int32_t llimit, int32_t ulimit );
-int   param_setting_bool(int argc, char** argv, const char* key);
+int   param_setting_bool(int argc, char** argv, const char* key, bool dfl);
 
 char* param_parseByte(const char* key, char* val, uint8_t llimit, uint8_t ulimit, char* buf );
 char* param_parseU16(const char* key, char* val, uint16_t llimit, uint16_t ulimit, char *buf );
 char* param_parseI32(const char* key, char* val, int32_t llimit, int32_t ulimit, char *buf );
-char* param_printBool(const char* key, char* buf);
+char* param_printBool(const char* key, bool dfl, char* buf);
 char* param_parseBool(const char* key, char* val, char* buf);
 char* param_parseStr(const char* key, char* val, const int size, const char* pattern, char* buf);
 
@@ -58,20 +58,23 @@ typedef void (*ByteHandler)(uint8_t val);
 typedef void (*I32Handler)(int32_t val);
 
 
-#define GET_BYTE_PARAM(key) get_byte_param(key, 0)
+#define GET_BOOL_PARAM(key, dfl)  get_byte_param((key), ((dfl)? 1:0))
+
+// FIXME: These macros should not be used
 #define GET_U16_PARAM(key)  get_u16_param(key, 0)
 #define GET_I32_PARAM(key)  get_i32_param(key, 0)
-
 #define GET_STR_PARAM(key, buf, size) get_str_param(key, buf, size, NULL)
 #define GET_BIN_PARAM(key, buf, size) get_bin_param(key, buf, size, NULL)
 
+
+
 /* NOTE: This is quite like creating a closure function */
-#define CMD_BOOL_SETTING(f, key, bh) \
+#define CMD_BOOL_SETTING(f, key, dfl, bh) \
     inline static int f(int argc, char** argv) { \
-        int r = param_setting_bool(argc, argv, key); \
+        int r = param_setting_bool(argc, argv, key, dfl); \
         BoolHandler bhh = bh; \
         if (bhh != NULL) \
-            (*bhh)(GET_BYTE_PARAM(key)); \
+            (*bhh)(get_byte_param(key, dfl)); \
         return r; \
     } 
 
@@ -80,7 +83,7 @@ typedef void (*I32Handler)(int32_t val);
         int r = param_setting_byte(argc, argv, key, dfl, llimit, ulimit); \
         ByteHandler bhh = bh; \
         if (bhh != NULL) \
-            (*bhh)(GET_BYTE_PARAM(key)); \
+            (*bhh)(get_byte_param(key, dfl)); \
         return r; \
     }
 

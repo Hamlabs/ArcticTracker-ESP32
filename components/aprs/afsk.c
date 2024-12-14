@@ -64,7 +64,7 @@ void afsk_init()
 {
     afskmx = mutex_create();
     clock_init(&afskclk, AFSK_RESOLUTION, AFSK_CNT, afsk_sampler, NULL);
-    if (GET_BYTE_PARAM("TRX_SQUELCH") == 0)
+    if (get_byte_param("TRX_SQUELCH", DFL_TRX_SQUELCH) == 0)
         afsk_setSquelchOff(true);
 }
 
