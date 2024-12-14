@@ -236,7 +236,14 @@ char* compute_hmac(const char* keyid, char* res, int hlen, uint8_t* data1, int l
     char b64hash[HMAC_B64_SIZE+1];
     uint8_t hash[HMAC_SHA256_SIZE];
 
-    int keylen = GET_STR_PARAM(keyid, key, KEY_SIZE) -1;
+    int keylen = 0; 
+    if (strcmp(keyid, "API.KEY")) {
+        strcpy(key, DFL_API_KEY);
+        keylen = strlen(key);
+    }
+    else
+        keylen = get_str_param(keyid, key, KEY_SIZE, NULL) -1;
+    
     if (keylen <= 0) {
         /* Key is not set. Generate a random key */
         ESP_LOGW(TAG, "API Key %s is not set", keyid);

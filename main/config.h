@@ -60,11 +60,6 @@ typedef void (*I32Handler)(int32_t val);
 
 #define GET_BOOL_PARAM(key, dfl)  get_byte_param((key), ((dfl)? 1:0))
 
-// FIXME: These macros should not be used
-#define GET_U16_PARAM(key)  get_u16_param(key, 0)
-#define GET_I32_PARAM(key)  get_i32_param(key, 0)
-#define GET_STR_PARAM(key, buf, size) get_str_param(key, buf, size, NULL)
-#define GET_BIN_PARAM(key, buf, size) get_bin_param(key, buf, size, NULL)
 
 
 
@@ -97,7 +92,7 @@ typedef void (*I32Handler)(int32_t val);
         int r = param_setting_i32(argc, argv, key, dfl, llimit, ulimit); \
         I32Handler bhh = bh; \
         if (bhh != NULL) \
-            (*bhh)(GET_I32_PARAM(key)); \
+            (*bhh)(get_i32_param(key, dfl)); \
         return r; \
     }
     

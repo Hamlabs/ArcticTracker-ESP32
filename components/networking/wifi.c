@@ -349,7 +349,7 @@ bool wifi_getApAlt(int n, wifiAp_t* res) {
     }
     char key[12];
     sprintf(key, "AP.ALT.%d", n);
-    return ( GET_BIN_PARAM(key, (void*) res, sizeof(wifiAp_t)) > 0); 
+    return ( get_bin_param(key, (void*) res, sizeof(wifiAp_t), NULL) > 0); 
 }
 
 

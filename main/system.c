@@ -101,8 +101,8 @@ esp_err_t firmware_upgrade()
         return ESP_FAIL;
     }
     
-    GET_STR_PARAM("FW.URL", fwurl, 79);
-    GET_STR_PARAM("FW.CERT", fwcert, BBUF_SIZE);
+    get_str_param("FW.URL", fwurl, 79, DFL_FW_URL);
+    get_str_param("FW.CERT", fwcert, BBUF_SIZE, NULL);
     ESP_LOGI(TAG, "Fw upgrade: URL=%s", fwurl);
     
     esp_http_client_config_t config = {
@@ -312,7 +312,7 @@ void time_update()
 {    
     mutex_lock(time_mutex);
     char tz[64];
-    GET_STR_PARAM("TIMEZONE", tz, 64);
+    get_str_param("TIMEZONE", tz, 64, DFL_TIMEZONE);
     setenv("TZ", tz, 1);
     tzset();
     
@@ -352,7 +352,7 @@ time_t timegm(struct tm *tm)
     time_t t = mktime(tm);
         
     char tz[64];
-    GET_STR_PARAM("TIMEZONE", tz, 64);
+    get_str_param("TIMEZONE", tz, 64, DFL_TIMEZONE);
     setenv("TZ", tz, 1);
     tzset();
     mutex_unlock(time_mutex);

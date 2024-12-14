@@ -148,7 +148,7 @@ static void status_screen1() {
     disp_clear();
     status_heading("APRS");
 
-    GET_STR_PARAM("MYCALL", call, 10);
+    get_str_param("MYCALL", call, 10, DFL_MYCALL);
     disp_setBoldFont(true);
     disp_setHighFont(true, false);
     disp_writeText(0, LINE1, call);
@@ -167,7 +167,7 @@ static void status_screen1() {
     /* Get and convert digipeater path */
     addr_t digis[7];
     char buf[70];
-    GET_STR_PARAM("DIGIPATH", buf, 70);
+    get_str_param("DIGIPATH", buf, 70, DFL_DIGIPATH);
     uint8_t ndigis = str2digis(digis, buf);
     digis2str(buf, ndigis, digis, true);
     disp_writeText(0, LINE4, buf);  

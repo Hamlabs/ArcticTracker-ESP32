@@ -156,7 +156,7 @@ int tracklog_post() {
         return 0;
     
     /* Get settings */
-    GET_STR_PARAM("MYCALL", call, 10);
+    get_str_param("MYCALL", call, 10, DFL_MYCALL);
     get_str_param("TRKLOG.URL", url, 64, DFL_TRKLOG_URL);
 
     /* 
