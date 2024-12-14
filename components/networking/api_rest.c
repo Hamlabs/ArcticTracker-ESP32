@@ -91,14 +91,14 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
     cJSON_AddStringToObject(root, "comment", buf);
     
     cJSON_AddNumberToObject(root, "maxpause",  get_byte_param("MAXPAUSE", DFL_MAXPAUSE) );
-    cJSON_AddNumberToObject(root, "minpause", get_byte_param("MINPAUSE", DFL_MINPAUSE) );
+    cJSON_AddNumberToObject(root, "minpause",  get_byte_param("MINPAUSE", DFL_MINPAUSE) );
     cJSON_AddNumberToObject(root, "mindist",   get_byte_param("MINDIST", DFL_MINDIST));
     cJSON_AddNumberToObject(root, "repeat",    get_byte_param("REPEAT", DFL_REPEAT));
     cJSON_AddNumberToObject(root, "turnlimit", get_u16_param("TURNLIMIT", DFL_TURNLIMIT));
    
     cJSON_AddBoolToObject(root, "timestamp", GET_BOOL_PARAM("TIMESTAMP.on", DFL_TIMESTAMP_ON));
     cJSON_AddBoolToObject(root, "compress",  GET_BOOL_PARAM("COMPRESS.on", DFL_COMPRESS_ON));
-    cJSON_AddBoolToObject(root, "altitude", GET_BOOL_PARAM("ALTITUDE.on", DFL_ALTITUDE_ON));
+    cJSON_AddBoolToObject(root, "altitude",  GET_BOOL_PARAM("ALTITUDE.on", DFL_ALTITUDE_ON));
     cJSON_AddBoolToObject(root, "extraturn", GET_BOOL_PARAM("EXTRATURN.on", DFL_EXTRATURN_ON));
    
 #if defined(ARCTIC4_UHF)
@@ -121,17 +121,22 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
 
 static esp_err_t aprs_put_handler(httpd_req_t *req) 
 {
-    
+    char buf[32];
     ESP_LOGI(TAG, "aprs_put_handler");
     cJSON *root;   
     rest_cors_enable(req); 
     CHECK_JSON_INPUT(req, root);
-      
-    set_str_param("MYCALL",   JSON_STR(root, "mycall"));
-    set_str_param("SYMBOL",   JSON_STR(root, "symbol"));
-    set_str_param("DIGIPATH", JSON_STR(root, "path"));
-    set_str_param("REP.COMMENT",  JSON_STR(root, "comment"));
     
+    strcpy(buf, JSON_STR(root, "mycall"));
+    strupr(buf);
+    set_str_param("MYCALL",  buf);
+    
+    strcpy(buf, JSON_STR(root, "path"));
+    strupr(buf);
+    set_str_param("DIGIPATH", buf);
+    
+    set_str_param("SYMBOL",   JSON_STR(root, "symbol"));
+    set_str_param("REP.COMMENT",  JSON_STR(root, "comment"));
     set_byte_param("MAXPAUSE", JSON_BYTE(root, "maxpause"));
     set_byte_param("MINPAUSE", JSON_BYTE(root, "minpause"));
     set_byte_param("MINDIST",  JSON_BYTE(root, "mindist"));
