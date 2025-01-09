@@ -287,7 +287,7 @@ CMD_STR_SETTING  (_param_osym,       "OBJ.SYMBOL",   3,  DFL_OBJ_SYMBOL,   REGEX
 CMD_STR_SETTING  (_param_oid,        "OBJ.ID",       10, DFL_OBJ_ID,       REGEX_AXADDR);
 CMD_STR_SETTING  (_param_comment,    "REP.COMMENT",  40, DFL_REP_COMMENT,  NULL);
 CMD_STR_SETTING  (_param_igate_host, "IGATE.HOST",   64, DFL_IGATE_HOST,   REGEX_HOSTNAME);
-CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",   9,  DFL_IGATE_USER,   REGEX_AXADDR);
+CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",   10,  DFL_IGATE_USER,   REGEX_AXADDR);
 CMD_STR_SETTING  (_param_igate_filt, "IGATE.FILTER", 32, DFL_IGATE_FILTER, ".*");
 CMD_BYTE_SETTING (_param_trklogint,  "TRKLOG.INT",   DFL_TRKLOG_INT,  0, 60,  NULL);
 CMD_BYTE_SETTING (_param_trklogttl,  "TRKLOG.TTL",   DFL_TRKLOG_TTL,  0, 250, NULL);

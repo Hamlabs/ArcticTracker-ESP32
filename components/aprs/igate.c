@@ -291,7 +291,9 @@ static void rf2inet(FBUF *frame)
   
     /* Send to internet server */
     int len = fbuf_read(&newHdr, FRAME_LEN, buf); 
-    inet_write(buf, len);
+    buf[len] = '\r';
+    buf[len+1] = '\n';
+    inet_write(buf, len+2);
     buf[len] = '\0';
     ESP_LOGI(TAG, "Frame gated to inet.."); 
     ESP_LOGD(TAG, "%s", buf);
