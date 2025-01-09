@@ -1,4 +1,4 @@
-![LilyGo tracker](t_twr.jpg)
+![Arctic Tracker and LilyGo T-TWR](trackers.jpg)
 # ArcticTracker-ESP32
 
 Arctic Tracker (v.3) is an APRS tracker platform based on the ESP32S3 MCU module, a GPS, a display and a 
@@ -9,7 +9,7 @@ is available: For easy configuration, for pushing APRS data, etc. It can also fu
 It is based on the earlier Arctic Tracker (v.2) prototype which used an ESP32. This was again based on the even earlier 
 Arctic Tracker (v.1) prototype which used a Teensy 3 MCU module and a ESP-8266 module (with NodeMCU). 
 
-See http://www.hamlabs.no for some blogging about this project and on the including port to the [T-TWR](http://hamlabs.no/2024/03/22/arctic-tracker-software-on-lilygo-t-twr-plus/).
+See http://www.hamlabs.no for some blogging about this project and on the port to the [T-TWR](http://hamlabs.no/2024/03/22/arctic-tracker-software-on-lilygo-t-twr-plus/).
 
 ## Supported hardware
 
@@ -83,14 +83,16 @@ You may choose to update only the app (ArcticTracker.bin) or the Webapp (webapp.
 ## Setup of the tracker - the command shell
 Plug a USB cable into the tracker and your computer. A serial interface will appear. Start a (serial) terminal program and connect to the serial interface (on Linux it is /dev/ttyACM0). Alternatively, the monitor command of the idf.py may be used. It may be necessary to reset the tracker to get the command prompt (cmd:). 
 
-The command-shell let you configure everything and is useful in developing and debugging the software. Be sure to set the *callsign*. The *'help'* command shows the available commands. The *'tracker on'* command turns on the tracking. *'radio on'* command turns on the radio. The *'wifi on'* command turns on the WIFI. The *'ap'* command lets you set up a list of WIFI access points. The tracker will try to connect to these in order if they are in range. Also, before you try to use the webapp, use the *'api-key'* to set a secret key to be used for the webapp to authenticate. *'api-origins'* should be set to a regular expression matching the origins expected for the webapp. ".*" (dot star) will match all. If things are working as expected, you should to be able to get to the most important settings with a web-browser. 
+The command-shell let you configure everything and is useful in developing and debugging the software. Be sure to set the *callsign*. The *'help'* command shows the available commands. The *'tracker on'* command turns on the tracking (on by default). *'radio on'* command turns on the radio (on by default). The *'wifi on'* command turns on the WIFI. The *'ap'* command lets you set up a list of WIFI access points. The tracker will try to connect to these in order if they are in range. Also, for access from the webapp, the *'api-key'* can be used to change a secret key to be used for the webapp to authenticate. If things are working as expected, you should to be able to get to the most important settings with a web-browser. 
 
-The tracker is also able to function as its own access point (*'softap'* command). Info about ip-address, etc. is shown on the display so you can connect your browser to it. 
+The tracker is also able to function as its own access point (menu or *'softap'* command). Info about ip-address, etc. is shown on the display so you can connect your browser to it. The password can be set using the command shell or the web-app. 
+
+The api-key and the softap key is '123456789' by default. Please change it at your first convenience.
 
 ## Issues and work in progress
-When working with a version 4 tracker we will also move on to exploring LoRa APRS (and possibly FSK modes) on 70 cm.  In Norway it is now legal to use up to 200 Khz bandwith from 433.600 to 434 MHz, so an Arctic Tracker 4 UHF PCB (with a LoRa module) is underway. A version 4 for VHF/plain old APRS is being tested and it looks promising. I hope to publish some on this soon. 
+When working with a version 4 tracker we have also moved on to exploring LoRa APRS (and possibly FSK modes) on 70 cm.  In Norway it is now legal to use up to 200 Khz bandwith from 433.600 to 434 MHz, so an Arctic Tracker 4 UHF PCB (with a LoRa module) is being tested. A version 4 for VHF/plain old APRS is also being tested and it looks promising. I hope to publish some on this soon. 
 
-Receiving packets is more complicated than transmitting and involve some DSP work and sampling from the ADC. This seems to work reasonably well, though it still somewhat work-in-progress. It can work without the squelch signal now. At least in my setup it seems the SA-868 need a rather strong signal to open the squelch even at the lowest settin (it may be better outside my shack where there is less computer noise).
+Receiving packets is more complicated than transmitting and involve some DSP work and sampling from the ADC. This seems to work reasonably well, though it still somewhat work-in-progress. It can work without the squelch signal now. At least in my setup it seems the SA-868 need a rather strong signal to open the squelch even at the lowest setting (it may be better outside my shack where there is less computer noise).
 
 The SA868 comes with a programmable version and I wonder if it could used and maybe optimized a bit for APRS? 
 
