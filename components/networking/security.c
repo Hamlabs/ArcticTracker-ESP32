@@ -92,11 +92,13 @@ void rest_setSecHdrs(esp_http_client_handle_t client, char* service, char* data,
     if (dlen > 0)
         compute_sha256_b64(chash, (uint8_t*) data, dlen ); 
     
+    ESP_LOGI(TAG, "CHASH: %s", chash);
     /* Create hmac */
     compute_hmac(key, hmac, HMAC_B64_SIZE, (uint8_t*) nonce, NONCE_SIZE, (uint8_t*) chash , (dlen>0 ? SHA256_B64_SIZE : 0));
     
     /* Set header */
     sprintf(httpauth, "Arctic-Hmac %s;%s;%s", service, nonce, hmac);
+    ESP_LOGI(TAG, "HTTP AUTH: %s", httpauth);
     esp_http_client_set_header(client, "Authorization", httpauth);
     
 } 
@@ -237,12 +239,7 @@ char* compute_hmac(const char* keyid, char* res, int hlen, uint8_t* data1, int l
     uint8_t hash[HMAC_SHA256_SIZE];
 
     int keylen = 0; 
-    if (strcmp(keyid, "API.KEY")) {
-        strcpy(key, DFL_API_KEY);
-        keylen = strlen(key);
-    }
-    else
-        keylen = get_str_param(keyid, key, KEY_SIZE, NULL) -1;
+    keylen = get_str_param(keyid, key, KEY_SIZE, NULL) -1;
     
     if (keylen <= 0) {
         /* Key is not set. Generate a random key */
