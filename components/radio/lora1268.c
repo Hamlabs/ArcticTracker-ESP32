@@ -273,7 +273,7 @@ void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_
 		ESP_LOGE(TAG, "Lora CR setting out of range: %d", codingRate); 
 		codingRate = 1;
 	}
-	if (spreadingFactor>12 || spreadingFactor < 8) {
+	if (spreadingFactor>12 || spreadingFactor < 4) {
 		ESP_LOGE(TAG, "Lora SF setting out of range: %d", codingRate);
 		spreadingFactor = 12;
 	}

@@ -320,7 +320,7 @@ CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       DFL_RADIO_ON,       hdl_r
 
 #if defined(ARCTIC4_UHF)
 CMD_I32_SETTING  (_param_freq,       "FREQ",           DFL_FREQ,           433000000, 436000000, hdl_freq);
-CMD_BYTE_SETTING (_param_lora_sf,    "LORA_SF",        DFL_LORA_SF,        7, 12,  hdl_lora_sf);
+CMD_BYTE_SETTING (_param_lora_sf,    "LORA_SF",        DFL_LORA_SF,        5, 12,  hdl_lora_sf);
 CMD_BYTE_SETTING (_param_lora_cr,    "LORA_CR",        DFL_LORA_CR,        5, 8,   hdl_lora_cr);
 CMD_BYTE_SETTING (_param_txpower,    "TXPOWER",        DFL_TXPOWER,        0, 6,   hdl_txpower);
 #else
@@ -351,7 +351,6 @@ void register_aprs()
     ADD_CMD("trklog-put", &do_trput,           "Put tracklog record", "");  
     
     ADD_CMD("mycall",     &_param_mycall,      "My callsign", "[<callsign>]");
-//    ADD_CMD("dest",       &_param_dest,        "APRS destination address", "[<addr>]");
     ADD_CMD("digipath",   &_param_digipath,    "APRS Digipeater path", "[<addr>, ...]");
     ADD_CMD("symbol",     &_param_symbol,      "APRS symbol (sym-table symbol)", "[<T><S>]");
     ADD_CMD("osymbol",    &_param_osym,        "APRS symbol for objects (sym-table symbol)", "[<T><S>]");
@@ -400,7 +399,7 @@ void register_aprs()
     ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
 #else
-    ADD_CMD("lora-sf",    &_param_lora_sf,     "LoRa spreading factor (7-12)",      "[<val>]");
+    ADD_CMD("lora-sf",    &_param_lora_sf,     "LoRa spreading factor (5-12)",      "[<val>]");
     ADD_CMD("lora-cr",    &_param_lora_cr,     "LoRa coding rate (5-8)",            "[<val>]");
     ADD_CMD("txpower",    &_param_txpower,     "Tx power (1-6)",                    "[<val>]");
     ADD_CMD("freq",       &_param_freq,        "TX/RX frequency (Hz)",              "[<val>]");
