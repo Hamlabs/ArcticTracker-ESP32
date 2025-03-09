@@ -393,7 +393,7 @@ static bool course_change(uint16_t crs, uint16_t prev, uint16_t limit)
 static void report_status(posdata_t* pos)
 {
     FBUF packet;   
-    fbuf_new(&packet);
+    fbuf_new(&packet, SRC_TRACKER);
     ESP_LOGI(TAG, "Report status");
     
     /* Create packet header */
@@ -441,7 +441,7 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     static uint8_t ccount;
     FBUF packet;    
     char comment[40];
-    fbuf_new(&packet); 
+    fbuf_new(&packet, SRC_TRACKER); 
           
     /* Create packet header */
     send_header(&packet, no_tx);    
@@ -490,7 +490,7 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     uint8_t igtrack = GET_BOOL_PARAM("IGATE.TRACK.on", DFL_IGATE_TRACK_ON); 
     
     if (!no_tx) 
-       fbq_put(outframes, fbuf_newRef(&packet));
+       fbq_put(outframes, fbuf_newRef(&packet, SRC_TRACKER));
     if (gate != NULL && igtrack) 
        fbq_put(gate, packet);
     else {
@@ -511,7 +511,7 @@ static void report_object_position(posdata_t* pos, char* id, bool add)
 {
     char osym[3];
     FBUF packet; 
-    fbuf_new(&packet);
+    fbuf_new(&packet, SRC_TRACKER);
     
     /* Create packet header */
     send_header(&packet, false);   

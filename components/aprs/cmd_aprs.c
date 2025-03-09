@@ -83,7 +83,7 @@ static int do_testpacket(int argc, char** argv)
     get_str_param("DEST", to, 10, DFL_DEST);       
     get_str_param("DIGIPATH", dbuf, 70, "");
 
-    fbuf_new(&packet);
+    fbuf_new(&packet, SRC_USER);
     ax25_aprs_header(&packet, from, to, dbuf);
     fbuf_putstr(&packet, "The lazy brown dog jumps over the quick fox 1234567890");                      
     printf("*** Sending (AX25 UI) test packet ***\r\n");       

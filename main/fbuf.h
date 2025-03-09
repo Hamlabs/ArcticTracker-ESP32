@@ -12,6 +12,13 @@
 
 #define NILPTR 0xFFFF
 
+#define SRC_UNKNOWN      0x00
+#define SRC_RX           0x01
+#define SRC_TRACKER      0x02
+#define SRC_DIGIPEATER   0x03
+#define SRC_IGATE        0x04
+#define SRC_USER         0x05
+
 
 #define fbuf_t FBUF
 #define fbq_t FBQ
@@ -26,6 +33,7 @@ typedef struct _fb
    fbindex_t head, wslot, rslot; 
    uint16_t  rpos; 
    uint16_t  length;
+   uint8_t   tag;
 }
 FBUF; 
 
@@ -34,9 +42,11 @@ FBUF;
    Operations for packet buffer chain
  ****************************************/
 
+uint8_t  fbuf_getTag    (FBUF* bb);
+void     fbuf_setTag    (FBUF* bb, uint8_t tag);
 void     fbuf_init      (void);
-void     fbuf_new       (FBUF* b);
-FBUF     fbuf_newRef    (FBUF* b);
+void     fbuf_new       (FBUF* b, uint8_t tag);
+FBUF     fbuf_newRef    (FBUF* b, uint8_t tag);
 void     fbuf_release   (FBUF* b);
 void     fbuf_reset     (FBUF* b);
 void     fbuf_rseek     (FBUF* b, const uint16_t pos);
@@ -84,7 +94,7 @@ void  fbq_init (FBQ* q, const uint16_t size);
 void  fbq_clear (FBQ* q);
 void  fbq_put   (FBQ* q, FBUF b); 
 FBUF  fbq_get   (FBQ* q);
-void  fbq_signal(FBQ* q);
+void  fbq_signal(FBQ* q, uint8_t tag);
 
  
 #define fbq_eof(q)    ( sem_getCount(((q)->capacity)) >= (q)->size )

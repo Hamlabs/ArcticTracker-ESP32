@@ -127,14 +127,35 @@ void fbuf_init() {
 
 
 /*******************************************************
+    get the tag of the buffer
+ *******************************************************/
+
+uint8_t fbuf_getTag(FBUF* bb) {
+    return bb->tag;
+}
+
+
+
+/*******************************************************
+    set the tag of the buffer
+ *******************************************************/
+
+void fbuf_setTag(FBUF* bb, uint8_t tag) {
+    bb->tag = tag;
+}
+
+
+
+/*******************************************************
     initialise a buffer chain
  *******************************************************/
  
-void fbuf_new (FBUF* bb)
+void fbuf_new (FBUF* bb, uint8_t tag)
 {
     bb->head = bb->wslot = bb->rslot = _fbuf_newslot();
     bb->rpos = 0;
     bb->length = 0;
+    bb->tag = tag;
 }
 
 
@@ -160,7 +181,7 @@ void fbuf_release(FBUF* bb)
  *   Create a new reference to a buffer chain
  *******************************************************/
 
-FBUF fbuf_newRef(FBUF* bb)
+FBUF fbuf_newRef(FBUF* bb, uint8_t tag)
 {
     FBUF newb;
     fbindex_t b = bb->head;
@@ -173,6 +194,7 @@ FBUF fbuf_newRef(FBUF* bb)
     newb.length = bb->length; 
     fbuf_reset(&newb);
     newb.wslot = bb->wslot;
+    newb.tag = tag;
     return newb;
 }
 
@@ -543,7 +565,7 @@ FBUF fbq_get(FBQ* q)
 {
     FBUF x; 
     if (clr) {
-        fbuf_new(&x);
+        fbuf_new(&x, SRC_UNKNOWN);
         return x;
     }
     cond_clear(q->lock);
@@ -564,10 +586,10 @@ FBUF fbq_get(FBQ* q)
  * put an empty buffer onto the queue. 
  **********************************************************/
  
-void fbq_signal(FBQ* q)
+void fbq_signal(FBQ* q, uint8_t tag)
 {
    FBUF b; 
-   fbuf_new(&b);
+   fbuf_new(&b, tag);
    fbq_put(q, b);
 }
 

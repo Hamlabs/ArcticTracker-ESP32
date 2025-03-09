@@ -18,7 +18,7 @@ FBQ encoder_queue;
 
 static FBQ mon;
 static FBQ *txmon = NULL; 
-static FBUF buffer; 
+static FBUF frame; 
 static cond_t packet_rdy;
 
 char  last_packet[256]; 
@@ -70,7 +70,7 @@ bool loraprs_tx_is_on() {
 
 /***********************************************************
  * Subscribe or unsubscribe to packets from decoder
- * packets are put into the given buffer queue.
+ * packets are put into the given frame queue.
  ***********************************************************/
  
 void loraprs_subscribe_rx(fbq_t* q, uint8_t i)
@@ -134,16 +134,16 @@ static void rxdecoder (void* arg) {
             continue;
         }
         
-        fbuf_new(&frame);
+        fbuf_new(&frame, SRC_RX);
         ax25_str2frame(&frame,  (char*) buf+3, len-3);
         strcpy(last_packet, (char*) buf+3);
         last_rssi = rssi; last_snr = snr;
         last_time = getTime();
         
         if (mqueue[0] || mqueue[1] || mqueue[2]) { 
-            if (mqueue[0]) fbq_put( mqueue[0], frame);               // Monitor 
-            if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&frame)); // Digipeater 
-            if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&frame)); // Igate 
+            if (mqueue[0]) fbq_put( mqueue[0], frame);                       // Monitor 
+            if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&frame, SRC_RX)); // Digipeater 
+            if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&frame, SRC_RX)); // Igate 
         }
         if (mqueue[0]==NULL)
             fbuf_release(&frame); 
@@ -154,7 +154,7 @@ static void rxdecoder (void* arg) {
 /*******************************************************************************
  * TX encoder thread
  *
- * This function gets a frame from buffer-queue, and starts the transmitter
+ * This function gets a frame from frame-queue, and starts the transmitter
  * as soon as the channel is free.   
  *******************************************************************************/
 
@@ -164,24 +164,24 @@ static void txencoder (void* arg)
   char txbuf[256];
   ESP_LOGI(TAG, "TX encoder thread");
   while (true) {
-     /* Get frame from buffer-queue when available. 
+     /* Get frame from frame-queue when available. 
       * This is a blocking call.
       */  
-     buffer = fbq_get(&encoder_queue); 
+     frame = fbq_get(&encoder_queue); 
      
      /* Now send it */
      txbuf[0]='<'; 
      txbuf[1]=0xFF;
      txbuf[2]=0x01;
-     int len = ax25_frame2str(txbuf+3, &buffer);    
+     int len = ax25_frame2str(txbuf+3, &frame);    
      ESP_LOGI(TAG, "TX packet: %d bytes", len);
      tx_led_on();
      txon = true;
      lora_SendPacket((uint8_t*) txbuf, len+3);
      if (txmon != NULL)
-        fbq_put(txmon, buffer);
+        fbq_put(txmon, frame);
      else
-        fbuf_release(&buffer);
+        fbuf_release(&frame);
   }
 }
 

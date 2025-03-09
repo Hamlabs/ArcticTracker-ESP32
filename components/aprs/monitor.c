@@ -85,7 +85,7 @@ void mon_activate(bool m)
     
     
     if (tstop) {
-        fbq_signal(&mon);
+        fbq_signal(&mon, SRC_RX);
         APRS_SUBSCRIBE_RX(NULL, 0);
         APRS_MONITOR_TX(NULL);
     }
@@ -116,7 +116,7 @@ FBQ* mon_text_activate(bool m)
         return mq;
     }
     if (tstop) 
-        fbq_signal(&mon);
+        fbq_signal(&mon, SRC_RX);
     return NULL;
 }
 

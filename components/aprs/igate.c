@@ -160,7 +160,7 @@ static void igate_main(void* arg)
     
             /* Unsubscribe and terminate child thread */
             _igate_run = false; 
-            fbq_signal(&rxqueue);
+            fbq_signal(&rxqueue, SRC_IGATE);
             sleepMs(50);
             APRS_SUBSCRIBE_RX(NULL, 2);
             
@@ -264,7 +264,7 @@ static void rf2inet(FBUF *frame)
     beeps(". ");
       
     /* Write header in plain text -> newHdr */
-    fbuf_new(&newHdr);
+    fbuf_new(&newHdr, SRC_IGATE);
     addr2str(buf, &from);
     fbuf_putstr(&newHdr, buf); 
     fbuf_putstr(&newHdr, ">");

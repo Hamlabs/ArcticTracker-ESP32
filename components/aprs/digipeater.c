@@ -36,6 +36,7 @@ static TaskHandle_t digithr;
 static fbq_t* outframes; 
 
 static void check_frame(FBUF *f);
+static void send_packet(FBUF *hdr);
 
 #define TAG "digi"
 
@@ -124,7 +125,7 @@ void digipeater_activate(bool m)
         radio_release();
 #endif    
         /* Unsubscribe to RX packets and stop threads */
-        fbq_signal(&rxqueue);   
+        fbq_signal(&rxqueue, SRC_DIGIPEATER);   
         digithr = NULL;
         APRS_SUBSCRIBE_RX(NULL, 1);
     }
@@ -188,7 +189,6 @@ static void check_frame(FBUF *f)
    mycall.flags = FLAG_DIGI;
    
    
-   
    digis2[j++] = mycall; 
    
    
@@ -208,7 +208,7 @@ static void check_frame(FBUF *f)
           digis2[j++] = digis[i];
    
    /* Write a new header -> newHdr */
-   fbuf_new(&newHdr);
+   fbuf_new(&newHdr, SRC_DIGIPEATER);
    ax25_encode_header(&newHdr, &from, &to, digis2, j, ctrl, pid);
 
    /* Replace header in original packet with new header. 
@@ -217,13 +217,21 @@ static void check_frame(FBUF *f)
    fbuf_connect(&newHdr, f, AX25_HDR_LEN(ndigis) );
 
    /* Send packet */
-    ESP_LOGI(TAG, "Resend (digipeat) frame"); 
-    beeps(". ");
-    sleepMs(60);
-    fbq_put(outframes, newHdr);  
-    sleepMs(200);
+    send_packet(&newHdr);
 }
 
 
+
+/********************************************************
+ *  Transmit a packet 
+ ********************************************************/
+
+static void send_packet(FBUF *hdr) {
+    ESP_LOGI(TAG, "Resend (digipeat) frame"); 
+    beeps(". ");
+    sleepMs(60);
+    fbq_put(outframes, *hdr);  
+    sleepMs(200);
+}
 
 
