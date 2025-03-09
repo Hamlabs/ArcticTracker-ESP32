@@ -71,7 +71,7 @@ static void menu_show(int st, int sel)
 {     
     disp_clear();
     disp_frame(); 
-    disp_box(2, sel*11+2, 97+10, 12, true);
+    disp_box(4, sel*11+4, 97+14, 12, true);
     
     int i;
     char item[32];
@@ -84,8 +84,8 @@ static void menu_show(int st, int sel)
         sprintf(item, "%s  %s", items[st+i].mc_name, 
             (items[st+i].mc_param==NULL ? "" : (!on ? "On" : "Off")));
         
-         int ypos = 4+i*11;
-         disp_writeText(5, ypos, item); 
+         int ypos = 6+i*11;
+         disp_writeText(7, ypos, item); 
     }
     disp_flush();
 }
@@ -275,12 +275,14 @@ static void mhandle_softAp(void* x) {
 static void mhandle_tracklog(void* x) {
     bool isOn = GET_BOOL_PARAM("TRKLOG.on", DFL_TRKLOG_ON) && GET_BOOL_PARAM("TRKLOG.POST.on", DFL_TRKLOG_POST_ON) ;
     if (isOn) {
-        tracklog_off();
+        set_byte_param("TRKLOG.on", 0);    
         set_byte_param("TRKLOG.POST.on", 0);
+        tracklog_off();
     }
     else {
+        set_byte_param("TRKLOG.on", 1);  
+        set_byte_param("TRKLOG.POST.on", 1); 
         tracklog_on();
-        set_byte_param("TRKLOG.POST.on", 1);
         tracklog_post_start(); 
     }    
 }

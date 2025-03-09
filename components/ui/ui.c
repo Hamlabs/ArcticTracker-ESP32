@@ -234,6 +234,15 @@ static void bphandler(struct tmrTimerControl* p)
 
 static void holdhandler(struct tmrTimerControl *p) {
     (void)p;
+#if DEVICE == T_TWR
+    if ((gpio_get_level(BUTTON_PIN) != 0) ||
+        (gpio_get_level(ENC_PUSH_PIN) != 0) )
+       return;
+#else    
+    if (gpio_get_level(BUTTON_PIN) != 0)
+        return;
+#endif
+    
     pressed = false;
     cond_setBits(buttCond, BUTT_EV_LONG);
 }
@@ -248,7 +257,7 @@ static void button_init() {
         ( void * ) 0, bphandler
     );  
     bhtimer = xTimerCreate ( 
-        "Button hold", pdMS_TO_TICKS(1000),  pdFALSE,
+        "Button hold", pdMS_TO_TICKS(1100),  pdFALSE,
         ( void * ) 0, holdhandler
     );
 

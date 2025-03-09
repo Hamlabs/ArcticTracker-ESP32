@@ -667,10 +667,10 @@ void disp_label(int x, int y, char* lbl)
 
 void disp_frame() 
 {
-   disp_hLine(1,0,110);   // top
-   disp_hLine(1,59,110);  // bottom
-   disp_vLine(0,0,59);    //left
-   disp_vLine(110,0,59);  // right
+   disp_hLine(3,2,114);   // top
+   disp_hLine(2,61,115);  // bottom
+   disp_vLine(2,2,59);    //left
+   disp_vLine(116,2,59);  // right
 }
 
 

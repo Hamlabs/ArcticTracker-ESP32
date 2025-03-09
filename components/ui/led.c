@@ -129,9 +129,9 @@ void led_setBlink(uint16_t len, uint16_t interv, bool both ) {
 
 #if DEVICE == ARCTIC4
 #define ARCTIC_LED_OFF 1
-#define ARCTIC_LED_ON 0
+#define ARCTIC_LED_ON  0
 #else
-#define ARCTIC_LED_ON 1
+#define ARCTIC_LED_ON  1
 #define ARCTIC_LED_OFF 0
 #endif
 
