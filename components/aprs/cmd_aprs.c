@@ -319,10 +319,14 @@ CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       DFL_RADIO_ON,       hdl_r
 
 
 #if defined(ARCTIC4_UHF)
-CMD_I32_SETTING  (_param_freq,       "FREQ",           DFL_FREQ,           433000000, 436000000, hdl_freq);
-CMD_BYTE_SETTING (_param_lora_sf,    "LORA_SF",        DFL_LORA_SF,        5, 12,  hdl_lora_sf);
-CMD_BYTE_SETTING (_param_lora_cr,    "LORA_CR",        DFL_LORA_CR,        5, 8,   hdl_lora_cr);
-CMD_BYTE_SETTING (_param_txpower,    "TXPOWER",        DFL_TXPOWER,        0, 6,   hdl_txpower);
+CMD_I32_SETTING  (_param_freq,        "FREQ",          DFL_FREQ,           433000000, 436000000, hdl_freq);
+CMD_BYTE_SETTING (_param_lora_sf,     "LORA_SF",       DFL_LORA_SF,        5, 12,  hdl_lora_sf);
+CMD_BYTE_SETTING (_param_lora_cr,     "LORA_CR",       DFL_LORA_CR,        5, 8,   hdl_lora_cr);
+CMD_BYTE_SETTING (_param_txpower,     "TXPOWER",       DFL_TXPOWER,        0, 6,   hdl_txpower);
+CMD_BYTE_SETTING (_param_lora_alt_sf, "LORA_ALT_SF",   DFL_LORA_ALT_SF,    5, 12,  hdl_lora_sf);
+CMD_BYTE_SETTING (_param_lora_alt_cr, "LORA_ALT_CR",   DFL_LORA_ALT_CR,    5, 8,   hdl_lora_cr);
+CMD_BOOL_SETTING (_param_lora_alt_on, "LORA_ALT.on",   DFL_LORA_ALT_ON,    NULL);
+
 #else
 
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000, hdl_txfreq);
@@ -399,11 +403,14 @@ void register_aprs()
     ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
     ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
 #else
-    ADD_CMD("lora-sf",    &_param_lora_sf,     "LoRa spreading factor (5-12)",      "[<val>]");
-    ADD_CMD("lora-cr",    &_param_lora_cr,     "LoRa coding rate (5-8)",            "[<val>]");
-    ADD_CMD("txpower",    &_param_txpower,     "Tx power (1-6)",                    "[<val>]");
-    ADD_CMD("freq",       &_param_freq,        "TX/RX frequency (Hz)",              "[<val>]");
-    ADD_CMD("heard",      &do_heard,           "Last heard packet",                 "");
+    ADD_CMD("lora-sf",     &_param_lora_sf,     "LoRa spreading factor (5-12)",            "[<val>]");
+    ADD_CMD("lora-cr",     &_param_lora_cr,     "LoRa coding rate (5-8)",                  "[<val>]");
+    ADD_CMD("lora-alt-sf", &_param_lora_alt_sf, "LoRa alt. spreading factor (5-12)",       "[<val>]");
+    ADD_CMD("lora-alt-cr", &_param_lora_alt_cr, "LoRa alt. coding rate (5-8)",             "[<val>]");
+    ADD_CMD("lora-alt",    &_param_lora_alt_on, "Use alternative setting for digipeating", "[on|off]");
+    ADD_CMD("txpower",     &_param_txpower,     "Tx power (1-6)",                          "[<val>]");
+    ADD_CMD("freq",        &_param_freq,        "TX/RX frequency (Hz)",                    "[<val>]");
+    ADD_CMD("heard",       &do_heard,           "Last heard packet",                       "");
 #endif
 }
 

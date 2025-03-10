@@ -28,6 +28,10 @@ time_t last_time;
 
 bool txon = false; 
 
+
+static void alt_setting(bool on, FBUF *frame);
+
+
 /* Set packet queue for TX monitoring */
 void loraprs_monitor_tx(FBQ* m)
    { txmon = m; }
@@ -174,15 +178,36 @@ static void txencoder (void* arg)
      txbuf[1]=0xFF;
      txbuf[2]=0x01;
      int len = ax25_frame2str(txbuf+3, &frame);    
+     
+     alt_setting(true, &frame); 
      ESP_LOGI(TAG, "TX packet: %d bytes", len);
      tx_led_on();
      txon = true;
      lora_SendPacket((uint8_t*) txbuf, len+3);
+     alt_setting(false, &frame); 
+     
      if (txmon != NULL)
         fbq_put(txmon, frame);
      else
         fbuf_release(&frame);
   }
+}
+
+
+static void alt_setting(bool on, FBUF *frame) {
+    if (!GET_BOOL_PARAM("LORA_ALT.on", DFL_LORA_ALT_ON) || frame->tag != SRC_DIGIPEATER)
+        return; 
+        
+    uint8_t cr, sf; 
+    if (on) {
+        sf = get_byte_param("LORA_ALT_SF", DFL_LORA_ALT_SF);
+        cr = get_byte_param("LORA_ALT_CR", DFL_LORA_ALT_CR);
+    }
+    else {
+        sf = get_byte_param("LORA_SF", DFL_LORA_SF);
+        cr = get_byte_param("LORA_SF", DFL_LORA_CR);
+    }
+    lora_SetModulationParams(sf, SX126X_LORA_BW_125_0, cr-4, (sf>=11 ? 1:0)); 
 }
 
 

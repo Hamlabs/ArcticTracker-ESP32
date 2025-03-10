@@ -22,6 +22,8 @@
  
 #define DFL_LORA_SF         12
 #define DFL_LORA_CR          5
+#define DFL_LORA_ALT_SF      5
+#define DFL_LORA_ALT_CR      6
 #define DFL_REPEAT           0
 #define DFL_TRKLOG_INT       5
 #define DFL_TRKLOG_TTL      24
@@ -33,7 +35,6 @@
 #define DFL_MINPAUSE        20
 #define DFL_MINDIST        100
 #define DFL_STATUSTIME      30
-#define DFL_REPEAT           0
 
 #if DEVICE == T_TWR
 #define DFL_TRX_VOLUME       6
@@ -72,4 +73,4 @@
 #define DFL_WIFI_ON        false
 #define DFL_SOFTAP_ON      false
 
-
+#define DFL_LORA_ALT_ON    false
