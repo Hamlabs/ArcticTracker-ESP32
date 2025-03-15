@@ -117,8 +117,8 @@ static void hdlc_rxdecoder (void* arg)
    uint8_t octet = 0;
    
    ESP_LOGD(TAG, "Start receiving frame"); 
-   fbuf_release (&fbuf); // In case we had an abort or checksum
-   fbuf_new(&fbuf);      // mismatch on the previous frame
+   fbuf_release (&fbuf);       // In case we had an abort or checksum
+   fbuf_new(&fbuf, SRC_RX);    // mismatch on the previous frame
    
    do {
       if (length > MAX_HDLC_FRAME_SIZE) 
@@ -152,7 +152,7 @@ static void hdlc_rxdecoder (void* arg)
       if (tag_seq == prev_seq) {
           ESP_LOGI(TAG, "Duplicate frame received. seq=%d, length=%d", tag_seq, length); 
           fbuf_release(&fbuf); 
-          fbuf_new(&fbuf);
+          fbuf_new(&fbuf, SRC_RX);
           goto frame_sync;
       }
       else
@@ -168,13 +168,13 @@ static void hdlc_rxdecoder (void* arg)
       fbuf_removeLast(&fbuf);
       
       if (mqueue[0] || mqueue[1] || mqueue[2]) { 
-         if (mqueue[0]) fbq_put( mqueue[0], fbuf);               /* Monitor */
-         if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&fbuf)); /* Digipeater */
-         if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&fbuf)); /* Igate */
+         if (mqueue[0]) fbq_put( mqueue[0], fbuf);                       /* Monitor */
+         if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&fbuf, SRC_RX)); /* Digipeater */
+         if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&fbuf, SRC_RX)); /* Igate */
       }
       if (mqueue[0]==NULL)
          fbuf_release(&fbuf); 
-      fbuf_new(&fbuf);
+      fbuf_new(&fbuf, SRC_RX);
    }
    else if (length > AX25_HDR_LEN(0)+2)
        ESP_LOGI(TAG, "Invalid frame received. length=%d", length);
@@ -230,7 +230,7 @@ void hdlc_init_decoder (fifo_t* s)
 {   
   inq = s;
   mqueue[0] = mqueue[1] = mqueue[2] = NULL;
-  fbuf_new(&fbuf);  
+  fbuf_new(&fbuf, SRC_RX);  
   xTaskCreatePinnedToCore(&hdlc_rxdecoder, "HDLC RX decoder", 
         STACK_HDLC_RXDECODER, NULL, NORMALPRIO, NULL, CORE_HDLC_RXDECODER);
 }

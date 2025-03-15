@@ -294,9 +294,9 @@ char* param_parseI32(const char* key, char* val, int32_t llimit, int32_t ulimit,
     int32_t n = 0;
     if (sscanf(val, "%ld", &n) == 1) {
         if (n < llimit)
-            sprintf(buf, "ERROR: Value must be more than %ld", llimit);
+            sprintf(buf, "ERROR: Value must be more than or equal to %ld", llimit);
         else if (n > ulimit)
-            sprintf(buf, "ERROR. Value must be less than %ld", ulimit);
+            sprintf(buf, "ERROR. Value must be less than or equal to %ld", ulimit);
         else { 
             sprintf(buf, "OK");
             set_i32_param(key, n);

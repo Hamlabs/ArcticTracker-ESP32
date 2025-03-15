@@ -320,6 +320,10 @@ static void delete_block(blkno_t blk) {
  ******************************************************/
 
 static void write_entry(posentry_t* entr, FILE* f) {
+    if (f==NULL || entr==NULL) {
+        ESP_LOGW(TAG, "Cannot write entry to file");
+        return;
+    }
     fwrite(entr, sizeof(posentry_t), 1, f);
 }
 

@@ -122,6 +122,7 @@ static void rxdecoder (void* arg) {
             lora_TxOff();
             tx_led_off();
             txon = false; 
+            alt_setting(false, NULL); 
             continue;
         }
         
@@ -184,7 +185,7 @@ static void txencoder (void* arg)
      tx_led_on();
      txon = true;
      lora_SendPacket((uint8_t*) txbuf, len+3);
-     alt_setting(false, &frame); 
+
      
      if (txmon != NULL)
         fbq_put(txmon, frame);
@@ -195,17 +196,20 @@ static void txencoder (void* arg)
 
 
 static void alt_setting(bool on, FBUF *frame) {
-    if (!GET_BOOL_PARAM("LORA_ALT.on", DFL_LORA_ALT_ON) || frame->tag != SRC_DIGIPEATER)
+    if (!GET_BOOL_PARAM("LORA_ALT.on", DFL_LORA_ALT_ON) 
+        || (frame != NULL && frame->tag != SRC_DIGIPEATER))
         return; 
         
     uint8_t cr, sf; 
     if (on) {
         sf = get_byte_param("LORA_ALT_SF", DFL_LORA_ALT_SF);
         cr = get_byte_param("LORA_ALT_CR", DFL_LORA_ALT_CR);
+        ESP_LOGD(TAG, "Switching to alternative setting: sf=%d, cr=%d", sf, cr);
     }
     else {
         sf = get_byte_param("LORA_SF", DFL_LORA_SF);
-        cr = get_byte_param("LORA_SF", DFL_LORA_CR);
+        cr = get_byte_param("LORA_CR", DFL_LORA_CR);
+        ESP_LOGD(TAG, "Switching to normal setting: sf=%d, cr=%d", sf, cr);
     }
     lora_SetModulationParams(sf, SX126X_LORA_BW_125_0, cr-4, (sf>=11 ? 1:0)); 
 }

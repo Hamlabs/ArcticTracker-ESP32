@@ -189,7 +189,7 @@ static void startup(void* arg)
     afsk_init(); 
     radio_init();  
 #endif
-    time_init();
+//    time_init();
     gps_init(GPS_UART);
     tracker_init(oq);
     tracklog_init();
@@ -197,7 +197,7 @@ static void startup(void* arg)
     igate_init(); 
     
     mon_init();
-    sleepMs(10000);
+    sleepMs(10000);   
     time_update();   
     sleepMs(1000);
     vTaskDelete(NULL);
@@ -253,6 +253,7 @@ void app_main()
     register_wifi();
     register_aprs();
     
+    time_init(); 
     wifi_init();
     fatfs_init();
     rest_start(HTTP_PORT, HTTPS_PORT, "/");
