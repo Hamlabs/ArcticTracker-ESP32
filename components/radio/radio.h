@@ -37,6 +37,9 @@ void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate,
 void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, 
         uint8_t codingRate, uint8_t ldro);
 
+void lora_SetCadParams(uint8_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin, 
+        uint8_t cadExitMode, uint32_t cadTimeout);
+
 void lora_setTxPower(uint8_t lvl);
 void lora_SetRfFrequency(uint32_t frequency);
 uint8_t lora_ReceivePacket(uint8_t *pData, int16_t len); 

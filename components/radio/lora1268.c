@@ -30,6 +30,10 @@
 
 
 static int16_t loraBegin(uint32_t frequencyInHz, int8_t txPowerInDbm, float tcxoVoltage, bool useRegulatorLDO); 
+
+static void    setModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, uint8_t ldro);
+static void    setRfFrequency(uint32_t frequency);
+static void    setRxGain(bool on);
 static void    reset(void);
 static void    setStandby(uint8_t mode);
 static void    setRegulatorMode(uint8_t mode);
@@ -47,6 +51,7 @@ static void    setRx(uint32_t timeout);
 static void    setTx(uint32_t timeoutInMs);
 static void    setStandby(uint8_t mode);
 static uint8_t getStatus(void);
+static void    clearIrqStatus();
 
 static void    writeCommand(uint8_t cmd, uint8_t* data, uint8_t numBytes);
 static uint8_t writeCommand2(uint8_t cmd, uint8_t* data, uint8_t numBytes);
@@ -61,6 +66,9 @@ static void    chipSelect(bool select);
 
 extern uint8_t spi_transfer(uint8_t address);
 extern void  spi_init();
+
+
+static mutex_t lora_mutex;
 
 static bool txActive; 
 static uint8_t PacketParams[6];
@@ -91,8 +99,10 @@ static int power[7] = {-5,-2,1,4,7,10,13};
 
 void lora_init(void)
 {
+	lora_mutex = mutex_create();
+	
+	mutex_lock(lora_mutex);
 	txActive = false;
-
 	gpio_reset_pin(LORA_PIN_CS);
 	gpio_set_direction(LORA_PIN_CS, GPIO_MODE_OUTPUT);
 	gpio_set_level(LORA_PIN_CS, 1);
@@ -115,6 +125,7 @@ void lora_init(void)
 	gpio_set_direction(LORA_PIN_DIO3, GPIO_MODE_OUTPUT);
 	gpio_set_level(LORA_PIN_DIO3, 0);	
     spi_init();  
+	mutex_unlock(lora_mutex);
 }
 
 
@@ -123,6 +134,7 @@ static int _count = 0;
 
 void lora_on(bool on)
 {
+	mutex_lock(lora_mutex);
 	gpio_set_level(RADIO_PIN_PWRON, (on ? 1 : 0));
 	sleepMs(10);
 	if (!_on && on) {
@@ -131,11 +143,14 @@ void lora_on(bool on)
 		int32_t freq = get_i32_param("FREQ", DFL_FREQ); 
 		uint8_t txpo = get_byte_param("TXPOWER", DFL_TXPOWER);
 	
-		ESP_LOGI(TAG, "Lora on: sf=%x, cr=%x", sf, (cr-4));
+		ESP_LOGI(TAG, "Lora on: sf=%d, cr=%d", sf, cr);
 		loraBegin((uint32_t) freq, power[txpo], 0, false );
+		mutex_unlock(lora_mutex);
 		lora_config(sf, SX126X_LORA_BW_125_0, cr-4, 8, 0, true, false, (sf>=11 ? 1:0)); 
 	     	// SF, BW, CR, PAlength, PLlen, CRCon, invertIRQ, optimize
 	}
+	else
+		mutex_unlock(lora_mutex);
 	_on = on;
 }
 
@@ -185,10 +200,11 @@ void lora_release(void)
 void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, 
 	uint16_t preambleLength, uint8_t payloadLen, bool crcOn, bool invertIrq, uint8_t ldro) 
 {		 
+	mutex_lock(lora_mutex);
 	setStopRxTimerOnPreambleDetect(false);
 	setLoRaSymbNumTimeout(0); 
 	setPacketType(SX126X_PACKET_TYPE_LORA); // SX126x.ModulationParams.PacketType : MODEM_LORA
-	lora_SetModulationParams(spreadingFactor, bandwidth, codingRate, ldro);
+	setModulationParams(spreadingFactor, bandwidth, codingRate, ldro);
 	
 	PacketParams[0] = (preambleLength >> 8) & 0xFF;
 	PacketParams[1] = preambleLength;
@@ -202,14 +218,14 @@ void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate,
 	}
 	
 	if ( crcOn )
-		PacketParams[4] = SX126X_LORA_IQ_INVERTED;
+		PacketParams[4] = 0x01; // CRC on
 	else
-		PacketParams[4] = SX126X_LORA_IQ_STANDARD;
+		PacketParams[4] = 0x00; // CRC off 
 
 	if ( invertIrq )
-		PacketParams[5] = 0x01; // Inverted LoRa I and Q signals setup
+		PacketParams[5] = SX126X_LORA_IQ_INVERTED; // Inverted LoRa I and Q signals setup
 	else
-		PacketParams[5] = 0x00; // Standard LoRa I and Q signals setup
+		PacketParams[5] = SX126X_LORA_IQ_STANDARD; // Standard LoRa I and Q signals setup
 	
 	// fixes IQ configuration for inverted IQ
 	fixInvertedIQ(PacketParams[5]);
@@ -226,15 +242,23 @@ void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate,
 	
 	// Receive state no receive timeoout
 	setRx(0xFFFFFF);
+	mutex_unlock(lora_mutex);
+	
+	setRxGain(true); 
+	
+	/* Maybe some tuning of these parameters may help */
+	lora_SetCadParams(SX126X_CAD_ON_4_SYMB, 0x00, 0x00, SX126X_CAD_GOTO_RX, 0x3FFF);
 }
 
 
 
 
 void lora_setTxPower(uint8_t level) {
+	mutex_lock(lora_mutex);
 	if (level > 6)
 		level = 6;
 	setPowerConfig(power[level], SX126X_PA_RAMP_200U);
+	mutex_unlock(lora_mutex);
 }
 
 
@@ -243,6 +267,14 @@ void lora_setTxPower(uint8_t level) {
  ****************************************************************************/
 
 void lora_SetRfFrequency(uint32_t frequency)
+{
+	mutex_lock(lora_mutex);
+	setRfFrequency(frequency); 
+	mutex_unlock(lora_mutex);
+}
+
+
+void setRfFrequency(uint32_t frequency) 
 {
 	uint8_t buf[4];
 	uint32_t freq = 0;
@@ -260,7 +292,10 @@ void lora_SetRfFrequency(uint32_t frequency)
 	buf[2] = (uint8_t)((freq >> 8) & 0xFF);
 	buf[3] = (uint8_t)(freq & 0xFF);
 	writeCommand(SX126X_CMD_SET_RF_FREQUENCY, buf, 4); // 0x86
+	mutex_unlock(lora_mutex);
 }
+
+
 
 
 /****************************************************************************
@@ -268,6 +303,15 @@ void lora_SetRfFrequency(uint32_t frequency)
  ****************************************************************************/
 
 void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, uint8_t ldro)
+{
+	mutex_lock(lora_mutex);
+	setModulationParams(spreadingFactor, bandwidth, codingRate, ldro);
+	mutex_unlock(lora_mutex);
+}
+
+
+
+static void setModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, uint8_t ldro)
 {
 	if (codingRate>8) {
 		ESP_LOGE(TAG, "Lora CR setting out of range: %d", codingRate); 
@@ -285,7 +329,42 @@ void lora_SetModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint8_
 	data[2] = codingRate;
 	data[3] = ldro;
 	writeCommand(SX126X_CMD_SET_MODULATION_PARAMS, data, 4); // 0x8B
+	mutex_unlock(lora_mutex);
 }
+
+
+
+/****************************************************************************
+ *  Set Cad and set Cad parameters 
+ ****************************************************************************/
+// Recommended for SF12:  CADSymbolNum = 2, CadDetPeak = Default, CadDetMin = Default, CadTimeout = 0x3FFF 
+// lora_setCalParams(CAD_ON_2_SYMB, 0x00, 0x00, 0x3FFF)
+
+void lora_SetCadParams(uint8_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetMin, uint8_t cadExitMode, uint32_t cadTimeout)
+{
+	mutex_lock(lora_mutex);
+	uint8_t data[7];
+	data[0] = cadSymbolNum;
+	data[1] = cadDetPeak;
+	data[2] = cadDetMin;
+	data[3] = cadExitMode;
+	data[4] = (uint8_t)((cadTimeout >> 16) & 0xFF);
+	data[5] = (uint8_t)((cadTimeout >> 8) & 0xFF);
+	data[6] = (uint8_t)(cadTimeout & 0xFF);
+	writeCommand(SX126X_CMD_SET_CAD_PARAMS, data, 7); // 0x88
+	mutex_unlock(lora_mutex);
+}
+
+
+
+void lora_SetCad()
+{
+	mutex_lock(lora_mutex);
+	uint8_t data = 0;
+	writeCommand(SX126X_CMD_SET_CAD, &data, 0); // 0xC5
+	mutex_unlock(lora_mutex);
+}
+
 
 
 /****************************************************************************
@@ -316,13 +395,15 @@ uint8_t lora_ReceivePacket(uint8_t *pData, int16_t len)
 
 void lora_SendPacket(uint8_t *pData, int16_t len)
 {
+	mutex_lock(lora_mutex);
 	PacketParams[2] = 0x00; //Variable length packet (explicit header)
 	PacketParams[3] = len;
 	writeCommand(SX126X_CMD_SET_PACKET_PARAMS, PacketParams, 6); // 0x8C
-	lora_ClearIrqStatus(SX126X_IRQ_ALL);
-	lora_WriteBuffer(pData, len);
+	clearIrqStatus(SX126X_IRQ_ALL);
+	writeBuffer(pData, len);
 	gpio_set_level(LORA_PIN_DIO3, 1);
 	setTx(500);
+	mutex_unlock(lora_mutex);
 }
 
 
@@ -331,8 +412,10 @@ void lora_SendPacket(uint8_t *pData, int16_t len)
  ****************************************************************************/
 
 void lora_TxOff() {
+	mutex_lock(lora_mutex);
 	setRx(0xFFFFFF);
 	gpio_set_level(LORA_PIN_DIO3, 0);
+	mutex_unlock(lora_mutex);
 }
 
 /****************************************************************************
@@ -353,6 +436,7 @@ void lora_TxOff() {
 
 void lora_SetIrqHandler(gpio_isr_t handler, uint16_t  mask) 
 {
+	mutex_lock(lora_mutex);
 	gpio_set_intr_type(LORA_PIN_DIO1, GPIO_INTR_POSEDGE);
 	gpio_isr_handler_add(LORA_PIN_DIO1, handler, NULL);
 	gpio_intr_enable(LORA_PIN_DIO1);
@@ -361,6 +445,7 @@ void lora_SetIrqHandler(gpio_isr_t handler, uint16_t  mask)
 		SX126X_IRQ_ALL, 
 		mask,  
 		SX126X_IRQ_NONE, SX126X_IRQ_NONE);  
+	mutex_unlock(lora_mutex);
 }
 
 
@@ -371,8 +456,10 @@ void lora_SetIrqHandler(gpio_isr_t handler, uint16_t  mask)
 
 uint16_t lora_GetIrqStatus( void )
 {
+	mutex_lock(lora_mutex);
 	uint8_t data[3];
 	readCommand(SX126X_CMD_GET_IRQ_STATUS, data, 3); // 0x12
+	mutex_unlock(lora_mutex);
 	return (data[1] << 8) | data[2];
 }
 
@@ -383,8 +470,14 @@ uint16_t lora_GetIrqStatus( void )
 
 void lora_ClearIrqStatus()
 {
-	uint8_t buf[2];
+	mutex_lock(lora_mutex);
+	clearIrqStatus();
+	mutex_unlock(lora_mutex);
+}
 
+static void clearIrqStatus() 
+{
+	uint8_t buf[2];
 	buf[0] = (uint8_t)(((uint16_t)SX126X_IRQ_ALL >> 8) & 0x00FF);
 	buf[1] = (uint8_t)((uint16_t)SX126X_IRQ_ALL & 0x00FF);
 	writeCommand(SX126X_CMD_CLEAR_IRQ_STATUS, buf, 2); // 0x02
@@ -399,8 +492,10 @@ void lora_ClearIrqStatus()
 
 uint8_t lora_GetRssiInst()
 {
+	mutex_lock(lora_mutex);
 	uint8_t buf[2];
 	readCommand( SX126X_CMD_GET_RSSI_INST, buf, 2 ); // 0x15
+	mutex_unlock(lora_mutex);
 	return buf[1];
 }
 
@@ -412,10 +507,12 @@ uint8_t lora_GetRssiInst()
 
 void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *snrPacket)
 {
+	mutex_lock(lora_mutex);
 	uint8_t buf[4];
 	readCommand( SX126X_CMD_GET_PACKET_STATUS, buf, 4 ); // 0x14
 	*rssiPacket = (buf[3] >> 1) * -1;
 	( buf[2] < 128 ) ? ( *snrPacket = buf[2] >> 2 ) : ( *snrPacket = ( ( buf[2] - 256 ) >> 2 ) );
+	mutex_unlock(lora_mutex);
 }
 
 
@@ -425,7 +522,7 @@ void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *snrPacket)
  * address of the first byte received (RxStartBufferPointer). 
  ****************************************************************************/
 
-void lora_GetRxBufferStatus(uint8_t *payloadLength, uint8_t *rxStartBufferPointer)
+static void getRxBufferStatus(uint8_t *payloadLength, uint8_t *rxStartBufferPointer)
 {
 	uint8_t buf[3];
 	readCommand( SX126X_CMD_GET_RX_BUFFER_STATUS, buf, 3 ); // 0x13
@@ -442,11 +539,12 @@ void lora_GetRxBufferStatus(uint8_t *payloadLength, uint8_t *rxStartBufferPointe
 
 void lora_SetBufferAddr(uint8_t txBaseAddress, uint8_t rxBaseAddress)
 {
+	mutex_lock(lora_mutex);
 	uint8_t buf[2];
-
 	buf[0] = txBaseAddress;
 	buf[1] = rxBaseAddress;
 	writeCommand(SX126X_CMD_SET_BUFFER_BASE_ADDRESS, buf, 2); // 0x8F
+	mutex_unlock(lora_mutex);
 }
 
 
@@ -457,12 +555,14 @@ void lora_SetBufferAddr(uint8_t txBaseAddress, uint8_t rxBaseAddress)
 
 uint8_t lora_ReadBuffer(uint8_t *rxData, int16_t rxDataLen)
 {
+	mutex_lock(lora_mutex);
 	uint8_t offset = 0;
 	uint8_t payloadLength = 0;
-	lora_GetRxBufferStatus(&payloadLength, &offset);
+	getRxBufferStatus(&payloadLength, &offset);
 	if( payloadLength > rxDataLen )
 	{
 		ESP_LOGW(TAG, "ReadBuffer rxDataLen too small. payloadLength=%d rxDataLen=%d", payloadLength, rxDataLen);
+		mutex_unlock(lora_mutex);
 		return 0;
 	}
 
@@ -482,6 +582,7 @@ uint8_t lora_ReadBuffer(uint8_t *rxData, int16_t rxDataLen)
 
 	// wait for BUSY to go low
 	waitForIdle(BUSY_TIMEOUT, "end ReadBuffer", false);
+	mutex_unlock(lora_mutex);
 	return payloadLength;
 }
 
@@ -492,6 +593,14 @@ uint8_t lora_ReadBuffer(uint8_t *rxData, int16_t rxDataLen)
  ****************************************************************************/
 
 void lora_WriteBuffer(uint8_t *txData, int16_t txDataLen)
+{
+	mutex_lock(lora_mutex);
+	writeBuffer(txData, txDataLen);
+	mutex_unlock(lora_mutex);
+}
+
+
+static void writeBuffer(uint8_t *txData, int16_t txDataLen)
 {
 	// ensure BUSY is low (state meachine ready)
 	waitForIdle(BUSY_TIMEOUT, "start WriteBuffer", true);
@@ -561,7 +670,7 @@ static int16_t loraBegin(uint32_t frequencyInHz, int8_t txPowerInDbm, float tcxo
 	setPaConfig(0x04, 0x06, 0x00, 0x01); // PA Optimal Settings +14 dBm
 	setOvercurrentProtection(60.0); 
 	setPowerConfig(txPowerInDbm, SX126X_PA_RAMP_200U);
-	lora_SetRfFrequency(frequencyInHz);
+	setRfFrequency(frequencyInHz);
 	return ERR_NONE;
 }
 
@@ -792,6 +901,20 @@ static void setOvercurrentProtection(float currentLimit)
 		writeRegister(SX126X_REG_OCP_CONFIGURATION, buf, 1); // 0x08E7
 	}
 }
+
+
+
+/****************************************************************************
+ *  Set RX gain
+ ****************************************************************************/
+
+static void setRxGain(bool on)
+{
+	uint8_t buf[1];
+	buf[0] = (on ? 0x96 : 0x94); 
+	writeRegister(SX126X_REG_RX_GAIN, buf, 1); // 0x08AC
+}
+
 
 
 /****************************************************************************
