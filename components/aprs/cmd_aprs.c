@@ -386,6 +386,7 @@ void register_aprs()
     ADD_CMD("igate-port", &_param_igate_port,  "Igate server port",  "[<portnr>]");
     ADD_CMD("igate-user", &_param_igate_user,  "Igate server user",  "[<callsign>]");
     ADD_CMD("igate-pass", &_param_igate_pass,  "Igate server passcode",  "[<code>]");
+    ADD_CMD("igate-filter", &_param_igate_filt, "Igate server filter", "[<filter>]");
     ADD_CMD("tracklog",   &_param_tracklog_on, "Track logging", "[on|off]"); 
     ADD_CMD("trklog-post",&_param_trkpost_on,  "Track log automatic post to server", "[on|off]");
     ADD_CMD("radio",      &_param_radio_on,    "Radio module power", "[on|off]");
