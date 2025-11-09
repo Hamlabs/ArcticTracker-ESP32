@@ -95,6 +95,7 @@ igate-host  Igate server host
 igate-port  Igate server port
 igate-user  Igate server user
 igate-pass  Igate server passcode
+igate-filter Igate server filter
 
 tracklog    Track logging
 trklog-post Track log automatic post to server
