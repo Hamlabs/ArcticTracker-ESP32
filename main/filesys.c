@@ -13,6 +13,7 @@
 #include "esp_system.h"
 #include "esp_vfs_dev.h"
 #include "wear_levelling.h"
+#include <string.h>
 #include <dirent.h>
        
 #define TAG "system"
@@ -84,9 +85,10 @@ void fatfs_init() {
 void fatfs_format() {
    esp_err_t  err = esp_vfs_fat_spiflash_format_rw_wl(FATFS_PATH, FATFS_LABEL);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to format FATFS (%s)", esp_err_to_name(err));
+        ESP_LOGE(TAG, "Failed to format FATFS '%s' (%s)", FATFS_LABEL, esp_err_to_name(err));
         return;
     }
+    ESP_LOGI(TAG, "FATFS '%s' formatted successfully", FATFS_LABEL);
 }
     
     
@@ -159,7 +161,7 @@ bool changeWD(char* wd) {
 void getPath(char* path, char* fname, bool allowroot) {
     if (allowroot && *fname == '/')
         sprintf(path, "%s", fname);
-    else if (strncmp(fname, FATFS_PATH, 7) == 0)
+    else if (strncmp(fname, FATFS_PATH, strlen(FATFS_PATH)) == 0)
         sprintf(path, fname);
     else
         sprintf(path, "%s/%s", workingdir, fname);
