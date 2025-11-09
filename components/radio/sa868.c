@@ -469,7 +469,7 @@ bool sa8_setVolume(uint8_t vol)
     uart_write_bytes(_serial, buf, len);
     waitReply(reply);
     mutex_unlock(radio_mutex);
-    return (reply[10] == '0');
+    return (strlen(reply) > 10 && reply[10] == '0');
 }
 
 
@@ -541,7 +541,7 @@ bool sa8_setFilter(bool emp, bool highpass, bool lowpass)
     uart_write_bytes(_serial, buf, len);
     waitReply(reply);
     mutex_unlock(radio_mutex);
-    return (reply[14] == '0');
+    return (strlen(reply) > 14 && reply[14] == '0');
 }
 
 
@@ -562,7 +562,7 @@ bool sa8_setTail(int tail)
     uart_write_bytes(_serial, buf, len);
     waitReply(reply);
     mutex_unlock(radio_mutex);
-    return (reply[14] == '0');
+    return (strlen(reply) > 14 && reply[14] == '0');
 }
 
 
@@ -584,7 +584,7 @@ static bool _getVersion()
     waitReply(reply);
     waitReply(reply);
     mutex_unlock(radio_mutex);
-    return (reply[14] == '0');
+    return (strlen(reply) > 14 && reply[14] == '0');
 }
 
 
@@ -600,7 +600,7 @@ static bool _handshake()
     uart_write_bytes(_serial, buf, len);
     waitReply(reply);
     mutex_unlock(radio_mutex);
-    return (reply[12] == '0');
+    return (strlen(reply) > 12 && reply[12] == '0');
 }
 
 
@@ -626,7 +626,7 @@ static bool _setGroupParm()
     uart_write_bytes(_serial, buf, len);
     waitReply(reply);
     mutex_unlock(radio_mutex);
-    return (reply[13] == '0');
+    return (strlen(reply) > 13 && reply[13] == '0');
 }
 
 

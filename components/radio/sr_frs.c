@@ -3,6 +3,7 @@
 #if !defined(ARCTIC4_UHF) && !defined(RADIO_DISABLE) && DEVICE != T_TWR && DEVICE != ARCTIC4
 
 #include <stdio.h>
+#include <string.h>
 #include "config.h"
 #include "hdlc.h"
 #include "afsk.h"
@@ -384,7 +385,7 @@ bool frs_setVolume(uint8_t vol)
     // ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
     readline(_serial, reply, 16);
-    return (reply[13] == '0');
+    return (strlen(reply) > 13 && reply[13] == '0');
 }
 
 
@@ -405,7 +406,7 @@ bool frs_setMicLevel(uint8_t level)
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
     readline(_serial, reply, 16);
-    return (reply[13] == '0');
+    return (strlen(reply) > 13 && reply[13] == '0');
 }
 
 
@@ -446,7 +447,7 @@ bool frs_setPowerSave(bool on)
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
     readline(_serial, reply, 16);
-    return (reply[13] == '0');
+    return (strlen(reply) > 13 && reply[13] == '0');
 }
 
 
@@ -460,7 +461,7 @@ static bool _handshake()
     uart_write_bytes(_serial, buf, len);
     readline(_serial, reply, 16);
     ESP_LOGD(TAG, "%s", reply);
-    return (reply[14] == '0');
+    return (strlen(reply) > 14 && reply[14] == '0');
 }
 
 
@@ -484,7 +485,7 @@ static bool _setGroupParm()
     uart_write_bytes(_serial, buf, len);
     readline(_serial, reply, 16);
     ESP_LOGD(TAG, "%s", reply);
-    return (reply[15] == '0');
+    return (strlen(reply) > 15 && reply[15] == '0');
 }
 
 
