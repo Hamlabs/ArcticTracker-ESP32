@@ -190,6 +190,9 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
     get_str_param("IGATE.USER", buf, 32, DFL_IGATE_USER);
     cJSON_AddStringToObject(root, "user", buf);
     
+    get_str_param("IGATE.FILTER", buf, 32, DFL_IGATE_FILTER);
+    cJSON_AddStringToObject(root, "filter", buf);
+    
     return rest_JSON_send(req, root);
 }
 
@@ -211,6 +214,7 @@ static esp_err_t digi_put_handler(httpd_req_t *req)
     set_u16_param("IGATE.PASS",     JSON_U16(root, "passcode"));
     set_str_param("IGATE.HOST",     JSON_STR(root, "server"));
     set_str_param("IGATE.USER",     JSON_STR(root, "user"));
+    set_str_param("IGATE.FILTER",   JSON_STR(root, "filter"));
     
     bool digiOn = JSON_BOOL(root, "digiOn");
     set_byte_param("DIGIPEATER.on", digiOn);
