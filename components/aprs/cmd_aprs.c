@@ -76,6 +76,10 @@ static int do_testpacket(int argc, char** argv)
     
     char from[11], to[11];
     char *dbuf = malloc(71); 
+    if (dbuf == NULL) {
+        printf("ERROR: Memory allocation failed\r\n");
+        return 0;
+    }
   
     radio_require();    
     sleepMs(100);

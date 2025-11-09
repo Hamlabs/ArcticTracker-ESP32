@@ -115,6 +115,10 @@ static void _fbuf_releaseslot(fbindex_t i) {
 void fbuf_init() {
 #if !defined(FBUF_STATIC_MEM)
     _pool = malloc(sizeof(fbslot_t) * FBUF_SLOTS);
+    if (_pool == NULL) {
+        ESP_LOGE("fbuf", "Failed to allocate memory for buffer pool");
+        return;
+    }
 #endif
     for (int i=0; i<FBUF_SLOTS; i++)
     {
@@ -502,6 +506,16 @@ void fbuf_removeLast(FBUF* x)
 void fbq_init(FBQ* q, const uint16_t sz)
 {
     q->buf = malloc(sz * sizeof(FBUF));
+    if (q->buf == NULL) {
+        ESP_LOGE("fbuf", "Failed to allocate memory for queue buffer");
+        q->size = 0;
+        q->index = 0;
+        q->cnt = 0;
+        q->length = NULL;
+        q->capacity = NULL;
+        q->lock = NULL;
+        return;
+    }
     q->size = sz;
     q->index = 0;
     q->cnt = 0;

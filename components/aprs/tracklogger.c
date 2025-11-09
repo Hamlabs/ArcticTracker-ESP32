@@ -146,14 +146,23 @@ static void remove_old() {
 
 int tracklog_post() {
     char call[10];
-    char* buf = malloc(JS_CHUNK_SIZE * JS_RECORD_SIZE + JS_HEAD +50);
+    const int bufsize = JS_CHUNK_SIZE * JS_RECORD_SIZE + JS_HEAD + 50;
+    char* buf = malloc(bufsize);
     char url[64]; 
     int len = 0, i=0;
     posentry_t pd; 
 
-    /* If empty, just return */
-    if (trackstore_getEnt(&pd) == NULL)
+    /* Check malloc result */
+    if (buf == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for tracklog buffer");
         return 0;
+    }
+
+    /* If empty, just return */
+    if (trackstore_getEnt(&pd) == NULL) {
+        free(buf);
+        return 0;
+    }
     
     /* Get settings */
     get_str_param("MYCALL", call, 10, DFL_MYCALL);
@@ -163,16 +172,35 @@ int tracklog_post() {
      * Serialise as JSON: 
      *   (call, list-of (call, time, lat, lng))
      */
-    len += sprintf(buf+len, "{\"call\":\"%s\", \"pos\":[\n", call);
+    int n = snprintf(buf+len, bufsize-len, "{\"call\":\"%s\", \"pos\":[\n", call);
+    if (n < 0 || n >= bufsize-len) {
+        ESP_LOGE(TAG, "Buffer overflow in tracklog_post header");
+        free(buf);
+        return 0;
+    }
+    len += n;
     for (;;) {
-        len += sprintf(buf+len, "{\"time\":%lu, \"lat\":%lu, \"lng\":%lu}", pd.time, pd.lat, pd.lng);
+        n = snprintf(buf+len, bufsize-len, "{\"time\":%lu, \"lat\":%lu, \"lng\":%lu}", pd.time, pd.lat, pd.lng);
+        if (n < 0 || n >= bufsize-len) {
+            ESP_LOGE(TAG, "Buffer overflow in tracklog_post record");
+            break;
+        }
+        len += n;
         if (++i >= JS_CHUNK_SIZE)
             break;
         if (trackstore_getEnt(&pd) == NULL)
             break;
-        len += sprintf(buf+len, ",\n");
+        n = snprintf(buf+len, bufsize-len, ",\n");
+        if (n < 0 || n >= bufsize-len) {
+            ESP_LOGE(TAG, "Buffer overflow in tracklog_post separator");
+            break;
+        }
+        len += n;
     }
-    len += sprintf(buf+len, "]}");
+    n = snprintf(buf+len, bufsize-len, "]}");
+    if (n >= 0 && n < bufsize-len) {
+        len += n;
+    }
     
     
     

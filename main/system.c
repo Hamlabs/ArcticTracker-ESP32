@@ -612,7 +612,7 @@ bool readline(uart_port_t cbp, char* buf, const uint16_t max)
   uint16_t i=0; 
   __characters = 0;
   
-  for (i=0; i<max; i++) {
+  for (i=0; i<max-1; i++) {
     uart_read_bytes(cbp, (uint8_t*) &x, 1, portMAX_DELAY);     
     if (x == 0x03)     /* CTRL-C */
       return false;
@@ -637,7 +637,7 @@ bool freadline(FILE* f, char* buf, const uint16_t max)
   char x;
   uint16_t i=0; 
   
-  for (i=0; i<max; i++) {
+  for (i=0; i<max-1; i++) {
     x = fgetc(f);     
     if (x == 0x03)     /* CTRL-C */
       return false;
