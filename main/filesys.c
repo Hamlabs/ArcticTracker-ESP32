@@ -12,6 +12,7 @@
 #include "esp_vfs_fat.h"
 #include "esp_system.h"
 #include "esp_vfs_dev.h"
+#include "wear_levelling.h"
 #include <dirent.h>
        
 #define TAG "system"
@@ -30,7 +31,8 @@
 #define FATFS_PATH2 "/webapp"
 
 static char workingdir[263];
-wl_handle_t whandle;
+wl_handle_t whandle = WL_INVALID_HANDLE;
+wl_handle_t whandle2 = WL_INVALID_HANDLE;
 
 
 
@@ -51,20 +53,27 @@ void fatfs_init() {
     uint64_t total, free;
     esp_err_t err = esp_vfs_fat_spiflash_mount_rw_wl(FATFS_PATH, FATFS_LABEL, &fatconf, &whandle);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
-        return;
+        ESP_LOGE(TAG, "Failed to mount FATFS '%s' (%s)", FATFS_LABEL, esp_err_to_name(err));
+    } else {
+        err = esp_vfs_fat_info(FATFS_PATH, &total, &free);
+        if (err == ESP_OK) {
+            ESP_LOGI(TAG, "FAT fs: '%s' mounted at '%s', %lld bytes, %lld free", FATFS_LABEL, FATFS_PATH, total, free);
+        } else {
+            ESP_LOGE(TAG, "Failed to get info for FATFS '%s' (%s)", FATFS_LABEL, esp_err_to_name(err));
+        }
     }
-    err =  esp_vfs_fat_info(FATFS_PATH, &total, &free);
-    ESP_LOGI(TAG, "FAT fs: '%s', %lld bytes, %lld free", FATFS_LABEL, total, free);
-    
     
     err = esp_vfs_fat_spiflash_mount_ro(FATFS_PATH2, FATFS_LABEL2, &fatconf);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to mount FATFS (%s)", esp_err_to_name(err));
-        return;
+        ESP_LOGE(TAG, "Failed to mount FATFS '%s' (%s)", FATFS_LABEL2, esp_err_to_name(err));
+    } else {
+        err = esp_vfs_fat_info(FATFS_PATH2, &total, &free);
+        if (err == ESP_OK) {
+            ESP_LOGI(TAG, "FAT fs: '%s' mounted at '%s', %lld bytes, %lld free", FATFS_LABEL2, FATFS_PATH2, total, free);
+        } else {
+            ESP_LOGE(TAG, "Failed to get info for FATFS '%s' (%s)", FATFS_LABEL2, esp_err_to_name(err));
+        }
     }
-    err =  esp_vfs_fat_info(FATFS_PATH2, &total, &free);
-    ESP_LOGI(TAG, "FAT fs: '%s', %lld bytes, %lld free", FATFS_LABEL2, total, free);
 }
 
 
@@ -87,7 +96,11 @@ void fatfs_format() {
 
 size_t fatfs_size() {
     uint64_t total, free;
-    esp_vfs_fat_info(FATFS_PATH, &total, &free);
+    esp_err_t err = esp_vfs_fat_info(FATFS_PATH, &total, &free);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to get FATFS size (%s)", esp_err_to_name(err));
+        return 0;
+    }
     return (size_t) total;
 }
 
@@ -98,7 +111,11 @@ size_t fatfs_size() {
 
 size_t fatfs_free() {
     uint64_t total, free;
-    esp_vfs_fat_info(FATFS_PATH, &total, &free);
+    esp_err_t err = esp_vfs_fat_info(FATFS_PATH, &total, &free);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to get FATFS free space (%s)", esp_err_to_name(err));
+        return 0;
+    }
     return (size_t) free;
 }
     
@@ -112,7 +129,7 @@ bool changeWD(char* wd) {
     strcpy(newwd, workingdir);    
     if (wd == NULL || strcmp(wd, "/")==0)
         strcpy(newwd, FATFS_PATH);
-    else if (strcmp(wd, "..")==0 && strlen(newwd) > strlen("FATFS_PATH") ) {
+    else if (strcmp(wd, "..")==0 && strlen(newwd) > strlen(FATFS_PATH) ) {
         int i;
         for (i = strlen(workingdir); workingdir[i-1] != '/'; i--)
             newwd[i-1] = '\0';
