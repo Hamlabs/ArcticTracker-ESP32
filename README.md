@@ -1,7 +1,7 @@
 ![Arctic Tracker and LilyGo T-TWR](trackers.jpg)
 # ArcticTracker-ESP32
 
-Arctic Tracker (v.3) is an APRS tracker platform based on the ESP32S3 MCU module, a GPS, a display and a 
+Arctic Tracker (v.3 and 4) is an APRS tracker platform based on the ESP32S3 MCU module, a GPS, a display and a 
 VHF transceiver module. Hardware prototypes were created mainly as experimental prototypes to show how we can build a 
 tracker using affordable modules. The Arctic Tracker is also a IoT device capable of using WIFI and the internet when this 
 is available: For easy configuration, for pushing APRS data, etc. It can also function as a igate. 
@@ -17,13 +17,15 @@ See http://www.hamlabs.no for some blogging about this project.
 
 * [_LilyGo T-TWR-plus 2.0_](https://www.lilygo.cc/products/t-twr-plus?variant=42911934185653).
 * [_LilyGo T-TWR-plus 2.1_](https://lilygo.cc/products/t-twr-rev2-1).
-* Arctic Tracker 4
+* Arctic Tracker 4 
 * Arctic Tracker 4 UHF (LoRa APRS)
+
+The LilyGo radios and the VHF version use the SA868 and the UHF version uses the Lora1268F30-Mini (from NiceRF). 
 
 ## Implemented features
 
 This is the firmware. It is implemented in C and based on the ESP-IDF which again is based on FreeRTOS. 
-It is fairly complete now. The following features are implemented:
+It is work-in-progress but many features are fairly complete now. The following features are implemented:
 
 * Command shell running on a serial port (USB). This allows settings of various parameters, using persistent storage (flash).
 * Internetworking using WIFI. Automatically connect to access points available. User can set up 
@@ -38,7 +40,7 @@ It is fairly complete now. The following features are implemented:
 * Digipeater and igate. 
 * Basic information on battery and charging.
 * Track logging. Store positions in flash memory e.g. every 5 seconds and upload to a REST
-  API on a Polaric Server when network is available. '
+  API on a Polaric Server when network is available. 
 * Firmware upgrades over the air (OTA) is still "work in progress"..
 
 ## REST API and security
