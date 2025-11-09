@@ -49,10 +49,23 @@ void trackstore_start() {
     
     /* Open file(s) */
     firstfile = open_block(meta.firstblk, "a+");
+    if (firstfile == NULL) {
+        ESP_LOGE(TAG, "Failed to open first block file");
+        mutex_unlock(mutex);
+        return;
+    }
     if (meta.firstblk == meta.lastblk)
         lastfile = firstfile;
-    else
+    else {
         lastfile = open_block(meta.lastblk, "a+");
+        if (lastfile == NULL) {
+            ESP_LOGE(TAG, "Failed to open last block file");
+            fclose(firstfile);
+            firstfile = NULL;
+            mutex_unlock(mutex);
+            return;
+        }
+    }
     mutex_unlock(mutex);
 }
 
@@ -77,6 +90,9 @@ void trackstore_reset() {
     meta.lastblk = meta.firstblk = 0;
     meta.nblocks = 1;
     lastfile = firstfile = open_block(meta.lastblk, "a+");
+    if (lastfile == NULL) {
+        ESP_LOGE(TAG, "Failed to open block file after reset");
+    }
     set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
     mutex_unlock(mutex);
 }
@@ -89,9 +105,14 @@ void trackstore_reset() {
 
 void trackstore_stop() {
     mutex_lock(mutex); 
-    fclose(lastfile); 
-    if (meta.firstblk != meta.lastblk)
+    if (lastfile != NULL) {
+        fclose(lastfile);
+        lastfile = NULL;
+    }
+    if (meta.firstblk != meta.lastblk && firstfile != NULL) {
         fclose(firstfile);
+        firstfile = NULL;
+    }
     mutex_unlock(mutex); 
 }
 
@@ -149,6 +170,13 @@ void trackstore_put(posdata_t *x) {
         meta.lastblk = (meta.lastblk + 1) % MAX_UINT16;
         meta.nblocks++;
         lastfile = open_block(meta.lastblk, "a+");
+        if (lastfile == NULL) {
+            ESP_LOGE(TAG, "Failed to open new block file");
+            meta.lastblk = (meta.lastblk - 1 + MAX_UINT16) % MAX_UINT16;
+            meta.nblocks--;
+            mutex_unlock(mutex);
+            return;
+        }
         meta.last = 0;
     } 
     
@@ -259,8 +287,13 @@ static bool check_rblock() {
         /* Open file or get already open file */
         if (meta.firstblk == meta.lastblk && lastfile!=NULL)
             firstfile=lastfile;
-        else
+        else {
             firstfile = open_block(meta.firstblk, "a+");
+            if (firstfile == NULL) {
+                ESP_LOGE(TAG, "Failed to open next block file");
+                return false;
+            }
+        }
         set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
     }
     return true; 
@@ -281,6 +314,9 @@ static void reset_empty() {
         meta.firstblk = meta.lastblk = 0;
         meta.nblocks = 1;
         firstfile = lastfile = open_block(meta.firstblk, "a+");
+        if (firstfile == NULL) {
+            ESP_LOGE(TAG, "Failed to open block file in reset_empty");
+        }
         set_bin_param("tracks.META", &meta, sizeof(ts_meta_t));
     }
 }
