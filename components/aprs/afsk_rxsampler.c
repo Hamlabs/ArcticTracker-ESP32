@@ -46,6 +46,14 @@ void rxSampler_init()
 //    adcsampler_calibrate(adc);
     raw_sample_buf = malloc(ADC_FRAGMENT_SIZE);   
     sample_buffer = malloc(RX_SAMPLE_BUF_SIZE);
+    if (raw_sample_buf == NULL || sample_buffer == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for RX sampler buffers");
+        if (raw_sample_buf) free(raw_sample_buf);
+        if (sample_buffer) free(sample_buffer);
+        raw_sample_buf = NULL;
+        sample_buffer = NULL;
+        return;
+    }
     start = wstart = curr = end_frame = curr_put = sample_buffer;
     buf_end = sample_buffer + RX_SAMPLE_BUF_SIZE-1;
 }

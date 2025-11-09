@@ -151,9 +151,17 @@ int tracklog_post() {
     int len = 0, i=0;
     posentry_t pd; 
 
-    /* If empty, just return */
-    if (trackstore_getEnt(&pd) == NULL)
+    /* Check malloc result */
+    if (buf == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for tracklog buffer");
         return 0;
+    }
+
+    /* If empty, just return */
+    if (trackstore_getEnt(&pd) == NULL) {
+        free(buf);
+        return 0;
+    }
     
     /* Get settings */
     get_str_param("MYCALL", call, 10, DFL_MYCALL);

@@ -102,6 +102,10 @@ int param_setting_str (int argc, char** argv,
 {
     char* data = malloc(size+1);
     char buf[64];
+    if (data == NULL) {
+        printf("ERROR: Memory allocation failed\n");
+        return -1;
+    }
     if (argc < 2) {
         get_str_param(key, data, size, dfl);
         printf("'%s'\n", data);
