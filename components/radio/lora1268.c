@@ -247,7 +247,17 @@ void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate,
 	setRxGain(true); 
 	
 	/* Maybe some tuning of these parameters may help */
-	lora_SetCadParams(SX126X_CAD_ON_4_SYMB, 0x00, 0x00, SX126X_CAD_GOTO_RX, 0x3FFF);
+	// lora_SetCadParams(SX126X_CAD_ON_4_SYMB, 0x00, 0x00, SX126X_CAD_GOTO_RX, 0x3FFF);
+	
+	/* Suggested by ChatGPT */
+	lora_SetCadParams( 
+	   SX126X_CAD_ON_4_SYMB,
+       0x18,      // cadDetPeak: detection sensitivity (increase for more sensitivity)
+       0x0A,      // cadDetMin: required quality (10 is a good default)
+       SX126X_CAD_GOTO_RX,
+       0x3FFF     // timeout or channel busy time
+    );
+	
 }
 
 
@@ -329,7 +339,6 @@ static void setModulationParams(uint8_t spreadingFactor, uint8_t bandwidth, uint
 	data[2] = codingRate;
 	data[3] = ldro;
 	writeCommand(SX126X_CMD_SET_MODULATION_PARAMS, data, 4); // 0x8B
-	mutex_unlock(lora_mutex);
 }
 
 
@@ -696,8 +705,8 @@ static void setRx(uint32_t timeout)
 	}
 	if ((getStatus() & 0x70) != 0x50) {
 		ESP_LOGE(TAG, "SetRx Illegal Status");
-//		LoRaError(ERR_INVALID_SETRX_STATE);
 	}
+	setRxGain(true); 
 }
 
 
