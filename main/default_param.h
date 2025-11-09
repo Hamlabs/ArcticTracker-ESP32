@@ -10,7 +10,7 @@
 #define DFL_REP_COMMENT   "Arctic Tracker"
 #define DFL_IGATE_HOST    "aprs.no"
 #define DFL_IGATE_USER    "NOCALL"
-#define DFL_IGATE_FILTER  ""
+#define DFL_IGATE_FILTER  "m/10"
 #define DFL_TIMEZONE      ""
 #define DFL_FW_URL        ""
 

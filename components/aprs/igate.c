@@ -256,11 +256,7 @@ static void rf2inet(FBUF *frame)
     if (hlist_duplicate(&from, &to, frame, ndigis))
         return;
   
-    static const char* nogate[8] = {"TCP", "NOGATE", "RFONLY", NULL};
-    if ( type == '?' /* QUERY */ ||
-        ( !own && ax25_search_digis( digis, ndigis, (char**) nogate)))
-        return;
-      
+    static const char* nogate[8] = {"TCP", "NOGATE", "RFONLY", NULL};      
     beeps(". ");
       
     /* Write header in plain text -> newHdr */
@@ -324,14 +320,16 @@ void igate_login(char* user, uint16_t pass, char* filter)
 {
     int n=0;
     char buf[128];
-    n = sprintf(buf, "user %s pass %d vers Arctic-Tracker %s\r\n", user, pass, VERSION_SSTRING);
+    n = sprintf(buf, "user %s pass %d vers Arctic-Tracker %s", user, pass, VERSION_SSTRING);
     ESP_LOGD(TAG, "Login string: %s", buf);
     inet_write(buf, n);
-    inet_read(buf, 128);
   
-    if (strlen(filter) > 1) {
-        n = sprintf(buf, "filter %s\r\n", filter);
-        inet_write(buf, n);
-    }
+    if (strlen(filter) > 1) 
+        n = sprintf(buf, " filter %s\r\n", filter);
+    else
+        n = sprintf(buf, "\r\n");
+    inet_write(buf, n);
+    inet_read(buf, 128);
+    ESP_LOGD(TAG, "%s", buf);
 }
 
