@@ -69,8 +69,8 @@ int do_connect(int argc, char** argv)
     /* Loop reading text from console. Ctrl-D to disconnect */
     char* line;  
     while ((line = linenoise("")) != NULL) { 
-        inet_write(line, 64);
-        inet_write("\r\n", 3);
+        inet_write(line, strlen(line));
+        inet_write("\r\n", 2);
         free(line);
     }
     trunning=false;
@@ -103,7 +103,7 @@ int do_mdns(int argc, char** argv)
 {
     char buf[20];
     for (int i=0; i<argc; i++) {
-        sprintf(buf, "_%s", argv[i]); 
+        snprintf(buf, sizeof(buf), "_%s", argv[i]); 
         mdns_result_t * res = mdns_find_service(buf, "_tcp");
         mdns_print_results(res);
         mdns_free_results(res);
@@ -233,10 +233,13 @@ int do_apAlt(int argc, char** argv)
             printf("Ok\n");
         }
         else {
-            strcpy(alt.ssid, argv[2]); 
+            strncpy(alt.ssid, argv[2], sizeof(alt.ssid) - 1); 
+            alt.ssid[sizeof(alt.ssid) - 1] = '\0';
             alt.passwd[0] = '\0';
-            if (argc >= 4)
-                strcpy(alt.passwd, argv[3]);
+            if (argc >= 4) {
+                strncpy(alt.passwd, argv[3], sizeof(alt.passwd) - 1);
+                alt.passwd[sizeof(alt.passwd) - 1] = '\0';
+            }
             wifi_setApAlt(i, &alt);
         }
     }

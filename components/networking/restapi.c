@@ -60,6 +60,17 @@ esp_err_t rest_options_handler(httpd_req_t *req) {
 
 
 /*******************************************************************************************
+ * Free session context callback
+ *******************************************************************************************/
+
+static void free_sess_ctx(void *ctx) {
+    if (ctx != NULL) {
+        free(ctx);
+    }
+}
+
+
+/*******************************************************************************************
  * Return origin in requst, IF it matches API.ORIGINS regular expression
  *******************************************************************************************/
 
@@ -67,8 +78,14 @@ static char* get_origin(httpd_req_t *req) {
     char filter[64];
     char origin[64];
 
-    if (req->sess_ctx == NULL)
+    if (req->sess_ctx == NULL) {
         req->sess_ctx = malloc(sizeof(rest_sess_context_t));
+        if (req->sess_ctx == NULL) {
+            ESP_LOGE(TAG, "Failed to allocate session context");
+            return "";
+        }
+        req->free_ctx = free_sess_ctx;
+    }
     char* buf =  ((rest_sess_context_t*) req->sess_ctx)->orig; 
     buf[0]=0;
     
@@ -84,8 +101,10 @@ static char* get_origin(httpd_req_t *req) {
         return buf;
     }
     /* Check it and return it if it matches */
-    if (trex_match(rex, origin)) 
-        strcpy(buf, origin);
+    if (trex_match(rex, origin)) {
+        strncpy(buf, origin, 63);
+        buf[63] = '\0';
+    }
     
     trex_free(rex);
     return buf;
@@ -217,6 +236,10 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
     
     /* Allocate context struct */
     context = calloc(1, sizeof(rest_server_context_t));
+    if (context == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate REST server context");
+        return;
+    }
     strcpy(context->base_path, path);
     
     /* Set up and start HTTP server */
@@ -278,6 +301,11 @@ esp_err_t rest_post(char* uri, char* service, char* data, int dlen, char* key)
         .crt_bundle_attach = esp_crt_bundle_attach
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        return ESP_FAIL;
+    }
+    
     esp_http_client_set_post_field(client, data, dlen);
     esp_http_client_set_header(client, "Content-Type", "application/json");
     rest_setSecHdrs(client, service, data, dlen, key);
