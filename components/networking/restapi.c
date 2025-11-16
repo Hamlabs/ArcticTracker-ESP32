@@ -236,6 +236,10 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
     
     /* Allocate context struct */
     context = calloc(1, sizeof(rest_server_context_t));
+    if (context == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate REST server context");
+        return;
+    }
     strcpy(context->base_path, path);
     
     /* Set up and start HTTP server */

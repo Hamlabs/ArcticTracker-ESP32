@@ -202,8 +202,14 @@ esp_err_t register_file_server(httpd_handle_t *server, const char *path)
 {
     static fileserv_context_t *context = NULL;
 
-    /* Allocate memory for server data */
-    context = calloc(1, sizeof(fileserv_context_t));
+    /* Allocate memory for server data only if not already allocated */
+    if (context == NULL) {
+        context = calloc(1, sizeof(fileserv_context_t));
+        if (context == NULL) {
+            ESP_LOGE(TAG, "Failed to allocate file server context");
+            return ESP_ERR_NO_MEM;
+        }
+    }
     strcpy(context->base_path, path);
 
     /* URI handler for getting uploaded files */
