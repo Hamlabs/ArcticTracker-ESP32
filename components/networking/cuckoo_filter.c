@@ -152,9 +152,21 @@ cuckoo_filter_new (
     bucket_count <<= 1;
   }
 
-  /* FIXME: Should check for integer overflows here */
-  size_t allocation_in_bytes = (sizeof(cuckoo_filter_t)
-    + (bucket_count * CUCKOO_NESTS_PER_BUCKET * sizeof(cuckoo_nest_t)));
+  /* Check for integer overflows in allocation size calculation */
+  size_t nest_size = bucket_count * CUCKOO_NESTS_PER_BUCKET;
+  if (nest_size / CUCKOO_NESTS_PER_BUCKET != bucket_count) {
+    return CUCKOO_FILTER_ALLOCATION_FAILED;  /* Overflow detected */
+  }
+  
+  size_t nests_bytes = nest_size * sizeof(cuckoo_nest_t);
+  if (nests_bytes / sizeof(cuckoo_nest_t) != nest_size) {
+    return CUCKOO_FILTER_ALLOCATION_FAILED;  /* Overflow detected */
+  }
+  
+  size_t allocation_in_bytes = sizeof(cuckoo_filter_t) + nests_bytes;
+  if (allocation_in_bytes < sizeof(cuckoo_filter_t)) {
+    return CUCKOO_FILTER_ALLOCATION_FAILED;  /* Overflow detected */
+  }
 
   new_filter = calloc(allocation_in_bytes, 1);
   if (!new_filter) {
@@ -162,7 +174,7 @@ cuckoo_filter_new (
   }
 
   new_filter->last_victim = NULL;
-  memset(&new_filter->victim, 0, sizeof(new_filter)->victim);
+  memset(&new_filter->victim, 0, sizeof(new_filter->victim));
   new_filter->bucket_count = bucket_count;
   new_filter->nests_per_bucket = CUCKOO_NESTS_PER_BUCKET;
   new_filter->max_kick_attempts = max_kick_attempts;

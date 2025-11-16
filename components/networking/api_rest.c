@@ -127,11 +127,13 @@ static esp_err_t aprs_put_handler(httpd_req_t *req)
     rest_cors_enable(req); 
     CHECK_JSON_INPUT(req, root);
     
-    strcpy(buf, JSON_STR(root, "mycall"));
+    strncpy(buf, JSON_STR(root, "mycall"), sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
     strupr(buf);
     set_str_param("MYCALL",  buf);
     
-    strcpy(buf, JSON_STR(root, "path"));
+    strncpy(buf, JSON_STR(root, "path"), sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
     strupr(buf);
     set_str_param("DIGIPATH", buf);
     
@@ -297,8 +299,10 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
         wifiAp_t ap; 
         sprintf(ssid, "ap_%d_ssid", i);
         sprintf(pw, "ap_%d_pw", i);
-        strcpy (ap.ssid, JSON_STR(root, ssid));
-        strcpy (ap.passwd, JSON_STR(root, pw));
+        strncpy(ap.ssid, JSON_STR(root, ssid), sizeof(ap.ssid) - 1);
+        ap.ssid[sizeof(ap.ssid) - 1] = '\0';
+        strncpy(ap.passwd, JSON_STR(root, pw), sizeof(ap.passwd) - 1);
+        ap.passwd[sizeof(ap.passwd) - 1] = '\0';
         wifi_setApAlt(i, &ap);
     }
     
@@ -373,7 +377,8 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
 static esp_err_t trackers_handler(httpd_req_t *req) {   
     rest_cors_enable(req);
     cJSON *root = cJSON_CreateArray();
-    mdns_result_t * res = mdns_find_service("_https", "_tcp");
+    mdns_result_t * results = mdns_find_service("_https", "_tcp");
+    mdns_result_t * res = results;
     while(res) {
         cJSON *obj = cJSON_CreateObject();
         cJSON_AddStringToObject(obj, "name", res->instance_name);
@@ -381,6 +386,9 @@ static esp_err_t trackers_handler(httpd_req_t *req) {
         cJSON_AddNumberToObject(obj, "port", res->port); 
         cJSON_AddItemToArray(root, obj);
         res = res->next;
+    }
+    if (results != NULL) {
+        mdns_query_results_free(results);
     }
     return rest_JSON_send(req, root);
 }

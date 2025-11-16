@@ -40,6 +40,7 @@ int  inet_open(char* host, int port)
     sock =  socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
     if (sock < 0) { 
         ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        sock = -1;
         return errno;
     }    
     ESP_LOGI(TAG, "Inet socket connecting to %s:%d", inet_ntoa(dest_addr.sin_addr), port);
@@ -47,6 +48,8 @@ int  inet_open(char* host, int port)
     int err = connect(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
     if (err != 0) { 
         ESP_LOGW(TAG, "Socket unable to connect: errno=%d", errno);
+        close(sock);
+        sock = -1;
         return errno;
     }
     
@@ -65,6 +68,7 @@ void inet_close(void)
         ESP_LOGI(TAG, "Closing connection...");
         shutdown(sock, 0);
         close(sock);
+        sock = -1;
     }
 }
 
@@ -128,6 +132,11 @@ int http_post(char* uri, char* ctype, char* data, int dlen)
         .crt_bundle_attach = esp_crt_bundle_attach
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        return -1;
+    }
+    
     esp_http_client_set_post_field(client, data, dlen);
     esp_err_t err = esp_http_client_perform(client);
 

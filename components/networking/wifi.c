@@ -141,7 +141,12 @@ static void wifi_event_handler(void* arg, esp_event_base_t ebase,
             if (apCount > 0) {
                 free(apList);
                 apList = (wifi_ap_record_t *) malloc(sizeof(wifi_ap_record_t) * apCount);
-                ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, apList));
+                if (apList != NULL) {
+                    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, apList));
+                } else {
+                    ESP_LOGE(TAG, "Failed to allocate memory for AP list");
+                    apCount = 0;
+                }
             }
         }
         cond_set(scanDone);
@@ -230,9 +235,11 @@ void wifi_enable_softAp(bool en)
         }
         
         wifi_config_t conf; 
-        strcpy((char*) conf.ap.ssid, ssid); 
-        conf.ap.ssid_len = strlen(ssid);
-        strcpy((char*) conf.ap.password, passwd);
+        strncpy((char*) conf.ap.ssid, ssid, sizeof(conf.ap.ssid)); 
+        conf.ap.ssid[sizeof(conf.ap.ssid) - 1] = '\0';
+        conf.ap.ssid_len = strlen((char*)conf.ap.ssid);
+        strncpy((char*) conf.ap.password, passwd, sizeof(conf.ap.password));
+        conf.ap.password[sizeof(conf.ap.password) - 1] = '\0';
         conf.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
         conf.ap.channel = 1;
         
