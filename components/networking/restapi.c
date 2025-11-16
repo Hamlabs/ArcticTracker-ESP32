@@ -60,6 +60,17 @@ esp_err_t rest_options_handler(httpd_req_t *req) {
 
 
 /*******************************************************************************************
+ * Free session context callback
+ *******************************************************************************************/
+
+static void free_sess_ctx(void *ctx) {
+    if (ctx != NULL) {
+        free(ctx);
+    }
+}
+
+
+/*******************************************************************************************
  * Return origin in requst, IF it matches API.ORIGINS regular expression
  *******************************************************************************************/
 
@@ -67,8 +78,14 @@ static char* get_origin(httpd_req_t *req) {
     char filter[64];
     char origin[64];
 
-    if (req->sess_ctx == NULL)
+    if (req->sess_ctx == NULL) {
         req->sess_ctx = malloc(sizeof(rest_sess_context_t));
+        if (req->sess_ctx == NULL) {
+            ESP_LOGE(TAG, "Failed to allocate session context");
+            return "";
+        }
+        req->free_ctx = free_sess_ctx;
+    }
     char* buf =  ((rest_sess_context_t*) req->sess_ctx)->orig; 
     buf[0]=0;
     

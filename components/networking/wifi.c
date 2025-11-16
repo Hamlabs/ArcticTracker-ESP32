@@ -141,7 +141,12 @@ static void wifi_event_handler(void* arg, esp_event_base_t ebase,
             if (apCount > 0) {
                 free(apList);
                 apList = (wifi_ap_record_t *) malloc(sizeof(wifi_ap_record_t) * apCount);
-                ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, apList));
+                if (apList != NULL) {
+                    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, apList));
+                } else {
+                    ESP_LOGE(TAG, "Failed to allocate memory for AP list");
+                    apCount = 0;
+                }
             }
         }
         cond_set(scanDone);
