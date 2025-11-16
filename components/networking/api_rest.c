@@ -102,8 +102,11 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
     cJSON_AddBoolToObject(root, "extraturn", GET_BOOL_PARAM("EXTRATURN.on", DFL_EXTRATURN_ON));
    
 #if defined(ARCTIC4_UHF)
-    cJSON_AddNumberToObject(root, "lora_sf",   get_byte_param("LORA_SF", DFL_LORA_SF));
-    cJSON_AddNumberToObject(root, "lora_cr",   get_byte_param("LORA_CR", DFL_LORA_CR));
+    cJSON_AddNumberToObject(root, "lora_sf",     get_byte_param("LORA_SF", DFL_LORA_SF));
+    cJSON_AddNumberToObject(root, "lora_cr",     get_byte_param("LORA_CR", DFL_LORA_CR));
+    cJSON_AddNumberToObject(root, "lora_alt_sf", get_byte_param("LORA_ALT_SF", DFL_LORA_ALT_SF));
+    cJSON_AddNumberToObject(root, "lora_alt_cr", get_byte_param("LORA_ALT_CR", DFL_LORA_ALT_CR));
+    
     cJSON_AddNumberToObject(root, "txpower",   get_byte_param("TXPOWER", DFL_TXPOWER));
     cJSON_AddNumberToObject(root, "freq",      get_i32_param("FREQ", DFL_FREQ));
 #else
@@ -146,11 +149,14 @@ static esp_err_t aprs_put_handler(httpd_req_t *req)
     set_byte_param("COMPRESS.on",  JSON_BOOL(root, "compress"));
     set_byte_param("ALTITUDE.on",  JSON_BOOL(root, "altitude"));
     set_byte_param("EXTRATURN.on", JSON_BOOL(root, "extraturn"));
-    set_u16_param("TURNLIMIT", JSON_U16(root, "turnlimit"));
+    set_u16_param ("TURNLIMIT",    JSON_U16(root,  "turnlimit"));
     
 #if defined(ARCTIC4_UHF)
-    set_byte_param("LORA_SF", JSON_BYTE(root, "lora_sf"));
-    set_byte_param("LORA_CR", JSON_BYTE(root, "lora_cr"));  
+    set_byte_param("LORA_SF",     JSON_BYTE(root, "lora_sf"));
+    set_byte_param("LORA_CR",     JSON_BYTE(root, "lora_cr"));  
+    set_byte_param("LORA_ALT_SF", JSON_BYTE(root, "lora_alt_sf"));
+    set_byte_param("LORA_ALT_CR", JSON_BYTE(root, "lora_alt_cr"));  
+    
     set_byte_param("TXPOWER", JSON_BYTE(root, "txpower")); 
     set_i32_param("FREQ",     JSON_INT(root, "freq"));
 #else
@@ -192,7 +198,10 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
     
     get_str_param("IGATE.FILTER", buf, 32, DFL_IGATE_FILTER);
     cJSON_AddStringToObject(root, "filter", buf);
-    
+
+#if defined(ARCTIC4_UHF)
+    cJSON_AddBoolToObject(root, "dualOn", GET_BOOL_PARAM("LORA_ALT.on", DFL_LORA_ALT_ON));
+#endif
     return rest_JSON_send(req, root);
 }
 
@@ -216,10 +225,15 @@ static esp_err_t digi_put_handler(httpd_req_t *req)
     set_str_param("IGATE.USER",     JSON_STR(root, "user"));
     set_str_param("IGATE.FILTER",   JSON_STR(root, "filter"));
     
+#if defined(ARCTIC4_UHF)   
+    bool dualOn = JSON_BOOL(root, "dualOn");
+    set_byte_param("LORA_ALT.on", dualOn);
+#endif
+    
     bool digiOn = JSON_BOOL(root, "digiOn");
     set_byte_param("DIGIPEATER.on", digiOn);
     digipeater_activate(digiOn);
-
+    
     bool igateOn = JSON_BOOL(root, "igateOn");
     set_byte_param("IGATE.on", igateOn);
     igate_activate(igateOn); 
