@@ -233,10 +233,13 @@ int do_apAlt(int argc, char** argv)
             printf("Ok\n");
         }
         else {
-            strcpy(alt.ssid, argv[2]); 
+            strncpy(alt.ssid, argv[2], sizeof(alt.ssid) - 1); 
+            alt.ssid[sizeof(alt.ssid) - 1] = '\0';
             alt.passwd[0] = '\0';
-            if (argc >= 4)
-                strcpy(alt.passwd, argv[3]);
+            if (argc >= 4) {
+                strncpy(alt.passwd, argv[3], sizeof(alt.passwd) - 1);
+                alt.passwd[sizeof(alt.passwd) - 1] = '\0';
+            }
             wifi_setApAlt(i, &alt);
         }
     }

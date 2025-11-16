@@ -235,9 +235,11 @@ void wifi_enable_softAp(bool en)
         }
         
         wifi_config_t conf; 
-        strcpy((char*) conf.ap.ssid, ssid); 
-        conf.ap.ssid_len = strlen(ssid);
-        strcpy((char*) conf.ap.password, passwd);
+        strncpy((char*) conf.ap.ssid, ssid, sizeof(conf.ap.ssid)); 
+        conf.ap.ssid[sizeof(conf.ap.ssid) - 1] = '\0';
+        conf.ap.ssid_len = strlen((char*)conf.ap.ssid);
+        strncpy((char*) conf.ap.password, passwd, sizeof(conf.ap.password));
+        conf.ap.password[sizeof(conf.ap.password) - 1] = '\0';
         conf.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
         conf.ap.channel = 1;
         

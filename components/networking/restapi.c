@@ -101,8 +101,10 @@ static char* get_origin(httpd_req_t *req) {
         return buf;
     }
     /* Check it and return it if it matches */
-    if (trex_match(rex, origin)) 
-        strcpy(buf, origin);
+    if (trex_match(rex, origin)) {
+        strncpy(buf, origin, 63);
+        buf[63] = '\0';
+    }
     
     trex_free(rex);
     return buf;

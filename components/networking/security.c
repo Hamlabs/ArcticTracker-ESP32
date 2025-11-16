@@ -147,8 +147,10 @@ esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize)
                 return ESP_FAIL;
             }
             else {
-                strcpy(nonce, tokens[1]);
-                strcpy(rhmac, tokens[2]);
+                strncpy(nonce, tokens[1], NONCE_SIZE);
+                nonce[NONCE_SIZE] = '\0';
+                strncpy(rhmac, tokens[2], HMAC_B64_SIZE);
+                rhmac[HMAC_B64_SIZE] = '\0';
                 authhdr_ok = true;
             }
         }
