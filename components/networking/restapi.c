@@ -300,6 +300,11 @@ esp_err_t rest_post(char* uri, char* service, char* data, int dlen, char* key)
         .crt_bundle_attach = esp_crt_bundle_attach
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        return ESP_FAIL;
+    }
+    
     esp_http_client_set_post_field(client, data, dlen);
     esp_http_client_set_header(client, "Content-Type", "application/json");
     rest_setSecHdrs(client, service, data, dlen, key);

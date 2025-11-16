@@ -132,6 +132,11 @@ int http_post(char* uri, char* ctype, char* data, int dlen)
         .crt_bundle_attach = esp_crt_bundle_attach
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        return -1;
+    }
+    
     esp_http_client_set_post_field(client, data, dlen);
     esp_err_t err = esp_http_client_perform(client);
 
