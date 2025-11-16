@@ -232,6 +232,7 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
     sconfig.httpd = config;
     sconfig.port_secure = sport;
     sconfig.port_insecure = port;
+    sconfig.session_tickets = false;  // Prevent memory exhaustion
 
     extern const unsigned char cert_start[] asm("_binary_cert_pem_start");
     extern const unsigned char cert_end[]   asm("_binary_cert_pem_end");
