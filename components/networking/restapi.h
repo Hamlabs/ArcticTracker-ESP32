@@ -38,6 +38,7 @@ void      rest_start(uint16_t port, uint16_t sport, const char *path);
 void      rest_stop(void);
 void      rest_cors_enable(httpd_req_t *req);
 esp_err_t rest_options_handler(httpd_req_t *req);
+char*     get_client_ip(httpd_req_t *req);
 
 /* Security */
 char*     compute_sha256_b64(char* hash, uint8_t *data, int len); 

@@ -6,6 +6,8 @@
 #include "esp_http_server.h"
 #include <esp_https_server.h>
 #include "esp_tls.h"
+#include "lwip/sockets.h"
+#include <arpa/inet.h>
 
 #include "esp_system.h"
 #include "esp_log.h"
@@ -111,6 +113,40 @@ static char* get_origin(httpd_req_t *req) {
 }
 
 
+/*******************************************************************************************
+ * Get the IPv4 address of the client from the HTTP request
+ * Returns a pointer to a static buffer containing the IP address string
+ *******************************************************************************************/
+
+char* get_client_ip(httpd_req_t *req) {
+    static char ip_str[INET_ADDRSTRLEN];
+    struct sockaddr_in client_addr;
+    socklen_t addr_len = sizeof(client_addr);
+    
+    // Initialize with empty string in case of error
+    ip_str[0] = '\0';
+    
+    // Get the socket file descriptor from the request
+    int sockfd = httpd_req_to_sockfd(req);
+    if (sockfd < 0) {
+        ESP_LOGE(TAG, "Failed to get socket descriptor from request");
+        return ip_str;
+    }
+    
+    // Get the peer (client) address
+    if (getpeername(sockfd, (struct sockaddr *)&client_addr, &addr_len) != 0) {
+        ESP_LOGE(TAG, "Failed to get client address: errno %d", errno);
+        return ip_str;
+    }
+    
+    // Convert the IP address to string format
+    if (inet_ntop(AF_INET, &client_addr.sin_addr, ip_str, INET_ADDRSTRLEN) == NULL) {
+        ESP_LOGE(TAG, "Failed to convert IP address to string");
+        ip_str[0] = '\0';
+    }
+    
+    return ip_str;
+}
 
 
 /*******************************************************************************************
