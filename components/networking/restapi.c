@@ -114,13 +114,13 @@ static char* get_origin(httpd_req_t *req) {
 
 
 /*******************************************************************************************
- * Get the IPv4 address of the client from the HTTP request
+ * Get the IP address (IPv4 or IPv6) of the client from the HTTP request
  * Returns a pointer to a static buffer containing the IP address string
  *******************************************************************************************/
 
 char* get_client_ip(httpd_req_t *req) {
-    static char ip_str[INET_ADDRSTRLEN];
-    struct sockaddr_in client_addr;
+    static char ip_str[INET6_ADDRSTRLEN];
+    struct sockaddr_storage client_addr;
     socklen_t addr_len = sizeof(client_addr);
     
     // Initialize with empty string in case of error
@@ -139,10 +139,23 @@ char* get_client_ip(httpd_req_t *req) {
         return ip_str;
     }
     
-    // Convert the IP address to string format
-    if (inet_ntop(AF_INET, &client_addr.sin_addr, ip_str, INET_ADDRSTRLEN) == NULL) {
-        ESP_LOGE(TAG, "Failed to convert IP address to string");
-        ip_str[0] = '\0';
+    // Convert the IP address to string format based on address family
+    if (client_addr.ss_family == AF_INET) {
+        // IPv4 address
+        struct sockaddr_in *addr_in = (struct sockaddr_in *)&client_addr;
+        if (inet_ntop(AF_INET, &addr_in->sin_addr, ip_str, INET6_ADDRSTRLEN) == NULL) {
+            ESP_LOGE(TAG, "Failed to convert IPv4 address to string");
+            ip_str[0] = '\0';
+        }
+    } else if (client_addr.ss_family == AF_INET6) {
+        // IPv6 address
+        struct sockaddr_in6 *addr_in6 = (struct sockaddr_in6 *)&client_addr;
+        if (inet_ntop(AF_INET6, &addr_in6->sin6_addr, ip_str, INET6_ADDRSTRLEN) == NULL) {
+            ESP_LOGE(TAG, "Failed to convert IPv6 address to string");
+            ip_str[0] = '\0';
+        }
+    } else {
+        ESP_LOGE(TAG, "Unknown address family: %d", client_addr.ss_family);
     }
     
     return ip_str;
