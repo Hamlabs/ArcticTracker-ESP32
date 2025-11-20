@@ -114,7 +114,7 @@ static char* get_origin(httpd_req_t *req) {
 
 
 /*******************************************************************************************
- * Get the IPv4 address of the client from the HTTP request
+ * Get the IP address (IPv4 or IPv6) of the client from the HTTP request
  * Returns a pointer to a static buffer containing the IP address string
  *******************************************************************************************/
 
