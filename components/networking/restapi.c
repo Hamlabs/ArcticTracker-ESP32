@@ -25,6 +25,11 @@
 #define SCRATCH_BUFSIZE (10240)
 #define TAG "rest"
 
+/* HTTP server configuration parameters */
+#define HTTP_MAX_OPEN_SOCKETS 8
+#define HTTP_RECV_TIMEOUT_SEC 5
+#define HTTP_SEND_TIMEOUT_SEC 5
+
 
 typedef struct rest_server_context {
     char base_path[ESP_VFS_PATH_MAX + 1];
@@ -186,7 +191,7 @@ esp_err_t rest_JSON_send(httpd_req_t *req, cJSON *root) {
     }
     free((void *)sys_info);
     cJSON_Delete(root);
-    return ESP_OK;
+    return err;
 }
 
 
@@ -322,9 +327,9 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
      
     /* Defensive parameters to prevent socket exhaustion and improve reliability */
     config.lru_purge_enable = true;
-    config.max_open_sockets = 8;
-    config.recv_wait_timeout = 5;
-    config.send_wait_timeout = 5;
+    config.max_open_sockets = HTTP_MAX_OPEN_SOCKETS;
+    config.recv_wait_timeout = HTTP_RECV_TIMEOUT_SEC;
+    config.send_wait_timeout = HTTP_SEND_TIMEOUT_SEC;
     
     /* Set up HTTPS server */
 #if defined WEBSERVER_HTTPS
