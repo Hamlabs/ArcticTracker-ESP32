@@ -78,17 +78,28 @@ static void dhcp_enable(bool on)
         str2ip(&info.ip, ip);
         str2ip(&info.gw, ip); //ESP acts as router, so gw addr will be its own addr
         str2ip(&info.netmask, "255.255.255.0");
-        ESP_ERROR_CHECK(esp_netif_set_ip_info(ap_netif, &info));
+        esp_err_t res = esp_netif_set_ip_info(ap_netif, &info);
+        if (res != ESP_OK) {
+            ESP_LOGE(TAG, "Setting ip info failed [dhcp]: %s", esp_err_to_name(res));
+            return;
+        }
         
         // start the DHCP server   
-        ESP_ERROR_CHECK(esp_netif_dhcps_start(ap_netif));
-        
-        ESP_LOGD(TAG, "DHCP server started on %s", ip);
+        res = esp_netif_dhcps_start(ap_netif);
+        if (res != ESP_OK) {
+            ESP_LOGE(TAG, "Starting DHCP server failed: %s", esp_err_to_name(res));
+            dhcp_started = false; 
+            return;
+        }
+        ESP_LOGI(TAG, "DHCP server started on %s", ip);
         dhcp_started = true;
     }
     if (!on && dhcp_started) {
-        ESP_ERROR_CHECK(esp_netif_dhcps_stop(ap_netif));
-        dhcp_started = false; 
+        esp_err_t res = esp_netif_dhcps_stop(ap_netif);
+        if (res != ESP_OK) 
+            ESP_LOGE(TAG, "Stopping DHCP server failed: %s", esp_err_to_name(res));
+        else
+            dhcp_started = false; 
     }
 }
 
@@ -276,7 +287,8 @@ void wifi_enable(bool en)
     if (en && !enabled) {
         ESP_ERROR_CHECK( esp_wifi_start() );
         status = "Idle";
-        
+ //       dhcp_enable(true);
+                
         /* Start autoconnect task */
         if ( xTaskCreatePinnedToCore( task_autoConnect, "wifi-autocon", STACK_AUTOCON, 
                 NULL, tskIDLE_PRIORITY, &task_autocon, CORE_AUTOCON ) == pdPASS)
@@ -287,7 +299,7 @@ void wifi_enable(bool en)
         /* Kill autoconnect task */
         vTaskDelete( task_autocon );
         ESP_LOGD(TAG, "WIFI autoconnect task killed");
-        dhcp_enable(false);
+ //       dhcp_enable(false);
         ESP_ERROR_CHECK( esp_wifi_stop() );
     }
     enabled = en;

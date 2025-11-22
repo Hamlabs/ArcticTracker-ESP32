@@ -73,7 +73,7 @@ static void free_sess_ctx(void *ctx) {
 
 
 /*******************************************************************************************
- * Return origin in requst, IF it matches API.ORIGINS regular expression
+ * Return origin in request, IF it matches API.ORIGINS regular expression
  *******************************************************************************************/
 
 static char* get_origin(httpd_req_t *req) {
@@ -143,7 +143,7 @@ char* get_client_ip(httpd_req_t *req) {
     if (client_addr.ss_family == AF_INET) {
         // IPv4 address
         struct sockaddr_in *addr_in = (struct sockaddr_in *)&client_addr;
-        if (inet_ntop(AF_INET, &addr_in->sin_addr, ip_str, INET6_ADDRSTRLEN) == NULL) {
+        if (inet_ntop(AF_INET, &addr_in->sin_addr, ip_str, INET_ADDRSTRLEN) == NULL) {
             ESP_LOGE(TAG, "Failed to convert IPv4 address to string");
             ip_str[0] = '\0';
         }
@@ -167,7 +167,11 @@ char* get_client_ip(httpd_req_t *req) {
  *******************************************************************************************/
 
 esp_err_t rest_JSON_send(httpd_req_t *req, cJSON *root) {
-    const char *sys_info = cJSON_Print(root);    
+    const char *sys_info = cJSON_Print(root);
+
+    ESP_LOGD(TAG, "Response send: %s", get_client_ip(req));
+    httpd_resp_set_hdr(req, "Connection", "close");
+    
     httpd_resp_sendstr(req, sys_info);
     free((void *)sys_info);
     cJSON_Delete(root);
@@ -235,6 +239,7 @@ esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int *size)
  *******************************************************************************************/
 
 esp_err_t rest_AUTH(httpd_req_t *req) {
+    ESP_LOGD(TAG, "Client auth: %s", get_client_ip(req));
     if (rest_isAuth(req, "", 0) != ESP_OK) {
         httpd_resp_send_err(req, HTTPD_401_UNAUTHORIZED, "Authenticaion failed");
         return ESP_FAIL;
@@ -297,6 +302,11 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
     config.server_port = port;
     config.max_uri_handlers = 32;
     config.uri_match_fn = httpd_uri_match_wildcard;
+     
+//    config.lru_purge_enable = true;
+    config.max_open_sockets = 10;        // increase as appropriate for your environment
+//    config.recv_wait_timeout = 5;        // seconds
+//    config.send_wait_timeout = 5;        // seconds
     
     /* Set up HTTPS server */
 #if defined WEBSERVER_HTTPS
@@ -317,11 +327,11 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
     sconfig.prvtkey_len = privkey_pem_end - privkey_pem_start;
 #endif
     
-    ESP_LOGI(TAG, "Starting REST HTTP Server on port %u", port);
-    
 #if defined WEBSERVER_HTTPS
+    ESP_LOGI(TAG, "Starting REST HTTPS Server on port %u", sport);
     httpd_ssl_start(&http_server, &sconfig);
 #else
+    ESP_LOGI(TAG, "Starting REST HTTP Server on port %u", port);
     httpd_start(&http_server, &config);
 #endif
     register_api_rest();
