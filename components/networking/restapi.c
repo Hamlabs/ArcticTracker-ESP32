@@ -12,6 +12,7 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_vfs.h"
+#include "esp_wifi.h"
 #include "cJSON.h"
 #include "system.h"
 #include "networking.h"
@@ -23,6 +24,11 @@
 
 #define SCRATCH_BUFSIZE (10240)
 #define TAG "rest"
+
+/* HTTP server configuration parameters */
+#define HTTP_MAX_OPEN_SOCKETS 8
+#define HTTP_RECV_TIMEOUT_SEC 5
+#define HTTP_SEND_TIMEOUT_SEC 5
 
 
 typedef struct rest_server_context {
@@ -170,12 +176,22 @@ esp_err_t rest_JSON_send(httpd_req_t *req, cJSON *root) {
     const char *sys_info = cJSON_Print(root);
 
     ESP_LOGD(TAG, "Response send: %s", get_client_ip(req));
-    httpd_resp_set_hdr(req, "Connection", "close");
     
-    httpd_resp_sendstr(req, sys_info);
+    /* Set Connection: close when running in softAP mode to avoid keep-alive socket accumulation */
+    wifi_mode_t mode;
+    if (esp_wifi_get_mode(&mode) == ESP_OK) {
+        if (mode == WIFI_MODE_AP || mode == WIFI_MODE_APSTA) {
+            httpd_resp_set_hdr(req, "Connection", "close");
+        }
+    }
+    
+    esp_err_t err = httpd_resp_sendstr(req, sys_info);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to send response: %d", err);
+    }
     free((void *)sys_info);
     cJSON_Delete(root);
-    return ESP_OK;
+    return err;
 }
 
 
@@ -288,6 +304,12 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
 {
     nonce_init();
     
+    /* Stop any running server first */
+    if (http_server != NULL) {
+        ESP_LOGI(TAG, "Stopping existing HTTP server before restart");
+        rest_stop();
+    }
+    
     /* Allocate context struct */
     context = calloc(1, sizeof(rest_server_context_t));
     if (context == NULL) {
@@ -303,10 +325,11 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
     config.max_uri_handlers = 32;
     config.uri_match_fn = httpd_uri_match_wildcard;
      
-//    config.lru_purge_enable = true;
-    config.max_open_sockets = 10;        // increase as appropriate for your environment
-//    config.recv_wait_timeout = 5;        // seconds
-//    config.send_wait_timeout = 5;        // seconds
+    /* Defensive parameters to prevent socket exhaustion and improve reliability */
+    config.lru_purge_enable = true;
+    config.max_open_sockets = HTTP_MAX_OPEN_SOCKETS;
+    config.recv_wait_timeout = HTTP_RECV_TIMEOUT_SEC;
+    config.send_wait_timeout = HTTP_SEND_TIMEOUT_SEC;
     
     /* Set up HTTPS server */
 #if defined WEBSERVER_HTTPS
@@ -329,10 +352,22 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
     
 #if defined WEBSERVER_HTTPS
     ESP_LOGI(TAG, "Starting REST HTTPS Server on port %u", sport);
-    httpd_ssl_start(&http_server, &sconfig);
+    esp_err_t err = httpd_ssl_start(&http_server, &sconfig);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to start HTTPS server: %d", err);
+        free(context);
+        context = NULL;
+        return;
+    }
 #else
     ESP_LOGI(TAG, "Starting REST HTTP Server on port %u", port);
-    httpd_start(&http_server, &config);
+    esp_err_t err = httpd_start(&http_server, &config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to start HTTP server: %d", err);
+        free(context);
+        context = NULL;
+        return;
+    }
 #endif
     register_api_rest();
 }
@@ -340,6 +375,24 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
 
 
 void rest_stop() {
+    if (http_server != NULL) {
+        ESP_LOGI(TAG, "Stopping REST HTTP server");
+#if defined WEBSERVER_HTTPS
+        esp_err_t err = httpd_ssl_stop(http_server);
+#else
+        esp_err_t err = httpd_stop(http_server);
+#endif
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to stop HTTP server: %d", err);
+        }
+        http_server = NULL;
+    }
+    
+    if (context != NULL) {
+        ESP_LOGI(TAG, "Freeing REST server context");
+        free(context);
+        context = NULL;
+    }
 }
 
 
