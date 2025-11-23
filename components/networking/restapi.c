@@ -54,7 +54,7 @@ void rest_cors_enable(httpd_req_t *req) {
     httpd_resp_set_hdr(req, "Vary", "Origin");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
     httpd_resp_set_hdr(req, "Access-Control-Allow-Credentials", "true");
-    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Arctic-Nonce, Arctic-Hmac, Authorization");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Headers", "Content-Type, Arctic-Nonce, Arctic-Hmac, Authorization, X-Requested-With");
 }
 
 
