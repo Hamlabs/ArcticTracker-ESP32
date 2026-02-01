@@ -10,7 +10,6 @@ It is based on the earlier Arctic Tracker (v.2) prototype which used an ESP32. T
 Arctic Tracker (v.1) prototype which used a Teensy 3 MCU module and a ESP-8266 module (with NodeMCU). 
 
 See also the [Polaric Server project](https://github.com/PolaricServer).
-http://www.hamlabs.no has has much info about this project but the website is unfortunately down.
 
 [Documentation](https://doc.arctictracker.no) website.  
 
