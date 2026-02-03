@@ -22,7 +22,7 @@
  static uint8_t hlist_length = 0;
  
  /* Time. Number of ticks since this module was started */
- static uint16_t time = 0; 
+ static uint16_t _time = 0; 
  static bool _hlist_running = false;
  
  static void hlist_tick(void);
@@ -48,13 +48,13 @@
 
  static void hlist_tick()
  {
-    time++; 
+    _time++; 
     int16_t i = hlist_next - hlist_length; 
     if (i<0) 
         i = HEARDLIST_SIZE-i; 
     
     while (i != hlist_next) {
-       if (hlist[i].ts < time - HEARDLIST_MAX_AGE)
+       if (hlist[i].ts < _time - HEARDLIST_MAX_AGE)
           hlist_length--;
        else
           break;
@@ -90,7 +90,7 @@
  void hlist_add(uint16_t x)
  {
    hlist[hlist_next].val = x; 
-   hlist[hlist_next].ts = time;
+   hlist[hlist_next].ts = _time;
    hlist_next = (hlist_next + 1) % HEARDLIST_SIZE; 
    if (hlist_length < HEARDLIST_SIZE)
      hlist_length++;

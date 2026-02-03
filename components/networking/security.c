@@ -177,10 +177,10 @@ esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize)
     compute_hmac("API.KEY", hmac, HMAC_B64_SIZE, 
         (uint8_t*) nonce, NONCE_SIZE, 
         (uint8_t*) (plsize==0 ? "": phash), (plsize==0 ? 0 : SHA256_B64_SIZE));
-    
-    
+            
     if (strncmp(hmac, rhmac, HMAC_TRUNC) != 0) {
         ESP_LOGI(TAG, "HMAC signature doesn't match");
+        ESP_LOGD(TAG, "'%s' != '%s'", hmac, rhmac); 
         return ESP_FAIL;
     }
     

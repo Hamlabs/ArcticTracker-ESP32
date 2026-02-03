@@ -576,6 +576,7 @@ char* loglevel2str(esp_log_level_t lvl) {
         case ESP_LOG_INFO: return "INFO";     
         case ESP_LOG_DEBUG: return "DEBUG";     
         case ESP_LOG_VERBOSE: return "VERBOSE";
+        case ESP_LOG_MAX: return "MAX"; 
     }
     return "UNKNOWN";
 }
@@ -594,6 +595,7 @@ esp_log_level_t str2loglevel(char* str)
     else if (strcasecmp(str, "INFO")==0) return ESP_LOG_INFO;
     else if (strcasecmp(str, "DEBUG")==0) return ESP_LOG_DEBUG;
     else if (strcasecmp(str, "VERBOSE")==0) return ESP_LOG_VERBOSE;    
+    else if (strcasecmp(str, "MAX")==0) return ESP_LOG_MAX;
     ESP_LOGW(TAG, "No corresponding log level for string '%s'", str);
     return ESP_LOG_NONE;
 }

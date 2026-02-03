@@ -2,7 +2,8 @@
  * Misc. System related stuff
  * By LA7ECA, ohanssen@acm.org
  */
- 
+
+#include <time.h> 
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/semphr.h"
