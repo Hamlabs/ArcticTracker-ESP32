@@ -11,9 +11,8 @@
 
 #define DERIVED_KEY_LENGTH 32
 #define PBKDF2_ITERATIONS 65536
-#define AES_GCM_SIV_NONCE_SIZE 12
-#define AES_GCM_SIV_TAG_SIZE 16
-#define AES_BLOCK_SIZE 16
+#define AES_GCM_NONCE_SIZE 12
+#define AES_GCM_TAG_SIZE 16
 
 
 
@@ -49,11 +48,11 @@ uint8_t * crypt_derive_key(uint8_t* buf, const char* passwd, const char* salt)
 
 
 /**
- * Encrypt data using AES-256-GCM-SIV (RFC 8452)
+ * Encrypt data using AES-256-GCM authenticated encryption
  * 
- * NOTE: This implementation uses AES-256-GCM as a practical alternative.
- * Full AES-GCM-SIV requires POLYVAL implementation which is not available in mbedtls.
- * AES-GCM provides authenticated encryption with similar security properties.
+ * This function provides authenticated encryption using AES-256 in Galois/Counter Mode.
+ * While the interface follows AES-GCM-SIV (RFC 8452) conventions for compatibility,
+ * the implementation uses standard AES-GCM as mbedtls does not provide native AES-GCM-SIV support.
  * 
  * @param ciphertext Output buffer for ciphertext (must be at least plaintext_len bytes)
  * @param tag        Output buffer for authentication tag (must be at least 16 bytes)
@@ -102,12 +101,12 @@ int encrypt(uint8_t* ciphertext, uint8_t* tag, const uint8_t* key,
                                      MBEDTLS_GCM_ENCRYPT,
                                      plaintext_len,
                                      nonce,
-                                     AES_GCM_SIV_NONCE_SIZE,
+                                     AES_GCM_NONCE_SIZE,
                                      aad,
                                      aad_len,
                                      plaintext,
                                      ciphertext,
-                                     AES_GCM_SIV_TAG_SIZE,
+                                     AES_GCM_TAG_SIZE,
                                      tag);
     
     /* Clean up */

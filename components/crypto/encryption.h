@@ -19,10 +19,11 @@
 uint8_t * crypt_derive_key(uint8_t* buf, const char* passwd, const char* salt);
 
 /**
- * Encrypt data using AES-256-GCM-SIV (RFC 8452)
+ * Encrypt data using AES-256-GCM authenticated encryption
  * 
- * AES-GCM-SIV is a nonce-misuse-resistant authenticated encryption algorithm.
- * This implementation uses AES-256 (32-byte key).
+ * This function provides authenticated encryption using AES-256 in Galois/Counter Mode.
+ * While the interface follows AES-GCM-SIV (RFC 8452) conventions for compatibility,
+ * the implementation uses standard AES-GCM as mbedtls does not provide native AES-GCM-SIV support.
  * 
  * @param ciphertext Output buffer for ciphertext (must be at least plaintext_len bytes)
  * @param tag        Output buffer for authentication tag (must be at least 16 bytes)
