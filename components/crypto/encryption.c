@@ -13,19 +13,22 @@
 /**
  * Derive a cryptographic key from a password and salt using PBKDF2
  * 
- * @param buf    Buffer to write the derived key to (must be at least 32 bytes)
- * @param passwd Password string
- * @param salt   Salt string
+ * @param buf    Buffer to write the derived key to (must be at least 32 bytes and non-NULL)
+ * @param passwd Password string (null-terminated)
+ * @param salt   Salt string (null-terminated)
  * @return       Pointer to buf containing the derived key, or NULL on error
  */
 uint8_t * crypt_derive_key(uint8_t* buf, const char* passwd, const char* salt)
 {
-    /* Derive 256 bit AES key from password using 
-     * Use PBKDF2 With HmacSHA256
-     */
+    /* Derive 256-bit AES key from password using PBKDF2 with HMAC-SHA256 */
     mbedtls_md_context_t md_ctx;
     const mbedtls_md_info_t *md_info;
     int ret;
+    
+    /* Validate input parameters */
+    if (buf == NULL || passwd == NULL || salt == NULL) {
+        return NULL;
+    }
     
     /* Initialize the MD context */
     mbedtls_md_init(&md_ctx);
