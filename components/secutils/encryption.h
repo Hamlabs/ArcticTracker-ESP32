@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-
+void sec_init(void);
 void sec_set_key(char* keyphrase);
 uint8_t * sec_encrypt(uint8_t *buf, char* cleartext, char* nonce);
 char * sec_encryptB64(char *res, size_t size, char* cleartext, char* nonce);

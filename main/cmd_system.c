@@ -33,6 +33,7 @@
 #include "freertos/task.h"
 #include "esp_chip_info.h"
 #include "pmu.h"
+#include "encryption.h"
 
 
 static int do_sysinfo(int argc, char** argv);
@@ -577,6 +578,7 @@ static int do_reset(int argc, char** argv) {
     trackstore_reset();
     return 0;
 }
+
 
 
 

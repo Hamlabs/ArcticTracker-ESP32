@@ -15,6 +15,7 @@
 #define DFL_FW_URL        ""
 
 
+#define DFL_CRYPTO_KEY     "123456789"
 #define DFL_SOFTAP_PASSWD  "123456789"
 #define DFL_SOFTAP_IP      "192.168.0.1"
 #define DFL_API_KEY        "123456789"

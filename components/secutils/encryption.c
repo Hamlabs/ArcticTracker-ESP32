@@ -9,6 +9,7 @@
 #include "micro_aes.h"
 #include "mbedtls/base64.h"
 #include "base91.h"
+#include "config.h"
 
 #define DERIVED_KEY_LENGTH 32
 #define PBKDF2_ITERATIONS 16384
@@ -110,7 +111,6 @@ char * sec_encryptB64(char *res, size_t size, char* cleartext, char* nonce) {
  */
 char * sec_encryptB91(char *res, size_t size, char* cleartext, char* nonce) {
     size_t csize = strlen(cleartext) + 16;
-    size_t olen;
     uint8_t *buf = (uint8_t*) malloc(csize);
     gcm_siv_encrypt(buf, _key, cleartext, nonce);
     size_t len = encodeBase91(buf, res, csize);
@@ -119,6 +119,13 @@ char * sec_encryptB91(char *res, size_t size, char* cleartext, char* nonce) {
     return res;
 }
 
+
+
+void sec_init() {
+    char k[129];
+    get_str_param("CRYPTO.KEY", k, 128, DFL_CRYPTO_KEY);
+    sec_set_key(k);
+}
 
 
 

@@ -56,6 +56,7 @@ bool regexMatch(char* str, const char* pattern);
 typedef void (*BoolHandler)(bool val);
 typedef void (*ByteHandler)(uint8_t val);
 typedef void (*I32Handler)(int32_t val);
+typedef void (*StrHandler)();
 
 
 #define GET_BOOL_PARAM(key, dfl)  get_byte_param((key), ((dfl)? 1:0))
@@ -100,6 +101,16 @@ typedef void (*I32Handler)(int32_t val);
     inline static int f(int argc, char** argv) { \
         return param_setting_str(argc, argv, key, size, dfl, pattern); \
     }
+
+#define CMD_STR_SETTING_H(f, key, size, dfl, pattern, bh)  \
+    inline static int f(int argc, char** argv) { \
+        int r = param_setting_str(argc, argv, key, size, dfl, pattern); \
+        StrHandler bhh = bh; \
+        if (bhh != NULL) \
+            (*bhh)(); \
+        return r; \
+    }
+    
     
 #define CMD_USTR_SETTING(f, key, size, dfl, pattern)  \
     inline static int f(int argc, char** argv) { \

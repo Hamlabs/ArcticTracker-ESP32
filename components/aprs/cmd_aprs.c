@@ -23,6 +23,7 @@
 #include "tracklogger.h"
 #include "lora1268.h"
 #include "aprs.h"
+#include "encryption.h"
 
 
 void   register_aprs(void);
@@ -244,7 +245,6 @@ void hdl_radio(bool on) {
 }
 
 
-
 void hdl_tracklog(bool on) {
     if (on) 
         tracklog_on();
@@ -284,15 +284,18 @@ CMD_USTR_SETTING (_param_mycall,     "MYCALL",       10, DFL_MYCALL,       REGEX
 CMD_USTR_SETTING (_param_dest,       "DEST",         10, DFL_DEST,         REGEX_AXADDR);
 CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",     70, DFL_DIGIPATH,     REGEX_DIGIPATH);
 
-CMD_STR_SETTING  (_param_trklogurl,  "TRKLOG.URL",   64, DFL_TRKLOG_URL,   REGEX_URL);
-CMD_STR_SETTING  (_param_serverkey,  "TRKLOG.KEY",   128, "",              NULL);
+CMD_STR_SETTING    (_param_trklogurl,  "TRKLOG.URL",   64, DFL_TRKLOG_URL,   REGEX_URL);
+CMD_STR_SETTING    (_param_serverkey,  "TRKLOG.KEY",   128, "",              NULL);
+CMD_STR_SETTING_H  (_param_cryptkey,   "CRYPTO.KEY",   128, DFL_CRYPTO_KEY,  NULL, sec_init);
+
 CMD_STR_SETTING  (_param_symbol,     "SYMBOL",       3,  DFL_SYMBOL,       REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_osym,       "OBJ.SYMBOL",   3,  DFL_OBJ_SYMBOL,   REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_oid,        "OBJ.ID",       10, DFL_OBJ_ID,       REGEX_AXADDR);
 CMD_STR_SETTING  (_param_comment,    "REP.COMMENT",  40, DFL_REP_COMMENT,  NULL);
 CMD_STR_SETTING  (_param_igate_host, "IGATE.HOST",   64, DFL_IGATE_HOST,   REGEX_HOSTNAME);
-CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",   10,  DFL_IGATE_USER,   REGEX_AXADDR);
+CMD_STR_SETTING  (_param_igate_user, "IGATE.USER",   10, DFL_IGATE_USER,   REGEX_AXADDR);
 CMD_STR_SETTING  (_param_igate_filt, "IGATE.FILTER", 32, DFL_IGATE_FILTER, ".*");
+
 CMD_BYTE_SETTING (_param_trklogint,  "TRKLOG.INT",   DFL_TRKLOG_INT,  0, 60,  NULL);
 CMD_BYTE_SETTING (_param_trklogttl,  "TRKLOG.TTL",   DFL_TRKLOG_TTL,  0, 250, NULL);
 CMD_BYTE_SETTING (_param_maxframe,   "MAXFRAME",     DFL_MAXFRAME,    1, 7,   NULL);
@@ -369,6 +372,7 @@ void register_aprs()
     ADD_CMD("trklog-ttl", &_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
     ADD_CMD("trklog-key", &_param_serverkey,   "KEY for authenticating tracklog-messages to Polaric Server", "[<key>]");
     ADD_CMD("trklog-url", &_param_trklogurl,   "URL for posting tracklog updates to Polaric Server", "[<url>]");
+    ADD_CMD("crypto-key", &_param_cryptkey,    "Key for encrypting APRS packets",   "[<val>]");
     ADD_CMD("maxframe",   &_param_maxframe,    "APRS max frames in a transmission", "[<val>]");
     ADD_CMD("maxpause",   &_param_maxpause,    "Tracking max pause (10 sec units)", "[<val>]");
     ADD_CMD("minpause",   &_param_minpause,    "Tracking min pause (10 sec units)", "[<val>]");
