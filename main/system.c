@@ -13,9 +13,9 @@
 #include "networking.h"
 #include "config.h"
 #include "esp_sntp.h"
-#include "esp_ota_ops.h"
+// #include "esp_ota_ops.h"
 #include "esp_http_client.h"
-#include "esp_https_ota.h"
+// #include "esp_https_ota.h" FIXME
 #include "esp_sleep.h"
 #include "ui.h"
 #include "gui.h"
@@ -79,6 +79,7 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 esp_err_t firmware_upgrade()
 { 
+    /*
     if (!wifi_isConnected()) {
         ESP_LOGW(TAG, "Wifi not connected - cannot update");
         return ESP_OK; 
@@ -131,6 +132,7 @@ esp_err_t firmware_upgrade()
         ESP_LOGE(TAG, "Fw upgrade failed!");
         return ESP_FAIL;
     }
+    */
     return ESP_OK;
 }             
 
