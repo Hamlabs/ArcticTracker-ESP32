@@ -1,9 +1,10 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
 #include "esp_log.h"
 
 #include "ssd1306.h"
@@ -17,20 +18,37 @@
 
 #define CONFIG_OFFSETX 0
 
+// I2C bus handle - shared with other modules (e.g., PMU)
+// NOTE: This must be initialized by calling i2c_master_init() before
+// other modules (like PMU) can add their devices to the bus.
+i2c_master_bus_handle_t bus_handle = NULL;
+static i2c_master_dev_handle_t dev_handle = NULL;
+
 
 void i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset)
 {
-	i2c_config_t i2c_config = {
-		.mode = I2C_MODE_MASTER,
-		.sda_io_num = sda,
-		.scl_io_num = scl,
-		.sda_pullup_en = GPIO_PULLUP_ENABLE,
-		.scl_pullup_en = GPIO_PULLUP_ENABLE,
-		.master.clk_speed = I2C_MASTER_FREQ_HZ
-	};
-	
-	ESP_ERROR_CHECK(i2c_param_config(I2C_NUM, &i2c_config));
-	ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM, I2C_MODE_MASTER, 0, 0, 0));
+	// Create I2C master bus if not already created
+	if (bus_handle == NULL) {
+		i2c_master_bus_config_t bus_config = {
+			.clk_source = I2C_CLK_SRC_DEFAULT,
+			.i2c_port = I2C_NUM,
+			.scl_io_num = scl,
+			.sda_io_num = sda,
+			.glitch_ignore_cnt = 7,
+			.flags.enable_internal_pullup = true,
+		};
+		ESP_ERROR_CHECK(i2c_new_master_bus(&bus_config, &bus_handle));
+	}
+
+	// Add device to the I2C bus
+	if (dev_handle == NULL) {
+		i2c_device_config_t dev_config = {
+			.dev_addr_length = I2C_ADDR_BIT_LEN_7,
+			.device_address = I2CAddress,
+			.scl_speed_hz = I2C_MASTER_FREQ_HZ,
+		};
+		ESP_ERROR_CHECK(i2c_master_bus_add_device(bus_handle, &dev_config, &dev_handle));
+	}
 
 	if (reset >= 0) {
 		//gpio_pad_select_gpio(reset);
@@ -52,65 +70,61 @@ void i2c_init(SSD1306_t * dev, int width, int height) {
 	dev->_pages = 8;
 	if (dev->_height == 32) dev->_pages = 4;
 	
-	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-
-	i2c_master_start(cmd);
-	i2c_master_write_byte(cmd, (dev->_address << 1) | I2C_MASTER_WRITE, true);
-	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
-	i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_OFF, true);				// AE
-	i2c_master_write_byte(cmd, OLED_CMD_SET_MUX_RATIO, true);			// A8
-	if (dev->_height == 64) i2c_master_write_byte(cmd, 0x3F, true);
-	if (dev->_height == 32) i2c_master_write_byte(cmd, 0x1F, true);
-	i2c_master_write_byte(cmd, OLED_CMD_SET_DISPLAY_OFFSET, true);		// D3
-	i2c_master_write_byte(cmd, 0x00, true);
-	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);	// 40
-	//i2c_master_write_byte(cmd, OLED_CMD_SET_SEGMENT_REMAP, true);		// A1
+	// Build command sequence for initialization
+	// Maximum required size: 28 bytes for initialization commands
+	uint8_t cmd_data[32];
+	int idx = 0;
+	
+	cmd_data[idx++] = OLED_CONTROL_BYTE_CMD_STREAM;
+	cmd_data[idx++] = OLED_CMD_DISPLAY_OFF;				// AE
+	cmd_data[idx++] = OLED_CMD_SET_MUX_RATIO;			// A8
+	if (dev->_height == 64) cmd_data[idx++] = 0x3F;
+	if (dev->_height == 32) cmd_data[idx++] = 0x1F;
+	cmd_data[idx++] = OLED_CMD_SET_DISPLAY_OFFSET;		// D3
+	cmd_data[idx++] = 0x00;
+	cmd_data[idx++] = OLED_CONTROL_BYTE_DATA_STREAM;	// 40
+	//cmd_data[idx++] = OLED_CMD_SET_SEGMENT_REMAP;		// A1
 	if (dev->_flip) {
-		i2c_master_write_byte(cmd, OLED_CMD_SET_SEGMENT_REMAP_0, true);		// A0
+		cmd_data[idx++] = OLED_CMD_SET_SEGMENT_REMAP_0;		// A0
 	} else {
-		i2c_master_write_byte(cmd, OLED_CMD_SET_SEGMENT_REMAP_1, true);		// A1
+		cmd_data[idx++] = OLED_CMD_SET_SEGMENT_REMAP_1;		// A1
 	}
-	i2c_master_write_byte(cmd, OLED_CMD_SET_COM_SCAN_MODE, true);		// C8
-	i2c_master_write_byte(cmd, OLED_CMD_SET_DISPLAY_CLK_DIV, true);		// D5
-	i2c_master_write_byte(cmd, 0x80, true);
-	i2c_master_write_byte(cmd, OLED_CMD_SET_COM_PIN_MAP, true);			// DA
-	if (dev->_height == 64) i2c_master_write_byte(cmd, 0x12, true);
-	if (dev->_height == 32) i2c_master_write_byte(cmd, 0x02, true);
-	i2c_master_write_byte(cmd, OLED_CMD_SET_CONTRAST, true);			// 81
-	i2c_master_write_byte(cmd, 0xFF, true);
-	i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_RAM, true);				// A4
-	i2c_master_write_byte(cmd, OLED_CMD_SET_VCOMH_DESELCT, true);		// DB
-	i2c_master_write_byte(cmd, 0x40, true);
-	i2c_master_write_byte(cmd, OLED_CMD_SET_MEMORY_ADDR_MODE, true);	// 20
-	//i2c_master_write_byte(cmd, OLED_CMD_SET_HORI_ADDR_MODE, true);	// 00
-	i2c_master_write_byte(cmd, OLED_CMD_SET_PAGE_ADDR_MODE, true);		// 02
+	cmd_data[idx++] = OLED_CMD_SET_COM_SCAN_MODE;		// C8
+	cmd_data[idx++] = OLED_CMD_SET_DISPLAY_CLK_DIV;		// D5
+	cmd_data[idx++] = 0x80;
+	cmd_data[idx++] = OLED_CMD_SET_COM_PIN_MAP;			// DA
+	if (dev->_height == 64) cmd_data[idx++] = 0x12;
+	if (dev->_height == 32) cmd_data[idx++] = 0x02;
+	cmd_data[idx++] = OLED_CMD_SET_CONTRAST;			// 81
+	cmd_data[idx++] = 0xFF;
+	cmd_data[idx++] = OLED_CMD_DISPLAY_RAM;				// A4
+	cmd_data[idx++] = OLED_CMD_SET_VCOMH_DESELCT;		// DB
+	cmd_data[idx++] = 0x40;
+	cmd_data[idx++] = OLED_CMD_SET_MEMORY_ADDR_MODE;	// 20
+	//cmd_data[idx++] = OLED_CMD_SET_HORI_ADDR_MODE;	// 00
+	cmd_data[idx++] = OLED_CMD_SET_PAGE_ADDR_MODE;		// 02
 	// Set Lower Column Start Address for Page Addressing Mode
-	i2c_master_write_byte(cmd, 0x00, true);
+	cmd_data[idx++] = 0x00;
 	// Set Higher Column Start Address for Page Addressing Mode
-	i2c_master_write_byte(cmd, 0x10, true);
-	i2c_master_write_byte(cmd, OLED_CMD_SET_CHARGE_PUMP, true);			// 8D
-	i2c_master_write_byte(cmd, 0x14, true);
-	i2c_master_write_byte(cmd, OLED_CMD_DEACTIVE_SCROLL, true);			// 2E
-	i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_NORMAL, true);			// A6
-	i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_ON, true);				// AF
+	cmd_data[idx++] = 0x10;
+	cmd_data[idx++] = OLED_CMD_SET_CHARGE_PUMP;			// 8D
+	cmd_data[idx++] = 0x14;
+	cmd_data[idx++] = OLED_CMD_DEACTIVE_SCROLL;			// 2E
+	cmd_data[idx++] = OLED_CMD_DISPLAY_NORMAL;			// A6
+	cmd_data[idx++] = OLED_CMD_DISPLAY_ON;				// AF
 
-	i2c_master_stop(cmd);
-
-	esp_err_t espRc = i2c_master_cmd_begin(I2C_NUM, cmd, 10/portTICK_PERIOD_MS);
+	esp_err_t espRc = i2c_master_transmit(dev_handle, cmd_data, idx, pdMS_TO_TICKS(10));
 	if (espRc == ESP_OK) {
 		ESP_LOGI(tag, "OLED configured successfully");
 	} else {
 		ESP_LOGE(tag, "OLED configuration failed. code: 0x%.2X", espRc);
 		// Code 107 is timeout
 	}
-	i2c_cmd_link_delete(cmd);
 }
 
 
 
 void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width) {
-	i2c_cmd_handle_t cmd;
-
 	if (page >= dev->_pages) return;
 	if (seg >= dev->_width) return;
 
@@ -123,67 +137,71 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int
 		_page = (dev->_pages - page) - 1;
 	}
 
-	cmd = i2c_cmd_link_create();
-	i2c_master_start(cmd);
-	i2c_master_write_byte(cmd, (dev->_address << 1) | I2C_MASTER_WRITE, true);
-
-	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
+	// First, send the command sequence to set the page/column
+	uint8_t cmd_data[4];
+	cmd_data[0] = OLED_CONTROL_BYTE_CMD_STREAM;
 	// Set Lower Column Start Address for Page Addressing Mode
-	i2c_master_write_byte(cmd, (0x00 + columLow), true);
+	cmd_data[1] = (0x00 + columLow);
 	// Set Higher Column Start Address for Page Addressing Mode
-	i2c_master_write_byte(cmd, (0x10 + columHigh), true);
+	cmd_data[2] = (0x10 + columHigh);
 	// Set Page Start Address for Page Addressing Mode
-	i2c_master_write_byte(cmd, 0xB0 | _page, true);
+	cmd_data[3] = 0xB0 | _page;
 
-	i2c_master_stop(cmd);
-	i2c_master_cmd_begin(I2C_NUM, cmd, 10/portTICK_PERIOD_MS);
-	i2c_cmd_link_delete(cmd);
+	esp_err_t ret = i2c_master_transmit(dev_handle, cmd_data, 4, pdMS_TO_TICKS(10));
+	if (ret != ESP_OK) {
+		ESP_LOGE(tag, "Failed to set page/column address");
+		return;
+	}
 
-	cmd = i2c_cmd_link_create();
-	i2c_master_start(cmd);
-	i2c_master_write_byte(cmd, (dev->_address << 1) | I2C_MASTER_WRITE, true);
-
-	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_DATA_STREAM, true);
-	i2c_master_write(cmd, images, width, true);
-
-	i2c_master_stop(cmd);
-	i2c_master_cmd_begin(I2C_NUM, cmd, 10/portTICK_PERIOD_MS);
-	i2c_cmd_link_delete(cmd);
+	// Now send the data
+	uint8_t *data_buf = malloc(width + 1);
+	if (data_buf == NULL) {
+		ESP_LOGE(tag, "Failed to allocate memory for display data");
+		return;
+	}
+	
+	data_buf[0] = OLED_CONTROL_BYTE_DATA_STREAM;
+	memcpy(data_buf + 1, images, width);
+	
+	ret = i2c_master_transmit(dev_handle, data_buf, width + 1, pdMS_TO_TICKS(10));
+	free(data_buf);
+	
+	if (ret != ESP_OK) {
+		ESP_LOGE(tag, "Failed to transmit display data");
+	}
 }
 
 
 void i2c_contrast(SSD1306_t * dev, int contrast) {
-	i2c_cmd_handle_t cmd;
 	int _contrast = contrast;
 	if (contrast < 0x0) _contrast = 0;
 	if (contrast > 0xFF) _contrast = 0xFF;
 
-	cmd = i2c_cmd_link_create();
-	i2c_master_start(cmd);
-	i2c_master_write_byte(cmd, (dev->_address << 1) | I2C_MASTER_WRITE, true);
-	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
-	i2c_master_write_byte(cmd, OLED_CMD_SET_CONTRAST, true);			// 81
-	i2c_master_write_byte(cmd, _contrast, true);
-	i2c_master_stop(cmd);
-	i2c_master_cmd_begin(I2C_NUM, cmd, 10/portTICK_PERIOD_MS);
-	i2c_cmd_link_delete(cmd);
+	uint8_t cmd_data[3];
+	cmd_data[0] = OLED_CONTROL_BYTE_CMD_STREAM;
+	cmd_data[1] = OLED_CMD_SET_CONTRAST;			// 81
+	cmd_data[2] = _contrast;
+	
+	esp_err_t ret = i2c_master_transmit(dev_handle, cmd_data, 3, pdMS_TO_TICKS(10));
+	if (ret != ESP_OK) {
+		ESP_LOGE(tag, "Failed to set contrast");
+	}
 }
 
 
 
 void i2c_sleep(SSD1306_t * dev, bool sleep) {
-	i2c_cmd_handle_t cmd;
-	cmd = i2c_cmd_link_create();
-	i2c_master_start(cmd);
-	i2c_master_write_byte(cmd, (dev->_address << 1) | I2C_MASTER_WRITE, true);
-	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
+	uint8_t cmd_data[2];
+	cmd_data[0] = OLED_CONTROL_BYTE_CMD_STREAM;
 	if (sleep)
-		i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_OFF, true);
+		cmd_data[1] = OLED_CMD_DISPLAY_OFF;
 	else
-		i2c_master_write_byte(cmd, OLED_CMD_DISPLAY_ON, true);
-	i2c_master_stop(cmd);
-	i2c_master_cmd_begin(I2C_NUM, cmd, 10/portTICK_PERIOD_MS);
-	i2c_cmd_link_delete(cmd);
+		cmd_data[1] = OLED_CMD_DISPLAY_ON;
+	
+	esp_err_t ret = i2c_master_transmit(dev_handle, cmd_data, 2, pdMS_TO_TICKS(10));
+	if (ret != ESP_OK) {
+		ESP_LOGE(tag, "Failed to set sleep mode");
+	}
 }
 
 
@@ -192,84 +210,81 @@ void i2c_sleep(SSD1306_t * dev, bool sleep) {
 void i2c_hardware_scroll(SSD1306_t * dev, ssd1306_scroll_type_t scroll) {
 	esp_err_t espRc;
 
-	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-	i2c_master_start(cmd);
-
-	i2c_master_write_byte(cmd, (dev->_address << 1) | I2C_MASTER_WRITE, true);
-	i2c_master_write_byte(cmd, OLED_CONTROL_BYTE_CMD_STREAM, true);
+	// Maximum required: 1 byte control + up to 10 bytes command data = 11 bytes
+	uint8_t cmd_data[12];
+	int idx = 0;
+	
+	cmd_data[idx++] = OLED_CONTROL_BYTE_CMD_STREAM;
 
 	if (scroll == SCROLL_RIGHT) {
-		i2c_master_write_byte(cmd, OLED_CMD_HORIZONTAL_RIGHT, true);	// 26
-		i2c_master_write_byte(cmd, 0x00, true); // Dummy byte
-		i2c_master_write_byte(cmd, 0x00, true); // Define start page address
-		i2c_master_write_byte(cmd, 0x07, true); // Frame frequency
-		i2c_master_write_byte(cmd, 0x07, true); // Define end page address
-		i2c_master_write_byte(cmd, 0x00, true); //
-		i2c_master_write_byte(cmd, 0xFF, true); //
-		i2c_master_write_byte(cmd, OLED_CMD_ACTIVE_SCROLL, true);		// 2F
+		cmd_data[idx++] = OLED_CMD_HORIZONTAL_RIGHT;	// 26
+		cmd_data[idx++] = 0x00; // Dummy byte
+		cmd_data[idx++] = 0x00; // Define start page address
+		cmd_data[idx++] = 0x07; // Frame frequency
+		cmd_data[idx++] = 0x07; // Define end page address
+		cmd_data[idx++] = 0x00; //
+		cmd_data[idx++] = 0xFF; //
+		cmd_data[idx++] = OLED_CMD_ACTIVE_SCROLL;		// 2F
 	} 
 
 	if (scroll == SCROLL_LEFT) {
-		i2c_master_write_byte(cmd, OLED_CMD_HORIZONTAL_LEFT, true);		// 27
-		i2c_master_write_byte(cmd, 0x00, true); // Dummy byte
-		i2c_master_write_byte(cmd, 0x00, true); // Define start page address
-		i2c_master_write_byte(cmd, 0x07, true); // Frame frequency
-		i2c_master_write_byte(cmd, 0x07, true); // Define end page address
-		i2c_master_write_byte(cmd, 0x00, true); //
-		i2c_master_write_byte(cmd, 0xFF, true); //
-		i2c_master_write_byte(cmd, OLED_CMD_ACTIVE_SCROLL, true);		// 2F
+		cmd_data[idx++] = OLED_CMD_HORIZONTAL_LEFT;		// 27
+		cmd_data[idx++] = 0x00; // Dummy byte
+		cmd_data[idx++] = 0x00; // Define start page address
+		cmd_data[idx++] = 0x07; // Frame frequency
+		cmd_data[idx++] = 0x07; // Define end page address
+		cmd_data[idx++] = 0x00; //
+		cmd_data[idx++] = 0xFF; //
+		cmd_data[idx++] = OLED_CMD_ACTIVE_SCROLL;		// 2F
 	} 
 
 	if (scroll == SCROLL_DOWN) {
-		i2c_master_write_byte(cmd, OLED_CMD_CONTINUOUS_SCROLL, true);	// 29
-		i2c_master_write_byte(cmd, 0x00, true); // Dummy byte
-		i2c_master_write_byte(cmd, 0x00, true); // Define start page address
-		i2c_master_write_byte(cmd, 0x07, true); // Frame frequency
-		//i2c_master_write_byte(cmd, 0x01, true); // Define end page address
-		i2c_master_write_byte(cmd, 0x00, true); // Define end page address
-		i2c_master_write_byte(cmd, 0x3F, true); // Vertical scrolling offset
+		cmd_data[idx++] = OLED_CMD_CONTINUOUS_SCROLL;	// 29
+		cmd_data[idx++] = 0x00; // Dummy byte
+		cmd_data[idx++] = 0x00; // Define start page address
+		cmd_data[idx++] = 0x07; // Frame frequency
+		//cmd_data[idx++] = 0x01; // Define end page address
+		cmd_data[idx++] = 0x00; // Define end page address
+		cmd_data[idx++] = 0x3F; // Vertical scrolling offset
 
-		i2c_master_write_byte(cmd, OLED_CMD_VERTICAL, true);			// A3
-		i2c_master_write_byte(cmd, 0x00, true);
+		cmd_data[idx++] = OLED_CMD_VERTICAL;			// A3
+		cmd_data[idx++] = 0x00;
 		if (dev->_height == 64)
-		//i2c_master_write_byte(cmd, 0x7F, true);
-		i2c_master_write_byte(cmd, 0x40, true);
+		//cmd_data[idx++] = 0x7F;
+		cmd_data[idx++] = 0x40;
 		if (dev->_height == 32)
-		i2c_master_write_byte(cmd, 0x20, true);
-		i2c_master_write_byte(cmd, OLED_CMD_ACTIVE_SCROLL, true);		// 2F
+		cmd_data[idx++] = 0x20;
+		cmd_data[idx++] = OLED_CMD_ACTIVE_SCROLL;		// 2F
 	}
 
 	if (scroll == SCROLL_UP) {
-		i2c_master_write_byte(cmd, OLED_CMD_CONTINUOUS_SCROLL, true);	// 29
-		i2c_master_write_byte(cmd, 0x00, true); // Dummy byte
-		i2c_master_write_byte(cmd, 0x00, true); // Define start page address
-		i2c_master_write_byte(cmd, 0x07, true); // Frame frequency
-		//i2c_master_write_byte(cmd, 0x01, true); // Define end page address
-		i2c_master_write_byte(cmd, 0x00, true); // Define end page address
-		i2c_master_write_byte(cmd, 0x01, true); // Vertical scrolling offset
+		cmd_data[idx++] = OLED_CMD_CONTINUOUS_SCROLL;	// 29
+		cmd_data[idx++] = 0x00; // Dummy byte
+		cmd_data[idx++] = 0x00; // Define start page address
+		cmd_data[idx++] = 0x07; // Frame frequency
+		//cmd_data[idx++] = 0x01; // Define end page address
+		cmd_data[idx++] = 0x00; // Define end page address
+		cmd_data[idx++] = 0x01; // Vertical scrolling offset
 
-		i2c_master_write_byte(cmd, OLED_CMD_VERTICAL, true);			// A3
-		i2c_master_write_byte(cmd, 0x00, true);
+		cmd_data[idx++] = OLED_CMD_VERTICAL;			// A3
+		cmd_data[idx++] = 0x00;
 		if (dev->_height == 64)
-		//i2c_master_write_byte(cmd, 0x7F, true);
-		i2c_master_write_byte(cmd, 0x40, true);
+		//cmd_data[idx++] = 0x7F;
+		cmd_data[idx++] = 0x40;
 		if (dev->_height == 32)
-		i2c_master_write_byte(cmd, 0x20, true);
-		i2c_master_write_byte(cmd, OLED_CMD_ACTIVE_SCROLL, true);		// 2F
+		cmd_data[idx++] = 0x20;
+		cmd_data[idx++] = OLED_CMD_ACTIVE_SCROLL;		// 2F
 	}
 
 	if (scroll == SCROLL_STOP) {
-		i2c_master_write_byte(cmd, OLED_CMD_DEACTIVE_SCROLL, true);		// 2E
+		cmd_data[idx++] = OLED_CMD_DEACTIVE_SCROLL;		// 2E
 	}
 
-	i2c_master_stop(cmd);
-	espRc = i2c_master_cmd_begin(I2C_NUM, cmd, 10/portTICK_PERIOD_MS);
+	espRc = i2c_master_transmit(dev_handle, cmd_data, idx, pdMS_TO_TICKS(10));
 	if (espRc == ESP_OK) {
 		ESP_LOGD(tag, "Scroll command succeeded");
 	} else {
 		ESP_LOGE(tag, "Scroll command failed. code: 0x%.2X", espRc);
 	}
-
-	i2c_cmd_link_delete(cmd);
 }
 
