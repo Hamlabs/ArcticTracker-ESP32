@@ -19,7 +19,7 @@ static const char *TAG = "pmu";
 #define I2C_MASTER_NUM                  I2C_NUM_0
 #define I2C_MASTER_SDA_IO               (gpio_num_t)CONFIG_PMU_I2C_SDA
 #define I2C_MASTER_SCL_IO               (gpio_num_t)CONFIG_PMU_I2C_SCL
-#define I2C_MASTER_FREQ_HZ              400000 /*!< I2C master clock frequency. Must match display driver (400kHz) */
+/* I2C_MASTER_FREQ_HZ is defined in defines.h and shared with display driver */
 
 #define PMU_LOWBAT_SHUTDOWN  5
 

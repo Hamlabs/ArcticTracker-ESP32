@@ -284,6 +284,9 @@
 #define DISP_SCL_PIN    10
 #endif
 
+/* I2C bus configuration - shared between display and PMU */
+#define I2C_MASTER_FREQ_HZ  400000  /*!< I2C master clock frequency (400kHz) */
+
 
 
 

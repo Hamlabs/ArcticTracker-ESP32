@@ -8,13 +8,12 @@
 #include "esp_log.h"
 
 #include "ssd1306.h"
+#include "defines.h"
 
 #define tag "SSD1306"
 
 #define I2C_NUM I2C_NUM_0
 //#define I2C_NUM I2C_NUM_1
-
-#define I2C_MASTER_FREQ_HZ 400000 /*!< I2C master clock frequency. no higher than 1MHz for now */
 
 #define CONFIG_OFFSETX 0
 
