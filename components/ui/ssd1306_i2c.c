@@ -144,16 +144,27 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int
 	// Set Page Start Address for Page Addressing Mode
 	cmd_data[3] = 0xB0 | _page;
 
-	i2c_master_transmit(dev_handle, cmd_data, 4, pdMS_TO_TICKS(10));
+	esp_err_t ret = i2c_master_transmit(dev_handle, cmd_data, 4, pdMS_TO_TICKS(10));
+	if (ret != ESP_OK) {
+		ESP_LOGE(tag, "Failed to set page/column address");
+		return;
+	}
 
 	// Now send the data
 	uint8_t *data_buf = malloc(width + 1);
-	if (data_buf) {
-		data_buf[0] = OLED_CONTROL_BYTE_DATA_STREAM;
-		memcpy(data_buf + 1, images, width);
-		
-		i2c_master_transmit(dev_handle, data_buf, width + 1, pdMS_TO_TICKS(10));
-		free(data_buf);
+	if (data_buf == NULL) {
+		ESP_LOGE(tag, "Failed to allocate memory for display data");
+		return;
+	}
+	
+	data_buf[0] = OLED_CONTROL_BYTE_DATA_STREAM;
+	memcpy(data_buf + 1, images, width);
+	
+	ret = i2c_master_transmit(dev_handle, data_buf, width + 1, pdMS_TO_TICKS(10));
+	free(data_buf);
+	
+	if (ret != ESP_OK) {
+		ESP_LOGE(tag, "Failed to transmit display data");
 	}
 }
 
