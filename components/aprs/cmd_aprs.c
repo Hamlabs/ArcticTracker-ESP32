@@ -274,7 +274,15 @@ void hdl_trkpost(bool on) {
         tracklog_post_stop();
 }
 
-
+void hdl_crypto(bool on) {
+    if (on) {
+        printf("NOTE: Position, object and status reports will now be encrypted.\n");
+        printf("NOTE: This is an experimental feature at this point.\n");
+        printf("NOTE: Be sure you know what you are doing and that encryption (on amateur radio) is legal.. \n");
+    }
+    else
+        printf("NOTE: Position, object and status reports will now be sent as cleartext. .\n");
+}
 
 
 
@@ -284,9 +292,9 @@ CMD_USTR_SETTING (_param_mycall,     "MYCALL",       10, DFL_MYCALL,       REGEX
 CMD_USTR_SETTING (_param_dest,       "DEST",         10, DFL_DEST,         REGEX_AXADDR);
 CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",     70, DFL_DIGIPATH,     REGEX_DIGIPATH);
 
-CMD_STR_SETTING    (_param_trklogurl,  "TRKLOG.URL",   64, DFL_TRKLOG_URL,   REGEX_URL);
-CMD_STR_SETTING    (_param_serverkey,  "TRKLOG.KEY",   128, "",              NULL);
-CMD_STR_SETTING_H  (_param_cryptkey,   "CRYPTO.KEY",   128, DFL_CRYPTO_KEY,  NULL, sec_init);
+CMD_STR_SETTING    (_param_trklogurl, "TRKLOG.URL",   64, DFL_TRKLOG_URL,   REGEX_URL);
+CMD_STR_SETTING    (_param_serverkey, "TRKLOG.KEY",   128, "",              NULL);
+CMD_STR_SETTING_H  (_param_cryptkey,  "CRYPTO.KEY",   128, DFL_CRYPTO_KEY,  NULL, sec_init);
 
 CMD_STR_SETTING  (_param_symbol,     "SYMBOL",       3,  DFL_SYMBOL,       REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_osym,       "OBJ.SYMBOL",   3,  DFL_OBJ_SYMBOL,   REGEX_APRSSYM);
@@ -308,6 +316,7 @@ CMD_U16_SETTING  (_param_turnlimit,  "TURNLIMIT",    DFL_TURNLIMIT,   0, 360);
 CMD_U16_SETTING  (_param_igate_port, "IGATE.PORT",   DFL_IGATE_PORT,  1, 65535);
 CMD_U16_SETTING  (_param_igate_pass, "IGATE.PASS",   0,               0, 65535);
 
+CMD_BOOL_SETTING (_param_crypto_on,  "CRYPTO.on",      DFL_CRYPTO_ON,      hdl_crypto);
 CMD_BOOL_SETTING (_param_tracklog_on,"TRKLOG.on",      DFL_TRKLOG_ON,      hdl_tracklog);
 CMD_BOOL_SETTING (_param_trkpost_on, "TRKLOG.POST.on", DFL_TRKLOG_POST_ON, hdl_trkpost);
 CMD_BOOL_SETTING (_param_tracker_on, "TRACKER.on",     DFL_TRACKER_ON,     hdl_tracker);
@@ -372,6 +381,7 @@ void register_aprs()
     ADD_CMD("trklog-ttl", &_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
     ADD_CMD("trklog-key", &_param_serverkey,   "KEY for authenticating tracklog-messages to Polaric Server", "[<key>]");
     ADD_CMD("trklog-url", &_param_trklogurl,   "URL for posting tracklog updates to Polaric Server", "[<url>]");
+    ADD_CMD("crypto",     &_param_crypto_on,   "Encrypt APRS reports", "[on|off]");
     ADD_CMD("crypto-key", &_param_cryptkey,    "Key for encrypting APRS packets",   "[<val>]");
     ADD_CMD("maxframe",   &_param_maxframe,    "APRS max frames in a transmission", "[<val>]");
     ADD_CMD("maxpause",   &_param_maxpause,    "Tracking max pause (10 sec units)", "[<val>]");

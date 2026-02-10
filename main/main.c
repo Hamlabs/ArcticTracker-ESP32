@@ -30,6 +30,7 @@
 #include "trackstore.h"
 #include "gui.h"
 #include "restapi.h"
+#include "encryption.h"
 
 #include "soc/gpio_sig_map.h"
 #include "driver/usb_serial_jtag.h"
@@ -199,6 +200,7 @@ static void startup(void* arg)
     mon_init();
     sleepMs(10000);   
     time_update();   
+    sec_init();
     sleepMs(1000);
     vTaskDelete(NULL);
 }

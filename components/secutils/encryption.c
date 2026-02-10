@@ -10,6 +10,8 @@
 #include "mbedtls/base64.h"
 #include "base91.h"
 #include "config.h"
+// #include "ax25.h"
+
 
 #define DERIVED_KEY_LENGTH 32
 #define PBKDF2_ITERATIONS 16384
@@ -57,7 +59,7 @@ static uint8_t * derive_key(uint8_t* buf, const char* passwd, const char* salt)
 /**
  * Encrypt a text using a key, and a nonce. 
  */
-static uint8_t * gcm_siv_encrypt(uint8_t *buf, uint8_t* key, char* cleartext, char* nonce) 
+static uint8_t * gcm_siv_encrypt(uint8_t *buf, uint8_t* key, char* cleartext, size_t size, char* nonce) 
 {
     uint8_t ivect[12], aad[1]; 
     memset(ivect, 0, 12);
@@ -66,7 +68,7 @@ static uint8_t * gcm_siv_encrypt(uint8_t *buf, uint8_t* key, char* cleartext, ch
     GCM_SIV_encrypt ( 
             key, ivect,
             (void*) aad, 0,                 
-            (void*) cleartext, strlen(cleartext),  
+            (void*) cleartext, size,  
             buf );    
     return buf;
 }
@@ -86,22 +88,23 @@ void sec_set_key(char* keyphrase) {
 /**
  *  Encrypt a string using AES-GCM-SIV.
  */
-uint8_t * sec_encrypt(uint8_t *buf, char* cleartext, char* nonce) {
-    return gcm_siv_encrypt(buf, _key, cleartext, nonce);
+uint8_t * sec_encrypt(uint8_t *buf, char* cleartext, size_t size, char* nonce) {
+    return gcm_siv_encrypt(buf, _key, cleartext, size, nonce);
 }
 
 
 /**
  *  Encrypt a string using AES-GCM-SIV. Encode with Base64.
  */
-char * sec_encryptB64(char *res, size_t size, char* cleartext, char* nonce) {
-    size_t csize = strlen(cleartext) + 16;
+size_t sec_encryptB64(char *res, size_t dsize, char* cleartext, size_t size, char* nonce) {
+    size_t csize = size + 16;
     size_t olen;
     uint8_t *buf = (uint8_t*) malloc(csize);
-    gcm_siv_encrypt(buf, _key, cleartext, nonce);
-    mbedtls_base64_encode((unsigned char*) res, size, &olen, buf, csize);
+    gcm_siv_encrypt(buf, _key, cleartext, size, nonce);
+    
+    mbedtls_base64_encode((unsigned char*) res, dsize, &olen, buf, csize);
     free(buf);
-    return res;
+    return olen;
 }
 
 
@@ -109,14 +112,14 @@ char * sec_encryptB64(char *res, size_t size, char* cleartext, char* nonce) {
 /**
  *  Encrypt a string using AES-GCM-SIV. Encode with Base91
  */
-char * sec_encryptB91(char *res, size_t size, char* cleartext, char* nonce) {
-    size_t csize = strlen(cleartext) + 16;
+size_t sec_encryptB91(char *res, size_t dsize, char* cleartext, size_t size, char* nonce) {
+    size_t csize = size + 16;
     uint8_t *buf = (uint8_t*) malloc(csize);
-    gcm_siv_encrypt(buf, _key, cleartext, nonce);
+    gcm_siv_encrypt(buf, _key, cleartext, size, nonce);
+    
     size_t len = encodeBase91(buf, res, csize);
-    res[len] = '\0';
     free(buf);
-    return res;
+    return len;
 }
 
 
@@ -129,14 +132,13 @@ void sec_init() {
 
 
 
+
 void sec_crypt_test() {
     char res[128];
-    char* key   = "Hackandcrack"; 
     char* clear = "The quick brown fox jumps over whatever other animals";
-    sec_set_key(key);
-    sec_encryptB64(res, 128, clear, "NONCE");
+    sec_encryptB64(res, 128, clear, strlen(clear), "NONCE");
     printf("CIPHERTEXT: %s\n", res);
-    sec_encryptB91(res, 128, clear, "NONCE");
+    sec_encryptB91(res, 128, clear, strlen(clear), "NONCE");
     printf("CIPHERTEXT: %s\n", res);
 }
 

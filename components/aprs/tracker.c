@@ -1,4 +1,4 @@
-    
+
 /*
  * This is the APRS tracking code
  */
@@ -14,6 +14,8 @@
 #include "radio.h"
 #include "tracker.h"
 #include "math.h"
+#include "encryption.h"
+
 
 
 #define TAG "tracker"
@@ -34,6 +36,7 @@ static void activate_tx(void);
 static bool should_update(posdata_t*, posdata_t*, posdata_t*);
 static uint8_t smartbeacon(uint8_t mindist, float speed, uint8_t minpause);
 static bool course_change(uint16_t, uint16_t, uint16_t);
+
 static void report_status(posdata_t*);
 static void report_station_position(posdata_t*, bool);
 static void report_object_position(posdata_t*, char*, bool);
@@ -46,6 +49,8 @@ static void send_timestamp_z(FBUF* packet, posdata_t* pos);
 static void send_timestamp_compressed(FBUF* packet, posdata_t* pos);
 static void send_latlong_compressed(FBUF*, double, bool);
 static void send_csT_compressed(FBUF*, posdata_t*);
+
+void encrypt_packet(FBUF *f);
 
 
 
@@ -397,10 +402,12 @@ static void report_status(posdata_t* pos)
     ESP_LOGI(TAG, "Report status");
     
     /* Create packet header */
-    send_header(&packet, false);  
+    send_header(&packet, false);
+    
+    /* status report packet type and timestamp */
     fbuf_putChar(&packet, '>');
     send_timestamp_z(&packet, pos); 
-    
+
     /* 
      * Get battery voltage - This should perhaps not be here but in status message or
      * telemetry message instead. 
@@ -414,6 +421,9 @@ static void report_status(posdata_t* pos)
     fbuf_putstr(&packet, VERSION_STRING);
     fbuf_putstr(&packet, " / VBATT="); 
     fbuf_putstr(&packet, vbatt);
+   
+    if ( GET_BOOL_PARAM("CRYPTO.on", DFL_CRYPTO_ON))
+        encrypt_packet(&packet);
    
     /* Send packet */
     fbq_put(outframes, packet);
@@ -483,6 +493,9 @@ static void report_station_position(posdata_t* pos, bool no_tx)
        ccount = COMMENT_PERIOD; 
     }
     
+    if ( GET_BOOL_PARAM("CRYPTO.on", DFL_CRYPTO_ON))
+        encrypt_packet(&packet);
+    
     /* Send packet.
      *   send it on radio if no_tx flag is set
      *   put it on igate-queue (if igate is active)
@@ -527,8 +540,42 @@ static void report_object_position(posdata_t* pos, char* id, bool add)
     
     /* Comment field may be added later */
 
+    if ( GET_BOOL_PARAM("CRYPTO.on", DFL_CRYPTO_ON))
+        encrypt_packet(&packet);
+    
     /* Send packet */
     fbq_put(outframes, packet);
+}
+
+
+
+/**********************************************************************
+ * Generate an AX.25 header from stored station parameters
+ **********************************************************************/
+
+static void send_header(FBUF* packet, bool no_tx)
+{
+    addr_t from, to; 
+    char call[10];
+    
+    get_str_param("MYCALL", call, 10, DFL_MYCALL); 
+    str2addr(&from, call, false); 
+    get_str_param("DEST", call, 10, DFL_DEST);
+    str2addr(&to, call, false); 
+
+    addr_t digis[7];
+    uint8_t ndigis = 0;
+    if (no_tx) {
+        ndigis = 1;
+        str2addr(&digis[0], "TCPIP", false);
+    }
+    else {
+        /* Convert digi path to AX.25 addr list */
+        char dpath[50]; 
+        get_str_param("DIGIPATH", dpath, 50, DFL_DIGIPATH); 
+        ndigis = str2digis(digis, dpath); 
+    }
+    ax25_encode_header(packet, &from, &to, digis, ndigis, FTYPE_UI, PID_NO_L3);
 }
 
 
@@ -638,37 +685,6 @@ static void send_csT_compressed(FBUF* packet, posdata_t* pos)
 
 
 
-/**********************************************************************
- * Generate an AX.25 header from stored station parameters
- **********************************************************************/
-
-static void send_header(FBUF* packet, bool no_tx)
-{
-    addr_t from, to; 
-    char call[10];
-    
-    get_str_param("MYCALL", call, 10, DFL_MYCALL); 
-    str2addr(&from, call, false); 
-    get_str_param("DEST", call, 10, DFL_DEST);
-    str2addr(&to, call, false); 
-
-    addr_t digis[7];
-    uint8_t ndigis = 0;
-    if (no_tx) {
-        ndigis = 1;
-        str2addr(&digis[0], "TCPIP", false);
-    }
-    else {
-        /* Convert digi path to AX.25 addr list */
-        char dpath[50]; 
-        get_str_param("DIGIPATH", dpath, 50, DFL_DEST); 
-        ndigis = str2digis(digis, dpath); 
-    }
-    ax25_encode_header(packet, &from, &to, digis, ndigis, FTYPE_UI, PID_NO_L3);
-}
-
-
-
 static void send_timestamp(FBUF* packet, posdata_t* pos)
 {
     char ts[12];
@@ -700,3 +716,48 @@ static void send_timestamp_compressed(FBUF* packet, posdata_t* pos)
        (char) ('0' + (pos->timestamp % 60)), '\0' );
     fbuf_putstr(packet, ts);
 }
+
+
+/******************************************************************************
+ * Encrypt packet
+ * FIXME: Move to another file?
+ ******************************************************************************/
+
+
+void encrypt_packet(FBUF *f) { 
+    ax25_display_frame(f);
+    printf("\n");
+    fbuf_reset(f);
+    
+    /* Need info from header */
+    addr_t from, to; 
+    addr_t digis[7];
+    uint8_t ctrl, pid;
+    uint8_t ndigis = ax25_decode_header(f, &from, &to, digis, &ctrl, &pid);
+    uint8_t hdrlen = AX25_HDR_LEN(ndigis);
+    
+    /* Read and encrypt packet content (excluding header) */
+    char buf[256];
+    char res[256];
+    char src[10]; 
+    
+    addr2str(src, &from);
+    uint16_t dlen = fbuf_read(f, 0, buf);
+    size_t rlen = sec_encryptB91(res, 256, (char*) (buf+hdrlen), (size_t) dlen-hdrlen, src);
+    res[rlen]='\0';
+    
+    /* Create new version of packet */
+    uint8_t tag = fbuf_getTag(f);
+    addr_t xdest; 
+    
+    fbuf_release(f);
+    fbuf_new(f, tag);
+    str2addr(&xdest, "APPSE1", false);
+    ax25_encode_header(f, &from, &xdest, digis, ndigis, ctrl, pid);
+    fbuf_write(f, "{{:", 3);
+    fbuf_write(f, res, rlen);
+    
+    ax25_display_frame(f);
+    printf("\n");
+}
+

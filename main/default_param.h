@@ -54,6 +54,8 @@
 #define DFL_FREQ     433775000
 #define DFL_TXPOWER          4
 
+
+#define DFL_CRYPTO_ON      false
 #define DFL_TRKLOG_ON      false
 #define DFL_TRKLOG_POST_ON false
 #define DFL_TRACKER_ON     true
