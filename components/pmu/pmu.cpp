@@ -16,7 +16,7 @@ extern "C" {
 static const char *TAG = "pmu";
 
 /* I2C configuration note: The I2C bus is initialized by the display driver (ssd1306_i2c.c)
- * with GPIO pins from defines.h (DISP_SDA_PIN, DISP_SCL_PIN). 
+ * with GPIO pins from defines.h (DISP_SDA_PIN, DISP_SCL_PIN).
  * PMU driver shares the same I2C bus by adding its device to the existing bus_handle.
  * The CONFIG_PMU_I2C_SDA and CONFIG_PMU_I2C_SCL values in sdkconfig should match
  * DISP_SDA_PIN and DISP_SCL_PIN for correct operation. */
