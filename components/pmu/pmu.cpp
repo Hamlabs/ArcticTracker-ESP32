@@ -23,12 +23,8 @@ static const char *TAG = "pmu";
 
 #define PMU_LOWBAT_SHUTDOWN  5
 
-// I2C handles - forward declaration and extern for sharing with display module
-#ifndef I2C_MASTER_BUS_HANDLE_T
-#define I2C_MASTER_BUS_HANDLE_T
-struct i2c_master_bus_t;
-typedef struct i2c_master_bus_t *i2c_master_bus_handle_t;
-#endif
+// I2C handles - extern to allow sharing with display module
+// Type i2c_master_bus_handle_t is defined in driver/i2c_master.h
 extern i2c_master_bus_handle_t bus_handle;
 static i2c_master_dev_handle_t pmu_dev_handle = NULL;
 

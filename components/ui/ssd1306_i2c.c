@@ -135,7 +135,7 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int
 	}
 
 	// First, send the command sequence to set the page/column
-	uint8_t cmd_data[5];
+	uint8_t cmd_data[4];
 	cmd_data[0] = OLED_CONTROL_BYTE_CMD_STREAM;
 	// Set Lower Column Start Address for Page Addressing Mode
 	cmd_data[1] = (0x00 + columLow);
@@ -174,12 +174,15 @@ void i2c_contrast(SSD1306_t * dev, int contrast) {
 	if (contrast < 0x0) _contrast = 0;
 	if (contrast > 0xFF) _contrast = 0xFF;
 
-	uint8_t cmd_data[4];
+	uint8_t cmd_data[3];
 	cmd_data[0] = OLED_CONTROL_BYTE_CMD_STREAM;
 	cmd_data[1] = OLED_CMD_SET_CONTRAST;			// 81
 	cmd_data[2] = _contrast;
 	
-	i2c_master_transmit(dev_handle, cmd_data, 3, pdMS_TO_TICKS(10));
+	esp_err_t ret = i2c_master_transmit(dev_handle, cmd_data, 3, pdMS_TO_TICKS(10));
+	if (ret != ESP_OK) {
+		ESP_LOGE(tag, "Failed to set contrast");
+	}
 }
 
 
@@ -192,7 +195,10 @@ void i2c_sleep(SSD1306_t * dev, bool sleep) {
 	else
 		cmd_data[1] = OLED_CMD_DISPLAY_ON;
 	
-	i2c_master_transmit(dev_handle, cmd_data, 2, pdMS_TO_TICKS(10));
+	esp_err_t ret = i2c_master_transmit(dev_handle, cmd_data, 2, pdMS_TO_TICKS(10));
+	if (ret != ESP_OK) {
+		ESP_LOGE(tag, "Failed to set sleep mode");
+	}
 }
 
 
