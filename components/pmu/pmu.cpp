@@ -1,6 +1,8 @@
 #include "defines.h"
 #include <stdio.h>
-#include "driver/i2c.h"
+#include <stdlib.h>
+#include <string.h>
+#include "driver/i2c_master.h"
 #include "esp_log.h"
 #include "pmu.h"
 
@@ -14,21 +16,16 @@ extern "C" {
 static const char *TAG = "pmu";
 
 /* Koordiner med andre steder hvor i2c er brukt */
-#define I2C_MASTER_NUM                  (i2c_port_t)CONFIG_I2C_MASTER_PORT_NUM
+#define I2C_MASTER_NUM                  I2C_NUM_0
 #define I2C_MASTER_SDA_IO               (gpio_num_t)CONFIG_PMU_I2C_SDA
 #define I2C_MASTER_SCL_IO               (gpio_num_t)CONFIG_PMU_I2C_SCL
 #define I2C_MASTER_FREQ_HZ              CONFIG_I2C_MASTER_FREQUENCY /*!< I2C master clock frequency */
 
-
-#define WRITE_BIT                       I2C_MASTER_WRITE            /*!< I2C master write */
-#define READ_BIT                        I2C_MASTER_READ             /*!< I2C master read */
-#define ACK_CHECK_EN                    0x1                         /*!< I2C master will check ack from slave */
-#define ACK_CHECK_DIS                   0x0                         /*!< I2C master will not check ack from slave */
-#define ACK_VAL                         (i2c_ack_type_t)0x0         /*!< I2C ack value */
-#define NACK_VAL                        (i2c_ack_type_t)0x1         /*!< I2C nack value */
-
 #define PMU_LOWBAT_SHUTDOWN  5
 
+// I2C handles - extern to allow sharing with other modules if needed
+extern i2c_master_bus_handle_t bus_handle;
+static i2c_master_dev_handle_t pmu_dev_handle = NULL;
 
 
 static int pmu_register_read(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len);
@@ -45,6 +42,20 @@ static XPowersPMU PMU;
 
 esp_err_t pmu_init()
 {
+    // Add PMU device to the I2C bus (bus should already be created by display init)
+    if (pmu_dev_handle == NULL && bus_handle != NULL) {
+        i2c_device_config_t dev_config = {
+            .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+            .device_address = AXP2101_SLAVE_ADDRESS,
+            .scl_speed_hz = I2C_MASTER_FREQ_HZ,
+        };
+        esp_err_t ret = i2c_master_bus_add_device(bus_handle, &dev_config, &pmu_dev_handle);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to add PMU device to I2C bus");
+            return ESP_FAIL;
+        }
+    }
+
     /* Implemented using read and write callback methods, applicable to other platforms */
     if (PMU.begin(AXP2101_SLAVE_ADDRESS, pmu_register_read, pmu_register_write_byte)) {
         ESP_LOGI(TAG, "Init PMU SUCCESS!");
@@ -337,29 +348,9 @@ static int pmu_register_read(uint8_t devAddr, uint8_t regAddr, uint8_t *data, ui
         return ESP_FAIL;
     }
 
-    i2c_cmd_handle_t cmd;
-
-    cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (devAddr << 1) | WRITE_BIT, ACK_CHECK_EN);
-    i2c_master_write_byte(cmd, regAddr, ACK_CHECK_EN);
-    i2c_master_stop(cmd);
-    ret =  i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdTICKS_TO_MS(1000));
-    i2c_cmd_link_delete(cmd);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "PMU i2c_master_cmd_begin FAILED! > ");
-        return ESP_FAIL;
-    }
-    cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (devAddr << 1) | READ_BIT, ACK_CHECK_EN);
-    if (len > 1) {
-        i2c_master_read(cmd, data, len - 1, ACK_VAL);
-    }
-    i2c_master_read_byte(cmd, &data[len - 1], NACK_VAL);
-    i2c_master_stop(cmd);
-    ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdTICKS_TO_MS(1000));
-    i2c_cmd_link_delete(cmd);
+    // Use i2c_master_transmit_receive for combined write-read transaction
+    ret = i2c_master_transmit_receive(pmu_dev_handle, &regAddr, 1, data, len, pdMS_TO_TICKS(1000));
+    
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "PMU READ FAILED! > ");
     }
@@ -379,14 +370,19 @@ static int pmu_register_write_byte(uint8_t devAddr, uint8_t regAddr, uint8_t *da
         return ESP_FAIL;
     }
 
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (devAddr << 1) |  I2C_MASTER_WRITE, ACK_CHECK_EN);
-    i2c_master_write_byte(cmd, regAddr, ACK_CHECK_EN);
-    i2c_master_write(cmd, data, len, ACK_CHECK_EN);
-    i2c_master_stop(cmd);
-    ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdTICKS_TO_MS(1000));
-    i2c_cmd_link_delete(cmd);
+    // Prepare write buffer: register address followed by data
+    uint8_t *write_buf = (uint8_t *)malloc(len + 1);
+    if (write_buf == NULL) {
+        ESP_LOGE(TAG, "PMU WRITE - malloc failed");
+        return ESP_FAIL;
+    }
+    
+    write_buf[0] = regAddr;
+    memcpy(write_buf + 1, data, len);
+    
+    ret = i2c_master_transmit(pmu_dev_handle, write_buf, len + 1, pdMS_TO_TICKS(1000));
+    free(write_buf);
+    
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "PMU WRITE FAILED! < ");
     }
