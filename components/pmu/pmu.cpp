@@ -43,8 +43,14 @@ static XPowersPMU PMU;
 
 esp_err_t pmu_init()
 {
+    // Check if I2C bus has been initialized by display module
+    if (bus_handle == NULL) {
+        ESP_LOGE(TAG, "I2C bus not initialized. Display must be initialized first.");
+        return ESP_FAIL;
+    }
+
     // Add PMU device to the I2C bus (bus should already be created by display init)
-    if (pmu_dev_handle == NULL && bus_handle != NULL) {
+    if (pmu_dev_handle == NULL) {
         i2c_device_config_t dev_config = {
             .dev_addr_length = I2C_ADDR_BIT_LEN_7,
             .device_address = AXP2101_SLAVE_ADDRESS,

@@ -19,6 +19,8 @@
 #define CONFIG_OFFSETX 0
 
 // I2C bus handle - shared with other modules (e.g., PMU)
+// NOTE: This must be initialized by calling i2c_master_init() before
+// other modules (like PMU) can add their devices to the bus.
 i2c_master_bus_handle_t bus_handle = NULL;
 static i2c_master_dev_handle_t dev_handle = NULL;
 
@@ -69,7 +71,8 @@ void i2c_init(SSD1306_t * dev, int width, int height) {
 	if (dev->_height == 32) dev->_pages = 4;
 	
 	// Build command sequence for initialization
-	uint8_t cmd_data[64];
+	// Maximum required size: 28 bytes for initialization commands
+	uint8_t cmd_data[32];
 	int idx = 0;
 	
 	cmd_data[idx++] = OLED_CONTROL_BYTE_CMD_STREAM;
@@ -207,7 +210,8 @@ void i2c_sleep(SSD1306_t * dev, bool sleep) {
 void i2c_hardware_scroll(SSD1306_t * dev, ssd1306_scroll_type_t scroll) {
 	esp_err_t espRc;
 
-	uint8_t cmd_data[16];
+	// Maximum required: 1 byte control + up to 10 bytes command data = 11 bytes
+	uint8_t cmd_data[12];
 	int idx = 0;
 	
 	cmd_data[idx++] = OLED_CONTROL_BYTE_CMD_STREAM;
