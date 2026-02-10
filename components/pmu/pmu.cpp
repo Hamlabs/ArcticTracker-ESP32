@@ -15,11 +15,11 @@ extern "C" {
 
 static const char *TAG = "pmu";
 
-/* Koordiner med andre steder hvor i2c er brukt */
-#define I2C_MASTER_NUM                  I2C_NUM_0
-#define I2C_MASTER_SDA_IO               (gpio_num_t)CONFIG_PMU_I2C_SDA
-#define I2C_MASTER_SCL_IO               (gpio_num_t)CONFIG_PMU_I2C_SCL
-/* I2C_MASTER_FREQ_HZ is defined in defines.h and shared with display driver */
+/* I2C configuration note: The I2C bus is initialized by the display driver (ssd1306_i2c.c)
+ * with GPIO pins from defines.h (DISP_SDA_PIN, DISP_SCL_PIN). 
+ * PMU driver shares the same I2C bus by adding its device to the existing bus_handle.
+ * The CONFIG_PMU_I2C_SDA and CONFIG_PMU_I2C_SCL values in sdkconfig should match
+ * DISP_SDA_PIN and DISP_SCL_PIN for correct operation. */
 
 #define PMU_LOWBAT_SHUTDOWN  5
 
