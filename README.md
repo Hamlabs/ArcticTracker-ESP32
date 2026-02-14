@@ -13,6 +13,7 @@ See also the [Polaric Server project](https://github.com/PolaricServer).
 
 [Documentation](https://doc.arctictracker.no) website.  
 
+
 ## Supported hardware
 
 * [_LilyGo T-TWR-plus 2.0_](https://www.lilygo.cc/products/t-twr-plus?variant=42911934185653).
@@ -100,6 +101,7 @@ Receiving packets is more complicated than transmitting and involve some DSP wor
 
 The SA868 comes with a programmable version and I wonder if it could used and maybe optimized a bit for APRS? 
 
-I am open for ideas and contributions :)
+*I am open for ideas and contributions :)*
  
 
+<a href="https://www.buymeacoffee.com/la7eca" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 150px !important;" ></a>
