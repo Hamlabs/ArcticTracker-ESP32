@@ -444,7 +444,7 @@ void disp_sleepmode(bool on) {
     if (on == _sleepmode)
         return;
     _sleepmode = on;
-//    i2c_sleep(&_dev_, on);  FIXME FIXME
+    i2c_sleep(&_dev_, on); 
 }
 
 

@@ -175,7 +175,7 @@ void spi_display_image(SSD1306_t * dev, int page, int seg, const uint8_t * image
 void spi_contrast(SSD1306_t * dev, int contrast);
 void spi_hardware_scroll(SSD1306_t * dev, ssd1306_scroll_type_t scroll);
 
-
+void i2c_sleep(SSD1306_t * dev, bool sleep);
 
 
 #endif /* MAIN_SSD1306_H_ */
