@@ -1,6 +1,6 @@
 #include "defines.h"
 #include <stdio.h>
-#include "driver/i2c.h"
+#include "driver/i2c_master.h"
 #include "esp_log.h"
 #include "pmu.h"
 
@@ -29,13 +29,23 @@ static const char *TAG = "pmu";
 
 #define PMU_LOWBAT_SHUTDOWN  5
 
+#define I2C_TICKS_TO_WAIT 100	  // Maximum ticks to wait before issuing a timeout.
 
+#define PMU_SLAVE_ADDRESS   0X34
+i2c_master_dev_handle_t  pmu_i2c_device;
 
+esp_err_t pmu_i2c_init();
 static int pmu_register_read(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len);
 static int pmu_register_write_byte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len);
 
 
 static XPowersPMU PMU;
+
+/* 
+ * I2C bus is initialized in the display_code. 
+ */
+extern i2c_master_bus_handle_t i2c_bus;
+
 
 
 /************************************************************
@@ -45,6 +55,8 @@ static XPowersPMU PMU;
 
 esp_err_t pmu_init()
 {
+    pmu_i2c_init(); 
+    
     /* Implemented using read and write callback methods, applicable to other platforms */
     if (PMU.begin(AXP2101_SLAVE_ADDRESS, pmu_register_read, pmu_register_write_byte)) {
         ESP_LOGI(TAG, "Init PMU SUCCESS!");
@@ -322,6 +334,25 @@ void pmu_printInfo()
 }
 
 
+/*******************************************************************************************
+ * i2c master initialization
+ *******************************************************************************************/
+
+esp_err_t pmu_i2c_init(void)
+{
+    /* Note: The i2c bus is shared with the display driver and we assume it is already
+     * initialized there 
+     */
+
+    i2c_device_config_t i2c_dev_conf = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = PMU_SLAVE_ADDRESS,
+        .scl_speed_hz = I2C_MASTER_FREQ_HZ,
+    };
+    return i2c_master_bus_add_device(i2c_bus, &i2c_dev_conf, &pmu_i2c_device);
+
+}
+
 
 /****************************************************************************************
  * Read a sequence of bytes from a pmu registers
@@ -330,39 +361,16 @@ void pmu_printInfo()
 static int pmu_register_read(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len)
 {
     esp_err_t ret;
-    if (len == 0) {
+    if (len == 0) 
         return ESP_OK;
-    }
-    if (data == NULL) {
+    
+    if (data == NULL) 
         return ESP_FAIL;
-    }
 
-    i2c_cmd_handle_t cmd;
-
-    cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (devAddr << 1) | WRITE_BIT, ACK_CHECK_EN);
-    i2c_master_write_byte(cmd, regAddr, ACK_CHECK_EN);
-    i2c_master_stop(cmd);
-    ret =  i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdTICKS_TO_MS(1000));
-    i2c_cmd_link_delete(cmd);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "PMU i2c_master_cmd_begin FAILED! > ");
-        return ESP_FAIL;
-    }
-    cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (devAddr << 1) | READ_BIT, ACK_CHECK_EN);
-    if (len > 1) {
-        i2c_master_read(cmd, data, len - 1, ACK_VAL);
-    }
-    i2c_master_read_byte(cmd, &data[len - 1], NACK_VAL);
-    i2c_master_stop(cmd);
-    ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdTICKS_TO_MS(1000));
-    i2c_cmd_link_delete(cmd);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "PMU READ FAILED! > ");
-    }
+    ret = i2c_master_transmit_receive( pmu_i2c_device,
+            (const uint8_t *) &regAddr, 1,
+            data, len, -1);
+    
     return ret == ESP_OK ? 0 : -1;
 }
 
@@ -375,23 +383,20 @@ static int pmu_register_read(uint8_t devAddr, uint8_t regAddr, uint8_t *data, ui
 static int pmu_register_write_byte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len)
 {
     esp_err_t ret;
-    if (data == NULL) {
+    if (data == NULL) 
         return ESP_FAIL;
-    }
-
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (devAddr << 1) |  I2C_MASTER_WRITE, ACK_CHECK_EN);
-    i2c_master_write_byte(cmd, regAddr, ACK_CHECK_EN);
-    i2c_master_write(cmd, data, len, ACK_CHECK_EN);
-    i2c_master_stop(cmd);
-    ret = i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, pdTICKS_TO_MS(1000));
-    i2c_cmd_link_delete(cmd);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "PMU WRITE FAILED! < ");
-    }
+    
+    uint8_t *write_buffer = (uint8_t *)malloc(sizeof(uint8_t) * (len + 1));
+    if (!write_buffer) 
+        return -1;
+    
+    write_buffer[0] = regAddr;
+    memcpy(write_buffer + 1, data, len);
+    ret = i2c_master_transmit(
+        pmu_i2c_device, write_buffer, len + 1, -1
+    );
+    free(write_buffer);
     return ret == ESP_OK ? 0 : -1;
 }
-
 
 }

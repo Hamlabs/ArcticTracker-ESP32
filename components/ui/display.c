@@ -23,7 +23,8 @@ SSD1306_t  _dev_;
 
 void i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset);
 void i2c_init(SSD1306_t * dev, int width, int height);
-void i2c_display_image(SSD1306_t * dev, int page, int seg, uint8_t * images, int width);
+void i2c_display_image(SSD1306_t * dev, int page, int seg, const uint8_t * images, int width);
+
 static void blhandler(TimerHandle_t timer);
 static void slhandler(TimerHandle_t timer);
 
@@ -443,7 +444,7 @@ void disp_sleepmode(bool on) {
     if (on == _sleepmode)
         return;
     _sleepmode = on;
-    i2c_sleep(&_dev_, on);
+//    i2c_sleep(&_dev_, on);  FIXME FIXME
 }
 
 
