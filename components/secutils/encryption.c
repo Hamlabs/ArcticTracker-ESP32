@@ -123,6 +123,10 @@ size_t sec_encryptB91(char *res, size_t dsize, char* cleartext, size_t size, cha
 }
 
 
+bool sec_isEncrypted() {
+    return GET_BOOL_PARAM("CRYPTO.on", DFL_CRYPTO_ON);
+}
+
 
 void sec_init() {
     char k[129];
@@ -131,16 +135,6 @@ void sec_init() {
 }
 
 
-
-
-void sec_crypt_test() {
-    char res[128];
-    char* clear = "The quick brown fox jumps over whatever other animals";
-    sec_encryptB64(res, 128, clear, strlen(clear), "NONCE");
-    printf("CIPHERTEXT: %s\n", res);
-    sec_encryptB91(res, 128, clear, strlen(clear), "NONCE");
-    printf("CIPHERTEXT: %s\n", res);
-}
 
 
 

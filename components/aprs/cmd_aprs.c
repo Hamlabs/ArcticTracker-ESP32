@@ -278,10 +278,10 @@ void hdl_crypto(bool on) {
     if (on) {
         printf("NOTE: Position, object and status reports will now be encrypted.\n");
         printf("NOTE: This is an experimental feature at this point.\n");
-        printf("NOTE: Be sure you know what you are doing and that encryption (on amateur radio) is legal.. \n");
+        printf("NOTE: Be sure you know what you are doing and that encryption (on amateur radio) is legal. \n");
     }
     else
-        printf("NOTE: Position, object and status reports will now be sent as cleartext. .\n");
+        printf("NOTE: Position, object and status reports will now be sent as cleartext.\n");
 }
 
 

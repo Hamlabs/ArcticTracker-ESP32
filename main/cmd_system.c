@@ -580,12 +580,6 @@ static int do_reset(int argc, char** argv) {
 }
 
 
-static int do_crypt(int argc, char** argv) {
-    sec_crypt_test();
-    return 0;
-}
-
-
 
 CMD_U16_SETTING  (_param_adcref,  "ADC.REF",  1100, 0, 3300);
 CMD_STR_SETTING  (_param_timezone,"TIMEZONE",   64, DFL_TIMEZONE,   REGEX_TIMEZONE);
@@ -628,7 +622,6 @@ void register_system()
     ADD_CMD("ioconfig",  &do_ioconfig,    "Show info on GPIO configuration", "<gpio>");
     ADD_CMD("fw-upgrade",&do_fwupgrade,   "Firmware upgrade (OTA)", "");
     ADD_CMD("rssi",      &do_rssi,        "Signal strength", "");
-    ADD_CMD("crypt-test", &do_crypt,      "", "");
     
 #if !defined(ARCTIC4_UHF)
     ADD_CMD("tone",      &do_tone,        "Tone generator test", "");

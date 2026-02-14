@@ -17,6 +17,8 @@
 #include "tracklogger.h"
 #include "radio.h"
 #include "aprs.h"
+#include "encryption.c"
+
 
 #define NSCREENS 10
 
@@ -120,6 +122,7 @@ static void status_heading(char* label) {
     disp_flag(56,0, "d", GET_BOOL_PARAM("DIGIPEATER.on", DFL_DIGIPEATER_ON));
     disp_flag(68,0, "p", batt_charge());
     disp_flag(80,0, "F", gps_is_fixed());
+    disp_flag(92,0, "c", sec_isEncrypted());
 #endif
     
     uint16_t batt = batt_percent();
@@ -173,7 +176,10 @@ static void status_screen1() {
     disp_writeText(0, LINE4, buf);  
     
     /* Number of pos reports */
-    sprintf(buf, "Pos reports: %ld", tracker_posReports());
+    if (sec_isEncrypted())
+        sprintf(buf, "Rprts: %ld - Encrypt", tracker_posReports());
+    else
+        sprintf(buf, "Pos reports: %ld", tracker_posReports());
     disp_writeText(0, LINE5, buf); 
     disp_flush();
 }
