@@ -24,6 +24,8 @@
 #define CONFIG_OFFSETX 0
 
 i2c_master_bus_handle_t i2c_bus;
+static bool failed = false; 
+
 
 
 
@@ -70,21 +72,6 @@ void i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset)
 
 void i2c_device_add(SSD1306_t * dev, i2c_port_t i2c_num, int16_t reset, uint16_t i2c_address)
 {
-	ESP_LOGI(TAG, "New i2c driver is used");
-	ESP_LOGW(TAG, "Will not install i2c master driver");
-#if 0
-	i2c_master_bus_config_t i2c_mst_config = {
-		.clk_source = I2C_CLK_SRC_DEFAULT,
-		.glitch_ignore_cnt = 7,
-		.i2c_port = I2C_NUM,
-		.scl_io_num = scl,
-		.sda_io_num = sda,
-		.flags.enable_internal_pullup = true,
-	};
-	i2c_master_bus_handle_t i2c_bus_handle;
-	ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &i2c_bus_handle));
-#endif
-
 	i2c_device_config_t dev_cfg = {
 		.dev_addr_length = I2C_ADDR_BIT_LEN_7,
 		.device_address = i2c_address,
@@ -163,11 +150,13 @@ void i2c_init(SSD1306_t * dev, int width, int height) {
 		ESP_LOGI(TAG, "OLED configured successfully");
 	} else {
 		ESP_LOGE(TAG, "Could not write to device [0x%02x at %d]: %d (%s)", dev->_address, dev->_i2c_num, res, esp_err_to_name(res));
+		failed = true;
 	}
 }
 
 
 void i2c_display_image(SSD1306_t * dev, int page, int seg, const uint8_t * images, int width) {
+	if (failed) return;
 	if (page >= dev->_pages) return;
 	if (seg >= dev->_width) return;
 
@@ -211,6 +200,7 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, const uint8_t * image
 
 
 void i2c_contrast(SSD1306_t * dev, int contrast) {
+	if (failed) return;
 	uint8_t _contrast = contrast;
 	if (contrast < 0x0) _contrast = 0;
 	if (contrast > 0xFF) _contrast = 0xFF;
@@ -229,6 +219,7 @@ void i2c_contrast(SSD1306_t * dev, int contrast) {
 
 
 void i2c_sleep(SSD1306_t * dev, bool sleep) {
+	if (failed) return;
 	uint8_t out_buf[3];
 	int out_index = 0;
 	out_buf[out_index++] = OLED_CONTROL_BYTE_CMD_STREAM;
@@ -246,6 +237,7 @@ void i2c_sleep(SSD1306_t * dev, bool sleep) {
 
 
 void i2c_hardware_scroll(SSD1306_t * dev, ssd1306_scroll_type_t scroll) {
+	if (failed) return;
 	uint8_t out_buf[11];
 	int out_index = 0;
 	out_buf[out_index++] = OLED_CONTROL_BYTE_CMD_STREAM; // 00

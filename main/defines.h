@@ -373,7 +373,7 @@
 #define STACK_NMEALISTENER   3600
 #define STACK_LEDBLINKER     2800
 #define STACK_UI_SRV         3800
-#define STACK_TRACKER        3800
+#define STACK_TRACKER        4000
 #define STACK_MONITOR        3200
 #define STACK_GUI            3400
 #define STACK_HLIST          1500
