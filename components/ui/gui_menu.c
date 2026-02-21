@@ -36,6 +36,9 @@ static void mhandle_fwupgrade(void*);
 static void mhandle_shutdown(void*);
 static void mhandle_restart(void*);
 static void mhandle_tracklog(void* x);
+static void mhandle_encrypt(void* x);
+
+
 
 static const MenuCommand items[] = 
 {
@@ -46,9 +49,10 @@ static const MenuCommand items[] =
     { "Igate",            mhandle_igate,     NULL, "IGATE.on",      DFL_IGATE_ON },
     { "Digipeater",       mhandle_digi,      NULL, "DIGIPEATER.on", DFL_DIGIPEATER_ON },
     { "Track log",        mhandle_tracklog,  NULL, "TRKLOG.on",     DFL_TRKLOG_ON },
+    { "Encryption",       mhandle_encrypt,   NULL, "CRYPTO.on",     DFL_CRYPTO_ON },
     { "Firmware upgrade", mhandle_fwupgrade, NULL, NULL, false }
 };
-static int nitems = 8; 
+static int nitems = 9; 
 
 
 
@@ -287,11 +291,18 @@ static void mhandle_tracklog(void* x) {
     }    
 }
 
+static void mhandle_encrypt(void* x) {
+    bool isOn = GET_BOOL_PARAM("CRYPTO.on", DFL_CRYPTO_ON);
+    set_byte_param("CRYPTO.on", !isOn);
+}
+
+
 static void mhandle_wifi(void* x) {
     bool isOn = GET_BOOL_PARAM("WIFI.on", DFL_WIFI_ON);
     set_byte_param("WIFI.on", !isOn);
     wifi_enable( !isOn ); 
 }
+
 
 static void mhandle_fwupgrade(void* x) {
     firmware_upgrade(); 

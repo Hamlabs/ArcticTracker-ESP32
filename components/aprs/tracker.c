@@ -493,14 +493,16 @@ static void report_station_position(posdata_t* pos, bool no_tx)
        ccount = COMMENT_PERIOD; 
     }
     
-    if ( GET_BOOL_PARAM("CRYPTO.on", DFL_CRYPTO_ON))
-        encrypt_packet(&packet);
-    
     /* Send packet.
      *   send it on radio if no_tx flag is set
      *   put it on igate-queue (if igate is active)
      */
     uint8_t igtrack = GET_BOOL_PARAM("IGATE.TRACK.on", DFL_IGATE_TRACK_ON); 
+   
+    /* Encrypt packet */ 
+    if ( (igtrack || !no_tx) && GET_BOOL_PARAM("CRYPTO.on", DFL_CRYPTO_ON))
+        encrypt_packet(&packet);
+    
     
     if (!no_tx) 
        fbq_put(outframes, fbuf_newRef(&packet, SRC_TRACKER));
@@ -725,8 +727,6 @@ static void send_timestamp_compressed(FBUF* packet, posdata_t* pos)
 
 
 void encrypt_packet(FBUF *f) { 
-    ax25_display_frame(f);
-    printf("\n");
     fbuf_reset(f);
     
     /* Need info from header */
@@ -742,8 +742,13 @@ void encrypt_packet(FBUF *f) {
     char src[10]; 
     
     addr2str(src, &from);
-    uint16_t dlen = fbuf_read(f, 0, buf);
-    size_t rlen = sec_encryptB91(res, 256, (char*) (buf+hdrlen), (size_t) dlen-hdrlen, src);
+    fbuf_rseek(f, hdrlen); 
+    buf[0]=':';
+    int i=1;
+    while(!fbuf_eof(f))
+        buf[i++]=fbuf_getChar(f);
+    int dlen = i;
+    size_t rlen = sec_encryptB91(res, 256, buf, (size_t) dlen, src);
     res[rlen]='\0';
     
     /* Create new version of packet */
@@ -756,8 +761,5 @@ void encrypt_packet(FBUF *f) {
     ax25_encode_header(f, &from, &xdest, digis, ndigis, ctrl, pid);
     fbuf_write(f, "{{:", 3);
     fbuf_write(f, res, rlen);
-    
-    ax25_display_frame(f);
-    printf("\n");
 }
 
