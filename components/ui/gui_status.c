@@ -337,13 +337,21 @@ static void status_screen4() {
             disp_writeText(0, LINE4, buf);
         }
     }		     
-    else {
+    else if (gps_is_present()) {
        disp_setBoldFont(true);
        disp_setHighFont(true, false);
        disp_writeText(0, LINE1, "Searching...");
        disp_setBoldFont(false);
        disp_setHighFont(false, false);
     }
+    else {
+       disp_setBoldFont(true);
+       disp_setHighFont(true, false);
+       disp_writeText(0, LINE1, "No GNSS!");
+       disp_setBoldFont(false);
+       disp_setHighFont(false, false);
+    }
+    
     disp_flush();
 }
 

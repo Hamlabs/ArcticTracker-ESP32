@@ -43,6 +43,7 @@ static void nmeaListener(void* arg);
 static char buf[NMEA_BUFSIZE+2];
 static bool monitor_pos, monitor_raw; 
 static bool is_fixed = false;
+static bool is_present = false; 
 static float altitude = -1;
 static float pdop = -1;
 
@@ -133,7 +134,9 @@ static void nmeaListener(void* arg)
     
     if (buf[0] != '$')
       continue;
-     
+    
+    is_present = true; 
+    
     /* For now, ignore PQTM... packets */
     if (strncmp(buf, "$PQTM", 5) == 0)
       continue; 
@@ -199,7 +202,7 @@ void gps_mon_off(void)
 
   
 /************************************************************************
- * Turn on/off GPS
+ * Turn on/off GPS, tell if it is present 
  ************************************************************************/
 
 void gps_on()
@@ -215,6 +218,11 @@ void gps_off()
    BLINK_NORMAL;
 }
 
+
+bool gps_is_present() 
+{
+  return  is_present;
+}
 
 
 /*************************************************************************
