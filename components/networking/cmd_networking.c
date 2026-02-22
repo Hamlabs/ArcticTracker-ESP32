@@ -190,9 +190,8 @@ int do_info(int argc, char** argv)
       
         printf("\n");
         printf("        SoftAP: %s\n", (wifi_softAp_isEnabled() ? "On" : "Off"));
-        get_str_param("WIFIAP.SSID", buf, 32, default_ssid);
-        printf("       AP SSID: %s\n",  buf);     
-        get_str_param("WIFIAP.IP", buf, 16, DFL_SOFTAP_IP);
+        printf("       AP SSID: %s\n",  default_ssid);     
+        get_str_param("SOFTAP.IP", buf, 16, DFL_SOFTAP_IP);
         printf(" AP IP address: %s\n", buf); 
     }
     else
@@ -256,7 +255,7 @@ inline static void _param_wifi_handler(bool x)
    
 static void _param_softap_handler(bool x) {
     char passwd[64];
-    get_str_param("WIFIAP.AUTH", passwd, 64, DFL_SOFTAP_PASSWD);
+    get_str_param("SOFTAP.AUTH", passwd, 64, DFL_SOFTAP_PASSWD);
     if (strlen(passwd) < 8) {
         printf("SoftAP password not set or too short\n");
         return;
@@ -275,9 +274,8 @@ CMD_BOOL_SETTING(_param_wifi,      "WIFI.on",      DFL_WIFI_ON,   &_param_wifi_h
 CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",    DFL_SOFTAP_ON, &_param_softap_handler);
 CMD_STR_SETTING (_param_apikey,    "API.KEY",      128, DFL_API_KEY, NULL);
 CMD_STR_SETTING (_param_apiorig,   "API.ORIGINS",  64,  DFL_API_ORIGINS, NULL);
-CMD_STR_SETTING (_param_ap_ssid,   "WIFIAP.SSID",  32,  default_ssid, NULL); 
-CMD_STR_SETTING (_param_ap_auth,   "WIFIAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
-CMD_STR_SETTING (_param_ap_ip,     "WIFIAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);
+CMD_STR_SETTING (_param_ap_auth,   "SOFTAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
+CMD_STR_SETTING (_param_ap_ip,     "SOFTAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);
 CMD_STR_SETTING (_param_fwurl,     "FW.URL",       64,  "", NULL);
 CMD_STR_SETTING (_param_fwcert,    "FW.CERT",      BBUF_SIZE, "", NULL);
 
@@ -294,10 +292,9 @@ void register_wifi()
     ADD_CMD("wifi",       &_param_wifi,      "WIFI On/Off setting", "[on|off]");
     ADD_CMD("softap",     &_param_softap,    "Soft AP On/Off setting", "[on|off]");
     ADD_CMD("ap",         &do_apAlt,         "List or change AP alternatives", "[<index> [delete | <ssid> [<password>]]]");
-    ADD_CMD("ap-ssid",    &_param_ap_ssid,   "WIFI SoftAP SSID setting", "[<ssid>]");
-    ADD_CMD("ap-auth",    &_param_ap_auth,   "WIFI SoftAP password", "[<password>]");
-    ADD_CMD("ap-ip",      &_param_ap_ip,     "WIFI_SoftAP IP address", "[<ip>]");
-    ADD_CMD("ap-sta",     &do_apSta,         "WIFI SoftAP Connected stations", NULL);
+    ADD_CMD("softap-auth",&_param_ap_auth,   "WIFI SoftAP password", "[<password>]");
+    ADD_CMD("softap-ip",  &_param_ap_ip,     "WIFI_SoftAP IP address", "[<ip>]");
+    ADD_CMD("softap-sta", &do_apSta,         "WIFI SoftAP Connected stations", NULL);
     ADD_CMD("api-key",    &_param_apikey,    "REST API Key", "[<key>]");    
     ADD_CMD("api-origins",&_param_apiorig,   "Allowed origins for REST API webclients", "[<regex>]");
     ADD_CMD("fw-url",     &_param_fwurl,     "URL for firmware update", "<url>");

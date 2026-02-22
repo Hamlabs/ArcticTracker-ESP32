@@ -74,7 +74,7 @@ static void dhcp_enable(bool on)
         // assign a static IP to the network interface
         esp_netif_ip_info_t info;
         memset(&info, 0, sizeof(info));
-        get_str_param("WIFIAP.IP", ip, 16, DFL_SOFTAP_IP);
+        get_str_param("SOFTAP.IP", ip, 16, DFL_SOFTAP_IP);
         str2ip(&info.ip, ip);
         str2ip(&info.gw, ip); //ESP acts as router, so gw addr will be its own addr
         str2ip(&info.netmask, "255.255.255.0");
@@ -237,8 +237,8 @@ void wifi_enable_softAp(bool en)
     
     if (en && !softApEnabled) { 
         ESP_LOGI(TAG, "Turning softap on");
-        get_str_param("WIFIAP.SSID", ssid, 32, default_ssid);
-        get_str_param("WIFIAP.AUTH", passwd, 64, DFL_SOFTAP_PASSWD);
+        strcpy(ssid, default_ssid);
+        get_str_param("SOFTAP.AUTH", passwd, 64, DFL_SOFTAP_PASSWD);
         
         if (strlen(passwd) < 8) {
             ESP_LOGE(TAG, "SoftAP password not set or too short");
@@ -428,12 +428,11 @@ char* wifi_getConnectedAp(char* buf) {
  ********************************************************************************/
 
 char* wifi_getApSsid(char* buf) {
-    get_str_param("WIFIAP.SSID", buf, 32, default_ssid);
-    return buf; 
+    return default_ssid; 
 }
 
 char* wifi_getApIp(char* buf) {
-    get_str_param("WIFIAP.IP", buf, 16, DFL_SOFTAP_IP);
+    get_str_param("SOFTAP.IP", buf, 16, DFL_SOFTAP_IP);
     return buf; 
 }
  

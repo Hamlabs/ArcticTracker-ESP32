@@ -259,10 +259,10 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     CHECK_AUTH(req);
     
     cJSON *root = cJSON_CreateObject();
-    get_str_param("WIFIAP.SSID", buf, 32, default_ssid);
+    strcpy(buf, default_ssid);
     cJSON_AddStringToObject(root, "apssid", buf);
     
-    get_str_param("WIFIAP.AUTH", buf, 64, DFL_SOFTAP_PASSWD);
+    get_str_param("SOFTAP.AUTH", buf, 64, DFL_SOFTAP_PASSWD);
     cJSON_AddStringToObject(root, "appass", buf);
 
     get_str_param("FW.URL", buf, 64, DFL_TRKLOG_URL);
@@ -299,8 +299,7 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
     rest_cors_enable(req);
     CHECK_JSON_INPUT(req, root);
  
-    set_str_param("WIFIAP.SSID", JSON_STR(root, "apssid"));
-    set_str_param("WIFIAP.AUTH", JSON_STR(root, "appass"));
+    set_str_param("SOFTAP.AUTH", JSON_STR(root, "appass"));
     set_str_param("FW.URL",      JSON_STR(root, "fwurl"));
     
     /* API key is updated if it is non-empty */
