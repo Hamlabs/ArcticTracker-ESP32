@@ -7,16 +7,39 @@
 
 
 #if DISPLAY_TYPE == 0
+// Nokia display. Not supported anymore
 
 #define DISPLAY_WIDTH  84
 #define DISPLAY_HEIGHT 48
 
 #elif DISPLAY_TYPE == 1
+// (0.96") is a very popular configuration, using SSH1306
 
-#define DISPLAY_WIDTH  SSD1306_WIDTH
-#define DISPLAY_HEIGHT SSD1306_HEIGHT
+#define DISPLAY_WIDTH  128
+#define DISPLAY_HEIGHT  64
+
+#elif DISPLAY_TYPE == 2
+// (1.3")  is used in T-TWR and Arctic Tracker, using SH1106
+
+#define DISPLAY_WIDTH  128
+#define DISPLAY_HEIGHT  64
+#define SH1106_HACK      1
+
+#elif DISPLAY_TYPE == 3
+// (1.5")  planned, using SH1107
+
+#define DISPLAY_WIDTH  128
+#define DISPLAY_HEIGHT 128
+
+#elif DISPLAY_TYPE == 4
+// (0.91") half height
+
+#define DISPLAY_WIDTH  128
+#define DISPLAY_HEIGHT 32
 
 #endif
+
+
 
  void disp_toggleBacklight(void);
  void disp_backlight(void);

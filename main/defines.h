@@ -240,28 +240,23 @@
 
 
 
-/*******************************************************************
+/***********************************************************************
  * DISPLAY CONFIG: 
- * DISPLAY_TYPE is 1=SSD1306 (I2C) (support for 0=Nokia is removed)
+ * DISPLAY_TYPE is a number from 1 to 4 (support for 0=Nokia is removed)
  * -1 to disable
- * SSD1306_HEIGHT and SSD1306_WIDTH should be set according to the 
- * actual display used. Known alternatives are: 
+ * Supported alternatives are: 
  * 
- * 128x64  (0.96") is a very popular configuration
- * 128x32  (0.91") half height 
- * 72x40   (0.42") e.g. DM-OLED042-647 from DisplayModule 
+ * 1. 128x64  (0.96") is a very popular configuration, using SSH1306
+ * 2. 128x64  (1.3")  is used in T-TWR and Arctic Tracker, using SH1106
+ * 3. 128x128 (1.5")  planned, using SH1107
+ * 4. 128x32  (0.91") half height 
+ *
+ * We may also consider the DM-OLED042-647 from DisplayModule which
+ * is very small (72x40). 
  * 
- *******************************************************************/
+ ***********************************************************************/
 
-#define DISPLAY_TYPE     1
-#define SSD1306_WIDTH  128
-#define SSD1306_HEIGHT  64
-
-/* 
- * Some displays have the SH1106 chip instead of SSD1306 but have
- * a resolution of 128x64 - mostly compatible with a little hack. 
- */
-#define SH1106_HACK     1
+#define DISPLAY_TYPE     2
 
 
 /* These are for the Nokia display on SPI */

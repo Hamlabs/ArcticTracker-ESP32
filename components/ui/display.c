@@ -1,6 +1,8 @@
 /* 
  * Graphical user interface using a display. Either a 
- * SSD1306 based 128x64 pix or a old Nokia display.   
+ * SSD1306 based 128x64 pix or a SH1106. The old Nokia display isn't supported anymore.
+ * Plan to support SH1107 (128x128pixel oled). 
+ *   
  * Routines for drawing text, lines and cicles on screen. 
  * By LA7ECA, ohanssen@acm.org
  */
