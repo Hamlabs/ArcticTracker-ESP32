@@ -101,19 +101,25 @@ void i2c_init(SSD1306_t * dev, int width, int height) {
 	dev->_width = width;
 	dev->_height = height;
 	dev->_pages = 8;
+	if (dev->_height == 128) dev->_pages = 16;
 	if (dev->_height == 32) dev->_pages = 4;
 	
-	uint8_t out_buf[27];
+	uint8_t out_buf[32];
 	int out_index = 0;
 	out_buf[out_index++] = OLED_CONTROL_BYTE_CMD_STREAM;
 	out_buf[out_index++] = OLED_CMD_DISPLAY_OFF;				// AE
-	out_buf[out_index++] = OLED_CMD_SET_MUX_RATIO;			 // A8
-	if (dev->_height == 64) out_buf[out_index++] = 0x3F;
-	if (dev->_height == 32) out_buf[out_index++] = 0x1F;
-	out_buf[out_index++] = OLED_CMD_SET_DISPLAY_OFFSET;		 // D3
+	out_buf[out_index++] = OLED_CMD_SET_MUX_RATIO;			    // A8
+	if (dev->_height == 128) out_buf[out_index++] = 0x7F; 
+	if (dev->_height == 64)  out_buf[out_index++] = 0x3F;
+	if (dev->_height == 32)  out_buf[out_index++] = 0x1F;
+	
+	out_buf[out_index++] = OLED_CMD_SET_DISPLAY_OFFSET;		    // D3
 	out_buf[out_index++] = 0x00;
+	
 	//out_buf[out_index++] = OLED_CONTROL_BYTE_DATA_STREAM;	// 40
 	out_buf[out_index++] = OLED_CMD_SET_DISPLAY_START_LINE;	// 40
+	out_buf[out_index++] = 0x00;
+	
 	//out_buf[out_index++] = OLED_CMD_SET_SEGMENT_REMAP;		// A1
 	if (dev->_flip) {
 		out_buf[out_index++] = OLED_CMD_SET_SEGMENT_REMAP_0; // A0
@@ -124,8 +130,9 @@ void i2c_init(SSD1306_t * dev, int width, int height) {
 	out_buf[out_index++] = OLED_CMD_SET_DISPLAY_CLK_DIV;		// D5
 	out_buf[out_index++] = 0x80;
 	out_buf[out_index++] = OLED_CMD_SET_COM_PIN_MAP;			// DA
-	if (dev->_height == 64) out_buf[out_index++] = 0x12;
+	if (dev->_height >= 64) out_buf[out_index++] = 0x12;
 	if (dev->_height == 32) out_buf[out_index++] = 0x02;
+	
 	out_buf[out_index++] = OLED_CMD_SET_CONTRAST;			// 81
 	out_buf[out_index++] = 0xFF;
 	out_buf[out_index++] = OLED_CMD_DISPLAY_RAM;				// A4
@@ -138,11 +145,12 @@ void i2c_init(SSD1306_t * dev, int width, int height) {
 	out_buf[out_index++] = 0x00;
 	// Set Higher Column Start Address for Page Addressing Mode
 	out_buf[out_index++] = 0x10;
+	
 	out_buf[out_index++] = OLED_CMD_SET_CHARGE_PUMP;			// 8D
 	out_buf[out_index++] = 0x14;
 	out_buf[out_index++] = OLED_CMD_DEACTIVE_SCROLL;			// 2E
 	out_buf[out_index++] = OLED_CMD_DISPLAY_NORMAL;			// A6
-	out_buf[out_index++] = OLED_CMD_DISPLAY_ON;				// AF
+ 	out_buf[out_index++] = OLED_CMD_DISPLAY_ON;				// AF
 
 	esp_err_t res;
 	res = i2c_master_transmit(dev->_i2c_dev_handle, out_buf, out_index, I2C_TICKS_TO_WAIT);

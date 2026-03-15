@@ -48,6 +48,7 @@
 #elif defined CONFIG_ARCTIC4
   #define DEVICE ARCTIC4
   #define DEVICE_STRING "Arctic Tracker 4 VHF"
+  
 #elif defined CONFIG_ARCTIC4_UHF
   #define DEVICE ARCTIC4
   #define ARCTIC4_UHF
@@ -256,21 +257,18 @@
  * 
  ***********************************************************************/
 
-#define DISPLAY_TYPE     2
+#define DISPLAY_TYPE     3
 
-
-/* These are for the Nokia display on SPI */
-#define LCD_PIN_CS      33
-#define LCD_PIN_BL      32
-#define LCD_PIN_DC      27
-#define LCD_PIN_RST     -1
 
 /* These are for the SSD1306 display on I2C */
 #if DEVICE == T_TWR
+
+#define DISPLAY_TYPE     2
 #define DISP_SDA_PIN     8
 #define DISP_SCL_PIN     9
 
 #elif DEVICE == ARCTIC4
+
 #define DISP_SDA_PIN    21
 #define DISP_SCL_PIN    47
 
