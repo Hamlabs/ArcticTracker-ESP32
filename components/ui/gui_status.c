@@ -24,11 +24,19 @@
 
 #if DISPLAY_HEIGHT >= 64
 
-#define LINE1 14
-#define LINE2 24
-#define LINE3 34
-#define LINE4 44
-#define LINE5 54
+#define LINE1  14
+#define LINE2  24
+#define LINE3  34
+#define LINE4  44
+#define LINE5  54
+
+/* These are for 128x128 display */
+#define LINE6  64
+#define LINE7  74
+#define LINE8  84
+#define LINE9  94
+#define LINE10 104
+#define LINE11 114
 
 #else
 #define LINE1  3
@@ -54,6 +62,9 @@ static void status_screen6(void);
 static void status_screen7(void);
 static void status_screen8(void);
 static void status_screen9(void);
+
+
+static void showLevel(int line, int level);
 
 void status_init() {
     gui_mutex = xSemaphoreCreateMutex();
@@ -207,7 +218,7 @@ static void status_screen2() {
         disp_setBoldFont(false);
     }
     else if (radio_is_on()) {
-        gui_setPause(300); 
+        gui_setPause(500); 
         
         int rssi=radio_getRssi();
         uint8_t sf = get_byte_param("LORA_SF", DFL_LORA_SF);
@@ -228,12 +239,20 @@ static void status_screen2() {
             char tbuf[9];
             time2str(tbuf, loraprs_last_time(), true);
             tbuf[5] = '\0';
-            sprintf(buf, "RX %s: %s", tbuf, buf2);
+            sprintf(buf, "%s: %s", tbuf, buf2);
             disp_writeText(0, LINE4, buf);
-            sprintf(buf, "%d dBm, SNR=%d dB", loraprs_last_rssi(), loraprs_last_snr());
+            sprintf(buf, "  %d dBm, SNR=%d dB", loraprs_last_rssi(), loraprs_last_snr());
             disp_writeText(0, LINE5, buf);
         }
-
+#if DISPLAY_HEIGHT >= 128
+        int rs = radio_getRssi();
+        sprintf(buf, "RSSI: -%3.1f dBm", ((float) rs) / 2 ); 
+        disp_lineDotted(true);
+        disp_hLine(0,69,110);
+        disp_lineDotted(false);
+        disp_writeText(0, LINE7, buf);
+        showLevel(LINE8, (256-rssi)/16);
+#endif
     }
     else {
         gui_setPause(2000); 
@@ -265,19 +284,10 @@ static void status_screen2() {
     }
     else if (radio_is_on()) {
         gui_setPause(250); 
+        
         int rssi=radio_getRssi();
         int nrssi = (rssi-16) / 8;
-        if (nrssi > 14)
-            nrssi = 14;
-        disp_setBoldFont(true);
-        disp_setHighFont(true, false);
-        int i = 0;
-        memset(buf, 0, 24);
-        for (i=0; i<nrssi; i++)
-            buf[i] = '}'+1;
-        disp_writeText(0, LINE1, buf);
-        disp_setBoldFont(false);
-        disp_setHighFont(false, false);
+        showLevel(LINE1, nrssi);
     
         sprintf(buf, "RSSI: %3d  %s", rssi, (radio_getSquelch() ? "[SQ]" : "")); 
         disp_writeText(0, LINE3, buf);
@@ -297,6 +307,28 @@ static void status_screen2() {
 #endif
 
 
+
+static void showLevel(int line, int level) {
+    disp_setBoldFont(true);
+    disp_setHighFont(true, false);
+
+    if (level > 14)
+        level = 14;
+    disp_setBoldFont(true);
+    disp_setHighFont(true, false);
+    int i = 0;
+    memset(buf, 0, 24);
+    for (i=0; i<level; i++)
+        buf[i] = '}'+1;
+    disp_writeText(0, line, buf);
+        
+    disp_setBoldFont(false);
+    disp_setHighFont(false, false);
+}        
+    
+    
+    
+        
 /****************************************************************
  * 3. Time
  ****************************************************************/
@@ -318,7 +350,7 @@ static void status_screen3() {
 
 
 /****************************************************************
- * 4. GPS position status
+ * 4. GNSS position status
  ****************************************************************/
 
 static void status_screen4() {

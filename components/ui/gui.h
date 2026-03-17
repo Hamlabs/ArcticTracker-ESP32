@@ -31,6 +31,7 @@
 #define DISPLAY_WIDTH  128
 #define DISPLAY_HEIGHT 128
 
+
 #elif DISPLAY_TYPE == 4
 // (0.91") half height
 
@@ -48,6 +49,7 @@
  void disp_clear(void);
  void disp_setPixel(int x, int y, bool on);
  void disp_inverseMode(bool on);
+ void disp_lineDotted(bool on);
  void disp_vLine(int x, int y, int len);
  void disp_hLine(int x, int y, int len);
  void disp_line(int x0, int y0, int x1, int y1);
@@ -56,7 +58,7 @@
  void disp_battery(int x, int y, int lvl);
  void disp_flag(int x, int y, char *sign, bool on);
  void disp_label(int x, int y, char* lbl);
- void disp_frame(); 
+ void disp_frame(int height); 
  void disp_setPopup();
  bool disp_popupActive();
  void disp_sleepmode(bool);

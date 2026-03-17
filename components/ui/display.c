@@ -35,8 +35,10 @@ static void slhandler(TimerHandle_t timer);
 /*********************************************************************************************/
 
 #if defined SH1106_HACK
-uint8_t buffer [DISPLAY_HEIGHT/8] [DISPLAY_WIDTH+4];
+#define LINE_XTRA 4
+uint8_t buffer [DISPLAY_HEIGHT/8] [DISPLAY_WIDTH + LINE_XTRA];
 #else
+#define LINE_XTRA 0
 uint8_t buffer [DISPLAY_HEIGHT/8] [DISPLAY_WIDTH];
 #endif 
 
@@ -378,6 +380,8 @@ void disp_writeText(int x, int y, const char * strp)
 static TimerHandle_t bltimer, sltimer;
 static int backlightLevel = BL_HIGH;
 static bool _dimmed = false;
+static int linestep = 1;
+
 
    
 void disp_init() 
@@ -460,15 +464,18 @@ bool disp_isDimmed() {
 
 void disp_flush() 
 {
-    uint16_t i;
-    for (i = 0; i < DISPLAY_HEIGHT/8; i++) 
-        if (changed[i]) {
-            changed[i] = false;      
-            i2c_display_image(&_dev_, i, 0, buffer[i], DISPLAY_WIDTH+4);
+    uint16_t line;
+    for (line = 0; line < DISPLAY_HEIGHT/8; line++) 
+        if (changed[line]) {
+            changed[line] = false;      
+            i2c_display_image(&_dev_, line, 0, buffer[line], DISPLAY_WIDTH + LINE_XTRA);
         }
 }
 
-
+/* 
+ * TODO: Display upside down. flush from DISPLAY_HEIGHT/8 - line to 0. 
+ * Use OLED_CMD_SET_SEGMENT_REMAP_0 and OLED_CMD_SET_COM_SCAN_MOD=0xC0
+ */
 
 
 /********************************************************
@@ -483,7 +490,7 @@ void disp_clear()
 #if defined SH1106_HACK
     for (j = 0; j < DISPLAY_WIDTH; j++)
 #else
-    for (j = 0; j < DISPLAY_WIDTH+4; j++)   
+    for (j = 0; j < DISPLAY_WIDTH; j++)   
 #endif
         buffer[i][j] = 0;
   }
@@ -519,6 +526,20 @@ void disp_inverseMode(bool on)
 { _inverse = on; }
 
 
+
+/********************************************************
+ * Dotted hLine or vLine style
+ ********************************************************/
+
+void disp_lineDotted(bool on) {
+    if (on) 
+        linestep = 2;
+    else
+        linestep = 1;
+}
+
+
+
 /********************************************************
  * Draw vertical line starting at x,y with length len
  ********************************************************/
@@ -526,7 +547,7 @@ void disp_inverseMode(bool on)
 void disp_vLine(int x, int y, int len) 
 {
   int i;
-  for (i=y; i<y+len; i++)
+  for (i=y; i<y+len; i+=linestep)
      disp_setPixel(x, i, !_inverse);
 }
 
@@ -538,7 +559,7 @@ void disp_vLine(int x, int y, int len)
 void disp_hLine(int x, int y, int len) 
 {
   int i;
-  for (i=x; i<x+len; i++)
+  for (i=x; i<x+len; i+=linestep)
      disp_setPixel(i,y, !_inverse);
 }
 
@@ -613,18 +634,18 @@ void disp_box(int x, int y, int width, int height, bool fill)
 
 void disp_battery(int x, int y, int lvl) 
 {
-    disp_vLine(x,y,8);
-    disp_hLine(x,y,12);
-    disp_hLine(x,y+8,12);
-    disp_vLine(x+12,y,2);
-    disp_vLine(x+12,y+7,2);
+    disp_vLine(x, y,8);
+    disp_hLine(x, y,13);
+    disp_hLine(x, y+8,13);
+    disp_vLine(x+13,y,2);
+    disp_vLine(x+13,y+7,2);
    
-    if (lvl >= 1) disp_box(x+1,y+2,2,5, true);
-    if (lvl >= 2) disp_box(x+4,y+2,2,5, true);
-    if (lvl >= 3) disp_box(x+7,y+2,2,5, true);
-    if (lvl >= 4) disp_box(x+10,y+2,2,5, true);
-    disp_vLine(x+13,y+2,5);
+    if (lvl >= 1) disp_box(x+2,y+2,2,5, true);
+    if (lvl >= 2) disp_box(x+5,y+2,2,5, true);
+    if (lvl >= 3) disp_box(x+8,y+2,2,5, true);
+    if (lvl >= 4) disp_box(x+11,y+2,2,5, true);
     disp_vLine(x+14,y+2,5);
+    disp_vLine(x+15,y+2,5);
 }
 
 
@@ -668,13 +689,14 @@ void disp_label(int x, int y, char* lbl)
  * Frame/popup
  *************************************************/
 
-void disp_frame() 
+void disp_frame(int height) 
 {
    disp_hLine(3,2,114);   // top
-   disp_hLine(2,61,115);  // bottom
-   disp_vLine(2,2,59);    //left
-   disp_vLine(116,2,59);  // right
+   disp_hLine(2,height,115);  // bottom
+   disp_vLine(2,2,height-2);    //left
+   disp_vLine(116,2,height-2);  // right
 }
+
 
 
 /* Set popup mode */ 

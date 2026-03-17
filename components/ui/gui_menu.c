@@ -62,7 +62,13 @@ static int nitems = 9;
  *********************************************************/
 
 #define MIN(x,y) (x<y ? x : y)
+
+#if DISPLAY_HEIGHT >= 128
+#define MAX_VISIBLE 9
+#else
 #define MAX_VISIBLE 5
+#endif
+
 
 static uint8_t offset = 0;
 static uint8_t selection = 0;
@@ -74,7 +80,7 @@ static bool menu_active;
 static void menu_show(int st, int sel) 
 {     
     disp_clear();
-    disp_frame(); 
+    disp_frame(MAX_VISIBLE*12); 
     disp_box(4, sel*11+4, 97+14, 12, true);
     
     int i;
@@ -208,7 +214,7 @@ void gui_fwupgrade()
 {
     _popup = true; 
     disp_clear(); 
-    disp_frame(); 
+    disp_frame(60); 
     disp_setBoldFont(true);
     disp_writeText(10,10, "Firmware");
     disp_writeText(10,19, "Upgrade...");
@@ -244,6 +250,12 @@ void gui_welcome()
   disp_setBoldFont(false);
 #endif
   
+#if DISPLAY_HEIGHT >= 128
+    disp_lineDotted(true);
+    disp_hLine(7,85, 110);
+    disp_lineDotted(false);
+    disp_writeText(10, 90, "(C) 2026 by LA7ECA");
+#endif
   disp_flush();
 }
 
