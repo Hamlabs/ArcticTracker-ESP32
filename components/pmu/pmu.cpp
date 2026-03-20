@@ -76,7 +76,7 @@ esp_err_t pmu_init()
     /* Don't change these VDDs */
     PMU.setDC3Voltage(3400);
     PMU.setALDO2Voltage(3300);
-        // Optional output Vx-1 on ARCTIC4
+        // Optional output Vx-1 on ARCTIC4, Lora module on mk2
     PMU.setALDO4Voltage(3300); 
         // GPS on T-TWR
     PMU.setBLDO1Voltage(1800);
@@ -121,7 +121,7 @@ void pmu_power_setup()
     PMU.disableALDO3();
     PMU.disableBLDO2();
     PMU.enableBLDO1();
-    PMU.disableALDO2(); // Optional Vx-1
+    PMU.enableALDO2(); // Optional Vx-1, used for LoRa module in mk2
     PMU.enableDC3();
     
 #else
