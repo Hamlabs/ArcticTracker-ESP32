@@ -56,7 +56,7 @@ static bool _igate_run = false;
 static uint32_t _icount = 0;
 static uint32_t _rcvd = 0;
 static uint32_t _tracker_icount = 0;
-
+static uint8_t  _subscription;
 
 static FBQ rxqueue;           /* Frames from radio or tracker */
 extern fbq_t* outframes;      /* Frames to be transmitted on radio */
@@ -147,7 +147,7 @@ static void igate_main(void* arg)
             xTaskCreatePinnedToCore(&igate_radio, "Igate Radio", 
                 STACK_IGATE_RADIO, NULL, NORMALPRIO, NULL, CORE_IGATE_RADIO);
     
-            APRS_SUBSCRIBE_RX(&rxqueue, 2);
+            _subscription = APRS_SUBSCRIBE_RX(&rxqueue);
            
             /* Listen for data from APRS/IS server */
             while (_igate_on) {
@@ -162,7 +162,7 @@ static void igate_main(void* arg)
             _igate_run = false; 
             fbq_signal(&rxqueue, SRC_IGATE);
             sleepMs(50);
-            APRS_SUBSCRIBE_RX(NULL, 2);
+            APRS_UNSUBSCRIBE_RX(_subscription);
             
             /* Connection failure. Wait for 2 minutes */
             if (_igate_on) {

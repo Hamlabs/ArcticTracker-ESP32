@@ -18,10 +18,16 @@
 #define SRC_DIGIPEATER   0x03
 #define SRC_IGATE        0x04
 #define SRC_USER         0x05
-
+#define SRC_DUPLICATE    0xFF
 
 #define fbuf_t FBUF
 #define fbq_t FBQ
+
+
+
+
+
+typedef struct fbqsw FBQSW_t; 
 
 typedef uint16_t fbindex_t;
 
@@ -54,7 +60,6 @@ void     fbuf_putChar   (FBUF* b, const char c);
 void     fbuf_write     (FBUF* b, const char* data, const uint16_t size);
 void     fbuf_putstr    (FBUF* b, const char *data);
 char     fbuf_getChar   (FBUF* b);
-//void     fbuf_streamRead(Stream *chp, FBUF* b);
 uint16_t fbuf_read      (FBUF* b, uint16_t size, char *buf);
 void     fbuf_cleanFront(FBUF* b);
 void     fbuf_print     (FILE* f, FBUF* b); 
@@ -90,11 +95,23 @@ typedef struct _fbq
    Operations for queue of packet buffer chains
  ************************************************/
 
-void  fbq_init (FBQ* q, const uint16_t size); 
+void  fbq_init  (FBQ* q, const uint16_t size); 
 void  fbq_clear (FBQ* q);
 void  fbq_put   (FBQ* q, FBUF b); 
 FBUF  fbq_get   (FBQ* q);
 void  fbq_signal(FBQ* q, uint8_t tag);
+
+
+/************************************************
+ * Operations for publish/subscribe functions
+ ************************************************/
+
+FBQSW_t* fbqsw_create(int capacity);
+int      fbqsw_subscribe(FBQSW_t* sw, FBQ * mq);
+void     fbqsw_unsubscribe(FBQSW_t* sw, int index);
+uint8_t  fbqsw_publish(FBQSW_t* sw, FBUF buf);
+
+
 
  
 #define fbq_eof(q)    ( sem_getCount(((q)->capacity)) >= (q)->size )

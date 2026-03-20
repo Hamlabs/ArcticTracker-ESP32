@@ -34,6 +34,8 @@ static FBQ rxqueue;
 static TaskHandle_t digithr;
 
 static fbq_t* outframes; 
+static uint8_t subscription;
+
 
 static void check_frame(FBUF *f);
 static void send_packet(FBUF *hdr);
@@ -104,7 +106,7 @@ void digipeater_activate(bool m)
         ESP_LOGI(TAG, "starting.."); 
         
         /* Subscribe to RX packets and start treads */
-        APRS_SUBSCRIBE_RX(mq, 1);
+        subscription = APRS_SUBSCRIBE_RX(mq);
         
         xTaskCreatePinnedToCore(&digipeater, "Digipeater", 
             STACK_DIGI, NULL, NORMALPRIO, &digithr, CORE_DIGI);
@@ -127,7 +129,7 @@ void digipeater_activate(bool m)
         /* Unsubscribe to RX packets and stop threads */
         fbq_signal(&rxqueue, SRC_DIGIPEATER);   
         digithr = NULL;
-        APRS_SUBSCRIBE_RX(NULL, 1);
+        APRS_UNSUBSCRIBE_RX(subscription);
     }
 }
 

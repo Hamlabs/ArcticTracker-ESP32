@@ -23,7 +23,6 @@
 
 static fifo_t* inq;
 static fbuf_t fbuf;
-static fbq_t* mqueue[3];
 
 static uint16_t tag_seq = 0;
 static uint16_t prev_seq = 0;
@@ -44,13 +43,13 @@ bool hdlc_isSuccess() {return success;}
  * packets are put into the given buffer queue.
  ***********************************************************/
  
-void hdlc_subscribe_rx(fbq_t* q, uint8_t i)
-{
-    if (i > MAX_SUBSCRIBE_CHAN)
-        return;
-    if (mqueue[i] != NULL)
-        fbq_clear(mqueue[i]);
-    mqueue[i] = q;
+FBQSW_t *psub;
+
+uint8_t hdlc_subscribe_rx(fbq_t* q) {
+    return fbqsw_subscribe(psub, q);
+}
+void hdlc_unsubscribe_rx(uint8_t i) {
+    fbqsw_unsubscribe(psub, i);
 }
 
 
@@ -169,15 +168,10 @@ static void hdlc_rxdecoder (void* arg)
       fbuf_removeLast(&fbuf);
       fbuf_removeLast(&fbuf);
       
-      // FIXME: Duplicate in lora_aprs.c
-      if (mqueue[0] || mqueue[1] || mqueue[2]) || mqueue [3] { 
-         if (mqueue[0]) fbq_put( mqueue[0], fbuf);                        /* Monitor */
-         if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&fbuf, SRC_RX));  /* Digipeater */
-         if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&fbuf, SRC_RX));  /* Igate */
-         if (mqueue[3]) fbq_put( mqueue[3], fbuf_newRef(&frame, SRC_RX)); /* netmon */ 
-      }
-      if (mqueue[0]==NULL)
-         fbuf_release(&fbuf); 
+      /* Distribute packet to subscribers */
+      if (fbqsw_publish(psub, &fbuf) == 0)
+         fbuf_release(&fbuf);
+       
       fbuf_new(&fbuf, SRC_RX);
    }
    else if (length > AX25_HDR_LEN(0)+2)
@@ -233,7 +227,8 @@ void hdlc_next_frame() {
 void hdlc_init_decoder (fifo_t* s)
 {   
   inq = s;
-  mqueue[0] = mqueue[1] = mqueue[2] = NULL;
+ // mqueue[0] = mqueue[1] = mqueue[2] = NULL;
+  psub = fbqsw_create(10);
   fbuf_new(&fbuf, SRC_RX);  
   xTaskCreatePinnedToCore(&hdlc_rxdecoder, "HDLC RX decoder", 
         STACK_HDLC_RXDECODER, NULL, NORMALPRIO, NULL, CORE_HDLC_RXDECODER);

@@ -14,7 +14,6 @@
 
 #define TAG "lora-aprs"
 
-static FBQ* mqueue[4];
 FBQ encoder_queue; 
 
 static FBQ mon;
@@ -77,14 +76,15 @@ bool loraprs_tx_is_on() {
  * Subscribe or unsubscribe to packets from decoder
  * packets are put into the given frame queue.
  ***********************************************************/
- 
-void loraprs_subscribe_rx(fbq_t* q, uint8_t i)
-{
-    if (i > MAX_SUBSCRIBE_CHAN)
-        return;
-    if (mqueue[i] != NULL)
-        fbq_clear(mqueue[i]);
-    mqueue[i] = q;
+
+FBQSW_t *psub;
+
+uint8_t loraprs_subscribe_rx(fbq_t* q) {
+    return fbqsw_subscribe(psub, q);
+}
+
+void loraprs_unsubscribe_rx(uint8_t i) {
+    fbqsw_unsubscribe(psub, i);
 }
 
 
@@ -150,16 +150,11 @@ static void rxdecoder (void* arg) {
         strcpy(last_packet, (char*) buf+3);
         last_rssi = rssi; last_snr = snr;
         last_time = getTime();
-        
-        // FIXME: Duplicatie in hdlc_tx.c
-        if (mqueue[0] || mqueue[1] || mqueue[2]  || mqueue [3] ) { 
-            if (mqueue[0]) fbq_put( mqueue[0], frame);                       // Monitor 
-            if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&frame, SRC_RX)); // Digipeater 
-            if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&frame, SRC_RX)); // Igate 
-            if (mqueue[3]) fbq_put( mqueue[3], fbuf_newRef(&frame, SRC_RX)); // Netmon
-        }
-        if (mqueue[0]==NULL)
-            fbuf_release(&frame); 
+
+        /* Distribute packet to subscribers */
+        if (fbqsw_publish(psub, frame) == 0)
+            fbuf_release(&frame);
+
     }
 }
 
@@ -234,8 +229,8 @@ void loraprs_init_decoder()
     packet_rdy = cond_create();
     cond_clear(packet_rdy);
     
-    mqueue[0] = mqueue[1] = mqueue[2] = NULL;
-    fbq_init(&mon, 10);    
+    
+    psub = fbqsw_create(10);
     lora_SetIrqHandler(intrHandler, SX126X_IRQ_RX_DONE | SX126X_IRQ_TX_DONE);
     
     /* Start RX thread */

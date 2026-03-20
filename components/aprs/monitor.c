@@ -11,7 +11,7 @@ static bool mon_on = false;
 static bool mon_ax25 = true; 
 static FBQ mon;
 static FBUF frame; 
-
+static uint8_t subscription;
 
 void mon_init()
 {
@@ -75,7 +75,7 @@ void mon_activate(bool m)
     if (tstart) {
         FBQ* mq = (mon_on? &mon : NULL);
         
-        APRS_SUBSCRIBE_RX(mq, 0);
+        subscription = APRS_SUBSCRIBE_RX(mq);
         if (GET_BOOL_PARAM("TXMON.on", DFL_TXMON_ON))
             APRS_MONITOR_TX(mq);
 
@@ -86,7 +86,7 @@ void mon_activate(bool m)
     
     if (tstop) {
         fbq_signal(&mon, SRC_RX);
-        APRS_SUBSCRIBE_RX(NULL, 0);
+        APRS_UNSUBSCRIBE_RX(subscription);
         APRS_MONITOR_TX(NULL);
     }
 }

@@ -83,10 +83,10 @@ void netmon_worker(void *wParam)
 }
 
 
-
+static uint8_t subscription;
 
 static void subscribe() {
-    APRS_SUBSCRIBE_RX(&mq, 3);
+    subscription = APRS_SUBSCRIBE_RX(&mq);
     if (GET_BOOL_PARAM("TXMON.on", DFL_TXMON_ON))
         APRS_MONITOR_TX(&mq);
 }
@@ -94,7 +94,7 @@ static void subscribe() {
 
 static void unsubscribe() {
     fbq_signal(&mq, SRC_RX);
-    APRS_SUBSCRIBE_RX(NULL, 3);
+    APRS_UNSUBSCRIBE_RX(subscription);
     APRS_MONITOR_TX(NULL);
 }
 
