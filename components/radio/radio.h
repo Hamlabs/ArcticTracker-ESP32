@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "driver/uart.h"
 #include "esp_adc/adc_continuous.h"
-
+#pragma message("**** INCLUDE RADIO *****")
 
  uint8_t radio_getRssi();
  bool radio_is_on(); 
@@ -31,6 +31,8 @@
  
 #if defined(ARCTIC4_UHF)
  
+#define LORA_LNA_GAIN 7
+ 
 void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate, 
         uint16_t preambleLength, uint8_t payloadLen, bool crcOn, bool invertIrq, uint8_t ldro );
 
@@ -48,15 +50,15 @@ void lora_TxOff();
 void lora_SetIrqHandler(gpio_isr_t handler, uint16_t mask);
 uint16_t lora_GetIrqStatus();
 void lora_ClearIrqStatus();
-void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *snrPacket);
+//void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *snrPacket);
+void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *rssiPacketSig, int8_t *snrPacket);
 void lora_GetRxBufferStatus(uint8_t *payloadLength, uint8_t *rxStartBufferPointer);
 void lora_SetBufferAddr(uint8_t txBaseAddress, uint8_t rxBaseAddress);
 uint8_t lora_ReadBuffer(uint8_t *rxData, int16_t rxDataLen);
 void lora_WriteBuffer(uint8_t *txData, int16_t txDataLen);
 
-
 #else 
- 
+
 /* ADC sampler */
 #define ADC_GET_CHANNEL(p)     ((p)->type2.channel)
 #define ADC_GET_DATA(p)        ((p)->type2.data)

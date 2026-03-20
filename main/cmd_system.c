@@ -467,12 +467,14 @@ static void showrssi(void* arg)
     while (run_rssi) {
         int rssi = radio_getRssi(); 
 #if defined(ARCTIC4_UHF)
-        printf("-%3.1f dBm ", (float)rssi/2);
-        for (int j=255; j>rssi; j=j-2)
+        rssi = -(rssi>>1) - LORA_LNA_GAIN;
+        printf("%03d dBm ", rssi);
+        for (int j=-127; j<rssi; j=j+2)
            printf("*");
 #else
         printf("%c %3d ", (radio_getSquelch() ? '+' : ' '), rssi);
-        for (int j=0; j<rssi; j=j+2)
+        for (int j=0; j<rssi; j
+            =j+2)
            printf("*");
 #endif
         printf("\n");

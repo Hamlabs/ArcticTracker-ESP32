@@ -245,8 +245,8 @@ static void status_screen2() {
             disp_writeText(0, LINE5, buf);
         }
 #if DISPLAY_HEIGHT >= 128
-        int rs = radio_getRssi();
-        sprintf(buf, "RSSI: -%3.1f dBm", ((float) rs) / 2 ); 
+        int rs = -(radio_getRssi()>>1) - LORA_LNA_GAIN;
+        sprintf(buf, "RSSI: -%3d dBm", rs ); 
         disp_lineDotted(true);
         disp_hLine(0,69,110);
         disp_lineDotted(false);

@@ -28,6 +28,10 @@
 #define FREQ_DIV      ( double )pow( 2.0, 25.0 )
 #define FREQ_STEP     ( double )( XTAL_FREQ / FREQ_DIV )
 
+#define STANDBY_MODE SX126X_STANDBY_XOSC
+#define RXGAIN true
+#define USELDO true
+
 
 static int16_t loraBegin(uint32_t frequencyInHz, int8_t txPowerInDbm, float tcxoVoltage, bool useRegulatorLDO); 
 
@@ -115,7 +119,7 @@ void lora_init(void)
 	
 	gpio_reset_pin(RADIO_PIN_PWRON);
 	gpio_set_direction(RADIO_PIN_PWRON, GPIO_MODE_OUTPUT);
-	gpio_set_level(LORA_PIN_CS, 0);		
+	gpio_set_level(RADIO_PIN_PWRON, 0);		
 	
 	gpio_reset_pin(LORA_PIN_DIO1);
 	gpio_set_direction(LORA_PIN_DIO1, GPIO_MODE_INPUT);
@@ -144,7 +148,7 @@ void lora_on(bool on)
 		uint8_t txpo = get_byte_param("TXPOWER", DFL_TXPOWER);
 	
 		ESP_LOGI(TAG, "Lora on: sf=%d, cr=%d", sf, cr);
-		loraBegin((uint32_t) freq, power[txpo], 0, true );
+		loraBegin((uint32_t) freq, power[txpo], 0, USELDO );
 		mutex_unlock(lora_mutex);
 		lora_config(sf, SX126X_LORA_BW_125_0, cr-4, 8, 0, true, false, (sf>=11 ? 1:0)); 
 	     	// SF, BW, CR, PAlength, PLlen, CRCon, invertIRQ, optimize
@@ -244,7 +248,7 @@ void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate,
 	setRx(0xFFFFFF);
 	mutex_unlock(lora_mutex);
 	
-	setRxGain(true); 
+	setRxGain(RXGAIN); 
 	
 	/* Maybe some tuning of these parameters may help */
 	// lora_SetCadParams(SX126X_CAD_ON_4_SYMB, 0x00, 0x00, SX126X_CAD_GOTO_RX, 0x3FFF);
@@ -501,8 +505,8 @@ static void clearIrqStatus()
 
 uint8_t lora_GetRssiInst()
 {
-	mutex_lock(lora_mutex);
 	uint8_t buf[2];
+	mutex_lock(lora_mutex);
 	readCommand( SX126X_CMD_GET_RSSI_INST, buf, 2 ); // 0x15
 	mutex_unlock(lora_mutex);
 	return buf[1];
@@ -514,13 +518,18 @@ uint8_t lora_GetRssiInst()
  *  Returns RSSI and SNR of the last received packet (for LoRa) 
  ****************************************************************************/
 
-void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *snrPacket)
+void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *rssiPacketSig, int8_t *snrPacket)
 {
 	mutex_lock(lora_mutex);
 	uint8_t buf[4];
 	readCommand( SX126X_CMD_GET_PACKET_STATUS, buf, 4 ); // 0x14
-	*rssiPacket = (buf[3] >> 1) * -1;
+	*rssiPacket    = (buf[1] >> 1) * -1;
+	*rssiPacketSig = (buf[3] >> 1) * -1;
+	
 	( buf[2] < 128 ) ? ( *snrPacket = buf[2] >> 2 ) : ( *snrPacket = ( ( buf[2] - 256 ) >> 2 ) );
+	
+	
+	
 	mutex_unlock(lora_mutex);
 }
 
@@ -655,8 +664,7 @@ static int16_t loraBegin(uint32_t frequencyInHz, int8_t txPowerInDbm, float tcxo
 	}
 
 	ESP_LOGI(TAG, "SX126x installed");
-	setStandby(SX126X_STANDBY_RC);
-	setDio2AsRfSwitchCtrl(true);  // Is this correct?
+//	setDio2AsRfSwitchCtrl(true);  // Is this correct?
 	
 	calibrate(	SX126X_CALIBRATE_IMAGE_ON
 				| SX126X_CALIBRATE_ADC_BULK_P_ON
@@ -665,7 +673,9 @@ static int16_t loraBegin(uint32_t frequencyInHz, int8_t txPowerInDbm, float tcxo
 				| SX126X_CALIBRATE_PLL_ON
 				| SX126X_CALIBRATE_RC13M_ON
 				| SX126X_CALIBRATE_RC64K_ON
+				| SX126X_CALIBRATE_IMAGE_ON
 				);
+	
 	
 	/* Oppsett av regulator LDO or DCDC. Er dette støttet av modulen??  */
 	ESP_LOGI(TAG, "useRegulatorLDO = %d", useRegulatorLDO);
@@ -674,7 +684,8 @@ static int16_t loraBegin(uint32_t frequencyInHz, int8_t txPowerInDbm, float tcxo
 	} else {
 		setRegulatorMode(SX126X_REGULATOR_DC_DC);
 	}
-	
+	setStandby(STANDBY_MODE)
+	;
 //	setPaConfig(0x04, 0x07, 0x00, 0x01); // PA Optimal Settings +22 dBm
 	setPaConfig(0x04, 0x06, 0x00, 0x01); // PA Optimal Settings +14 dBm
 	setOvercurrentProtection(60.0); 
@@ -692,7 +703,7 @@ static int16_t loraBegin(uint32_t frequencyInHz, int8_t txPowerInDbm, float tcxo
 
 static void setRx(uint32_t timeout)
 {
-	setStandby(SX126X_STANDBY_RC);
+	setStandby(STANDBY_MODE);
 	uint8_t buf[3];
 	buf[0] = (uint8_t)((timeout >> 16) & 0xFF);
 	buf[1] = (uint8_t)((timeout >> 8) & 0xFF);
@@ -706,7 +717,7 @@ static void setRx(uint32_t timeout)
 	if ((getStatus() & 0x70) != 0x50) {
 		ESP_LOGE(TAG, "SetRx Illegal Status");
 	}
-	setRxGain(true); 
+	setRxGain(RXGAIN); 
 }
 
 
@@ -716,7 +727,7 @@ static void setRx(uint32_t timeout)
 
 static void setTx(uint32_t timeoutInMs)
 {
-	setStandby(SX126X_STANDBY_RC);
+	setStandby(STANDBY_MODE);
 	uint8_t buf[3];
 	uint32_t tout = timeoutInMs;
 	if (timeoutInMs != 0) {
