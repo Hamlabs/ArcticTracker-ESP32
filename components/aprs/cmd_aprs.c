@@ -93,7 +93,7 @@ static int do_testpacket(int argc, char** argv)
     fbuf_putstr(&packet, "The lazy brown dog jumps over the quick fox 1234567890");                      
     printf("*** Sending (AX25 UI) test packet ***\r\n");       
     fbq_put(outframes, packet); 
-    ax25_display_frame(&packet);
+    ax25_display_frame(stdout, &packet);
     printf("\n");
     sleepMs(10);
     radio_release();

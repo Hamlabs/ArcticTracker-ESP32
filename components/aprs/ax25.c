@@ -279,14 +279,14 @@ static void encode_addr(FBUF *b, char* c, uint8_t ssid, uint8_t flags)
  * Display AX.25 frame (on output stream)
  **************************************************************************/
  
-void ax25_display_addr(addr_t* a)
+void ax25_display_addr(FILE* os, addr_t* a)
 {
     char buf[10];
     addr2str(buf, a);
-    printf("%s", buf);
+    fprintf(os, "%s", buf);
 }
 
-void ax25_display_frame(FBUF *b)
+void ax25_display_frame(FILE* os, FBUF *b)
 {
     fbuf_reset(b);
     addr_t to, from;
@@ -294,29 +294,29 @@ void ax25_display_frame(FBUF *b)
     uint8_t ctrl;
     uint8_t pid;
     uint8_t ndigis = ax25_decode_header(b, &from, &to, digis, &ctrl, &pid);
-    ax25_display_addr(&from); 
-    putchar('>');
-    ax25_display_addr(&to);
+    ax25_display_addr(os, &from); 
+    fputc('>', os);
+    ax25_display_addr(os, &to);
     uint8_t i;
     for (i=0; i<ndigis; i++) {
-       putchar(',');
-       ax25_display_addr(&digis[i]);
+       fputc(',', os);
+       ax25_display_addr(os, &digis[i]);
        if (digis[i].flags & FLAG_DIGI)
-           putchar('*');
+           fputc('*', os);
     }
     if (ctrl == FTYPE_UI)
     {
-       putchar(':');    
+       fputc(':', os);    
        for (i=0; i < fbuf_length(b) - AX25_HDR_LEN(ndigis); i++) {
           register char c = fbuf_getChar(b); 
           if (c!='\n' && c!='\r' && c>=(char) 32 && c<(char)127)
-              putchar(c);
+              fputc(c, os);
           else
-              putchar('.');
+              fputc('.', os);
        }
     }
-
 }
+
 
 /**************************************************************************
  * Decode an AX.25 frame to a text string

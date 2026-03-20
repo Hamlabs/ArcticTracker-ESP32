@@ -10,10 +10,11 @@
 #include "radio.h"
 #include "lora1268.h"
 #include "ui.h"
+#include "aprs.h"
 
 #define TAG "lora-aprs"
 
-static FBQ* mqueue[3];
+static FBQ* mqueue[4];
 FBQ encoder_queue; 
 
 static FBQ mon;
@@ -79,7 +80,7 @@ bool loraprs_tx_is_on() {
  
 void loraprs_subscribe_rx(fbq_t* q, uint8_t i)
 {
-    if (i > 2)
+    if (i > MAX_SUBSCRIBE_CHAN)
         return;
     if (mqueue[i] != NULL)
         fbq_clear(mqueue[i]);
@@ -105,7 +106,7 @@ static void IRAM_ATTR intrHandler(void* x) {
 static void rxdecoder (void* arg) {
     uint8_t buf[256];
     int16_t len = 0;
-    int8_t rssi; 
+    int8_t rssi, sigrssi;
     int8_t snr;
     FBUF frame;
     
@@ -130,8 +131,13 @@ static void rxdecoder (void* arg) {
         lora_ClearIrqStatus(SX126X_IRQ_ALL);
         if (len == 0)
             continue;
-        lora_GetPacketStatus(&rssi, &snr);
-        ESP_LOGI(TAG, "RX packet: len=%d, rssi=%d, snr=%d", len, rssi, snr);
+        lora_GetPacketStatus(&rssi, &sigrssi, &snr);
+        
+        rssi = rssi-LORA_LNA_GAIN;
+        sigrssi = sigrssi-LORA_LNA_GAIN;
+        
+        ESP_LOGI(TAG, "RX packet: len=%d, rssi=%d, srssi=%d, snr=%d", 
+                 len, rssi, sigrssi, snr);
         
         /* Is it APRS? */
         if (len < 20 || buf[0]!= '<' || buf[1]!= 0xff || buf[2]!= 0x01) {
@@ -145,10 +151,12 @@ static void rxdecoder (void* arg) {
         last_rssi = rssi; last_snr = snr;
         last_time = getTime();
         
-        if (mqueue[0] || mqueue[1] || mqueue[2]) { 
+        // FIXME: Duplicatie in hdlc_tx.c
+        if (mqueue[0] || mqueue[1] || mqueue[2]  || mqueue [3] ) { 
             if (mqueue[0]) fbq_put( mqueue[0], frame);                       // Monitor 
             if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&frame, SRC_RX)); // Digipeater 
             if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&frame, SRC_RX)); // Igate 
+            if (mqueue[3]) fbq_put( mqueue[3], fbuf_newRef(&frame, SRC_RX)); // Netmon
         }
         if (mqueue[0]==NULL)
             fbuf_release(&frame); 

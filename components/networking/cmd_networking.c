@@ -263,21 +263,32 @@ static void _param_softap_handler(bool x) {
     wifi_enable_softAp(x); 
 }
    
-inline static void _param_httpd_handler(bool x) {
+static void _param_httpd_handler(bool x) {
     if (wifi_isEnabled())
         httpd_enable(x);
 }
    
+
+static void _param_netmon_handler(bool x) {
+    if (x)
+        netmon_start();
+    else
+        netmon_stop();
+    
+}
+
+
    
-   
-CMD_BOOL_SETTING(_param_wifi,      "WIFI.on",      DFL_WIFI_ON,   &_param_wifi_handler);
-CMD_BOOL_SETTING(_param_softap,    "SOFTAP.on",    DFL_SOFTAP_ON, &_param_softap_handler);
-CMD_STR_SETTING (_param_apikey,    "API.KEY",      128, DFL_API_KEY, NULL);
-CMD_STR_SETTING (_param_apiorig,   "API.ORIGINS",  64,  DFL_API_ORIGINS, NULL);
-CMD_STR_SETTING (_param_ap_auth,   "SOFTAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
-CMD_STR_SETTING (_param_ap_ip,     "SOFTAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);
-CMD_STR_SETTING (_param_fwurl,     "FW.URL",       64,  "", NULL);
-CMD_STR_SETTING (_param_fwcert,    "FW.CERT",      BBUF_SIZE, "", NULL);
+CMD_BOOL_SETTING(_param_wifi,        "WIFI.on",      DFL_WIFI_ON,   &_param_wifi_handler);
+CMD_BOOL_SETTING(_param_softap,      "SOFTAP.on",    DFL_SOFTAP_ON, &_param_softap_handler);
+CMD_STR_SETTING (_param_apikey,      "API.KEY",      128, DFL_API_KEY, NULL);
+CMD_STR_SETTING (_param_apiorig,     "API.ORIGINS",  64,  DFL_API_ORIGINS, NULL);
+CMD_STR_SETTING (_param_ap_auth,     "SOFTAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
+CMD_STR_SETTING (_param_ap_ip,       "SOFTAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);
+CMD_STR_SETTING (_param_fwurl,       "FW.URL",       64,  "", NULL);
+CMD_STR_SETTING (_param_fwcert,      "FW.CERT",      BBUF_SIZE, "", NULL);
+CMD_U16_SETTING (_param_netmon_port, "NETMON.PORT",  DFL_NETMON_PORT, 0, (uint16_t) 65536);
+CMD_BOOL_SETTING(_param_netmon,      "NETMON.on",    false, &_param_netmon_handler);
 
 
 /********************************************************************************
@@ -286,20 +297,22 @@ CMD_STR_SETTING (_param_fwcert,    "FW.CERT",      BBUF_SIZE, "", NULL);
 
 void register_wifi()
 {
-    ADD_CMD("mdns",       &do_mdns,          "Scan for MDNS services", "<type>");  
-    ADD_CMD("wifi-scan",  &do_scan,          "Scan for wifi access points", NULL);  
-    ADD_CMD("wifi-info",  &do_info,          "Info about WIFI connection", NULL);
-    ADD_CMD("wifi",       &_param_wifi,      "WIFI On/Off setting", "[on|off]");
-    ADD_CMD("softap",     &_param_softap,    "Soft AP On/Off setting", "[on|off]");
-    ADD_CMD("ap",         &do_apAlt,         "List or change AP alternatives", "[<index> [delete | <ssid> [<password>]]]");
-    ADD_CMD("softap-auth",&_param_ap_auth,   "WIFI SoftAP password", "[<password>]");
-    ADD_CMD("softap-ip",  &_param_ap_ip,     "WIFI_SoftAP IP address", "[<ip>]");
-    ADD_CMD("softap-sta", &do_apSta,         "WIFI SoftAP Connected stations", NULL);
-    ADD_CMD("api-key",    &_param_apikey,    "REST API Key", "[<key>]");    
-    ADD_CMD("api-origins",&_param_apiorig,   "Allowed origins for REST API webclients", "[<regex>]");
-    ADD_CMD("fw-url",     &_param_fwurl,     "URL for firmware update", "<url>");
-    ADD_CMD("fw-cert",    &_param_fwcert,    "Certificate for firmware update", "");
-    ADD_CMD("connect",    &do_connect,       "Connect to internet server", "<host> <port>");
+    ADD_CMD("mdns",       &do_mdns,            "Scan for MDNS services", "<type>");  
+    ADD_CMD("wifi-scan",  &do_scan,            "Scan for wifi access points", NULL);  
+    ADD_CMD("wifi-info",  &do_info,            "Info about WIFI connection", NULL);
+    ADD_CMD("wifi",       &_param_wifi,        "WIFI On/Off setting", "[on|off]");
+    ADD_CMD("softap",     &_param_softap,      "Soft AP On/Off setting", "[on|off]");
+    ADD_CMD("ap",         &do_apAlt,           "List or change AP alternatives", "[<index> [delete | <ssid> [<password>]]]");
+    ADD_CMD("softap-auth",&_param_ap_auth,     "WIFI SoftAP password", "[<password>]");
+    ADD_CMD("softap-ip",  &_param_ap_ip,       "WIFI_SoftAP IP address", "[<ip>]");
+    ADD_CMD("softap-sta", &do_apSta,           "WIFI SoftAP Connected stations", NULL);
+    ADD_CMD("api-key",    &_param_apikey,      "REST API Key", "[<key>]");    
+    ADD_CMD("api-origins",&_param_apiorig,     "Allowed origins for REST API webclients", "[<regex>]");
+    ADD_CMD("fw-url",     &_param_fwurl,       "URL for firmware update", "<url>");
+    ADD_CMD("fw-cert",    &_param_fwcert,      "Certificate for firmware update", "");
+    ADD_CMD("connect",    &do_connect,         "Connect to internet server", "<host> <port>");
+    ADD_CMD("netmon",     &_param_netmon,      "Network monitor On/off setting", "[on|off]");
+    ADD_CMD("netmon-port",&_param_netmon_port, "Network monitor port number", "<port>");
 }
 
 

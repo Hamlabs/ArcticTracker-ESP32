@@ -67,13 +67,12 @@ void ax25_str2frame(FBUF* b, char* str, uint8_t len);
 int ax25_frame2str(char *buf, FBUF* b);
 
 /* Display information about frame on standard output */
-void ax25_display_frame(FBUF *);
-void ax25_display_addr(addr_t*);
+void ax25_display_frame(FILE* os, FBUF *);
+void ax25_display_addr(FILE* os, addr_t*);
 
 
 /* Monitor */
 void mon_init();
 void mon_activate(bool m);
-FBQ* mon_text_activate(bool m);
                          
 #endif /* __AX25_H__ */

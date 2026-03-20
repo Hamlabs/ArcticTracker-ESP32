@@ -36,9 +36,9 @@ static void monitor (void *arg)
         if (!fbuf_empty(&frame)) {
             /* Display it */
             if (mon_ax25)
-                ax25_display_frame(&frame);
+                ax25_display_frame(stdout, &frame);
             else 
-                fbuf_print(&frame);
+                fbuf_print(stdout, &frame);
             printf("\n");
             sleepMs(10);
         }
@@ -89,35 +89,6 @@ void mon_activate(bool m)
         APRS_SUBSCRIBE_RX(NULL, 0);
         APRS_MONITOR_TX(NULL);
     }
-}
-
-
-/******************************************************************************
- * Activate/deactivate monitor for text format packets
- ******************************************************************************/
-
-FBQ* mon_text_activate(bool m)
-{ 
-    /* AX.25 or text mode */
-    mon_ax25 = false; 
-  
-    /* Start if not on already */
-    bool tstart = m && !mon_on;
-  
-    /* Stop if not stopped already */
-    bool tstop = !m && mon_on;
-  
-    mon_on = m;
-  
-    if (tstart) {
-        FBQ* mq = (mon_on? &mon : NULL);
-        xTaskCreate(&monitor, "Packet monitor", 
-            STACK_MONITOR, NULL, NORMALPRIO, NULL);
-        return mq;
-    }
-    if (tstop) 
-        fbq_signal(&mon, SRC_RX);
-    return NULL;
 }
 
 

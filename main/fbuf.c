@@ -426,11 +426,11 @@ void fbuf_cleanFront(FBUF* b)
     Print a buffer chain to a stream.
  ********************************************************/ 
 
-void fbuf_print(FBUF* b) 
+void fbuf_print(FILE* os, FBUF* b) 
 {
     fbuf_reset(b);
     for (int i=0; i < b->length; i++)
-        putchar(fbuf_getChar(b));
+        fputc(fbuf_getChar(b), os);
 }
   
    

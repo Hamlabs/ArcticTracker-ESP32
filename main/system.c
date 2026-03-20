@@ -475,14 +475,14 @@ static char* logtags[] = {
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "gps", "uart", "digi", "igate", "tcp-cli", "trackstore", 
     "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", "httpd_uri", "httpd_parse", "mdns", 
-    "gptimer", "lora", "lora-aprs", "spi"
-#define NLOGTAGS 29
+    "gptimer", "lora", "lora-aprs", "spi", "tcpserver"
+#define NLOGTAGS 30
 #else
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "afsk-rx", "hdlc-enc", "hdlc-dec", "gps", "uart", "digi", "igate",
     "tcp-cli", "trackstore", "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", 
-    "httpd_uri", "httpd_parse", "mdns", "gptimer"
-#define NLOGTAGS 29
+    "httpd_uri", "httpd_parse", "mdns", "gptimer", "tcpserver"
+#define NLOGTAGS 30
 #endif
 };
 

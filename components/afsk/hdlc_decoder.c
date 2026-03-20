@@ -15,8 +15,10 @@
 #include "fbuf.h"
 #include "ui.h"
 #include "fifo.h"
+#include "aprs.h"
 
 #define TAG "hdlc-dec"
+
 
 
 static fifo_t* inq;
@@ -44,7 +46,7 @@ bool hdlc_isSuccess() {return success;}
  
 void hdlc_subscribe_rx(fbq_t* q, uint8_t i)
 {
-    if (i > 2)
+    if (i > MAX_SUBSCRIBE_CHAN)
         return;
     if (mqueue[i] != NULL)
         fbq_clear(mqueue[i]);
@@ -167,10 +169,12 @@ static void hdlc_rxdecoder (void* arg)
       fbuf_removeLast(&fbuf);
       fbuf_removeLast(&fbuf);
       
-      if (mqueue[0] || mqueue[1] || mqueue[2]) { 
-         if (mqueue[0]) fbq_put( mqueue[0], fbuf);                       /* Monitor */
-         if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&fbuf, SRC_RX)); /* Digipeater */
-         if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&fbuf, SRC_RX)); /* Igate */
+      // FIXME: Duplicate in lora_aprs.c
+      if (mqueue[0] || mqueue[1] || mqueue[2]) || mqueue [3] { 
+         if (mqueue[0]) fbq_put( mqueue[0], fbuf);                        /* Monitor */
+         if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&fbuf, SRC_RX));  /* Digipeater */
+         if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&fbuf, SRC_RX));  /* Igate */
+         if (mqueue[3]) fbq_put( mqueue[3], fbuf_newRef(&frame, SRC_RX)); /* netmon */ 
       }
       if (mqueue[0]==NULL)
          fbuf_release(&fbuf); 

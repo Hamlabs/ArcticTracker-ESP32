@@ -2,6 +2,8 @@
 #if !defined __APRS_H__
 #define __APRS_H__
 
+#define MAX_SUBSCRIBE_CHAN 3
+
 #if defined(ARCTIC4_UHF)
 char* loraprs_last_packet();
 char* loraprs_last_heard(char* buf);
