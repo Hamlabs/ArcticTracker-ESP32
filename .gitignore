@@ -1,3 +1,5 @@
 build/*
+managed_components
 *.old
 *.obj
+*.zip

@@ -66,6 +66,7 @@ static void netmon_worker(void *wParam)
     clients++;
     
     if (clients <= 5) {
+        char buf[16];
         subscr = subscribe(&mq, &txsubscr);
         xTaskCreate(tick, "netmon_tick", 1024, (void*) &wrk, 4, NULL); 
         while (wrk.mon_on)
@@ -75,7 +76,16 @@ static void netmon_worker(void *wParam)
             */
             frame = fbq_get(&mq);
             if (!fbuf_empty(&frame)) {
-                /* Display it */
+                
+                /* Display metainformation */
+                fprintf(f, "# src=%s", fbuf_showtag(buf, &frame));
+                if (frame.meta != NULL) {
+                    lorameta_t *meta = (lorameta_t*) frame.meta;
+                    fprintf(f,", rssi=%d, snr=%d", meta->rssi, meta->snr);
+                }
+                fprintf(f, "\n");
+                
+                /* Display frame */
                 if (mon_ax25)
                     ax25_display_frame(f, &frame);
                 else 
@@ -84,7 +94,6 @@ static void netmon_worker(void *wParam)
                 sleepMs(10);
             }
             else {
-                char buf[16];
                 fprintf(f, "# %s\n", datetime2str(buf, getTime(), false)); 
             }
             
@@ -136,7 +145,7 @@ static void unsubscribe(FBQ* mq, uint8_t subscr, uint8_t txsubscr) {
 
 void netmon_start() {
     uint16_t port = get_u16_param("NETMON.PORT", DFL_NETMON_PORT);
-    srv = tcpserver_start(port, &netmon_worker, 4096, "netmon");
+    srv = tcpserver_start(port, &netmon_worker, 3072, "netmon");
 }
 
 

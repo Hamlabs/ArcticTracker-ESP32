@@ -48,6 +48,22 @@ static fbindex_t _split(fbindex_t islot, uint16_t pos);
 static fbindex_t _fbuf_newslot (void);
 static void _fbuf_releaseslot(fbindex_t i);
 
+
+char* fbuf_showtag(char* buf, FBUF *b) {
+    switch (b->tag) {
+        case SRC_RX: strcpy(buf, "RX"); break;
+        case SRC_TX: strcpy(buf, "TX"); break;
+        case SRC_TRACKER: strcpy(buf, "TRACKER"); break;
+        case SRC_DIGIPEATER: strcpy(buf, "DIGIPEATER"); break;
+        case SRC_IGATE: strcpy(buf, "IGATE"); break;
+        case SRC_USER: strcpy(buf, "USER"); break;
+        case SRC_SYSTEM: strcpy(buf, "SYSTEM"); break;
+        default: strcpy(buf, "UNKNOWN");
+    }
+    return buf;
+}
+
+
 fbindex_t fbuf_freeSlots()
    { return _free_slots; }
 
@@ -160,6 +176,7 @@ void fbuf_new (FBUF* bb, uint8_t tag)
     bb->rpos = 0;
     bb->length = 0;
     bb->tag = tag;
+    bb->meta = NULL;
 }
 
 

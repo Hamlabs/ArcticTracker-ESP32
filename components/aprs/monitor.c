@@ -6,6 +6,8 @@
 #include "system.h"
 #include "aprs.h"
    
+
+#define TAG "monitor"
    
 static bool mon_on = false;
 static bool mon_ax25 = true; 
@@ -30,6 +32,7 @@ void mon_init()
 static void monitor (void *arg)
 {
     (void) arg; 
+    char buf[16];
     while (mon_on)
     {
         /* Wait for frame and then to AFSK decoder/encoder 
@@ -38,6 +41,16 @@ static void monitor (void *arg)
         frame = fbq_get(&mon);
         if (!fbuf_empty(&frame)) {
             /* Display it */
+            
+            /* Display metainformation */
+            fbuf_showtag(buf, &frame);
+            if (frame.meta == NULL) 
+                ESP_LOGI(TAG, "src=%s", buf);
+            else {
+                lorameta_t *meta = (lorameta_t*) frame.meta;
+                ESP_LOGI(TAG, "src=%s, rssi=%d, snr=%d", buf, meta->rssi, meta->snr);
+            }
+            /* Display frame */
             if (mon_ax25)
                 ax25_display_frame(stdout, &frame);
             else 

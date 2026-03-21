@@ -5,6 +5,12 @@
 #define MAX_SUBSCRIBE_CHAN 3
 
 #if defined(ARCTIC4_UHF)
+
+typedef struct lorameta {
+    int8_t rssi; 
+    int8_t snr;
+} lorameta_t;
+
 char* loraprs_last_packet();
 char* loraprs_last_heard(char* buf);
 int8_t loraprs_last_rssi();

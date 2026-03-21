@@ -31,6 +31,13 @@ bool txon = false;
 static void alt_setting(bool on, FBUF *frame);
 
 
+lorameta_t *loraprs_meta(int8_t rssi, int8_t snr) {
+    lorameta_t * x = malloc(sizeof(lorameta_t));
+    x->rssi = rssi;
+    x->snr = snr;
+    return x;
+}
+
    
 /* Return queue for packets to TX */
 fbq_t* loraprs_get_encoder_queue()
@@ -102,7 +109,6 @@ static void IRAM_ATTR intrHandler(void* x) {
 
 
 
-
 /* Main receiver thread */
 static void rxdecoder (void* arg) {
     uint8_t buf[256];
@@ -147,6 +153,7 @@ static void rxdecoder (void* arg) {
         }
         
         fbuf_new(&frame, SRC_RX);
+        frame.meta = loraprs_meta(rssi, snr);
         ax25_str2frame(&frame,  (char*) buf+3, len-3);
         strcpy(last_packet, (char*) buf+3);
         last_rssi = rssi; last_snr = snr;

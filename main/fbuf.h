@@ -14,10 +14,12 @@
 
 #define SRC_UNKNOWN      0x00
 #define SRC_RX           0x01
-#define SRC_TRACKER      0x02
-#define SRC_DIGIPEATER   0x03
-#define SRC_IGATE        0x04
-#define SRC_USER         0x05
+#define SRC_TX           0x02
+#define SRC_TRACKER      0x03
+#define SRC_DIGIPEATER   0x04
+#define SRC_IGATE        0x05
+#define SRC_USER         0x06
+#define SRC_SYSTEM       0x07
 #define SRC_DUPLICATE    0xFF
 
 #define fbuf_t FBUF
@@ -40,6 +42,7 @@ typedef struct _fb
    uint16_t  rpos; 
    uint16_t  length;
    uint8_t   tag;
+   void*     meta;
 }
 FBUF; 
 
@@ -47,7 +50,7 @@ FBUF;
 /****************************************
    Operations for packet buffer chain
  ****************************************/
-
+char*    fbuf_showtag   (char* buf, FBUF *b);
 uint8_t  fbuf_getTag    (FBUF* bb);
 void     fbuf_setTag    (FBUF* bb, uint8_t tag);
 void     fbuf_init      (void);
