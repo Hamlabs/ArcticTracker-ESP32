@@ -12,6 +12,9 @@ static bool mon_ax25 = true;
 static FBQ mon;
 static FBUF frame; 
 static uint8_t subscription;
+static uint8_t txsubscr = 255;
+
+
 
 void mon_init()
 {
@@ -77,7 +80,7 @@ void mon_activate(bool m)
         
         subscription = APRS_SUBSCRIBE_RX(mq);
         if (GET_BOOL_PARAM("TXMON.on", DFL_TXMON_ON))
-            APRS_MONITOR_TX(mq);
+            txsubscr = APRS_SUBSCRIBE_TXMON(mq);
 
         xTaskCreate(&monitor, "Packet monitor", 
             STACK_MONITOR, NULL, NORMALPRIO, NULL);
@@ -87,7 +90,8 @@ void mon_activate(bool m)
     if (tstop) {
         fbq_signal(&mon, SRC_RX);
         APRS_UNSUBSCRIBE_RX(subscription);
-        APRS_MONITOR_TX(NULL);
+        if (txsubscr != 255)
+            APRS_UNSUBSCRIBE_TXMON(txsubscr);
     }
 }
 

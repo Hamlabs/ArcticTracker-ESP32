@@ -119,7 +119,7 @@ void fbq_init(FBQ* q, const uint16_t sz)
  * IMPORTANT: Be sure that no thread blocks on the queue when calling this.
  * TODO: Check that this is correct wrt thread behaviour.  
  ****************************************************************************/
-bool clr = false;
+static bool clr = false;
 void fbq_clear(FBQ* q)
 {
     cond_wait(q->lock);

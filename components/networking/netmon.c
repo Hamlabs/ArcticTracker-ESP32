@@ -12,39 +12,63 @@
 
 
 static const char *TAG="tcpserver";
-static FBQ mq;
-static FBUF frame; 
-static bool inited, mon_on;
 static bool mon_ax25 = true; 
 static ServerInfo_t *srv = NULL;
 static int clients = 0; 
 
-static void subscribe();
-static void unsubscribe();
+static uint8_t subscribe(FBQ*, uint8_t*);
+static void unsubscribe(FBQ*, uint8_t, uint8_t);
+
+
+typedef struct workerctx {
+    FBQ* mq; 
+    bool mon_on;
+} workerctx_t; 
+
+/**************************************************************
+ * Send a signal to wake up the worker, periodically. 
+ **************************************************************/
 
 static void tick(void *wParam) {
-    while (mon_on) {
+    
+    workerctx_t *wrk = (workerctx_t*) wParam;
+    while (wrk->mon_on) {
         sleepMs(60000);
-        fbq_signal(&mq, SRC_RX);
+        if (wrk->mon_on)
+            fbq_signal(wrk->mq, SRC_RX);
     }
     vTaskDelete(NULL);
 }
 
 
-void netmon_worker(void *wParam)
+/**************************************************************
+ * Worker thread
+ **************************************************************/
+
+static void netmon_worker(void *wParam)
 {
     int sock = *((int*) wParam);
     FILE *f = fdopen(sock, "r+");
     char mycall[12];
+    FBQ mq;
+    FBUF frame; 
+    fbq_init(&mq, 10);
+    uint8_t subscr, txsubscr = 255;
+    
+    /* Worker context to be shared with the other thread */
+    workerctx_t wrk; 
+    wrk.mon_on = true;
+    wrk.mq = &mq;
+
     get_str_param("MYCALL", mycall, 10, DFL_MYCALL);
     fprintf(f, "# ArcticTracker Monitor: %s\n", mycall);
     fflush(f);
     clients++;
-    if (clients == 1) {
-        subscribe();
-        mon_on = true;
-        xTaskCreate(tick, "netmon_tick", 1024, (void*) NULL, 4, NULL); 
-        while (mon_on)
+    
+    if (clients <= 5) {
+        subscr = subscribe(&mq, &txsubscr);
+        xTaskCreate(tick, "netmon_tick", 1024, (void*) &wrk, 4, NULL); 
+        while (wrk.mon_on)
         {
             /* Wait for frame and then to AFSK decoder/encoder 
             * is not running. 
@@ -67,15 +91,15 @@ void netmon_worker(void *wParam)
             /* Flush and dispose the frame */
             fbuf_release(&frame);    
             if (fflush(f) == EOF)
-                mon_on = false;
+                wrk.mon_on = false;
         }
         /* Close down */
-        unsubscribe();
+        unsubscribe(&mq, subscr, txsubscr);  
     }
     else
-        fprintf(f, "# Max 1 client allowed\n");
+        fprintf(f, "# Max 5 clients allowed\n");
     fflush(f);
-    sleepMs(100);
+    sleepMs(500);
     clients--;
     fclose(f); 
     close(sock);
@@ -83,28 +107,34 @@ void netmon_worker(void *wParam)
 }
 
 
-static uint8_t subscription;
+/*************************************************************
+ * Subscribe to incoming packets
+ *************************************************************/
 
-static void subscribe() {
-    subscription = APRS_SUBSCRIBE_RX(&mq);
+static uint8_t subscribe(FBQ* mq, uint8_t *txsubscr) {
+    uint8_t subscription = APRS_SUBSCRIBE_RX(mq);
     if (GET_BOOL_PARAM("TXMON.on", DFL_TXMON_ON))
-        APRS_MONITOR_TX(&mq);
+    *txsubscr = APRS_SUBSCRIBE_TXMON(mq);
+    return subscription;
+}
+
+/*************************************************************
+ * Unsubscribe
+ *************************************************************/
+
+static void unsubscribe(FBQ* mq, uint8_t subscr, uint8_t txsubscr) {
+    fbq_signal(mq, SRC_RX);
+    APRS_UNSUBSCRIBE_RX(subscr);
+    if (txsubscr != 255)
+        APRS_UNSUBSCRIBE_TXMON(txsubscr);
 }
 
 
-static void unsubscribe() {
-    fbq_signal(&mq, SRC_RX);
-    APRS_UNSUBSCRIBE_RX(subscription);
-    APRS_MONITOR_TX(NULL);
-}
-
-
+/*************************************************************
+ * Start/stop the netmon service
+ *************************************************************/
 
 void netmon_start() {
-    if (!inited) {
-        fbq_init(&mq, HDLC_DECODER_QUEUE_SIZE);
-        inited = true;
-    }
     uint16_t port = get_u16_param("NETMON.PORT", DFL_NETMON_PORT);
     srv = tcpserver_start(port, &netmon_worker, 4096, "netmon");
 }

@@ -19,8 +19,8 @@
 
 QueueHandle_t outqueue; 
 FBQ encoder_queue; 
-FBQ *mqueue = NULL;
 static FBUF buffer; 
+static FBQSW_t *psubtx;
 
 #define BUFFER_EMPTY (fbuf_eof(&buffer))            
 
@@ -37,9 +37,6 @@ static void hdlc_encode_frames(void);
 static void hdlc_encode_byte(uint8_t txbyte, bool flag);
 
 
-void hdlc_monitor_tx(FBQ* m)
-   { mqueue = m; }
-
 fbq_t* hdlc_get_encoder_queue()
    { return &encoder_queue; }
 
@@ -49,8 +46,20 @@ bool hdlc_enc_packets_waiting()
 void hdlc_wait_idle()
    { while (!hdlc_idle) WAIT_IDLE; }
 
-   
-   
+
+ /***********************************************************
+ * Subscribe or unsubscribe to packets from encoder
+ * packets are put into the given buffer queue.
+ ***********************************************************/
+
+uint8_t hdlc_subscribe_txmon(fbq_t* q) {
+    return fbqsw_subscribe(psubtx, q);
+}
+
+void hlc_unsubscribe_txmon(uint8_t i) {
+    fbqsw_unsubscribe(psubtx, i);
+}
+
    
 /*******************************************************
  * Pseudo random function.
@@ -197,21 +206,12 @@ static void hdlc_encode_frames()
             hdlc_encode_byte(txbyte, false);
         }
             
-        if (mqueue != NULL) {
-            /* 
-             * Put packet on monitor queue, if active
-             */
-            ESP_LOGI(TAG, "Put frame on monitor queue");
-            fbq_put(mqueue, buffer);
-        }
-        else {
-            ESP_LOGI(TAG, "Release frame.");
-            fbuf_release(&buffer);   
-        }
+
+        if (fbqsw_publish(psubtx, frame) == 0)
+            fbuf_release(&frame);
+
         hdlc_encode_byte(crc^0xFF, false);       // Send FCS, LSB first
         hdlc_encode_byte((crc>>8)^0xFF, false);  // MSB
-        
-        break;
     
         if (!fbq_eof(&encoder_queue) && i < maxfr) {
             hdlc_encode_byte(HDLC_FLAG, true);

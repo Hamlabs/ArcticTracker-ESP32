@@ -23,6 +23,7 @@
 
 static fifo_t* inq;
 static fbuf_t fbuf;
+static FBQSW_t *psub;
 
 static uint16_t tag_seq = 0;
 static uint16_t prev_seq = 0;
@@ -42,8 +43,6 @@ bool hdlc_isSuccess() {return success;}
  * Subscribe or unsubscribe to packets from decoder
  * packets are put into the given buffer queue.
  ***********************************************************/
- 
-FBQSW_t *psub;
 
 uint8_t hdlc_subscribe_rx(fbq_t* q) {
     return fbqsw_subscribe(psub, q);

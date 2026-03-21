@@ -16,10 +16,9 @@
 
 FBQ encoder_queue; 
 
-static FBQ mon;
-static FBQ *txmon = NULL; 
 static FBUF frame; 
 static cond_t packet_rdy;
+static FBQSW_t *psub, *psubtx;
 
 char  last_packet[256]; 
 int8_t last_rssi;
@@ -32,10 +31,6 @@ bool txon = false;
 static void alt_setting(bool on, FBUF *frame);
 
 
-/* Set packet queue for TX monitoring */
-void loraprs_monitor_tx(FBQ* m)
-   { txmon = m; }
-   
    
 /* Return queue for packets to TX */
 fbq_t* loraprs_get_encoder_queue()
@@ -77,7 +72,6 @@ bool loraprs_tx_is_on() {
  * packets are put into the given frame queue.
  ***********************************************************/
 
-FBQSW_t *psub;
 
 uint8_t loraprs_subscribe_rx(fbq_t* q) {
     return fbqsw_subscribe(psub, q);
@@ -87,6 +81,13 @@ void loraprs_unsubscribe_rx(uint8_t i) {
     fbqsw_unsubscribe(psub, i);
 }
 
+uint8_t loraprs_subscribe_txmon(fbq_t* q) {
+    return fbqsw_subscribe(psubtx, q);
+}
+
+void loraprs_unsubscribe_txmon(uint8_t i) {
+    fbqsw_unsubscribe(psubtx, i);
+}
 
 
 /***********************************************************
@@ -188,12 +189,11 @@ static void txencoder (void* arg)
      tx_led_on();
      txon = true;
      lora_SendPacket((uint8_t*) txbuf, len+3);
-
      
-     if (txmon != NULL)
-        fbq_put(txmon, frame);
-     else
+     /* Distribute packet to subscribers */
+     if (fbqsw_publish(psubtx, frame) == 0)
         fbuf_release(&frame);
+
   }
 }
 
@@ -229,7 +229,6 @@ void loraprs_init_decoder()
     packet_rdy = cond_create();
     cond_clear(packet_rdy);
     
-    
     psub = fbqsw_create(10);
     lora_SetIrqHandler(intrHandler, SX126X_IRQ_RX_DONE | SX126X_IRQ_TX_DONE);
     
@@ -246,6 +245,7 @@ void loraprs_init_decoder()
 
 FBQ* loraprs_init_encoder() 
 {
+  psubtx = fbqsw_create(10);
   fbq_init(&encoder_queue, LORA_ENCODER_QUEUE_SIZE);
   /* Start TX thread */
   xTaskCreatePinnedToCore(&txencoder, "LoRa APRS TX", 
