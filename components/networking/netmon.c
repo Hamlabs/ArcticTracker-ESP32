@@ -115,6 +115,12 @@ void netmon_stop() {
 }
 
 
+void netmon_init() {
+    if (GET_BOOL_PARAM("NETMON.on", false))
+        netmon_start();
+}
+
+
 
 
 

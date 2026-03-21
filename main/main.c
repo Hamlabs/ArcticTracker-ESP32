@@ -196,8 +196,8 @@ static void startup(void* arg)
     tracklog_init();
     digipeater_init(oq);
     igate_init(); 
-    
     mon_init();
+    netmon_init();
     sleepMs(10000);   
     time_update();   
     sec_init();

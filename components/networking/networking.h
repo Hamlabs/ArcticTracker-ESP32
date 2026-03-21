@@ -72,6 +72,7 @@ ServerInfo_t * tcpserver_start(int port, TaskFunction_t worker, int stack, char*
 void tcpserver_stop(ServerInfo_t *srv);
 void netmon_start();
 void netmon_stop();
+void netmon_init();
 
 
 /* TCP client */
