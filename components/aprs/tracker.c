@@ -179,6 +179,7 @@ static void tracker(void* arg)
         * Wait for a fix on position. But with timeout to allow status and 
         * object reports to be sent. 
         */  
+        gps_getstored();
         uint8_t statustime = get_byte_param("STATUSTIME", DFL_STATUSTIME); 
         waited = gps_wait_fix( GPS_TIMEOUT * TRACKER_SLEEP_TIME * TIMER_RESOLUTION);
         if (!gps_is_fixed())

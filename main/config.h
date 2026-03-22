@@ -12,6 +12,7 @@
 
 uint32_t chipId(); 
 void nvs_init();
+void nvs_print_stats();
 int  config_open();
 void config_close();
 void delete_param(const char* key);

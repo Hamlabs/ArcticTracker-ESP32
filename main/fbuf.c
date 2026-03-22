@@ -216,6 +216,7 @@ FBUF fbuf_newRef(FBUF* bb, uint8_t tag)
     fbuf_reset(&newb);
     newb.wslot = bb->wslot;
     newb.tag = (tag==SRC_DUPLICATE ? bb->tag : tag);
+    newb.meta = bb->meta;
     return newb;
 }
 

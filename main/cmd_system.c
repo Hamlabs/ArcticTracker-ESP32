@@ -281,6 +281,7 @@ static int do_sysinfo(int argc, char** argv)
     printf("FBUF free mem:   %ld bytes\n", fbuf_freeMem());
     printf("FBUF used slots: %d\n", fbuf_usedSlots());
     printf("File system:     %u bytes, %u used, %u free\n", size, size-free, free);
+    printf("NVS:             ");nvs_print_stats();
     printf("IDF version:     %s\n\n", esp_get_idf_version());
     printf("Chip info:\n");
     printf("  model:         %s\n", model);
@@ -442,20 +443,61 @@ static int do_nmea(int argc, char** argv)
 }
 
 
+/********************************************************************************
+ * position
+ ********************************************************************************/
 
-
-extern void _beep(int freq, int duration); 
-
-static int do_beep(int argc, char** argv) {
+static int do_pos(int argc, char** argv)
+{
+    latlong_t pos;
     if (argc<=1) {
-        printf("beep command needs one argument (freq)\n");
-        return 0;
+        int n = get_bin_param("pos", &pos, sizeof(latlong_t), NULL);
+        if (n==0)
+            printf("Position not set\n");
+        else
+            printf("Lat: %3.4f, Lng: %3.4f\n", pos.latitude, pos.longitude);
     }
-    int freq = 0;
-    sscanf(argv[1], "%d", &freq);
-    _beep(freq, 2000);
+    else if (argc == 2) {
+        if (strcasecmp(argv[1], "DELETE") == 0) {
+            delete_param("pos");
+            printf("Ok");
+            return 0;
+        }
+        else {
+            printf("Unknown command: 'pos %s'", argv[1]);
+            return 0;
+        }
+            
+    }
+    else if (argc > 2) {
+        float lat, lng; 
+        if (sscanf(argv[1], "%f", &lat) == 0
+            ||  sscanf(argv[2], "%f", &lng) == 0) {
+            printf("Syntax error: Input must be numeric\n");
+            return 0;
+        }
+        if (lat<-90 || lat>90) { 
+            printf("Latitude out of range (must be between -90 and 90\n");
+            return 0;
+        }
+        if (lng<-180 || lng>180) {
+            printf("Latitude out of range (must be between -180 and 180\n");
+            return 0;
+        }
+        pos.latitude = lat; 
+        pos.longitude = lng;
+        set_bin_param("pos", &pos, sizeof(latlong_t));
+        gps_getstored();
+        printf("Ok\n");
+    }
     return 0;
 }
+
+
+
+
+
+
 
 /********************************************************************************
  * RSSI - signal strength
@@ -619,6 +661,7 @@ void register_system()
     ADD_CMD("time",      &do_time,        "Get date and time", NULL);
     ADD_CMD("timezone",  &_param_timezone,"Set timezone", "<tz-string>");
     ADD_CMD("nmea",      &do_nmea,        "Monitor GPS NMEA datastream", "[raw]");
+    ADD_CMD("pos",       &do_pos,         "Set own position", "[delete | <lat long>]");
     ADD_CMD("vbatt",     &do_vbatt,       "Read battery voltage", "");
     ADD_CMD("shutdown",  &do_shutdown,    "Shut down system", "");
     ADD_CMD("ioconfig",  &do_ioconfig,    "Show info on GPIO configuration", "<gpio>");

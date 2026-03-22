@@ -318,8 +318,7 @@ void time_update()
     setenv("TZ", tz, 1);
     tzset();
     
-    
-    if (gps_is_fixed()) {
+    if (gps_is_present() && gps_is_fixed()) {
         ESP_LOGI(TAG, "Getting time from fixed GNSS.");
         set_time(gps_get_time());
     }
@@ -328,7 +327,7 @@ void time_update()
         initialize_sntp(); 
         sntp_initialized = true;
     }
-    else {
+    else if (gps_is_present()) {
         /* if time not set by other means, use GNSS even if not in fix */
         ESP_LOGI(TAG, "Getting time from GNSS.");
         time_t t = gps_get_time();
@@ -369,7 +368,7 @@ time_t timegm(struct tm *tm)
 
 time_t getTime() {
     time_t now;
-    if (gps_is_fixed()) 
+    if (gps_is_present() && gps_is_fixed()) 
         now = gps_get_time();
     else 
         time(&now);

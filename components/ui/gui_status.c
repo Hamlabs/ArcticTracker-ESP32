@@ -357,7 +357,7 @@ static void status_screen4() {
     char buf[24];
     disp_clear();
     status_heading("GNSS");
-    if (gps_is_fixed()) {
+    if (gps_is_present() && gps_is_fixed()) {
         disp_setBoldFont(true);
         disp_writeText(0, LINE1, pos2str_lat(buf, gps_get_pos()));
         disp_writeText(0, LINE2, pos2str_long(buf, gps_get_pos()));
@@ -380,8 +380,12 @@ static void status_screen4() {
        disp_setBoldFont(true);
        disp_setHighFont(true, false);
        disp_writeText(0, LINE1, "No GNSS!");
-       disp_setBoldFont(false);
        disp_setHighFont(false, false);
+       if (gps_is_fixed()) {
+          disp_writeText(0, LINE3, pos2str_lat(buf, gps_get_pos()));
+          disp_writeText(0, LINE4, pos2str_long(buf, gps_get_pos()));
+       }
+       disp_setBoldFont(false);
     }
     
     disp_flush();

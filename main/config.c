@@ -46,6 +46,15 @@ void nvs_init()
 }
 
 
+void nvs_print_stats() {
+    nvs_stats_t nvs_stats;
+    nvs_get_stats(NULL, &nvs_stats);
+    printf("%u used, %u free, %u available, %u total\n",
+       nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.available_entries, nvs_stats.total_entries);
+}
+
+
+
 /********************************************************************************
  * Open/close NVS storage for config
  ********************************************************************************/

@@ -22,6 +22,12 @@ typedef struct _PosData {
 } posdata_t;
 
 
+typedef struct _LatLong {
+    float    latitude;
+    float    longitude;
+} latlong_t;
+
+
 
 /* Access to current position. Note that current_time can be 
  * different from timestamp in current_pos since GPS is not always in fix 
@@ -41,6 +47,7 @@ void        gps_fake(void);
 float       gps_get_pdop();
 posdata_t*  gps_get_pos(void);
 time_t      gps_get_time(void);
+bool        gps_getstored(); 
 uint32_t    gps_distance(posdata_t*, posdata_t*);
 uint16_t    gps_bearing(posdata_t *from, posdata_t *to);
 void        gps_mon_pos (void);

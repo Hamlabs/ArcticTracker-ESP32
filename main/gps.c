@@ -44,6 +44,7 @@ static char buf[NMEA_BUFSIZE+2];
 static bool monitor_pos, monitor_raw; 
 static bool is_fixed = false;
 static bool is_present = false; 
+static bool stored = false; 
 static float altitude = -1;
 static float pdop = -1;
 
@@ -96,12 +97,20 @@ void gps_init(uart_port_t uart)
 /* 
  * Create a fake GPS position
  */
-void gps_fake() 
+bool gps_getstored() 
 {
-    /* Just set the timestamp */
+    latlong_t pos;
+    int n = get_bin_param("pos", &pos, sizeof(latlong_t), NULL);
+    if (n == 0 || gps_is_present()) {
+       stored = false; 
+       return false;
+    }
+    
     gps_current_pos.timestamp = getTime();
-    gps_current_pos.latitude = 66.0;
-    gps_current_pos.longitude = 15.0;
+    gps_current_pos.latitude = pos.latitude;
+    gps_current_pos.longitude = pos.longitude;
+    stored = true;
+    return true;
 }
 
 
@@ -119,9 +128,10 @@ static void nmeaListener(void* arg)
   (void)arg;
   char* argv[16];
   uint8_t argc;
+  is_present = false; 
   sleepMs(5000);
   ESP_LOGI(TAG, "NMEA listener starts..");
-  
+
   while (1) {
     int checksum = 0; 
     int c_checksum;
@@ -372,14 +382,18 @@ void notify_fix(bool lock)
 }
 
 
-bool gps_is_fixed()
-   { return is_fixed; /*&& GET_BYTE_PARAM("TRACKER.on"); */}
+
+
+bool gps_is_fixed() { 
+   bool available =  (is_fixed || stored );
+   return available; 
+}
    
   
 /* Return true if we waited */   
 bool gps_wait_fix(uint16_t timeout)
 { 
-     if (is_fixed) 
+    if (is_fixed || stored) 
         return false;      
     WAIT_FIX(timeout==0 ? portMAX_DELAY : timeout);
     return true;
