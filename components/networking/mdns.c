@@ -11,11 +11,12 @@ static char hostname[32];
  **********************************************************************************/
 
 void mdns_start(char* ident) {
-  
+    ESP_LOGI(TAG, "mdns_start: %s", ident);
+    
     //initialize mDNS service
     esp_err_t err = mdns_init();
     if (err) {
-        printf("MDNS Init failed: %d\n", err);
+        ESP_LOGW(TAG, "MDNS Init failed: %d\n", err);
         return;
     }
     
@@ -62,7 +63,7 @@ mdns_result_t* mdns_find_service(const char * service_name, const char * proto)
         return NULL;
     }
     if(!results){
-        ESP_LOGI(TAG, "No results found!");
+        ESP_LOGD(TAG, "No results found!");
         return NULL;
     }
     return results;

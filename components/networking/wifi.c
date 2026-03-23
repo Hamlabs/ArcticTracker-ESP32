@@ -44,6 +44,7 @@ static char *status = "Off";
 static cond_t scanDone;
 
 char default_ssid[32];
+static char ident[16];
 
 
 /* esp netif object representing the WIFI station */
@@ -123,6 +124,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t ebase,
         status = "Connected";
         connected = true; 
         time_update(); 
+        mdns_start(ident);
     }
     else if (eid == WIFI_EVENT_STA_CONNECTED) {
         ESP_LOGD(TAG, "STA Connect event");
@@ -166,6 +168,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t ebase,
 
 
 
+    
 
 /********************************************************************************
  * Initialize
@@ -175,7 +178,6 @@ void wifi_init(void)
 {
     if (initialized)
         return;
-    char ident[16];
     
     get_str_param("MYCALL", ident, 16, DFL_MYCALL);
     if (strcmp(ident, "") == 0 || strcmp(ident, "NOCALL") == 0)
@@ -215,7 +217,6 @@ void wifi_init(void)
     if (GET_BOOL_PARAM("WIFI.on", DFL_WIFI_ON))
         wifi_enable(true);
     
-    mdns_start(ident);
     initialized = true;
 }
 
