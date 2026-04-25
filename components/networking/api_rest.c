@@ -96,6 +96,7 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
     cJSON_AddNumberToObject(root, "repeat",    get_byte_param("REPEAT", DFL_REPEAT));
     cJSON_AddNumberToObject(root, "turnlimit", get_u16_param("TURNLIMIT", DFL_TURNLIMIT));
    
+    cJSON_AddNumberToObject(root, "crypto",  GET_BOOL_PARAM("CRYPTO.on", DFL_CRYPTO_ON) );
     cJSON_AddBoolToObject(root, "timestamp", GET_BOOL_PARAM("TIMESTAMP.on", DFL_TIMESTAMP_ON));
     cJSON_AddBoolToObject(root, "compress",  GET_BOOL_PARAM("COMPRESS.on", DFL_COMPRESS_ON));
     cJSON_AddBoolToObject(root, "altitude",  GET_BOOL_PARAM("ALTITUDE.on", DFL_ALTITUDE_ON));
@@ -147,6 +148,7 @@ static esp_err_t aprs_put_handler(httpd_req_t *req)
     set_byte_param("MINDIST",  JSON_BYTE(root, "mindist"));
     set_byte_param("REPEAT",   JSON_BYTE(root, "repeat"));
     
+    set_byte_param("CRYPTO.on",    JSON_BOOL(root, "crypto"));
     set_byte_param("TIMESTAMP.on", JSON_BOOL(root, "timestamp"));
     set_byte_param("COMPRESS.on",  JSON_BOOL(root, "compress"));
     set_byte_param("ALTITUDE.on",  JSON_BOOL(root, "altitude"));
@@ -270,7 +272,8 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     
     /* Don't send the API key */
     cJSON_AddStringToObject(root, "apikey", "");
-    
+    /* Don't send the crypto key */
+    cJSON_AddStringToObject(root, "cryptokey", "");
     
     for (int i=0; i<6; i++) {
         wifiAp_t res;
@@ -305,6 +308,10 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
     /* API key is updated if it is non-empty */
     if (strlen(JSON_STR(root, "apikey"))>3)
         set_str_param("API.KEY", JSON_STR(root, "apikey"));
+    
+    /* Crypto key is updated if it is non-empty */
+    if (strlen(JSON_STR(root, "cryptokey"))>3)
+        set_str_param("CRYPTO.KEY", JSON_STR(root, "cryptokey"));
     
     for (int i=0; i<6; i++) {
         char ssid[32];

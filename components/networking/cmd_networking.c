@@ -17,6 +17,7 @@
 #include "linenoise/linenoise.h"
 #include "restapi.h"
 #include "mbedtls/base64.h"
+#include "encryption.h"
 
 static void   showScan(void);
 
@@ -276,19 +277,19 @@ static void _param_netmon_handler(bool x) {
         netmon_stop();
     
 }
-
+CMD_STR_SETTING_H  (_param_cryptkey,  "CRYPTO.KEY",   128, DFL_CRYPTO_KEY,  NULL, sec_init);
 
    
-CMD_BOOL_SETTING(_param_wifi,        "WIFI.on",      DFL_WIFI_ON,   &_param_wifi_handler);
-CMD_BOOL_SETTING(_param_softap,      "SOFTAP.on",    DFL_SOFTAP_ON, &_param_softap_handler);
-CMD_STR_SETTING (_param_apikey,      "API.KEY",      128, DFL_API_KEY, NULL);
-CMD_STR_SETTING (_param_apiorig,     "API.ORIGINS",  64,  DFL_API_ORIGINS, NULL);
-CMD_STR_SETTING (_param_ap_auth,     "SOFTAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
-CMD_STR_SETTING (_param_ap_ip,       "SOFTAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);
-CMD_STR_SETTING (_param_fwurl,       "FW.URL",       64,  "", NULL);
-CMD_STR_SETTING (_param_fwcert,      "FW.CERT",      BBUF_SIZE, "", NULL);
-CMD_U16_SETTING (_param_netmon_port, "NETMON.PORT",  DFL_NETMON_PORT, 0, (uint16_t) 65536);
-CMD_BOOL_SETTING(_param_netmon,      "NETMON.on",    false, &_param_netmon_handler);
+CMD_BOOL_SETTING  (_param_wifi,       "WIFI.on",      DFL_WIFI_ON,   &_param_wifi_handler);
+CMD_BOOL_SETTING  (_param_softap,     "SOFTAP.on",    DFL_SOFTAP_ON, &_param_softap_handler);
+CMD_STR_SETTING_H (_param_apikey,     "API.KEY",      128, DFL_API_KEY, NULL, sec_init);
+CMD_STR_SETTING   (_param_apiorig,    "API.ORIGINS",  64,  DFL_API_ORIGINS, NULL);
+CMD_STR_SETTING   (_param_ap_auth,    "SOFTAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
+CMD_STR_SETTING   (_param_ap_ip,      "SOFTAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);
+CMD_STR_SETTING   (_param_fwurl,      "FW.URL",       64,  "", NULL);
+CMD_STR_SETTING   (_param_fwcert,     "FW.CERT",      BBUF_SIZE, "", NULL);
+CMD_U16_SETTING   (_param_netmon_port,"NETMON.PORT",  DFL_NETMON_PORT, 0, (uint16_t) 65536);
+CMD_BOOL_SETTING  (_param_netmon,     "NETMON.on",    false, &_param_netmon_handler);
 
 
 /********************************************************************************
