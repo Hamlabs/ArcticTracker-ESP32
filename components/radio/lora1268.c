@@ -306,7 +306,6 @@ void setRfFrequency(uint32_t frequency)
 	buf[2] = (uint8_t)((freq >> 8) & 0xFF);
 	buf[3] = (uint8_t)(freq & 0xFF);
 	writeCommand(SX126X_CMD_SET_RF_FREQUENCY, buf, 4); // 0x86
-	mutex_unlock(lora_mutex);
 }
 
 
@@ -426,8 +425,8 @@ void lora_SendPacket(uint8_t *pData, int16_t len)
 
 void lora_TxOff() {
 	mutex_lock(lora_mutex);
-	setRx(0xFFFFFF);
 	gpio_set_level(LORA_PIN_DIO3, 0);
+	setRx(0xFFFFFF);
 	mutex_unlock(lora_mutex);
 }
 
@@ -731,8 +730,7 @@ static void setTx(uint32_t timeoutInMs)
 	uint8_t buf[3];
 	uint32_t tout = timeoutInMs;
 	if (timeoutInMs != 0) {
-		uint32_t timeoutInUs = timeoutInMs * 1000;
-		tout = (uint32_t)(timeoutInUs / 0.015625);
+		tout = (uint32_t)(timeoutInMs / 0.015625);
 	}
 
 	buf[0] = (uint8_t)((tout >> 16) & 0xFF);
