@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "config.h"
 #include "defines.h"
+#include "pmu.h"
 #include "ax25.h"
 #include "gps.h"
 #include "ui.h"
@@ -461,6 +462,12 @@ static void status_screen7() {
 
     disp_writeText(0, LINE1, buf);
     disp_writeText(0, LINE2, b1);
+    int vbus = pmu_getVbusVoltage();
+    
+    if (batt_charge() && vbus > 0) {
+        sprintf(buf, "Vbus: %1.02f V", ((float)vbus/1000) );
+        disp_writeText(0, LINE3, buf);
+    }
     
     disp_setBoldFont(true);
     disp_setHighFont(true, false); 

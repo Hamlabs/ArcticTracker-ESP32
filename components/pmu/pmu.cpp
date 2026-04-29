@@ -64,6 +64,7 @@ esp_err_t pmu_init()
         ESP_LOGE(TAG, "Init PMU FAILED!");
         return ESP_FAIL;
     }
+    
     /* Minimum common working voltage of the PMU VBUS input */
     PMU.setVbusVoltageLimit(XPOWERS_AXP2101_VBUS_VOL_LIM_3V88);
 
@@ -99,6 +100,7 @@ esp_err_t pmu_init()
     
     PMU.setBLDO2Voltage(3300);
        // Not used on ARCTIC4
+    
     
     return ESP_OK;
 }
@@ -265,6 +267,17 @@ bool pmu_isCharging() {
 }
     
     
+
+/*****************************************************
+ * Return voltage on VBUS
+ *****************************************************/
+
+uint16_t pmu_getVbusVoltage() {
+    return PMU.getVbusVoltage(); 
+}
+
+
+
 /*****************************************************
  * Return true if connected on VBUS
  *****************************************************/
