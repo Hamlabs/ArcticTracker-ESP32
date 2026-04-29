@@ -16,10 +16,11 @@
 #include "mbedtls/md.h"
 #include "mbedtls/platform.h"
 #include "restapi.h"
+#include "encryption.h"
+
 
 
 #define KEY_SIZE 128
-#define SHA256_SIZE 32
 #define SHA256_B64_SIZE 44
 #define HMAC_TRUNC 24
 #define HMAC_SHA256_SIZE 32
@@ -90,12 +91,14 @@ void rest_setSecHdrs(esp_http_client_handle_t client, char* service, char* data,
     
     /* Create a SHA256 hash of the content */
     if (dlen > 0)
-        compute_sha256_b64(chash, (uint8_t*) data, dlen ); 
+        sec_sha256_b64(chash, (uint8_t*) data, dlen ); 
     
     ESP_LOGI(TAG, "CHASH: %s", chash);
+
     /* Create hmac */
-    compute_hmac(key, hmac, HMAC_B64_SIZE, (uint8_t*) nonce, NONCE_SIZE, (uint8_t*) chash , (dlen>0 ? SHA256_B64_SIZE : 0));
-    
+    sec_hmac_sapi(hmac, HMAC_B64_SIZE, 
+        (uint8_t*) nonce, NONCE_SIZE, (uint8_t*) chash , (dlen>0 ? SHA256_B64_SIZE : 0));
+
     /* Set header */
     sprintf(httpauth, "Arctic-Hmac %s;%s;%s", service, nonce, hmac);
     ESP_LOGI(TAG, "HTTP AUTH: %s", httpauth);
@@ -172,9 +175,9 @@ esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize)
     /* Verify HMAC */
     char phash[SHA256_B64_SIZE+1];
     if (plsize > 0) 
-        compute_sha256_b64(phash, (uint8_t*) payload, plsize);
+        sec_sha256_b64(phash, (uint8_t*) payload, plsize);
     
-    compute_hmac("API.KEY", hmac, HMAC_B64_SIZE, 
+    sec_hmac_api(hmac, HMAC_B64_SIZE, 
         (uint8_t*) nonce, NONCE_SIZE, 
         (uint8_t*) (plsize==0 ? "": phash), (plsize==0 ? 0 : SHA256_B64_SIZE));
             
@@ -196,116 +199,3 @@ esp_err_t rest_isAuth(httpd_req_t *req, char* payload, int plsize)
 
 
 
-/*******************************************************************************************
- * Generate sha256 hash
- *******************************************************************************************/
-
-char* compute_sha256_b64(char* res, uint8_t *data, int len) 
-{
-    uint8_t hash[SHA256_SIZE];
-    
-    mbedtls_sha256_context ss;
-    mbedtls_sha256_init (&ss);
-    mbedtls_sha256_starts (&ss, 0);
-    if (len > 0)
-        mbedtls_sha256_update (&ss, (uint8_t*) data, len);
-    mbedtls_sha256_finish (&ss, hash);
-    
-    size_t olen;
-    mbedtls_base64_encode((unsigned char*) res, SHA256_B64_SIZE+1, &olen, hash, SHA256_SIZE);
-    return res;
-}
-
-
-
-
-/********************************************************************************************
- * HMAC based on SHA256 
- * data contains (some representation of) the content. It should not be repeated in a 
- * predictable way. It may be a good idea to include a nonce or timestamp.
- * The hash is converted to a base64 format and returned in the res buffer.
- * 
- * HMAC(H, K) == H(K ^ opad, H(K ^ ipad, text))
- * Implementation adapted from Adrian Perez
- * https://github.com/aperezdc/hmac-sha256/blob/master/hmac-sha256.c
- ********************************************************************************************/
-
-
-#define I_PAD 0x36
-#define O_PAD 0x5C
-
-char* compute_hmac(const char* keyid, char* res, int hlen, uint8_t* data1, int len1, uint8_t* data2, int len2)
-{      
-    char key[KEY_SIZE];
-    char b64hash[HMAC_B64_SIZE+1];
-    uint8_t hash[HMAC_SHA256_SIZE];
-
-    int keylen = 0; 
-    keylen = get_str_param(keyid, key, KEY_SIZE, NULL) -1;
-    
-    if (keylen <= 0) {
-        /* Key is not set. Generate a random key */
-        ESP_LOGW(TAG, "API Key %s is not set", keyid);
-        esp_fill_random(key, KEY_SIZE);
-        keylen = KEY_SIZE;
-    }
-    
-    /* IF key length is more than HMAC_KEY_SIZE, use a hash of it instead */
-    if (keylen > HMAC_KEY_SIZE) {
-        mbedtls_sha256((unsigned char*) key, keylen, hash, 0);
-        memcpy(key, hash, HMAC_SHA256_SIZE);
-        keylen = HMAC_SHA256_SIZE;
-    }
-    /* Consider if this and the padding can be done once and stored. */
-    
-   /*
-     * (1) append zeros to the end of K to create a HMAC_KEY_SIZE byte string
-     * (2) XOR (bitwise exclusive-OR) the string computed in step
-     *     (1) with ipad
-     */
-    uint8_t kx[HMAC_KEY_SIZE];
-    for (size_t i = 0; i < keylen; i++) kx[i] = I_PAD ^ key[i];
-    for (size_t i = keylen; i < HMAC_KEY_SIZE; i++) kx[i] = I_PAD ^ 0;
-
-
-    /*
-     * (3) append the stream of data 'text' to the string resulting
-     *     from step (2)
-     * (4) apply H to the stream generated in step (3)
-     */  
-    mbedtls_sha256_context ss;
-    mbedtls_sha256_init (&ss);
-    mbedtls_sha256_starts (&ss, 0);
-    mbedtls_sha256_update (&ss, kx, HMAC_KEY_SIZE);
-    if (len1 > 0)
-        mbedtls_sha256_update (&ss, (uint8_t*) data1, len1);
-    if (len2 > 0)
-        mbedtls_sha256_update (&ss, (uint8_t*) data2, len2);
-    
-    mbedtls_sha256_finish (&ss, hash);
-    
-    /*
-     * (5) XOR (bitwise exclusive-OR) the 64 byte string computed in
-     *     step (1) with opad
-     */
-    for (size_t i = 0; i < keylen; i++) kx[i] = O_PAD ^ key[i];
-    for (size_t i = keylen; i < HMAC_KEY_SIZE; i++) kx[i] = O_PAD ^ 0;
-    
-    /*
-     * (6) append the H result from step (4) to the 64 byte string
-     *     resulting from step (5)
-     * (7) apply H to the stream generated in step (6)
-     */
-    mbedtls_sha256_init (&ss);
-    mbedtls_sha256_starts (&ss, 0);
-    mbedtls_sha256_update (&ss, kx, HMAC_KEY_SIZE);
-    mbedtls_sha256_update (&ss, hash, HMAC_SHA256_SIZE);
-    mbedtls_sha256_finish (&ss, hash);
-
-    size_t olen;
-    mbedtls_base64_encode((unsigned char*) b64hash, HMAC_B64_SIZE, &olen, hash, HMAC_SHA256_SIZE  );
-    if (hlen >= 0) 
-        b64hash[hlen] = 0;
-    strcpy(res, b64hash);
-    return res;
-}

@@ -89,6 +89,13 @@ static uint8_t * gcm_siv_encrypt(uint8_t *buf, uint8_t* key, char* cleartext, si
 }
 
 
+/**
+ * Set a key to be used for encryption. 
+ * The key is derived from a passphrase using PBKDF2. 
+ */ 
+void sec_set_cryptkey(char* keyphrase) {
+    sec_derive_key(_cryptkey, keyphrase, SALT_APRSPOS);
+}
 
 
 /**
@@ -97,14 +104,6 @@ static uint8_t * gcm_siv_encrypt(uint8_t *buf, uint8_t* key, char* cleartext, si
  */ 
 void sec_set_apikey(char* keyphrase) {
     sec_derive_key(_apikey, keyphrase, SALT_APIKEY);
-}
-
-/**
- * Set a key to be used for encryption. 
- * The key is derived from a passphrase using PBKDF2. 
- */ 
-void sec_set_cryptkey(char* keyphrase) {
-    sec_derive_key(_cryptkey, keyphrase, SALT_APRSPOS);
 }
 
 
