@@ -306,7 +306,6 @@ void setRfFrequency(uint32_t frequency)
 	buf[2] = (uint8_t)((freq >> 8) & 0xFF);
 	buf[3] = (uint8_t)(freq & 0xFF);
 	writeCommand(SX126X_CMD_SET_RF_FREQUENCY, buf, 4); // 0x86
-	mutex_unlock(lora_mutex);
 }
 
 
@@ -415,7 +414,7 @@ void lora_SendPacket(uint8_t *pData, int16_t len)
 	clearIrqStatus(SX126X_IRQ_ALL);
 	writeBuffer(pData, len);
 	gpio_set_level(LORA_PIN_DIO3, 1);
-	setTx(500);
+	setTx(5000);
 	mutex_unlock(lora_mutex);
 }
 
@@ -426,8 +425,8 @@ void lora_SendPacket(uint8_t *pData, int16_t len)
 
 void lora_TxOff() {
 	mutex_lock(lora_mutex);
-	setRx(0xFFFFFF);
 	gpio_set_level(LORA_PIN_DIO3, 0);
+	setRx(0xFFFFFF);
 	mutex_unlock(lora_mutex);
 }
 
@@ -664,7 +663,7 @@ static int16_t loraBegin(uint32_t frequencyInHz, int8_t txPowerInDbm, float tcxo
 	}
 
 	ESP_LOGI(TAG, "SX126x installed");
-//	setDio2AsRfSwitchCtrl(true);  // Is this correct?
+	setDio2AsRfSwitchCtrl(true);  // Is this correct?
 	
 	calibrate(	SX126X_CALIBRATE_IMAGE_ON
 				| SX126X_CALIBRATE_ADC_BULK_P_ON
@@ -686,8 +685,8 @@ static int16_t loraBegin(uint32_t frequencyInHz, int8_t txPowerInDbm, float tcxo
 	}
 	setStandby(STANDBY_MODE)
 	;
-//	setPaConfig(0x04, 0x07, 0x00, 0x01); // PA Optimal Settings +22 dBm
-	setPaConfig(0x04, 0x06, 0x00, 0x01); // PA Optimal Settings +14 dBm
+	setPaConfig(0x04, 0x07, 0x00, 0x01); // PA Optimal Settings +22 dBm
+//	setPaConfig(0x04, 0x06, 0x00, 0x01); // PA Optimal Settings +14 dBm
 	setOvercurrentProtection(60.0); 
 	setPowerConfig(txPowerInDbm, SX126X_PA_RAMP_200U);
 	setRfFrequency(frequencyInHz);
@@ -730,10 +729,9 @@ static void setTx(uint32_t timeoutInMs)
 	setStandby(STANDBY_MODE);
 	uint8_t buf[3];
 	uint32_t tout = timeoutInMs;
-	if (timeoutInMs != 0) {
-		uint32_t timeoutInUs = timeoutInMs * 1000;
-		tout = (uint32_t)(timeoutInUs / 0.015625);
-	}
+	if (timeoutInMs != 0) 
+		tout = (uint32_t)(timeoutInMs / 0.015625);
+	
 
 	buf[0] = (uint8_t)((tout >> 16) & 0xFF);
 	buf[1] = (uint8_t)((tout >> 8) & 0xFF);
@@ -864,6 +862,8 @@ static void setPowerConfig(int8_t power, uint8_t rampTime)
 		power = 22;
 	else if( power < -5 )
 		power = -5;
+	
+	ESP_LOGD(TAG, "setPowerCOnfig %d\n", power);
 	
 	buf[0] = power;
 	buf[1] = ( uint8_t )rampTime;
