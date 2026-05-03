@@ -141,10 +141,9 @@ static void rxdecoder (void* arg) {
         lora_GetPacketStatus(&rssi, &sigrssi, &snr);
         
         rssi = rssi-LORA_LNA_GAIN;
-        sigrssi = sigrssi-LORA_LNA_GAIN;
         
-        ESP_LOGI(TAG, "RX packet: len=%d, rssi=%d, srssi=%d, snr=%d", 
-                 len, rssi, sigrssi, snr);
+        ESP_LOGI(TAG, "RX packet: len=%d, rssi=%d, signal-rssi=%d, snr=%d", 
+                 len, rssi, (snr<0 ? rssi+snr: rssi), snr);
         
         /* Is it APRS? */
         if (len < 20 || buf[0]!= '<' || buf[1]!= 0xff || buf[2]!= 0x01) {
