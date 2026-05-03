@@ -49,6 +49,7 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     sprintf(buf, "%1.02f", ((double) vbatt) / 1000);
     cJSON_AddStringToObject(root, "vbatt",  buf);       
     cJSON_AddNumberToObject(root, "vpercent", pbatt);    
+    cJSON_AddBoolToObject(root, "charging", batt_charge());
     
     uint8_t mac[6];
     ESP_ERROR_CHECK(esp_wifi_get_mac(WIFI_IF_STA, mac));
@@ -62,6 +63,7 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     cJSON_AddStringToObject(root, "battstatus", buf);
     cJSON_AddStringToObject(root, "device", DEVICE_STRING);
     cJSON_AddStringToObject(root, "version", VERSION_STRING);
+    
     return rest_JSON_send(req, root);
 }
 
@@ -191,6 +193,7 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
     cJSON_AddBoolToObject(root, "wide1", GET_BOOL_PARAM("DIGI.WIDE1.on", DFL_DIGI_WIDE1_ON));
     cJSON_AddBoolToObject(root, "sar", GET_BOOL_PARAM("DIGI.SAR.on", DFL_DIGI_SAR_ON));
     cJSON_AddBoolToObject(root, "igateOn", GET_BOOL_PARAM("IGATE.on", DFL_IGATE_ON));
+    cJSON_AddBoolToObject(root, "igtrackOn", GET_BOOL_PARAM("IGATE.TRACK.on", DFL_IGATE_TRACK_ON));
     cJSON_AddNumberToObject(root, "port", get_u16_param("IGATE.PORT", DFL_IGATE_PORT));
     cJSON_AddNumberToObject(root, "passcode", get_u16_param("IGATE.PASS", 0));
      
@@ -233,6 +236,8 @@ static esp_err_t digi_put_handler(httpd_req_t *req)
     bool dualOn = JSON_BOOL(root, "dualOn");
     set_byte_param("LORA_ALT.on", dualOn);
 #endif
+    bool igtrackOn = JSON_BOOL(root, "igtrackOn");
+    set_byte_param("IGATE.TRACK.on", igtrackOn);
     
     bool digiOn = JSON_BOOL(root, "digiOn");
     set_byte_param("DIGIPEATER.on", digiOn);
