@@ -202,11 +202,13 @@ static void tracker(void* arg)
            if (should_update(&prev_pos_gps, &prev_pos, &gps_current_pos)) {
               if (GET_BOOL_PARAM("REPORT.BEEP.on", DFL_REPORT_BEEP_ON)) 
                  { beep(10); }
-            
+                 
+              /* Transmit it */
               report_station_position(&gps_current_pos, false);
               prev_pos = gps_current_pos;                      
            }
            else
+              /* Don't transmit it */
               report_station_position(&gps_current_pos, true);
         
            prev_pos_gps = gps_current_pos;
@@ -506,8 +508,10 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     
     
     if (!no_tx) 
+       /* Transmit it on radio */
        fbq_put(outframes, fbuf_newRef(&packet, SRC_TRACKER));
-    if (gate != NULL && igtrack) 
+    if (!no_tx && gate != NULL && igtrack) 
+       /* Also send it through igate if igtrack is on */
        fbq_put(gate, packet);
     else {
        /* Add report to log if not igated */
