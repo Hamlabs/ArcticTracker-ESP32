@@ -36,6 +36,8 @@
 #include "driver/usb_serial_jtag.h"
 #include "esp_vfs_usb_serial_jtag.h"
 
+
+
 static const char* TAG = "main";
 
 
@@ -96,7 +98,7 @@ static void initialize_console()
     linenoiseSetCompletionCallback(&esp_console_get_completion);
     linenoiseSetHintsCallback((linenoiseHintsCallback*) &esp_console_get_hint);
 
-    /* Set command history size */
+    /* Set command history size. Restore history */
     linenoiseHistorySetMaxLen(100);
 }
 
@@ -114,7 +116,8 @@ void run_console()
      * This can be customized, made dynamic, etc.
      */
     const char* prompt = LOG_COLOR_I "cmd> " LOG_RESET_COLOR;
-   
+    
+    linenoiseHistoryLoad("/files/history");
     linenoise("(press <enter> to start)");
 
     /* Figure out if the terminal supports escape sequences */
@@ -213,7 +216,7 @@ static void startup(void* arg)
 
 void app_main()
 {       
-    /* Change function of somee pins through IO mux to be GPIO 
+    /* Change function of some pins through IO mux to be GPIO 
      * FIXME: Use macros from defines.h to identify GPIOs
      */
 #if DEVICE==T_TWR

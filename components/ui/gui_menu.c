@@ -15,6 +15,7 @@
 #include "networking.h"
 #include "tracklogger.h"
 
+
 typedef void (*menucmd_t)(void*);
 
 typedef struct {
@@ -160,6 +161,7 @@ void menu_end()
     status_show();
 }
 
+extern void linenoiseHistorySave(char* f);
 
 
 /****************************************************
@@ -173,17 +175,23 @@ int gui_pause = 1000;
 
 static void gui_thread (void* arg) 
 {
+    int n = 0;
     while (true) {
         sleepMs(gui_pause);
              
-        if (batt_charge() && !charging)
+        if (batt_charge() && !charging && batt_percent() < 95)
             { beeps("-.-.  "); blipUp(); }
-        if (!batt_charge() && charging)
+        if (!batt_charge() && charging && batt_percent() < 95)
             { beeps("-.-.  "); blipDown(); }
         charging = batt_charge();
     
         if (!menu_is_active() && !disp_popupActive())
             status_show();
+        
+        if (n++ > 10) {
+            linenoiseHistorySave("/files/history");
+            n=0;
+        }
     }
 }
 
