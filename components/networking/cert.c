@@ -23,9 +23,9 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/x509_crt.h"
-#include "mbedtls/x509write_crt.h"
 #include "mbedtls/mpi.h"
 #include "mbedtls/error.h"
+#include "mbedtls/version.h"
 
 
 #define TAG             "cert"
@@ -139,6 +139,16 @@ static int _generate(void)
         goto cleanup;
     }
 
+#if MBEDTLS_VERSION_NUMBER >= 0x03010000
+    {
+        unsigned char serial_buf[] = { 0x01 };
+        ret = mbedtls_x509write_crt_set_serial_raw(cert, serial_buf, sizeof(serial_buf));
+        if (ret != 0) {
+            ESP_LOGE(TAG, "set_serial_raw failed: -0x%04x", -ret);
+            goto cleanup;
+        }
+    }
+#else
     ret = mbedtls_mpi_read_string(&serial, 10, "1");
     if (ret != 0) {
         ESP_LOGE(TAG, "mpi_read_string failed: -0x%04x", -ret);
@@ -150,6 +160,7 @@ static int _generate(void)
         ESP_LOGE(TAG, "set_serial failed: -0x%04x", -ret);
         goto cleanup;
     }
+#endif
 
     ret = mbedtls_x509write_crt_set_validity(cert, CERT_NOT_BEFORE, CERT_NOT_AFTER);
     if (ret != 0) {
