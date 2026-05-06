@@ -15,15 +15,16 @@
  */
 
 #include <string.h>
+#include "defines.h"
 #include "esp_log.h"
 #include "config.h"
 #include "cert.h"
+#include "networking.h"
 #include "mbedtls/pk.h"
 #include "mbedtls/ecp.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/x509_crt.h"
-#include "mbedtls/mpi.h"
 #include "mbedtls/error.h"
 #include "mbedtls/version.h"
 
@@ -37,12 +38,7 @@
 /* NVS keys (max 15 chars). */
 #define NVS_KEY_CERT    "TLS.CERT"
 #define NVS_KEY_KEY     "TLS.KEY"
-
-/* Certificate validity window – 10 years, matching gencert.sh. */
-#define CERT_NOT_BEFORE "20240101000000"
-#define CERT_NOT_AFTER  "20341231235959"
-
-#define CERT_SUBJECT    "CN=Arctic Tracker"
+#define NVS_CERT_VER    "TLS.CERT.VER"
 
 
 static uint8_t _cert_pem[CERT_PEM_BUF_SIZE];
@@ -68,8 +64,12 @@ const uint8_t *cert_get_key_pem(size_t *len)
 }
 
 
-/* Generate a new ECDSA P-256 self-signed certificate and persist it to NVS.
- * All mbedTLS contexts are heap-allocated to avoid large stack frames. */
+
+/*****************************************************************************
+ * Generate a new ECDSA P-256 self-signed certificate and persist it to NVS.
+ * All mbedTLS contexts are heap-allocated to avoid large stack frames. 
+ *****************************************************************************/
+
 static int _generate(void)
 {
     int ret = -1;
@@ -78,9 +78,6 @@ static int _generate(void)
     mbedtls_entropy_context  *entropy  = NULL;
     mbedtls_ctr_drbg_context *ctr_drbg = NULL;
     mbedtls_x509write_cert   *cert     = NULL;
-    mbedtls_mpi               serial;
-
-    mbedtls_mpi_init(&serial);
 
     key      = malloc(sizeof(mbedtls_pk_context));
     entropy  = malloc(sizeof(mbedtls_entropy_context));
@@ -98,14 +95,15 @@ static int _generate(void)
     mbedtls_x509write_crt_init(cert);
 
     /* Seed the deterministic RNG from the hardware entropy source. */
-    const char *pers = "arctic_cert";
+    unsigned char pbuf[16];
+    const char *pers = mac2str(pbuf);
     ret = mbedtls_ctr_drbg_seed(ctr_drbg, mbedtls_entropy_func, entropy,
                                  (const unsigned char *)pers, strlen(pers));
     if (ret != 0) {
         ESP_LOGE(TAG, "ctr_drbg_seed failed: -0x%04x", -ret);
         goto cleanup;
     }
-
+    
     /* Generate the ECC P-256 key pair. */
     ESP_LOGI(TAG, "Generating ECC P-256 key pair...");
     ret = mbedtls_pk_setup(key, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY));
@@ -127,41 +125,42 @@ static int _generate(void)
     mbedtls_x509write_crt_set_subject_key(cert, key);
     mbedtls_x509write_crt_set_issuer_key(cert, key);
 
+    /* Subject name */
     ret = mbedtls_x509write_crt_set_subject_name(cert, CERT_SUBJECT);
     if (ret != 0) {
         ESP_LOGE(TAG, "set_subject_name failed: -0x%04x", -ret);
         goto cleanup;
     }
 
+    /* Issuer name */
     ret = mbedtls_x509write_crt_set_issuer_name(cert, CERT_SUBJECT);
     if (ret != 0) {
         ESP_LOGE(TAG, "set_issuer_name failed: -0x%04x", -ret);
         goto cleanup;
     }
 
-#if MBEDTLS_VERSION_NUMBER >= 0x03010000
-    {
-        unsigned char serial_buf[] = { 0x01 };
-        ret = mbedtls_x509write_crt_set_serial_raw(cert, serial_buf, sizeof(serial_buf));
-        if (ret != 0) {
-            ESP_LOGE(TAG, "set_serial_raw failed: -0x%04x", -ret);
-            goto cleanup;
-        }
-    }
-#else
-    ret = mbedtls_mpi_read_string(&serial, 10, "1");
+    /* Serial number. Incremented each time a new cert is generated */
+    uint32_t serial = get_u32_param("TLS.CERT.SER", 0);
+    serial++;
+    set_u32_param("TLS.CERT.SER", serial);
+    
+    int i=0;
+    unsigned char sbuf[4];
+    sbuf[0] = (serial >> 24) & 0xFF; 
+    sbuf[1] = (serial >> 16) & 0xFF; 
+    sbuf[2] = (serial >> 8) & 0xFF; 
+    sbuf[3] = serial & 0xFF;
+    if (sbuf[0] == 0x00 && !(sbuf[1] & 0x80)) i++;
+    if (sbuf[1] == 0x00 && !(sbuf[2] & 0x80)) i++;
+    if (sbuf[2] == 0x00 && !(sbuf[3] & 0x80)) i++;
+    
+    ret = mbedtls_x509write_crt_set_serial_raw(cert, ((uint8_t*) sbuf)+i, 4-i);
     if (ret != 0) {
-        ESP_LOGE(TAG, "mpi_read_string failed: -0x%04x", -ret);
+        ESP_LOGE(TAG, "set_serial_raw failed: -0x%04x", -ret);
         goto cleanup;
     }
-
-    ret = mbedtls_x509write_crt_set_serial(cert, &serial);
-    if (ret != 0) {
-        ESP_LOGE(TAG, "set_serial failed: -0x%04x", -ret);
-        goto cleanup;
-    }
-#endif
-
+    
+    /* Validity */
     ret = mbedtls_x509write_crt_set_validity(cert, CERT_NOT_BEFORE, CERT_NOT_AFTER);
     if (ret != 0) {
         ESP_LOGE(TAG, "set_validity failed: -0x%04x", -ret);
@@ -188,6 +187,7 @@ static int _generate(void)
     /* Persist to NVS so the same certificate survives reboots. */
     set_bin_param(NVS_KEY_CERT, _cert_pem, _cert_len);
     set_bin_param(NVS_KEY_KEY,  _key_pem,  _key_len);
+    set_str_param(NVS_CERT_VER, VERSION_SSTRING);
 
     ESP_LOGI(TAG, "Self-signed certificate generated and stored "
              "(cert=%u bytes, key=%u bytes)",
@@ -198,7 +198,6 @@ cleanup:
         mbedtls_x509write_crt_free(cert);
         free(cert);
     }
-    mbedtls_mpi_free(&serial);
     if (key) {
         mbedtls_pk_free(key);
         free(key);
@@ -214,6 +213,21 @@ cleanup:
     return ret;
 }
 
+
+/********************************************************************************
+ * Generate a new certificate 
+ ********************************************************************************/
+
+bool cert_generate(void) {
+    return _generate() == 0;
+}
+
+
+
+/*******************************************************************************
+ * Init certificate. Try to get it from NVS. If not there, generate a new
+ * certificate. 
+ *******************************************************************************/
 
 bool cert_init(void)
 {
@@ -235,9 +249,6 @@ bool cert_init(void)
     }
 
     /* Nothing in NVS – generate a fresh self-signed certificate. */
-    if (clen <= 0 || klen <= 0)
-        ESP_LOGD(TAG, "NVS load failed (cert=%d, key=%d), will generate new certificate",
-                 clen, klen);
     ESP_LOGI(TAG, "No certificate found in NVS, generating self-signed certificate...");
     if (_generate() != 0) {
         ESP_LOGE(TAG, "Failed to generate self-signed certificate");

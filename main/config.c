@@ -402,6 +402,10 @@ void set_i32_param(const char* key, int32_t val) {
     ESP_ERROR_CHECK(nvs_set_i32(nvs, key, val));
 }
 
+void set_u32_param(const char* key, uint32_t val) {
+    ESP_ERROR_CHECK(nvs_set_u32(nvs, key, val));
+}
+
 void set_str_param(const char* key, char* val) {
     ESP_ERROR_CHECK(nvs_set_str(nvs, key, val));
 }
@@ -441,6 +445,13 @@ uint16_t get_u16_param(const char* key, const uint16_t dfl) {
 int32_t get_i32_param(const char* key, const int32_t dfl) {
     int32_t val = dfl;
     esp_err_t err = nvs_get_i32(nvs, key, &val); 
+    _CHECK(err, key);
+    return val;
+}
+
+uint32_t get_u32_param(const char* key, const uint32_t dfl) {
+    uint32_t val = dfl;
+    esp_err_t err = nvs_get_u32(nvs, key, &val); 
     _CHECK(err, key);
     return val;
 }

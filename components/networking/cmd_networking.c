@@ -18,6 +18,9 @@
 #include "restapi.h"
 #include "mbedtls/base64.h"
 #include "encryption.h"
+#include "cert.h"
+
+
 
 static void   showScan(void);
 
@@ -96,6 +99,7 @@ int do_scan(int argc, char** argv)
     return 0;
 }
 
+
 /********************************************************************************
  * Scan command handler
  ********************************************************************************/
@@ -112,6 +116,20 @@ int do_mdns(int argc, char** argv)
     return 0;
 }
 
+
+/********************************************************************************
+ * New certificate command handler
+ ********************************************************************************/
+
+int do_newcert(int argc, char** argv)
+{
+    printf("Generating a new self-signed TLS certifcate\n");
+    if (cert_generate())
+        printf("Ok\n");
+    else
+        printf("Failed\n");
+    return 0;
+}
 
 
 /********************************************************************************
@@ -299,6 +317,7 @@ CMD_BOOL_SETTING  (_param_netmon,     "NETMON.on",    false, &_param_netmon_hand
 void register_wifi()
 {
     ADD_CMD("mdns",       &do_mdns,            "Scan for MDNS services", "<type>");  
+    ADD_CMD("newcert",    &do_newcert,         "Generate a new TLS certificate", NULL);
     ADD_CMD("wifi-scan",  &do_scan,            "Scan for wifi access points", NULL);  
     ADD_CMD("wifi-info",  &do_info,            "Info about WIFI connection", NULL);
     ADD_CMD("wifi",       &_param_wifi,        "WIFI On/Off setting", "[on|off]");

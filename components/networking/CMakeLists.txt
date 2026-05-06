@@ -4,7 +4,5 @@ idf_component_register (
     INCLUDE_DIRS "." "../../main" 
     REQUIRES console ui mdns esp_http_client json esp_https_server mbedtls
     
-    EMBED_TXTFILES "certs/cert.pem"
-               "certs/privkey.pem"
 )
 

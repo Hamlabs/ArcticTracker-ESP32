@@ -10,6 +10,11 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+
+/* Generate a new certificate */
+bool cert_generate(void); 
+
+
 /*
  * Load the TLS certificate and private key from NVS.  If no certificate is
  * found a new ECDSA P-256 self-signed certificate is generated and persisted

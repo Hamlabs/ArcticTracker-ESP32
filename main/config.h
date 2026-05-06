@@ -42,12 +42,14 @@ char* param_parseStr(const char* key, char* val, const int size, const char* pat
 void     set_byte_param(const char* key, uint8_t val);
 void     set_u16_param(const char* key, uint16_t val);
 void     set_i32_param(const char* key, int32_t val);
+void     set_u32_param(const char* key, uint32_t val);
 void     set_str_param(const char* key, char* val);
 void     set_bin_param(const char* key, const void* val, size_t len); 
 
 uint8_t  get_byte_param(const char* key, const uint8_t dfl);
 uint16_t get_u16_param(const char* key, const uint16_t dfl);
 int32_t  get_i32_param(const char* key, const int32_t dfl);
+uint32_t get_u32_param(const char* key, const uint32_t dfl);
 int      get_str_param(const char* key, char* buf, size_t size, const char* dfl);
 int      get_bin_param(const char* key, void* buf, size_t size, const void* dfl);
 
