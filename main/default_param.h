@@ -68,7 +68,7 @@
 #define DFL_DIGI_WIDE1_ON  true
 #define DFL_DIGI_SAR_ON    false
 #define DFL_IGATE_ON       false
-#define DFL_IGATE_TRACK_ON false
+#define DFL_IGATE_TRACK_ON true
 #define DFL_REPORT_BEEP_ON false
 #define DFL_EXTRATURN_ON   false
 #define DFL_TXMON_ON       true

@@ -150,7 +150,7 @@ void lora_on(bool on)
 		ESP_LOGI(TAG, "Lora on: sf=%d, cr=%d", sf, cr);
 		loraBegin((uint32_t) freq, power[txpo], 0, USELDO );
 		mutex_unlock(lora_mutex);
-		lora_config(sf, SX126X_LORA_BW_125_0, cr-4, 8, 0, true, false, (sf>=11 ? 1:0)); 
+		lora_config(sf, SX126X_LORA_BW_125_0, cr-4, 10, 0, true, false, (sf>=11 ? 1:0)); 
 	     	// SF, BW, CR, PAlength, PLlen, CRCon, invertIRQ, optimize
 	}
 	else
@@ -250,10 +250,7 @@ void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate,
 	
 	setRxGain(RXGAIN); 
 	
-	/* Maybe some tuning of these parameters may help */
-	// lora_SetCadParams(SX126X_CAD_ON_4_SYMB, 0x00, 0x00, SX126X_CAD_GOTO_RX, 0x3FFF);
-	
-	/* Suggested by ChatGPT */
+	/* This is actually not used */
 	lora_SetCadParams( 
 	   SX126X_CAD_ON_4_SYMB,
        0x18,      // cadDetPeak: detection sensitivity (increase for more sensitivity)
@@ -1032,7 +1029,6 @@ static bool waitForIdle(unsigned long timeout, char *text, bool stop)
 static void writeRegister(uint16_t reg, uint8_t* data, uint8_t numBytes) {
 	// ensure BUSY is low (state meachine ready)
 	waitForIdle(BUSY_TIMEOUT, "start WriteRegister", true);
-    ESP_LOGD(TAG, "WriteRegister: REG=0x%02x", reg);
 
     // start transfer
 	chipSelect(true);
@@ -1064,8 +1060,6 @@ static void readRegister(uint16_t reg, uint8_t* data, uint8_t numBytes) {
 	// ensure BUSY is low (state meachine ready)
 	waitForIdle(BUSY_TIMEOUT, "start ReadRegister", true);
 
-    ESP_LOGD(TAG, "ReadRegister: REG=0x%02x", reg);
-
 	// start transfer
 	chipSelect(true);
 
@@ -1096,7 +1090,6 @@ static void writeCommand(uint8_t cmd, uint8_t* data, uint8_t numBytes) {
 	uint8_t status;
 	for (int retry=1; retry<10; retry++) {
 		status = writeCommand2(cmd, data, numBytes);
-		ESP_LOGD(TAG, "status=%02x", status);
 		if (status == 0) break;
 		ESP_LOGW(TAG, "writeCommand2 status=%02x retry=%d", status, retry);
 	}
@@ -1119,7 +1112,6 @@ static uint8_t writeCommand2(uint8_t cmd, uint8_t* data, uint8_t numBytes) {
 	chipSelect(true);
 
 	// send command byte
-    ESP_LOGD(TAG, "WriteCommand: CMD=0x%02x", cmd);
 	spi_transfer(cmd);
 
 	// variable to save error during SPI transfer
@@ -1165,13 +1157,11 @@ static void readCommand(uint8_t cmd, uint8_t* data, uint8_t numBytes) {
 	chipSelect(true);
 
 	// send command byte
-	ESP_LOGD(TAG, "ReadCommand: CMD=0x%02x", cmd);
 	spi_transfer(cmd);
 
 	// send/receive all bytes
 	for(uint8_t n = 0; n < numBytes; n++) {
 		data[n] = spi_transfer(SX126X_CMD_NOP);
-        ESP_LOGD(TAG, "DataIn: %02x", data[n]);
 	}
 
 	// stop transfer

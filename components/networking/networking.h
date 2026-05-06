@@ -8,7 +8,6 @@
 
 #include "esp_wifi.h"
 #include "fbuf.h"
-// #include "tcpip_adapter.h"
 #include "esp_netif.h"
 #include "mdns.h"
 

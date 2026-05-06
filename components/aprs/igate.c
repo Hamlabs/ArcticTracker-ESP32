@@ -257,7 +257,7 @@ static void rf2inet(FBUF *frame)
         return;
   
     static const char* nogate[8] = {"TCP", "NOGATE", "RFONLY", NULL};      
-    beeps(". ");
+    if (!own) beeps(". ");
       
     /* Write header in plain text -> newHdr */
     fbuf_new(&newHdr, SRC_IGATE);
