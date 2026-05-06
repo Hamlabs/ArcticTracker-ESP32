@@ -91,10 +91,4 @@ void mdns_start(char* ident);
 #define mdns_free_results(results)    mdns_query_results_free(results)
 
 
-/* Self-signed TLS certificate */
-bool           cert_init(void);
-const uint8_t *cert_get_pem(size_t *len);
-const uint8_t *cert_get_key_pem(size_t *len);
-
-
 #endif
