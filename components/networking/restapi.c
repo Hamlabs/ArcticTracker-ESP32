@@ -20,6 +20,7 @@
 #include "restapi.h"
 #include "trex.h"
 #include "esp_crt_bundle.h"
+#include "cert.h"
 
 
 #define SCRATCH_BUFSIZE (10240)
@@ -339,15 +340,26 @@ void rest_start(uint16_t port, uint16_t sport, const char *path)
     sconfig.port_insecure = port;
     sconfig.session_tickets = false;  // Prevent memory exhaustion
 
-    extern const unsigned char cert_start[] asm("_binary_cert_pem_start");
-    extern const unsigned char cert_end[]   asm("_binary_cert_pem_end");
-    sconfig.servercert = cert_start;
-    sconfig.servercert_len = cert_end - cert_start;
+    /* Prefer a runtime-generated self-signed certificate stored in NVS.
+     * Fall back to the embedded certificate if generation fails. */
+    if (cert_init()) {
+        size_t cert_len, key_len;
+        sconfig.servercert     = cert_get_pem(&cert_len);
+        sconfig.servercert_len = cert_len;
+        sconfig.prvtkey_pem    = cert_get_key_pem(&key_len);
+        sconfig.prvtkey_len    = key_len;
+    } else {
+        ESP_LOGW(TAG, "cert_init failed, falling back to embedded certificate");
+        extern const unsigned char cert_start[] asm("_binary_cert_pem_start");
+        extern const unsigned char cert_end[]   asm("_binary_cert_pem_end");
+        sconfig.servercert     = cert_start;
+        sconfig.servercert_len = cert_end - cert_start;
 
-    extern const unsigned char privkey_pem_start[] asm("_binary_privkey_pem_start");
-    extern const unsigned char privkey_pem_end[]   asm("_binary_privkey_pem_end");
-    sconfig.prvtkey_pem = privkey_pem_start;
-    sconfig.prvtkey_len = privkey_pem_end - privkey_pem_start;
+        extern const unsigned char privkey_pem_start[] asm("_binary_privkey_pem_start");
+        extern const unsigned char privkey_pem_end[]   asm("_binary_privkey_pem_end");
+        sconfig.prvtkey_pem = privkey_pem_start;
+        sconfig.prvtkey_len = privkey_pem_end - privkey_pem_start;
+    }
 #endif
     
 #if defined WEBSERVER_HTTPS
