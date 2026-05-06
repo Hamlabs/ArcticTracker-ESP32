@@ -2,10 +2,14 @@
  * Self-signed TLS certificate generation and management.
  *
  * On first call to cert_init() the module checks NVS for a previously
- * generated certificate.  If none is found it generates a fresh RSA-2048
+ * generated certificate.  If none is found it generates a fresh ECDSA P-256
  * self-signed certificate using mbedTLS, stores both the certificate and the
  * private key in NVS so they survive reboots, and makes them available through
  * cert_get_pem() / cert_get_key_pem() for the HTTPS server.
+ *
+ * ECC P-256 is chosen over RSA-2048 because key generation is orders of
+ * magnitude faster on the ESP32 (milliseconds vs. tens of seconds), and the
+ * resulting PEM blobs are much smaller.
  *
  * By LA7ECA, ohanssen@acm.org
  */
@@ -15,7 +19,7 @@
 #include "config.h"
 #include "cert.h"
 #include "mbedtls/pk.h"
-#include "mbedtls/rsa.h"
+#include "mbedtls/ecp.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/x509_crt.h"
@@ -26,16 +30,13 @@
 
 #define TAG             "cert"
 
-/* PEM output buffer sizes – RSA-2048 cert is ~1.3 KB, key is ~1.7 KB. */
-#define CERT_PEM_BUF_SIZE   2048
-#define KEY_PEM_BUF_SIZE    2048
+/* PEM output buffer sizes – ECC P-256 cert is ~500 B, key is ~200 B. */
+#define CERT_PEM_BUF_SIZE   1024
+#define KEY_PEM_BUF_SIZE     512
 
 /* NVS keys (max 15 chars). */
 #define NVS_KEY_CERT    "TLS.CERT"
 #define NVS_KEY_KEY     "TLS.KEY"
-
-#define RSA_KEY_BITS    2048
-#define RSA_EXPONENT    65537
 
 /* Certificate validity window – 10 years, matching gencert.sh. */
 #define CERT_NOT_BEFORE "20240101000000"
@@ -67,7 +68,7 @@ const uint8_t *cert_get_key_pem(size_t *len)
 }
 
 
-/* Generate a new RSA-2048 self-signed certificate and persist it to NVS.
+/* Generate a new ECDSA P-256 self-signed certificate and persist it to NVS.
  * All mbedTLS contexts are heap-allocated to avoid large stack frames. */
 static int _generate(void)
 {
@@ -105,20 +106,18 @@ static int _generate(void)
         goto cleanup;
     }
 
-    /* Generate the RSA key pair. */
-    ESP_LOGI(TAG, "Generating RSA-%d key pair (this may take a moment)...",
-             RSA_KEY_BITS);
-    ret = mbedtls_pk_setup(key, mbedtls_pk_info_from_type(MBEDTLS_PK_RSA));
+    /* Generate the ECC P-256 key pair. */
+    ESP_LOGI(TAG, "Generating ECC P-256 key pair...");
+    ret = mbedtls_pk_setup(key, mbedtls_pk_info_from_type(MBEDTLS_PK_ECKEY));
     if (ret != 0) {
         ESP_LOGE(TAG, "pk_setup failed: -0x%04x", -ret);
         goto cleanup;
     }
 
-    ret = mbedtls_rsa_gen_key(mbedtls_pk_rsa(*key),
-                               mbedtls_ctr_drbg_random, ctr_drbg,
-                               RSA_KEY_BITS, RSA_EXPONENT);
+    ret = mbedtls_ecp_gen_key(MBEDTLS_ECP_DP_SECP256R1, mbedtls_pk_ec(*key),
+                               mbedtls_ctr_drbg_random, ctr_drbg);
     if (ret != 0) {
-        ESP_LOGE(TAG, "rsa_gen_key failed: -0x%04x", -ret);
+        ESP_LOGE(TAG, "ecp_gen_key failed: -0x%04x", -ret);
         goto cleanup;
     }
 

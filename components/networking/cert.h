@@ -12,8 +12,8 @@
 
 /*
  * Load the TLS certificate and private key from NVS.  If no certificate is
- * found a new RSA-2048 self-signed certificate is generated and persisted so
- * it survives reboots.
+ * found a new ECDSA P-256 self-signed certificate is generated and persisted
+ * so it survives reboots.
  *
  * Returns true on success, false if generation failed.
  */
