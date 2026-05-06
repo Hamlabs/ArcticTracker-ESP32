@@ -225,6 +225,9 @@ bool cert_init(void)
     }
 
     /* Nothing in NVS – generate a fresh self-signed certificate. */
+    if (clen <= 0 || klen <= 0)
+        ESP_LOGD(TAG, "NVS load failed (cert=%d, key=%d), will generate new certificate",
+                 clen, klen);
     ESP_LOGI(TAG, "No certificate found in NVS, generating self-signed certificate...");
     if (_generate() != 0) {
         ESP_LOGE(TAG, "Failed to generate self-signed certificate");
