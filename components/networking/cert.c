@@ -23,7 +23,6 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/x509_crt.h"
-#include "mbedtls/x509write_crt.h"
 #include "mbedtls/mpi.h"
 #include "mbedtls/error.h"
 
