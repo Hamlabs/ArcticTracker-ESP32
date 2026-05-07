@@ -72,7 +72,7 @@ typedef void (*StrHandler)();
     inline static int f(int argc, char** argv) { \
         int r = param_setting_bool(argc, argv, key, dfl); \
         BoolHandler bhh = bh; \
-        if (bhh != NULL) \
+        if (bhh != NULL && r==0) \
             (*bhh)(get_byte_param(key, dfl)); \
         return r; \
     } 
@@ -81,7 +81,7 @@ typedef void (*StrHandler)();
     inline static int f(int argc, char** argv) { \
         int r = param_setting_byte(argc, argv, key, dfl, llimit, ulimit); \
         ByteHandler bhh = bh; \
-        if (bhh != NULL) \
+        if (bhh != NULL && r==0) \
             (*bhh)(get_byte_param(key, dfl)); \
         return r; \
     }
@@ -95,7 +95,7 @@ typedef void (*StrHandler)();
     inline static int f(int argc, char** argv) { \
         int r = param_setting_i32(argc, argv, key, dfl, llimit, ulimit); \
         I32Handler bhh = bh; \
-        if (bhh != NULL) \
+        if (bhh != NULL && r==0) \
             (*bhh)(get_i32_param(key, dfl)); \
         return r; \
     }
@@ -109,7 +109,7 @@ typedef void (*StrHandler)();
     inline static int f(int argc, char** argv) { \
         int r = param_setting_str(argc, argv, key, size, dfl, pattern); \
         StrHandler bhh = bh; \
-        if (bhh != NULL) \
+        if (bhh != NULL && r==0) \
             (*bhh)(); \
         return r; \
     }
@@ -119,6 +119,16 @@ typedef void (*StrHandler)();
     inline static int f(int argc, char** argv) { \
         return param_setting_ustr(argc, argv, key, size, dfl, pattern); \
     }
-
+    
+    
+#define CMD_USTR_SETTING_H(f, key, size, dfl, pattern, bh)  \
+    inline static int f(int argc, char** argv) { \
+        int r = param_setting_ustr(argc, argv, key, size, dfl, pattern); \
+        StrHandler bhh = bh; \
+        if (bhh != NULL && r==0) \
+            (*bhh)(); \
+        return r; \
+    }
+    
     
 #endif

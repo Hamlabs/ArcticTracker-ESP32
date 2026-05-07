@@ -118,6 +118,7 @@ int param_setting_str (int argc, char** argv,
     if (argc < 2) {
         get_str_param(key, data, size, dfl);
         printf("'%s'\n", data);
+        return 1;
     }
     else {
         int n = strlen(argv[1]);

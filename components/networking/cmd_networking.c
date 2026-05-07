@@ -295,12 +295,17 @@ static void _param_netmon_handler(bool x) {
         netmon_stop();
     
 }
-CMD_STR_SETTING_H  (_param_cryptkey,  "CRYPTO.KEY",   128, DFL_CRYPTO_KEY,  NULL, sec_init);
 
-   
+
+static void _param_sec() {
+    sec_init();
+}
+
+
+CMD_STR_SETTING_H  (_param_cryptkey,  "CRYPTO.KEY",   128, DFL_CRYPTO_KEY,  NULL, &_param_sec);
 CMD_BOOL_SETTING  (_param_wifi,       "WIFI.on",      DFL_WIFI_ON,   &_param_wifi_handler);
 CMD_BOOL_SETTING  (_param_softap,     "SOFTAP.on",    DFL_SOFTAP_ON, &_param_softap_handler);
-CMD_STR_SETTING_H (_param_apikey,     "API.KEY",      128, DFL_API_KEY, NULL, sec_init);
+CMD_STR_SETTING_H (_param_apikey,     "API.KEY",      128, DFL_API_KEY, NULL, &_param_sec);
 CMD_STR_SETTING   (_param_apiorig,    "API.ORIGINS",  64,  DFL_API_ORIGINS, NULL);
 CMD_STR_SETTING   (_param_ap_auth,    "SOFTAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
 CMD_STR_SETTING   (_param_ap_ip,      "SOFTAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);

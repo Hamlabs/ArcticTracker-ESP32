@@ -230,6 +230,14 @@ void hdl_rxfreq(int32_t freq) {
 
 #endif
 
+extern void cert_generate(void);
+
+void hdl_mycall() {
+    cert_generate();
+    printf("NOTE: Callsign/certificate changed. Reboot is recommended\n");
+}
+
+
 
 void hdl_radio(bool on) {
     if ((radio_is_on() && on) || (!radio_is_on() && !on))
@@ -278,23 +286,29 @@ void hdl_crypto(bool on) {
     if (on) {
         printf("NOTE: Position, object and status reports will now be encrypted.\n");
         printf("NOTE: This is an experimental feature at this point.\n");
-        printf("NOTE: Be sure you know what you are doing and that encryption (on amateur radio) is legal. \n");
+        printf("NOTE: Be sure that use of encryption (on amateur radio) is legal. \n");
     }
     else
         printf("NOTE: Position, object and status reports will now be sent as cleartext.\n");
 }
 
 
+static void hdl_sec() {
+    sec_init();
+    printf("NOTE: Certificate changed. Reboot is recommended\n");
+}
+
+
 
 // Radio and APRS settings
 
-CMD_USTR_SETTING (_param_mycall,     "MYCALL",       10, DFL_MYCALL,       REGEX_AXADDR);
-CMD_USTR_SETTING (_param_dest,       "DEST",         10, DFL_DEST,         REGEX_AXADDR);
-CMD_USTR_SETTING (_param_digipath,   "DIGIPATH",     70, DFL_DIGIPATH,     REGEX_DIGIPATH);
+CMD_USTR_SETTING_H (_param_mycall,    "MYCALL",       10, DFL_MYCALL,       REGEX_AXADDR, hdl_mycall);
+CMD_USTR_SETTING   (_param_dest,      "DEST",         10, DFL_DEST,         REGEX_AXADDR);
+CMD_USTR_SETTING   (_param_digipath,  "DIGIPATH",     70, DFL_DIGIPATH,     REGEX_DIGIPATH);
 
 CMD_STR_SETTING    (_param_trklogurl, "TRKLOG.URL",   64, DFL_TRKLOG_URL,   REGEX_URL);
 CMD_STR_SETTING    (_param_serverkey, "TRKLOG.KEY",   128, "",              NULL);
-CMD_STR_SETTING_H  (_param_cryptkey,  "CRYPTO.KEY",   128, DFL_CRYPTO_KEY,  NULL, sec_init);
+CMD_STR_SETTING_H  (_param_cryptkey,  "CRYPTO.KEY",   128, DFL_CRYPTO_KEY,  NULL, hdl_sec);
 
 CMD_STR_SETTING  (_param_symbol,     "SYMBOL",       3,  DFL_SYMBOL,       REGEX_APRSSYM);
 CMD_STR_SETTING  (_param_osym,       "OBJ.SYMBOL",   3,  DFL_OBJ_SYMBOL,   REGEX_APRSSYM);
