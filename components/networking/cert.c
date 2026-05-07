@@ -126,14 +126,19 @@ static int _generate(void)
     mbedtls_x509write_crt_set_issuer_key(cert, key);
 
     /* Subject name */
-    ret = mbedtls_x509write_crt_set_subject_name(cert, CERT_SUBJECT);
+    char dname[128];
+    char mycall[11]; 
+    get_str_param("MYCALL", mycall, 10, DFL_MYCALL);
+    sprintf(dname, "CN=ArcticTracker %lX,OU=%s", chipId(), mycall);
+    ret = mbedtls_x509write_crt_set_subject_name(cert, dname);
+    
     if (ret != 0) {
         ESP_LOGE(TAG, "set_subject_name failed: -0x%04x", -ret);
         goto cleanup;
     }
 
     /* Issuer name */
-    ret = mbedtls_x509write_crt_set_issuer_name(cert, CERT_SUBJECT);
+    ret = mbedtls_x509write_crt_set_issuer_name(cert, dname);
     if (ret != 0) {
         ESP_LOGE(TAG, "set_issuer_name failed: -0x%04x", -ret);
         goto cleanup;
@@ -190,8 +195,8 @@ static int _generate(void)
     set_str_param(NVS_CERT_VER, VERSION_SSTRING);
 
     ESP_LOGI(TAG, "Self-signed certificate generated and stored "
-             "(cert=%u bytes, key=%u bytes)",
-             (unsigned)_cert_len, (unsigned)_key_len);
+             "(cert=%u bytes, key=%u bytes, %s)",
+             (unsigned)_cert_len, (unsigned)_key_len, dname);
 
 cleanup:
     if (cert) {
