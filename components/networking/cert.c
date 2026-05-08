@@ -262,8 +262,10 @@ static int add_dns_san(mbedtls_x509write_cert *crt, const char **dns_names, size
 
     const size_t ext_len = 1 + asn1_len_bytes(san_len) + san_len;
     unsigned char *ext = malloc(ext_len);
-    if (!ext)
+    if (!ext) {
+        ESP_LOGE(TAG, "Out of memory while building SAN extension");
         return MBEDTLS_ERR_X509_ALLOC_FAILED;
+    }
 
     int ret = 0;
     unsigned char *p = ext;
@@ -303,11 +305,10 @@ cleanup:
 
 static size_t asn1_len_bytes(size_t len)
 {
-    size_t bytes = 1;
     if (len < 128)
-        return bytes;
+        return 1;
 
-    bytes = 0;
+    size_t bytes = 0;
     while (len > 0) {
         bytes++;
         len >>= 8;
