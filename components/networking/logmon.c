@@ -32,6 +32,26 @@ static FBQ g_mq;
 
 
 /**************************************************************
+ * Escape a string for embedding in a JSON value.
+ * Returns the number of bytes written to dst (not including NUL).
+ **************************************************************/
+
+static int json_escape(char *dst, int dstlen, const char *src) {
+    int i = 0;
+    for (const char *p = src; *p != '\0' && i < dstlen - 1; p++) {
+        if (*p == '"' || *p == '\\') {
+            if (i >= dstlen - 2)
+                break;
+            dst[i++] = '\\';
+        }
+        dst[i++] = *p;
+    }
+    dst[i] = '\0';
+    return i;
+}
+
+
+/**************************************************************
  * Send a signal to wake up the worker, periodically. 
  **************************************************************/
 
@@ -83,22 +103,28 @@ static void logmon_worker(void *wParam)
             }
 
             /* Extract 'from' callsign (text before '>') */
-            char from[10] = "";
+            char from[13] = "";
             int i;
             for (i = 0; i < plen && pktbuf[i] != '>' && i < (int)sizeof(from)-1; i++)
                 from[i] = pktbuf[i];
             from[i] = '\0';
 
+            /* Escape pktbuf for safe embedding in JSON string value */
+            char escaped[512];
+            json_escape(escaped, sizeof(escaped), pktbuf);
+
             /* Send a log-entry on UDP socket using the log format used for the lora-aprs.live service */
-            char json[512];
+            char json[640];
             int jlen = snprintf(json, sizeof(json),
                 "{\"software\":{\"name\":\"ArcticTracker\",\"version\":\"%s\"},"
                 "\"hardware\":{\"name\":\"%s\"},"
                 "\"data\":{\"type\":\"aprs-lora\",\"from\":\"%s\","
                 "\"data\":\"%s\",\"rssi\":%d,\"snr\":%d,\"freq_offset\":0}}",
-                VERSION_SSTRING, DEVICE_STRING, from, pktbuf, rssi, snr);
-            if (jlen > 0 && jlen < (int)sizeof(json))
-                sendto(sock, json, jlen, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
+                VERSION_SSTRING, DEVICE_STRING, from, escaped, rssi, snr);
+            if (jlen > 0 && jlen < (int)sizeof(json)) {
+                if (sendto(sock, json, jlen, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0)
+                    ESP_LOGW(TAG, "sendto failed: errno=%d", errno);
+            }
         }
             
         /* Dispose the frame */
