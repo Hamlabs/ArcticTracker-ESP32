@@ -67,6 +67,8 @@ const uint8_t *cert_get_key_pem(size_t *len)
 }
 
 static int add_dns_san(mbedtls_x509write_cert *crt, const char **dns_names, size_t count);
+static size_t asn1_len_bytes(size_t len);
+static int asn1_write_len_fwd(unsigned char **p, const unsigned char *end, size_t len);
 
 
 
@@ -153,7 +155,7 @@ static int _generate(void)
     char mydomain[32];
     sprintf(mydomain, "arctic-%s.local", mycall);
     const char *domains[] = { mydomain };
-    add_dns_san(cert, domains, 3);
+    add_dns_san(cert, domains, sizeof(domains) / sizeof(domains[0]));
     
 
     /* Serial number. Incremented each time a new cert is generated */
@@ -244,7 +246,99 @@ cleanup:
  ***********************************************************************************/
 
 static int add_dns_san(mbedtls_x509write_cert *crt, const char **dns_names, size_t count) {
-   /* Please add this */
+    if (!crt || (count > 0 && !dns_names))
+        return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+
+    size_t san_len = 0;
+    for (size_t i = 0; i < count; i++) {
+        if (!dns_names[i] || dns_names[i][0] == '\0')
+            continue;
+        const size_t name_len = strlen(dns_names[i]);
+        san_len += 1 + asn1_len_bytes(name_len) + name_len;
+    }
+
+    if (san_len == 0)
+        return 0;
+
+    const size_t ext_len = 1 + asn1_len_bytes(san_len) + san_len;
+    unsigned char *ext = malloc(ext_len);
+    if (!ext)
+        return MBEDTLS_ERR_X509_ALLOC_FAILED;
+
+    int ret = 0;
+    unsigned char *p = ext;
+    const unsigned char *end = ext + ext_len;
+
+    *p++ = MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE;
+    ret = asn1_write_len_fwd(&p, end, san_len);
+    if (ret != 0)
+        goto cleanup;
+
+    for (size_t i = 0; i < count; i++) {
+        if (!dns_names[i] || dns_names[i][0] == '\0')
+            continue;
+
+        const size_t name_len = strlen(dns_names[i]);
+        *p++ = MBEDTLS_ASN1_CONTEXT_SPECIFIC | 2;
+        ret = asn1_write_len_fwd(&p, end, name_len);
+        if (ret != 0)
+            goto cleanup;
+        memcpy(p, dns_names[i], name_len);
+        p += name_len;
+    }
+
+    ret = mbedtls_x509write_crt_set_extension(
+        crt,
+        MBEDTLS_OID_SUBJECT_ALT_NAME,
+        MBEDTLS_OID_SIZE(MBEDTLS_OID_SUBJECT_ALT_NAME),
+        0,
+        ext,
+        p - ext
+    );
+
+cleanup:
+    free(ext);
+    return ret;
+}
+
+static size_t asn1_len_bytes(size_t len)
+{
+    size_t bytes = 1;
+    if (len < 128)
+        return bytes;
+
+    bytes = 0;
+    while (len > 0) {
+        bytes++;
+        len >>= 8;
+    }
+    return 1 + bytes;
+}
+
+static int asn1_write_len_fwd(unsigned char **p, const unsigned char *end, size_t len)
+{
+    if ((size_t)(end - *p) < asn1_len_bytes(len))
+        return MBEDTLS_ERR_ASN1_BUF_TOO_SMALL;
+
+    if (len < 128) {
+        *(*p)++ = (unsigned char) len;
+        return 0;
+    }
+
+    size_t bytes = 0;
+    size_t tmp = len;
+    while (tmp > 0) {
+        bytes++;
+        tmp >>= 8;
+    }
+
+    *(*p)++ = (unsigned char)(0x80 | bytes);
+    for (size_t i = 0; i < bytes; i++) {
+        (*p)[bytes - 1 - i] = (unsigned char) (len & 0xFF);
+        len >>= 8;
+    }
+    *p += bytes;
+    return 0;
 }
 
 // Usage example:
