@@ -73,6 +73,11 @@ void netmon_start();
 void netmon_stop();
 void netmon_init();
 
+/* UDP logger, logmon */
+void logmon_start();
+void logmon_stop();
+void logmon_init();
+
 
 /* TCP client */
 int  inet_open(char* host, int port);

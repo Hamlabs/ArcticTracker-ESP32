@@ -23,6 +23,8 @@
 #define DFL_API_ORIGINS    ".*"
  
 #define DFL_NETMON_PORT     23
+#define DFL_LOGMON_PORT   9073
+#define DFL_LOGMON_HOST   "lora-aprs.live"
 #define DFL_LORA_SF         12
 #define DFL_LORA_CR          5
 #define DFL_LORA_ALT_SF      5
