@@ -201,6 +201,7 @@ static void startup(void* arg)
     igate_init(); 
     mon_init();
     netmon_init();
+    logmon_init();
     sleepMs(10000);   
     time_update();   
     sec_init();
