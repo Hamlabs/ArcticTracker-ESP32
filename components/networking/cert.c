@@ -27,6 +27,9 @@
 #include "mbedtls/x509_crt.h"
 #include "mbedtls/error.h"
 #include "mbedtls/version.h"
+#include "mbedtls/asn1write.h"
+#include "mbedtls/oid.h"
+
 
 
 #define TAG             "cert"
@@ -62,6 +65,8 @@ const uint8_t *cert_get_key_pem(size_t *len)
         *len = _key_len;
     return _key_pem;
 }
+
+static int add_dns_san(mbedtls_x509write_cert *crt, const char **dns_names, size_t count);
 
 
 
@@ -143,6 +148,13 @@ static int _generate(void)
         ESP_LOGE(TAG, "set_issuer_name failed: -0x%04x", -ret);
         goto cleanup;
     }
+    
+    /* Add SAN extensions */
+    char mydomain[32];
+    sprintf(mydomain, "arctic-%s.local", mycall);
+    const char *domains[] = { mydomain };
+    add_dns_san(cert, domains, 3);
+    
 
     /* Serial number. Incremented each time a new cert is generated */
     uint32_t serial = get_u32_param("TLS.CERT.SER", 0);
@@ -194,6 +206,13 @@ static int _generate(void)
     set_bin_param(NVS_KEY_KEY,  _key_pem,  _key_len);
     set_str_param(NVS_CERT_VER, VERSION_SSTRING);
 
+    /* Write certificate to file */
+    FILE *f = fopen("/files/cert.pem", "w");
+    if (f != NULL) {
+        fprintf(f, (char*) _cert_pem);
+        fclose(f);
+    }
+    
     ESP_LOGI(TAG, "Self-signed certificate generated and stored "
              "(cert=%u bytes, key=%u bytes, %s)",
              (unsigned)_cert_len, (unsigned)_key_len, dname);
@@ -217,6 +236,22 @@ cleanup:
     }
     return ret;
 }
+
+
+
+/***********************************************************************************
+ * Add a DNS SAN extension to the certificate
+ ***********************************************************************************/
+
+static int add_dns_san(mbedtls_x509write_cert *crt, const char **dns_names, size_t count) {
+   /* Please add this */
+}
+
+// Usage example:
+// const char *domains[] = { "example.com", "www.example.com", "api.example.net" };
+// add_dns_san(&crt, domains, 3);
+
+
 
 
 /********************************************************************************
