@@ -99,7 +99,7 @@ static char* get_origin(httpd_req_t *req) {
     buf[0]=0;
     
     /* Get regular expression */
-    get_str_param("API.ORIGINS", filter, 64, "nohost");
+    get_str_param("API.ORIGINS", filter, 64, ".*");
     TRex *rex = trex_compile(filter);
     if (rex==NULL)
         return buf;

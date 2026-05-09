@@ -188,7 +188,7 @@ static void gui_thread (void* arg)
         if (!menu_is_active() && !disp_popupActive())
             status_show();
         
-        if (n++ > 10) {
+        if (n++ > 30) {
             linenoiseHistorySave("/files/history");
             n=0;
         }

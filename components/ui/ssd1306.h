@@ -22,6 +22,7 @@ Usage:
 0xC0 : Single Data byte 
 0x40 : Data Stream
 */
+
 #define OLED_CONTROL_BYTE_CMD_SINGLE    0x80
 #define OLED_CONTROL_BYTE_CMD_STREAM    0x00
 #define OLED_CONTROL_BYTE_DATA_SINGLE   0xC0
@@ -116,6 +117,7 @@ typedef struct {
 	i2c_master_dev_handle_t _i2c_dev_handle;
 #endif
 } SSD1306_t;
+
 
 void ssd1306_init(SSD1306_t * dev, int width, int height);
 int ssd1306_get_width(SSD1306_t * dev);

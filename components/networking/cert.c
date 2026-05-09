@@ -155,7 +155,7 @@ static int _generate(void)
     char mydomain[32];
     sprintf(mydomain, "arctic-%s.local", mycall);
     const char *domains[] = { mydomain };
-    add_dns_san(cert, domains, sizeof(domains) / sizeof(domains[0]));
+    add_dns_san(cert, domains, 1);
     
 
     /* Serial number. Incremented each time a new cert is generated */
@@ -245,6 +245,11 @@ cleanup:
  * Add a DNS SAN extension to the certificate
  ***********************************************************************************/
 
+// Usage example:
+// const char *domains[] = { "example.com", "www.example.com", "api.example.net" };
+// add_dns_san(&crt, domains, 3);
+
+
 static int add_dns_san(mbedtls_x509write_cert *crt, const char **dns_names, size_t count) {
     if (!crt || (count > 0 && !dns_names))
         return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
@@ -303,6 +308,7 @@ cleanup:
     return ret;
 }
 
+
 static size_t asn1_len_bytes(size_t len)
 {
     if (len < 128)
@@ -315,6 +321,7 @@ static size_t asn1_len_bytes(size_t len)
     }
     return 1 + bytes;
 }
+
 
 static int asn1_write_len_fwd(unsigned char **p, const unsigned char *end, size_t len)
 {
@@ -342,9 +349,6 @@ static int asn1_write_len_fwd(unsigned char **p, const unsigned char *end, size_
     return 0;
 }
 
-// Usage example:
-// const char *domains[] = { "example.com", "www.example.com", "api.example.net" };
-// add_dns_san(&crt, domains, 3);
 
 
 
