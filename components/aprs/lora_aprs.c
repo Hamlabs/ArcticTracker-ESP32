@@ -23,6 +23,7 @@ static FBQSW_t *psub, *psubtx;
 char  last_packet[256]; 
 int8_t last_rssi;
 int8_t last_snr;
+int32_t last_ferror;
 time_t last_time; 
 
 bool txon = false; 
@@ -31,10 +32,11 @@ bool txon = false;
 static void alt_setting(bool on, FBUF *frame);
 
 
-lorameta_t *loraprs_meta(int8_t rssi, int8_t snr) {
+lorameta_t *loraprs_meta(int8_t rssi, int8_t snr, int32_t ferr) {
     lorameta_t * x = malloc(sizeof(lorameta_t));
     x->rssi = rssi;
     x->snr = snr;
+    x->ferror = ferr;
     return x;
 }
 
@@ -135,15 +137,23 @@ static void rxdecoder (void* arg) {
         }
         
         len = lora_ReceivePacket(buf, 200);
-        lora_ClearIrqStatus(SX126X_IRQ_ALL);
-        if (len == 0)
-            continue;
         lora_GetPacketStatus(&rssi, &sigrssi, &snr);
+        long ferror = lora_GetFreqError(125);
+        lora_ClearIrqStatus(SX126X_IRQ_ALL);
+        
+        if (len == 0) {
+            ESP_LOGW(TAG, "Packet not ready. 0 bytes returned");
+            continue;
+        }
+        if (len < 0) {
+            ESP_LOGI(TAG, "CRC error");
+            continue;
+        }
         
         rssi = rssi-LORA_LNA_GAIN;
         
-        ESP_LOGI(TAG, "RX packet: len=%d, rssi=%d, signal-rssi=%d, snr=%d", 
-                 len, rssi, (snr<0 ? rssi+snr: rssi), snr);
+        ESP_LOGI(TAG, "RX packet: len=%d, rssi=%d, signal-rssi=%d, snr=%d, freqd=%ld",
+                 len, rssi, (snr<0 ? rssi+snr: rssi), snr, ferror);
         
         /* Is it APRS? */
         if (len < 20 || buf[0]!= '<' || buf[1]!= 0xff || buf[2]!= 0x01) {
@@ -152,11 +162,12 @@ static void rxdecoder (void* arg) {
         }
         
         fbuf_new(&frame, SRC_RX);
-        frame.meta = loraprs_meta(rssi, snr);
+        frame.meta = loraprs_meta(rssi, snr, ferror);
         ax25_str2frame(&frame,  (char*) buf+3, len-3);
         strcpy(last_packet, (char*) buf+3);
         last_rssi = rssi; last_snr = snr;
         last_time = getTime();
+        last_ferror = ferror;
 
         /* Distribute packet to subscribers */
         if (fbqsw_publish(psub, frame) == 0)

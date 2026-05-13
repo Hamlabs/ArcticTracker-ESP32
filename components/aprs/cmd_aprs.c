@@ -184,8 +184,16 @@ void hdl_lora_cr(uint8_t cr) {
 }
 
 
-void hdl_freq(int32_t freq) {
-    printf("Please restart to let change take effect\n");
+void hdl_freq(int32_t f) {
+    int32_t freq = get_i32_param("FREQ", DFL_FREQ); 
+    int32_t foffset = get_i32_param("FREQ_OFFSET", 0);
+    lora_SetRfFrequency(f+foffset);
+}
+
+void hdl_foffset(int32_t foff) {
+    int32_t freq = get_i32_param("FREQ", DFL_FREQ); 
+    int32_t foffset = get_i32_param("FREQ_OFFSET", 0);
+    lora_SetRfFrequency(freq+foffset);
 }
 
 void hdl_txpower(uint8_t po) {
@@ -350,6 +358,7 @@ CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       DFL_RADIO_ON,       hdl_r
 
 #if defined(ARCTIC4_UHF)
 CMD_I32_SETTING  (_param_freq,        "FREQ",          DFL_FREQ,           433000000, 436000000, hdl_freq);
+CMD_I32_SETTING  (_param_foffset,     "FREQ_OFFSET",   0,                  -30000, 30000, hdl_foffset);
 CMD_BYTE_SETTING (_param_lora_sf,     "LORA_SF",       DFL_LORA_SF,        5, 12,  hdl_lora_sf);
 CMD_BYTE_SETTING (_param_lora_cr,     "LORA_CR",       DFL_LORA_CR,        5, 8,   hdl_lora_cr);
 CMD_BYTE_SETTING (_param_txpower,     "TXPOWER",       DFL_TXPOWER,        0, 6,   hdl_txpower);
@@ -443,6 +452,7 @@ void register_aprs()
     ADD_CMD("lora-alt",    &_param_lora_alt_on, "Use alternative setting for digipeating", "[on|off]");
     ADD_CMD("txpower",     &_param_txpower,     "Tx power (1-6)",                          "[<val>]");
     ADD_CMD("freq",        &_param_freq,        "TX/RX frequency (Hz)",                    "[<val>]");
+    ADD_CMD("freq-offset", &_param_foffset,     "Frequency offset (error correction)",     "[<val>]");
     ADD_CMD("heard",       &do_heard,           "Last heard packet",                       "");
 #endif
 }

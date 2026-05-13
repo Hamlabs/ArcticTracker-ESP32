@@ -145,10 +145,13 @@ void lora_on(bool on)
 		uint8_t sf = get_byte_param("LORA_SF", DFL_LORA_SF);
 		uint8_t cr = get_byte_param("LORA_CR", DFL_LORA_CR);
 		int32_t freq = get_i32_param("FREQ", DFL_FREQ); 
+		int32_t foffset = get_i32_param("FREQ_OFFSET", 0);
 		uint8_t txpo = get_byte_param("TXPOWER", DFL_TXPOWER);
-	
+		/* Offset limit */
+		if (foffset > 30000 || freq < -30000)
+			foffset = 0;
 		ESP_LOGI(TAG, "Lora on: sf=%d, cr=%d", sf, cr);
-		loraBegin((uint32_t) freq, power[txpo], 0, USELDO );
+		loraBegin((uint32_t) freq+foffset, power[txpo], 0, USELDO );
 		mutex_unlock(lora_mutex);
 		lora_config(sf, SX126X_LORA_BW_125_0, cr-4, 10, 0, true, false, (sf>=11 ? 1:0)); 
 	     	// SF, BW, CR, PAlength, PLlen, CRCon, invertIRQ, optimize
@@ -381,17 +384,15 @@ void lora_SetCad()
  * 0 if no packet is received. To be used in ISR. 
  ****************************************************************************/
 
-uint8_t lora_ReceivePacket(uint8_t *pData, int16_t len) 
+int lora_ReceivePacket(uint8_t *pData, int16_t len) 
 {
-	uint8_t rxLen = 0;
+	int rxLen = 0;
 	uint16_t irqRegs = lora_GetIrqStatus();
 
 	if( irqRegs & SX126X_IRQ_RX_DONE ) {
-		if (irqRegs & (SX126X_IRQ_CRC_ERR | SX126X_IRQ_HEADER_ERR)) {
-			ESP_LOGI(TAG, "CRC error");
-			return 0;
-		}
 		rxLen = lora_ReadBuffer(pData, len);
+		if (irqRegs & (SX126X_IRQ_CRC_ERR | SX126X_IRQ_HEADER_ERR)) 
+			rxLen  = -rxLen;
 	}
 	return rxLen;
 }
@@ -509,6 +510,38 @@ uint8_t lora_GetRssiInst()
 }
 
 
+/******************************************************************************
+ * Frequency error in hz for the last received packet 
+ ******************************************************************************/
+
+long lora_GetFreqError(uint32_t bw) {	
+	mutex_lock(lora_mutex);
+    uint8_t buf[3];
+    readRegister(0x076B, buf, 3); // Register is 0x076B (MSB), 0x076C, 0x076D (LSB)
+
+    // 1. Correctly shift bytes into a 32-bit signed integer
+    // We cast to int32_t immediately to ensure 32-bit math
+    int32_t raw = ((int32_t)buf[0] << 16) | 
+				  ((int32_t)buf[1] << 8)  | 
+				  ((int32_t)buf[2]);
+    raw &= 0x0FFFFF;
+	int32_t fei = 0;
+	if (raw & 0x80000)  // Check sign bit (20th bit)
+        fei = raw | 0xFFF00000;
+	else 
+        fei = raw;
+
+	// Formula: Error (Hz) = -(fei * 2^25 / F_XOSC) * (BW / 1000)
+	// Borrowed from radioLib 6.0.0+ implementation:
+	float error = (float)fei * (-1.0f * (float)XTAL_FREQ / 16777216.0f);
+	error *= (bw / 500.0f);
+	mutex_unlock(lora_mutex);
+    return (long)error / 4;
+}
+
+
+
+
 /****************************************************************************
  *  GetPacketStatus
  *  Returns RSSI and SNR of the last received packet (for LoRa) 
@@ -523,8 +556,6 @@ void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *rssiPacketSig, int8_t *snr
 	*rssiPacketSig = (buf[3] >> 1) * -1;
 	
 	( buf[2] < 128 ) ? ( *snrPacket = buf[2] >> 2 ) : ( *snrPacket = ( ( buf[2] - 256 ) >> 2 ) );
-	
-	
 	
 	mutex_unlock(lora_mutex);
 }

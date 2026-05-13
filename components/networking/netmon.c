@@ -1,3 +1,5 @@
+
+
 /* Monitor APRS traffic over TCP */
 #include "esp_log.h"
 #include "system.h"
@@ -25,8 +27,10 @@ typedef struct workerctx {
     bool mon_on;
 } workerctx_t; 
 
+
 /**************************************************************
  * Send a signal to wake up the worker, periodically. 
+ * FIXME: We may use a timer instead of a thread? 
  **************************************************************/
 
 static void tick(void *wParam) {
@@ -81,7 +85,7 @@ static void netmon_worker(void *wParam)
                 fprintf(f, "# src=%s", fbuf_showtag(buf, &frame));
                 if (frame.meta != NULL) {
                     lorameta_t *meta = (lorameta_t*) frame.meta;
-                    fprintf(f,", rssi=%d, snr=%d", meta->rssi, meta->snr);
+                    fprintf(f,", rssi=%d dBm, snr=%d dB, ferr=%ld Hz", meta->rssi, meta->snr, meta->ferror);
                 }
                 fprintf(f, "\n");
                 

@@ -44,7 +44,7 @@ void lora_SetCadParams(uint8_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetM
 
 void lora_setTxPower(uint8_t lvl);
 void lora_SetRfFrequency(uint32_t frequency);
-uint8_t lora_ReceivePacket(uint8_t *pData, int16_t len); 
+int  lora_ReceivePacket(uint8_t *pData, int16_t len); 
 void lora_SendPacket(uint8_t *pData, int16_t len);
 void lora_TxOff();
 void lora_SetIrqHandler(gpio_isr_t handler, uint16_t mask);
@@ -52,6 +52,7 @@ uint16_t lora_GetIrqStatus();
 void lora_ClearIrqStatus();
 //void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *snrPacket);
 void lora_GetPacketStatus(int8_t *rssiPacket, int8_t *rssiPacketSig, int8_t *snrPacket);
+long lora_GetFreqError(uint32_t bandwidth_hz);
 void lora_GetRxBufferStatus(uint8_t *payloadLength, uint8_t *rxStartBufferPointer);
 void lora_SetBufferAddr(uint8_t txBaseAddress, uint8_t rxBaseAddress);
 uint8_t lora_ReadBuffer(uint8_t *rxData, int16_t rxDataLen);

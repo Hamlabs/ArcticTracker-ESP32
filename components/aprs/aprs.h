@@ -9,6 +9,7 @@
 typedef struct lorameta {
     int8_t rssi; 
     int8_t snr;
+    int32_t ferror;
 } lorameta_t;
 
 char* loraprs_last_packet();
