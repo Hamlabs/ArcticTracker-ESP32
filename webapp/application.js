@@ -88,10 +88,11 @@ menu = {
             
             m("span#buttons", [
                 m("span"+isSel("core.statusInfo"),  {onclick: show("core.statusInfo")},   "Status"),
-                m("span"+isSel("core.wifiSetup"),   {onclick: show("core.wifiSetup")},    "Wifi"),   
+                m("span"+isSel("core.wifiSetup"),   {onclick: show("core.wifiSetup")},    "Keys"),   
                 m("span"+isSel("core.aprsSetup"),   {onclick: show("core.aprsSetup")},    "Aprs"),
                 m("span"+isSel("core.digiSetup"),   {onclick: show("core.digiSetup")},    "Digi/Igate"), 
-                m("span"+isSel("core.trklogSetup"), {onclick: show("core.trklogSetup")},  "Trklog"), 
+                m("span"+isSel("core.trklogSetup"), {onclick: show("core.trklogSetup")},  "Misc"), nbsp,
+                m("img.spinner", {src:"img/spinner.gif"} ),
             ]),
 
         ])
