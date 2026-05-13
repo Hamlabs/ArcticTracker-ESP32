@@ -60,6 +60,10 @@
 #endif
 
 
+/* Certificate validity and subject field */
+#define CERT_NOT_BEFORE "20260101000000"
+#define CERT_NOT_AFTER  "20361231235959"
+
 
 /* Webserver settings */
 #define WEBSERVER_HTTPS 
@@ -257,13 +261,13 @@
  * 
  ***********************************************************************/
 
-#define DISPLAY_TYPE     3
+#define DISPLAY_TYPE     2
 
 
 /* These are for the SSD1306 display on I2C */
 #if DEVICE == T_TWR
 
-#define DISPLAY_TYPE     2
+#define DISPLAY_TYPE     3
 #define DISP_SDA_PIN     8
 #define DISP_SCL_PIN     9
 
@@ -368,7 +372,7 @@
 #define STACK_UI_SRV         3800
 #define STACK_TRACKER        4000
 #define STACK_MONITOR        3200
-#define STACK_GUI            3400
+#define STACK_GUI            4100
 #define STACK_HLIST          1500
 #define STACK_DIGI           3200
 #define STACK_TCP_REC        3000

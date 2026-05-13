@@ -1,4 +1,20 @@
-/* Monitor APRS traffic over UDP */
+/* Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - Monitor APRS traffic over UDP using syslog protocol
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
+
+
 #include "esp_log.h"
 #include "system.h"
 #include "lwip/err.h"
@@ -7,6 +23,7 @@
 #include <string.h>
 #include "defines.h"
 #include "config.h"
+#include "system.h"
 #include "networking.h"
 #include "ax25.h"
 #include "aprs.h"
@@ -15,11 +32,10 @@
 
 static const char *TAG="logmon";
 
-static int udp_sock = -1;
-static struct sockaddr_in dest_addr;
 
 static uint8_t subscribe(FBQ*, uint8_t*);
 static void unsubscribe(FBQ*, uint8_t, uint8_t);
+static int init_socket(struct sockaddr_in *dest_addr);
 
 
 typedef struct workerctx {
@@ -30,25 +46,6 @@ typedef struct workerctx {
 static workerctx_t g_wrk = {0};
 static FBQ g_mq;
 
-
-/**************************************************************
- * Escape a string for embedding in a JSON value.
- * Returns the number of bytes written to dst (not including NUL).
- **************************************************************/
-
-static int json_escape(char *dst, int dstlen, const char *src) {
-    int i = 0;
-    for (const char *p = src; *p != '\0' && i < dstlen - 1; p++) {
-        if (*p == '"' || *p == '\\') {
-            if (i >= dstlen - 2)
-                break;
-            dst[i++] = '\\';
-        }
-        dst[i++] = *p;
-    }
-    dst[i] = '\0';
-    return i;
-}
 
 
 /**************************************************************
@@ -73,17 +70,24 @@ static void tick(void *wParam) {
 
 static void logmon_worker(void *wParam)
 {
-    int sock = *((int*) wParam);
+    /* Get internet */
+    struct sockaddr_in dest_addr;
+    int sock = init_socket(&dest_addr);
+    if (sock < 0)
+        goto END;
+    
     FBUF frame; 
     fbq_init(&g_mq, 10);
     uint8_t subscr, txsubscr = 255;
-    
+    subscr = subscribe(&g_mq, &txsubscr);
+    char mycall[11]; 
+    get_str_param("MYCALL", mycall, 10, DFL_MYCALL);
+                
     /* Worker context to be shared with the other thread */
     g_wrk.mon_on = true;
     g_wrk.mq = &g_mq;
-
-    subscr = subscribe(&g_mq, &txsubscr);
     xTaskCreate(tick, "logmon_tick", 1024, (void*) &g_wrk, 4, NULL); 
+    
     while (g_wrk.mon_on)
     {
        /* Wait for frame. 
@@ -95,36 +99,25 @@ static void logmon_worker(void *wParam)
             int plen = ax25_frame2str(pktbuf, &frame);
             pktbuf[plen] = '\0';
 
-            int8_t rssi = 0, snr = 0;
+            char metabuf[26];
+            metabuf[0] = '\0';
             if (frame.meta != NULL) {
                 lorameta_t *meta = (lorameta_t*) frame.meta;
-                rssi = meta->rssi;
-                snr = meta->snr;
+                sprintf(metabuf, " / %ddBm / %ddB / %ldHz", meta->rssi, meta->snr, meta->ferror); 
             }
-
-            /* Extract 'from' callsign (text before '>') */
-            char from[13] = "";
-            int i;
-            for (i = 0; i < plen && pktbuf[i] != '>' && i < (int)sizeof(from)-1; i++)
-                from[i] = pktbuf[i];
-            from[i] = '\0';
-
-            /* Escape pktbuf for safe embedding in JSON string value */
-            char escaped[512];
-            json_escape(escaped, sizeof(escaped), pktbuf);
-
+            
+            /* Create log entry */
+            char tbuf[21];
+            char monbuf[350];
+            int len = sprintf(monbuf, "<165>1 %s %s Arctic_Tracker - - - %s / %s %s\n", datetime2str_iso(tbuf, getTime()), mycall, 
+                   (fbuf_getTag(&frame) == SRC_TRACKER ? "Tx":"Rx"), pktbuf, metabuf);
+            
             /* Send a log-entry on UDP socket using the log format used for the lora-aprs.live service */
-            char json[640];
-            int jlen = snprintf(json, sizeof(json),
-                "{\"software\":{\"name\":\"ArcticTracker\",\"version\":\"%s\"},"
-                "\"hardware\":{\"name\":\"%s\"},"
-                "\"data\":{\"type\":\"aprs-lora\",\"from\":\"%s\","
-                "\"data\":\"%s\",\"rssi\":%d,\"snr\":%d,\"freq_offset\":0}}",
-                VERSION_SSTRING, DEVICE_STRING, from, escaped, rssi, snr);
-            if (jlen > 0 && jlen < (int)sizeof(json)) {
-                if (sendto(sock, json, jlen, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0)
+            if (len > 0) {
+                if (sendto(sock, monbuf, len, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) < 0)
                     ESP_LOGW(TAG, "sendto failed: errno=%d", errno);
             }
+        
         }
             
         /* Dispose the frame */
@@ -134,8 +127,23 @@ static void logmon_worker(void *wParam)
     /* Close down */
     unsubscribe(&g_mq, subscr, txsubscr);
     g_wrk.mq = NULL;
+    
+    END:
+    if (sock > 0) 
+        close(sock);
     vTaskDelete(NULL);
 }
+
+
+
+static char* getFromFrame(char* buf, char* frame) {
+    char type = *(strchr(frame, ':')+1);
+    char from[11];
+    // TBD
+    return buf;
+}
+
+
 
 
 /*************************************************************
@@ -149,6 +157,7 @@ static uint8_t subscribe(FBQ* mq, uint8_t *txsubscr) {
     return subscription;
 }
 
+
 /*************************************************************
  * Unsubscribe
  *************************************************************/
@@ -161,34 +170,50 @@ static void unsubscribe(FBQ* mq, uint8_t subscr, uint8_t txsubscr) {
 }
 
 
+
+/*************************************************************
+ * Wait for wifi and initialize socket and dest address
+ *************************************************************/
+
+static int init_socket(struct sockaddr_in *dest_addr) {
+    
+    
+    uint16_t port = get_u16_param("LOGMON.PORT", DFL_LOGMON_PORT);
+    char host[64];
+    get_str_param("LOGMON.HOST", host, sizeof(host), DFL_LOGMON_HOST);
+
+    wifi_enable(true);
+    sleepMs(1000);
+    while (!wifi_isConnected()) 
+        sleepMs(10000);
+    struct hostent *addr = gethostbyname(host);
+    if (addr == NULL) {
+        ESP_LOGW(TAG, "Failed DNS lookup for logmon host: %s", host);
+        return -1;
+    }
+
+    int udp_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (udp_sock < 0) {
+        ESP_LOGE(TAG, "Failed to create UDP socket: errno=%d", errno);
+        return -1;
+    }
+
+    memset(dest_addr, 0, sizeof(dest_addr));
+    dest_addr->sin_family = AF_INET;
+    memcpy(&dest_addr->sin_addr.s_addr, addr->h_addr, sizeof(struct in_addr));
+    dest_addr->sin_port = htons(port);
+    ESP_LOGI(TAG, "Started logmon socket to %s:%d", host, port);
+    return udp_sock;
+}
+
+
+
 /*************************************************************
  * Start/stop the logmon service
  *************************************************************/
 
 void logmon_start() {
-    uint16_t port = get_u16_param("LOGMON.PORT", DFL_LOGMON_PORT);
-    char host[64];
-    get_str_param("LOGMON.HOST", host, sizeof(host), DFL_LOGMON_HOST);
-
-    struct hostent *addr = gethostbyname(host);
-    if (addr == NULL) {
-        ESP_LOGE(TAG, "Failed DNS lookup for logmon host: %s", host);
-        return;
-    }
-
-    udp_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (udp_sock < 0) {
-        ESP_LOGE(TAG, "Failed to create UDP socket: errno=%d", errno);
-        return;
-    }
-
-    memset(&dest_addr, 0, sizeof(dest_addr));
-    dest_addr.sin_family = AF_INET;
-    memcpy(&dest_addr.sin_addr.s_addr, addr->h_addr, sizeof(struct in_addr));
-    dest_addr.sin_port = htons(port);
-
-    ESP_LOGI(TAG, "Starting logmon to %s:%d", host, port);
-    xTaskCreate(logmon_worker, "logmon", 3072, (void*) &udp_sock, 4, NULL);
+    xTaskCreate(logmon_worker, "logmon", 4096, NULL, 4, NULL);
 }
 
 
@@ -196,10 +221,6 @@ void logmon_stop() {
     g_wrk.mon_on = false;
     if (g_wrk.mq != NULL)
         fbq_signal(g_wrk.mq, SRC_RX);
-    if (udp_sock >= 0) {
-        close(udp_sock);
-        udp_sock = -1;
-    }
 }
 
 

@@ -361,7 +361,10 @@ void ax25_str2frame(FBUF* b, char* str, uint8_t len)
     
     char* from = str;
     char* to = str+p1+1;
-    char* via = str+p2+1;
+    char* via = ""; 
+    if (p2 != p3)
+        via = str+p2+1;
+    
     char* text = str+p3+1;
 
     ax25_aprs_header(b, from, to, via);

@@ -201,7 +201,9 @@ static void startup(void* arg)
     igate_init(); 
     mon_init();
     netmon_init();
+#if defined(ARCTIC4_UHF)   
     logmon_init();
+#endif
     sleepMs(10000);   
     time_update();   
     sec_init();

@@ -437,6 +437,16 @@ char* datetime2str(char* buf, time_t time, bool local)
 }
 
 
+char* datetime2str_iso(char* buf, time_t time) 
+{
+    mutex_lock(time_mutex);
+    struct tm *tm = gmtime(&time);
+    mutex_unlock(time_mutex);
+    strftime(buf, 20, "%FT%TZ", tm);
+    return buf;
+}
+
+
 char* time2str(char* buf, time_t time, bool local)
 {
     mutex_lock(time_mutex);
@@ -474,8 +484,8 @@ static char* logtags[] = {
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "gps", "uart", "digi", "igate", "tcp-cli", "trackstore", 
     "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", "httpd_uri", "httpd_parse", "mdns", 
-    "gptimer", "lora", "lora-aprs", "spi", "tcpserver", "monitor", "cert"
-#define NLOGTAGS 32
+    "gptimer", "lora", "lora-aprs", "spi", "tcpserver", "monitor", "logmon", "cert"
+#define NLOGTAGS 33
 #else
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "afsk-rx", "hdlc-enc", "hdlc-dec", "gps", "uart", "digi", "igate",

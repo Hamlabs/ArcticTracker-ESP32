@@ -296,6 +296,7 @@ static void _param_netmon_handler(bool x) {
     
 }
 
+#if defined(ARCTIC4_UHF)   
 
 static void _param_logmon_handler(bool x) {
     if (x)
@@ -303,6 +304,8 @@ static void _param_logmon_handler(bool x) {
     else
         logmon_stop();
 }
+
+#endif 
 
 
 static void _param_sec() {
@@ -321,10 +324,11 @@ CMD_STR_SETTING   (_param_fwurl,      "FW.URL",       64,  "", NULL);
 CMD_STR_SETTING   (_param_fwcert,     "FW.CERT",      BBUF_SIZE, "", NULL);
 CMD_U16_SETTING   (_param_netmon_port,"NETMON.PORT",  DFL_NETMON_PORT, 0, (uint16_t) 65536);
 CMD_BOOL_SETTING  (_param_netmon,     "NETMON.on",    false, &_param_netmon_handler);
+#if defined(ARCTIC4_UHF)   
 CMD_STR_SETTING   (_param_logmon_host,"LOGMON.HOST",  64,  DFL_LOGMON_HOST, NULL);
 CMD_U16_SETTING   (_param_logmon_port,"LOGMON.PORT",  DFL_LOGMON_PORT, 0, (uint16_t) 65536);
 CMD_BOOL_SETTING  (_param_logmon,     "LOGMON.on",    false, &_param_logmon_handler);
-
+#endif
 
 /********************************************************************************
  * Register command handlers
@@ -349,9 +353,11 @@ void register_wifi()
     ADD_CMD("connect",    &do_connect,         "Connect to internet server", "<host> <port>");
     ADD_CMD("netmon",     &_param_netmon,      "Network monitor On/off setting", "[on|off]");
     ADD_CMD("netmon-port",&_param_netmon_port, "Network monitor port number", "<port>");
+#if defined(ARCTIC4_UHF)   
     ADD_CMD("logmon",     &_param_logmon,      "UDP log monitor On/off setting", "[on|off]");
     ADD_CMD("logmon-host",&_param_logmon_host, "UDP log monitor host", "<host>");
     ADD_CMD("logmon-port",&_param_logmon_port, "UDP log monitor port number", "<port>");
+#endif
 }
 
 

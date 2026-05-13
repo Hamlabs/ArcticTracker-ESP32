@@ -201,8 +201,10 @@ bool regexMatch(char* str, const char* pattern)
 int param_setting_byte(int argc, char** argv, const char* key, uint8_t dfl, uint8_t llimit, uint8_t ulimit)
 {
     char buf[64];
-    if (argc < 2)
+    if (argc < 2) {
         printf("%hu\n", get_byte_param(key, dfl));
+        return -1;
+    }
     else if (strcasecmp(argv[1], "reset")==0) {
             delete_param(key);
             printf("OK\n");
@@ -245,8 +247,10 @@ char* param_parseByte(const char* key, char* val, uint8_t llimit, uint8_t ulimit
 int param_setting_u16(int argc, char** argv, const char* key, uint16_t dfl, uint16_t llimit, uint16_t ulimit)
 {
     char buf[64];
-    if (argc < 2)
+    if (argc < 2) {
         printf("%u\n", get_u16_param(key, dfl));
+        return -1;
+    }
     else if (strcasecmp(argv[1], "reset")==0) {
         delete_param(key);
         printf("OK\n");
@@ -289,8 +293,10 @@ char* param_parseU16(const char* key, char* val, uint16_t llimit, uint16_t ulimi
 int param_setting_i32(int argc, char** argv, const char* key, int32_t dfl, int32_t llimit, int32_t ulimit)
 {
     char buf[64];
-    if (argc < 2)
+    if (argc < 2) {
         printf("%ld\n", get_i32_param(key, dfl));
+        return -1;
+    }
     else if (strcasecmp(argv[1], "reset")==0) {
         delete_param(key);
         printf("OK\n");
