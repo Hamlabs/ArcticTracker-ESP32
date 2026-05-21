@@ -213,8 +213,6 @@ void rest_register(char* uri, httpd_method_t method, esp_err_t (*handler)(httpd_
     esp_err_t err = httpd_register_uri_handler(http_server, &system_info_get_uri);
     if (err == ESP_ERR_INVALID_ARG)
         ESP_LOGE(TAG, "Cannot register method for %s. Null arg.", uri);
-    else if (err == ESP_ERR_INVALID_ARG)
-        ESP_LOGE(TAG, "Cannot register method for %s. Handler not found.", uri);
 }
 
 

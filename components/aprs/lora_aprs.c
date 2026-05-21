@@ -137,6 +137,7 @@ static void rxdecoder (void* arg) {
         }
         
         len = lora_ReceivePacket(buf, 200);
+        buf[len] = '\0';
         lora_GetPacketStatus(&rssi, &sigrssi, &snr);
         long ferror = lora_GetFreqError(125);
         lora_ClearIrqStatus(SX126X_IRQ_ALL);
@@ -199,8 +200,7 @@ static void txencoder (void* arg)
      txbuf[0]='<'; 
      txbuf[1]=0xFF;
      txbuf[2]=0x01;
-     int len = ax25_frame2str(txbuf+3, &frame);    
-     
+     int len = ax25_frame2str(txbuf+3, sizeof(txbuf)-3, &frame);
      alt_setting(true, &frame); 
      ESP_LOGI(TAG, "TX packet: %d bytes", len);
      tx_led_on();

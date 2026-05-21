@@ -240,7 +240,7 @@ void igate_activate(bool m)
 static void rf2inet(FBUF *frame) 
 {
     FBUF newHdr;
-    char buf[FRAME_LEN];
+    char buf[FRAME_LEN+2];
     char mycall_s[10];
     addr_t from, to, mycall; 
     addr_t digis[7];

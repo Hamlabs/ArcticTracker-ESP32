@@ -15,13 +15,16 @@
  */
 
 
+#include "defines.h"
+
+#if defined(ARCTIC4_UHF)
+
 #include "esp_log.h"
 #include "system.h"
 #include "lwip/err.h"
 #include "lwip/sockets.h"
 #include "lwip/netdb.h"
 #include <string.h>
-#include "defines.h"
 #include "config.h"
 #include "system.h"
 #include "networking.h"
@@ -96,7 +99,7 @@ static void logmon_worker(void *wParam)
         if (!fbuf_empty(&frame)) {
 
             char pktbuf[256];
-            int plen = ax25_frame2str(pktbuf, &frame);
+            int plen = ax25_frame2str(pktbuf, sizeof(pktbuf), &frame);
             pktbuf[plen] = '\0';
 
             char metabuf[26];
@@ -108,7 +111,7 @@ static void logmon_worker(void *wParam)
             
             /* Create log entry */
             char tbuf[21];
-            char monbuf[350];
+            char monbuf[400];
             int len = sprintf(monbuf, "<165>1 %s %s Arctic_Tracker - - - %s / %s %s\n", datetime2str_iso(tbuf, getTime()), mycall, 
                    (fbuf_getTag(&frame) == SRC_TRACKER ? "Tx":"Rx"), pktbuf, metabuf);
             
@@ -228,3 +231,6 @@ void logmon_init() {
     if (GET_BOOL_PARAM("LOGMON.on", false))
         logmon_start();
 }
+
+
+#endif

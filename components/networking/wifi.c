@@ -263,7 +263,7 @@ void wifi_enable_softAp(bool en)
         softApEnabled = true;
     }
     else if (softApEnabled && !en) {
-        ESP_LOGI(TAG, "Turning softap on");
+        ESP_LOGI(TAG, "Turning softap off");
         dhcp_enable(false);
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         softApEnabled = false;

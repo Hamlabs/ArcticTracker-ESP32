@@ -47,8 +47,12 @@ static void monitor (void *arg)
             if (frame.meta == NULL) 
                 ESP_LOGI(TAG, "src=%s", buf);
             else {
+                
+#if defined(ARCTIC4_UHF)
                 lorameta_t *meta = (lorameta_t*) frame.meta;
                 ESP_LOGI(TAG, "src=%s, rssi=%d, snr=%d", buf, meta->rssi, meta->snr);
+#endif
+                
             }
             /* Display frame */
             if (mon_ax25)

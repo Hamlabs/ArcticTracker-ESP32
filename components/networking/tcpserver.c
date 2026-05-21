@@ -42,8 +42,8 @@ static void tcp_server(void *pvParam)
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons( srv->port );
     int ss = 0;
-    static struct sockaddr_in remote_addr;
-    static socklen_t socklen;
+    struct sockaddr_in remote_addr;
+    socklen_t socklen;
     socklen = sizeof(remote_addr);
     sprintf(tname, "%s_worker", srv->name);
     int tries = 0;
@@ -85,7 +85,8 @@ static void tcp_server(void *pvParam)
             }
             sockaddr2ip( (struct sockaddr *) &remote_addr, ip);
             ESP_LOGI(TAG, "Connect from: %s", ip);
-            xTaskCreate(srv->worker, tname, srv->stack, (void*) &cs, 4, NULL); 
+            xTaskCreate(srv->worker, tname, srv->stack, (void*)(intptr_t) cs, 4, NULL);
+              /* Note that cs is passed "by value" to the thread */
         }
 
         sleepMs(2000);

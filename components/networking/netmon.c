@@ -17,6 +17,7 @@ static const char *TAG="tcpserver";
 static bool mon_ax25 = true; 
 static ServerInfo_t *srv = NULL;
 static int clients = 0; 
+static mutex_t cnt_mutex;
 
 static uint8_t subscribe(FBQ*, uint8_t*);
 static void unsubscribe(FBQ*, uint8_t, uint8_t);
@@ -51,7 +52,8 @@ static void tick(void *wParam) {
 
 static void netmon_worker(void *wParam)
 {
-    int sock = *((int*) wParam);
+    /* Note that sock is passed by value by casting it to an intptr_t */
+    int sock = (int)(intptr_t) wParam;
     FILE *f = fdopen(sock, "r+");
     char mycall[12];
     FBQ mq;
@@ -67,9 +69,12 @@ static void netmon_worker(void *wParam)
     get_str_param("MYCALL", mycall, 10, DFL_MYCALL);
     fprintf(f, "# ArcticTracker Monitor: %s\n", mycall);
     fflush(f);
-    clients++;
-    
-    if (clients <= 5) {
+
+    mutex_lock(cnt_mutex);
+    int cli = ++clients;
+    mutex_unlock(cnt_mutex);
+
+    if (cli <= 5) {
         char buf[16];
         subscr = subscribe(&mq, &txsubscr);
         xTaskCreate(tick, "netmon_tick", 1024, (void*) &wrk, 4, NULL); 
@@ -83,10 +88,14 @@ static void netmon_worker(void *wParam)
                 
                 /* Display metainformation */
                 fprintf(f, "# src=%s", fbuf_showtag(buf, &frame));
+
+#if defined(ARCTIC4_UHF)
                 if (frame.meta != NULL) {
                     lorameta_t *meta = (lorameta_t*) frame.meta;
                     fprintf(f,", rssi=%d dBm, snr=%d dB, ferr=%ld Hz", meta->rssi, meta->snr, meta->ferror);
                 }
+#endif
+
                 fprintf(f, "\n");
                 
                 /* Display frame */
@@ -113,7 +122,9 @@ static void netmon_worker(void *wParam)
         fprintf(f, "# Max 5 clients allowed\n");
     fflush(f);
     sleepMs(500);
+    mutex_lock(cnt_mutex);
     clients--;
+    mutex_unlock(cnt_mutex);
     fclose(f); 
     close(sock);
     vTaskDelete(NULL);
@@ -159,6 +170,7 @@ void netmon_stop() {
 
 
 void netmon_init() {
+    cnt_mutex = mutex_create();
     if (GET_BOOL_PARAM("NETMON.on", false))
         netmon_start();
 }

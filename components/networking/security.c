@@ -90,10 +90,10 @@ void rest_setSecHdrs(esp_http_client_handle_t client, char* service, char* data,
     nonce[NONCE_SIZE] = 0;
     
     /* Create a SHA256 hash of the content */
-    if (dlen > 0)
+    if (dlen > 0) {
         sec_sha256_b64(chash, (uint8_t*) data, dlen ); 
-    
-    ESP_LOGI(TAG, "CHASH: %s", chash);
+        ESP_LOGI(TAG, "CHASH: %s", chash);
+    }
 
     /* Create hmac */
     sec_hmac_sapi(hmac, HMAC_B64_SIZE, 

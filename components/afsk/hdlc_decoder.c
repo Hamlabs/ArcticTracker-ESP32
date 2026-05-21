@@ -47,6 +47,7 @@ bool hdlc_isSuccess() {return success;}
 uint8_t hdlc_subscribe_rx(fbq_t* q) {
     return fbqsw_subscribe(psub, q);
 }
+
 void hdlc_unsubscribe_rx(uint8_t i) {
     fbqsw_unsubscribe(psub, i);
 }
@@ -168,7 +169,7 @@ static void hdlc_rxdecoder (void* arg)
       fbuf_removeLast(&fbuf);
       
       /* Distribute packet to subscribers */
-      if (fbqsw_publish(psub, &fbuf) == 0)
+      if (fbqsw_publish(psub, fbuf) == 0)
          fbuf_release(&fbuf);
        
       fbuf_new(&fbuf, SRC_RX);

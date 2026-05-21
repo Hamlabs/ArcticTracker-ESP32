@@ -56,7 +56,7 @@ uint8_t hdlc_subscribe_txmon(fbq_t* q) {
     return fbqsw_subscribe(psubtx, q);
 }
 
-void hlc_unsubscribe_txmon(uint8_t i) {
+void hdlc_unsubscribe_txmon(uint8_t i) {
     fbqsw_unsubscribe(psubtx, i);
 }
 
@@ -206,9 +206,9 @@ static void hdlc_encode_frames()
             hdlc_encode_byte(txbyte, false);
         }
             
-
-        if (fbqsw_publish(psubtx, frame) == 0)
-            fbuf_release(&frame);
+// FIXME FIXME
+ //       if (fbqsw_publish(psubtx, buffer) == 0)
+            fbuf_release(&buffer);
 
         hdlc_encode_byte(crc^0xFF, false);       // Send FCS, LSB first
         hdlc_encode_byte((crc>>8)^0xFF, false);  // MSB

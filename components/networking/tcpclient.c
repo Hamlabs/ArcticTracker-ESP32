@@ -93,7 +93,7 @@ int inet_read(char* buf, int size)
         ESP_LOGE(TAG, "recv failed: errno %d", errno);
     else {
         // Data received
-        buf[len] = 0; // Null-terminate whatever we received and treat like a string
+        buf[len] = '\0'; // Null-terminate whatever we received and treat like a string
         ESP_LOGI(TAG, "Received %d bytes", len);
     }
     return len;
