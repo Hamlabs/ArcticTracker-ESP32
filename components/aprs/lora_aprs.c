@@ -164,7 +164,11 @@ static void rxdecoder (void* arg) {
         fbuf_new(&frame, SRC_RX);
         frame.meta = loraprs_meta(rssi, snr, ferror);
         ax25_str2frame(&frame,  (char*) buf+3, len-3);
-        strcpy(last_packet, (char*) buf+3);
+        int pkt_len = len - 3;
+        if (pkt_len >= (int)sizeof(last_packet))
+            pkt_len = (int)sizeof(last_packet) - 1;
+        memcpy(last_packet, buf+3, pkt_len);
+        last_packet[pkt_len] = '\0';
         last_rssi = rssi; last_snr = snr;
         last_time = getTime();
         last_ferror = ferror;
@@ -199,7 +203,7 @@ static void txencoder (void* arg)
      txbuf[0]='<'; 
      txbuf[1]=0xFF;
      txbuf[2]=0x01;
-     int len = ax25_frame2str(txbuf+3, &frame);    
+     int len = ax25_frame2str(txbuf+3, sizeof(txbuf)-3, &frame);    
      
      alt_setting(true, &frame); 
      ESP_LOGI(TAG, "TX packet: %d bytes", len);

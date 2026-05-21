@@ -322,28 +322,47 @@ void ax25_display_frame(FILE* os, FBUF *b)
  * Decode an AX.25 frame to a text string
  **************************************************************************/
 
-int ax25_frame2str(char *buf, FBUF* b) {
-    int len = 0;
+int ax25_frame2str(char *buf, size_t bufsize, FBUF* b) {
+    char tmp[AX25_ADDR_LEN + 1];
+    int n, len = 0;
     fbuf_reset(b);
     addr_t to, from;
     addr_t digis[7];
     uint8_t ctrl;
     uint8_t pid;
     uint8_t ndigis = ax25_decode_header(b, &from, &to, digis, &ctrl, &pid);
-    len += addr2str(buf, &from);
+
+    if (bufsize == 0) return 0;
+
+    n = addr2str(tmp, &from);
+    if ((size_t)(len + n + 1) > bufsize) { buf[len] = '\0'; return len; }
+    memcpy(buf + len, tmp, n); len += n;
+
+    if ((size_t)(len + 2) > bufsize) { buf[len] = '\0'; return len; }
     buf[len++] = '>';
-    len += addr2str(buf+len, &to);
-    for (int i=0; i<ndigis; i++) {
-        buf[len++]=',';
-        len += addr2str(buf+len, &digis[i]);
+
+    n = addr2str(tmp, &to);
+    if ((size_t)(len + n + 1) > bufsize) { buf[len] = '\0'; return len; }
+    memcpy(buf + len, tmp, n); len += n;
+
+    for (int i = 0; i < ndigis; i++) {
+        if ((size_t)(len + 2) > bufsize) { buf[len] = '\0'; return len; }
+        buf[len++] = ',';
+        n = addr2str(tmp, &digis[i]);
+        if ((size_t)(len + n + 1) > bufsize) { buf[len] = '\0'; return len; }
+        memcpy(buf + len, tmp, n); len += n;
     }
-    if (ctrl==FTYPE_UI) {
+    if (ctrl == FTYPE_UI) {
+        if ((size_t)(len + 2) > bufsize) { buf[len] = '\0'; return len; }
         buf[len++] = ':';
         int dlen = fbuf_length(b) - AX25_HDR_LEN(ndigis);
-        for (int j=0;j<dlen; j++)
-            buf[len++] = fbuf_getChar(b);
-        buf[len]='\0';
+        for (int j = 0; j < dlen; j++) {
+            char c = fbuf_getChar(b);
+            if ((size_t)(len + 1) >= bufsize) break;
+            buf[len++] = c;
+        }
     }
+    buf[len] = '\0';
     return len;
 }
 
@@ -354,10 +373,11 @@ int ax25_frame2str(char *buf, FBUF* b) {
 
 void ax25_str2frame(FBUF* b, char* str, uint8_t len) 
 {
+    str[len] = '\0';
     int p1 = strcspn(str, ">");
     int p2 = strcspn(str, ",");
     int p3 = strcspn(str, ":");
-    str[len] = str[p1] = str[p2] = str[p3] = '\0';
+    str[p1] = str[p2] = str[p3] = '\0';
     
     char* from = str;
     char* to = str+p1+1;

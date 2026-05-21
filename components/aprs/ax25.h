@@ -64,7 +64,7 @@ uint8_t ax25_decode_header(FBUF*, addr_t*, addr_t*, addr_t[],
 
 /* Encode frame from string */
 void ax25_str2frame(FBUF* b, char* str, uint8_t len); 
-int ax25_frame2str(char *buf, FBUF* b);
+int ax25_frame2str(char *buf, size_t bufsize, FBUF* b);
 
 /* Display information about frame on standard output */
 void ax25_display_frame(FILE* os, FBUF *);

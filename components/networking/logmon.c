@@ -96,7 +96,7 @@ static void logmon_worker(void *wParam)
         if (!fbuf_empty(&frame)) {
 
             char pktbuf[256];
-            int plen = ax25_frame2str(pktbuf, &frame);
+            int plen = ax25_frame2str(pktbuf, sizeof(pktbuf), &frame);
             pktbuf[plen] = '\0';
 
             char metabuf[26];
