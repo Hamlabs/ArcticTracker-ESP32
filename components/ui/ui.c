@@ -235,7 +235,7 @@ static void bphandler(struct tmrTimerControl* p)
 static void holdhandler(struct tmrTimerControl *p) {
     (void)p;
 #if DEVICE == T_TWR
-    if ((gpio_get_level(BUTTON_PIN) != 0) ||
+    if ((gpio_get_level(BUTTON_PIN) != 0) &&
         (gpio_get_level(ENC_PUSH_PIN) != 0) )
        return;
 #else    

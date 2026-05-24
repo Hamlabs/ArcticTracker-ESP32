@@ -315,38 +315,48 @@ void disp_writeText(int x, int y, const char * strp)
     x += 2;
 #endif
     
+  if (strp == NULL)
+     return;
+  if (y < 0 || y >= DISPLAY_HEIGHT || x >= DISPLAY_WIDTH)
+     return;
+  
   uint8_t i;
-  if (y+8 > DISPLAY_HEIGHT && x >= DISPLAY_WIDTH)
-      return;
   
   /* y offset within a single row */
   int offset = y % 8; 
+  int row = y / 8;
+  int pages = DISPLAY_HEIGHT / 8;
   /* 
    * Mark this row as changed. If offset within row, we also use 
    * the next row and need to mark this as well. 
    */
-  changed[y/8] = true; 
-  if (offset > 0)
-      changed[y/8+1] = true;
+  changed[row] = true; 
+  if (offset > 0 && row + 1 < pages)
+     changed[row+1] = true;
+  if (font_higher && row + 2 < pages)
+     changed[row+2] = true;
   
   /* For each charater in string */
-  while (*strp && x < DISPLAY_WIDTH-1) {
-     char c = *strp;
+  while (*strp && x < DISPLAY_WIDTH) {
+     uint8_t c = (uint8_t) *strp;
+     if (c < 32 || c > 127)
+        c = '?';
      int ftindex = (c-32)*font_width; 
-     
+      
      if (c == '.' || c==',' || c==':' || c==';' || c== '1' || c=='l' || c == 'I' || c=='i' || c == 'j' || c== ' ')
          x--;
-     
+      
      /* For each 8-bit part of character */
      if (font_higher) { 
      for ( i = 0; i < font_width; i++ ) {
-         if (x < DISPLAY_WIDTH-1) {
+         if (x >= 0 && x < DISPLAY_WIDTH) {
             uint8_t rows[3];
             spread_bits(font[ftindex+i], offset+1, rows);
-            buffer[y/8][x] ^= rows[0];
-            buffer[y/8+1][x] ^= rows[1];
-            if (rows[2])
-               buffer[y/8+2][x] ^= rows[2];
+            buffer[row][x] ^= rows[0];
+            if (row + 1 < pages)
+               buffer[row+1][x] ^= rows[1];
+            if (rows[2] && row + 2 < pages)
+               buffer[row+2][x] ^= rows[2];
             x++;
          }
      }
@@ -354,10 +364,10 @@ void disp_writeText(int x, int y, const char * strp)
      }
      else
      for ( i = 0; i < font_width; i++ ) {
-         if (x < DISPLAY_WIDTH-1) {
-            buffer[y/8][x] ^= (font[ftindex+i] << offset);   
-            if (offset > 0) 
-               buffer[y/8+1][x] ^= font[ftindex+i] >> (8-offset);
+         if (x >= 0 && x < DISPLAY_WIDTH) {
+            buffer[row][x] ^= (font[ftindex+i] << offset);   
+            if (offset > 0 && row + 1 < pages) 
+               buffer[row+1][x] ^= font[ftindex+i] >> (8-offset);
             x++; 
          }
      }
@@ -707,7 +717,6 @@ void disp_setPopup()
 bool disp_popupActive()
     { return _popup; }
     
-
 
 
 

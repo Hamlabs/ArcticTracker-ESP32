@@ -151,10 +151,10 @@ static void led_thread(void* arg)
         int16_t pbatt = batt_percent();
         if (batt_charge())
             BLINK_CHARGE;
-        else if (pbatt < 20)
-            BLINK_BATTLOW;
         else if (pbatt < 10)
             BLINK_BATTCRITICAL;
+        else if (pbatt < 20)
+            BLINK_BATTLOW;
         else
             rgbLED_down();
         
