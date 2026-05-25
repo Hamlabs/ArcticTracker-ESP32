@@ -60,7 +60,7 @@ void fbqsw_unsubscribe(FBQSW_t* sw, int index) {
     if (index < 0 || index >= sw->size)
         return;
     sw->mq[index] = NULL;
-    while (sw->mq[sw->last] == NULL)
+    while (sw->last >= 0 && sw->mq[sw->last] == NULL)
         sw->last--;
 }
 
@@ -194,7 +194,6 @@ void fbq_signal(FBQ* q, uint8_t tag)
    fbuf_new(&b, tag);
    fbq_put(q, b);
 }
-
 
 
 
