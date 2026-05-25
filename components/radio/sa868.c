@@ -4,6 +4,7 @@
 #if !defined(ARCTIC4_UHF) && !defined(RADIO_DISABLE)
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <string.h>
 #include "config.h"
 #include "hdlc.h"
@@ -94,6 +95,9 @@ static cond_t tx_off;
 
 
 #define RSSI_THRESHOLD 55
+#define SA868_REPLY_SIZE 16
+#define SA868_REPLY_TIMEOUT_MS 1000
+#define SA868_READ_POLL_MS 20
 
 
 
@@ -217,13 +221,48 @@ static void IRAM_ATTR _squelch_handler(void* arg)
  * Wait for reply from radio module
  ******************************************************/
 
-static void waitReply(char* reply) {
+static bool waitReply(char* reply, uint32_t timeout_ms) {
+    TickType_t start = xTaskGetTickCount();
+    TickType_t timeout = pdMS_TO_TICKS(timeout_ms);
+    TickType_t poll = pdMS_TO_TICKS(SA868_READ_POLL_MS);
+    size_t len = 0;
+    char ch;
+    bool complete = false;
+
+    if (timeout == 0)
+        timeout = 1;
+    if (poll == 0)
+        poll = 1;
+
     reply[0] = '\0';
-    while (reply[0] == '\0') {
-        sleepMs(10);
-        readline(_serial, reply, 15);
+
+    while ((xTaskGetTickCount() - start) < timeout) {
+        int n = uart_read_bytes(_serial, (uint8_t*) &ch, 1, poll);
+        if (n <= 0)
+            continue;
+
+        if (ch == '\r') {
+            uart_read_bytes(_serial, (uint8_t*) &ch, 1, 0);
+            complete = true;
+            break;
+        }
+        if (ch == '\n') {
+            complete = true;
+            break;
+        }
+
+        if (len < SA868_REPLY_SIZE-1)
+            reply[len++] = ch;
     }
-    ESP_LOGD(TAG, "Reply: %s", reply);
+
+    reply[len] = '\0';
+    if (complete) {
+        ESP_LOGD(TAG, "Reply: %s", reply);
+        return true;
+    }
+
+    ESP_LOGE(TAG, "Timeout waiting for SA868 reply (%"PRIu32" ms)", timeout_ms);
+    return false;
 }
     
     
@@ -436,16 +475,18 @@ uint8_t sa8_getRssi()
     if (!_on)
         return 0;
     
-    char reply[16];
-    int rssi;
+    char reply[SA868_REPLY_SIZE];
+    int rssi = 0;
+    bool ok;
     
     mutex_lock(radio_mutex);
     int len = sprintf(buf, "AT+RSSI?\r\n");
     uart_write_bytes(_serial, buf, len);
-    waitReply(reply);
-    sscanf(reply, "RSSI=%d", &rssi);
+    ok = waitReply(reply, SA868_REPLY_TIMEOUT_MS);
+    if (ok)
+        sscanf(reply, "RSSI=%d", &rssi);
     mutex_unlock(radio_mutex);
-    return rssi;
+    return (ok ? rssi : 0);
 }
 
 
@@ -459,7 +500,8 @@ bool sa8_setVolume(uint8_t vol)
     char buf[32];
     if (!_on)
         return true;
-    char reply[16];
+    char reply[SA868_REPLY_SIZE];
+    bool ok;
     
     mutex_lock(radio_mutex);
     if (vol > 8)
@@ -467,9 +509,9 @@ bool sa8_setVolume(uint8_t vol)
     int len = sprintf(buf, "AT+DMOSETVOLUME=%1d\r\n", vol);
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
-    waitReply(reply);
+    ok = waitReply(reply, SA868_REPLY_TIMEOUT_MS);
     mutex_unlock(radio_mutex);
-    return (strlen(reply) > 10 && reply[10] == '0');
+    return (ok && strlen(reply) > 10 && reply[10] == '0');
 }
 
 
@@ -532,16 +574,17 @@ bool sa8_setFilter(bool emp, bool highpass, bool lowpass)
     char buf[32];
     if (!_on)
         return true;
-    char reply[16];
+    char reply[SA868_REPLY_SIZE];
+    bool ok;
     
     mutex_lock(radio_mutex);
     int len = sprintf(buf, "AT+SETFILTER=%1d,%1d,%1d\r\n", 
         (emp ? 1:0), (highpass ? 1:0), (lowpass ? 1:0)  );
     ESP_LOGD(TAG, "Request: %s", buf);
     uart_write_bytes(_serial, buf, len);
-    waitReply(reply);
+    ok = waitReply(reply, SA868_REPLY_TIMEOUT_MS);
     mutex_unlock(radio_mutex);
-    return (strlen(reply) > 14 && reply[14] == '0');
+    return (ok && strlen(reply) > 14 && reply[14] == '0');
 }
 
 
@@ -555,14 +598,15 @@ bool sa8_setTail(int tail)
     char buf[32];
     if (!_on)
         return true;
-    char reply[16];
+    char reply[SA868_REPLY_SIZE];
+    bool ok;
     mutex_lock(radio_mutex);
     int len = sprintf(buf, "AT+SETTAIL=%1d\r\n", tail);
     ESP_LOGD(TAG, "Request: %s", buf);
     uart_write_bytes(_serial, buf, len);
-    waitReply(reply);
+    ok = waitReply(reply, SA868_REPLY_TIMEOUT_MS);
     mutex_unlock(radio_mutex);
-    return (strlen(reply) > 14 && reply[14] == '0');
+    return (ok && strlen(reply) > 14 && reply[14] == '0');
 }
 
 
@@ -576,15 +620,16 @@ static bool _getVersion()
     char buf[32];
     if (!_on)
         return true;
-    char reply[16];
+    char reply[SA868_REPLY_SIZE];
+    bool ok;
     mutex_lock(radio_mutex);
     int len = sprintf(buf, "AT+VERSION\r\n");
     ESP_LOGD(TAG, "Request: %s", buf);
     uart_write_bytes(_serial, buf, len);
-    waitReply(reply);
-    waitReply(reply);
+    ok = waitReply(reply, SA868_REPLY_TIMEOUT_MS);
+    ok = ok && waitReply(reply, SA868_REPLY_TIMEOUT_MS);
     mutex_unlock(radio_mutex);
-    return (strlen(reply) > 14 && reply[14] == '0');
+    return (ok && strlen(reply) > 14 && reply[14] == '0');
 }
 
 
@@ -592,15 +637,16 @@ static bool _getVersion()
 static bool _handshake()
 {
     char buf[32];
-    char reply[16];
+    char reply[SA868_REPLY_SIZE];
+    bool ok;
     
     mutex_lock(radio_mutex);
     int len = sprintf(buf, "AT+DMOCONNECT\r\n");
     ESP_LOGD(TAG, "Request: %s", buf);
     uart_write_bytes(_serial, buf, len);
-    waitReply(reply);
+    ok = waitReply(reply, SA868_REPLY_TIMEOUT_MS);
     mutex_unlock(radio_mutex);
-    return (strlen(reply) > 12 && reply[12] == '0');
+    return (ok && strlen(reply) > 12 && reply[12] == '0');
 }
 
 
@@ -615,7 +661,8 @@ static bool _setGroupParm()
     if (!_on)
         return true;
     
-    char txbuf[16], rxbuf[16], reply[16];
+    char txbuf[16], rxbuf[16], reply[SA868_REPLY_SIZE];
+    bool ok;
     sprintf(txbuf, "%lu.%04lu", _txfreq/10000, _txfreq%10000);
     sprintf(rxbuf, "%lu.%04lu", _rxfreq/10000, _rxfreq%10000);
 
@@ -624,9 +671,9 @@ static bool _setGroupParm()
             (_lowPower? 1 : 0), txbuf, rxbuf, _tcxcss, _squelch, _rcxcss);
     ESP_LOGD(TAG, "%s", buf);
     uart_write_bytes(_serial, buf, len);
-    waitReply(reply);
+    ok = waitReply(reply, SA868_REPLY_TIMEOUT_MS);
     mutex_unlock(radio_mutex);
-    return (strlen(reply) > 13 && reply[13] == '0');
+    return (ok && strlen(reply) > 13 && reply[13] == '0');
 }
 
 
