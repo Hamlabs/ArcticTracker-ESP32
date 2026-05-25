@@ -299,7 +299,11 @@ void fbuf_insert(FBUF* b, FBUF* x, uint16_t pos)
         if (pos > 0) 
             islot = _pool[islot].next;
     }
-    
+
+    fbindex_t split = _split(islot, pos);
+    if (pos > 0 && split == NILPTR)
+        return;
+
     /* Find last slot in x chain and increment reference count*/
     fbindex_t xlast = x->head;
     _pool[xlast].refcnt++;
@@ -307,9 +311,9 @@ void fbuf_insert(FBUF* b, FBUF* x, uint16_t pos)
         xlast = _pool[xlast].next;
         _pool[xlast].refcnt++;
     }
-    
+
     /* Insert x chain after islot */  
-    _pool[xlast].next = _split(islot, pos); 
+    _pool[xlast].next = split; 
     _pool[islot].next = x->head;
     
     b->wslot = x->wslot = NILPTR; // Disallow writing
@@ -338,12 +342,16 @@ void fbuf_connect(FBUF* b, FBUF* x, uint16_t pos)
             islot = _pool[islot].next;
     }
 
+    fbindex_t split = _split(islot, p);
+    if (p > 0 && split == NILPTR)
+        return;
+
     /* Find last slot of b and connect it to rest of x */
     fbindex_t xlast = b->head;
     while (_pool[xlast].next != NILPTR) 
         xlast = _pool[xlast].next;
 
-    _pool[xlast].next = _split(islot, p);
+    _pool[xlast].next = split;
 
     /* Increment reference count of rest of x */
     while (_pool[xlast].next != NILPTR) {
@@ -362,6 +370,11 @@ static fbindex_t _split(fbindex_t islot, uint16_t pos)
       if (pos == 0)
           return _pool[islot].next;
       fbindex_t newslot = _fbuf_newslot();
+      if (newslot == NILPTR) {
+          if (memFullError != NULL)
+              (*memFullError)();
+          return NILPTR;
+      }
       _pool[newslot].next = _pool[islot].next;
       _pool[islot].next = newslot;
       _pool[newslot].refcnt = _pool[islot].refcnt; 
@@ -510,6 +523,5 @@ void fbuf_removeLast(FBUF* x)
   }
   x->length--;
 }
-
 
 

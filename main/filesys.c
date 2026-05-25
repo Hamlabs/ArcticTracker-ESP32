@@ -162,10 +162,9 @@ void getPath(char* path, char* fname, bool allowroot) {
     if (allowroot && *fname == '/')
         sprintf(path, "%s", fname);
     else if (strncmp(fname, FATFS_PATH, strlen(FATFS_PATH)) == 0)
-        sprintf(path, fname);
+        snprintf(path, 263, "%s", fname);
     else
         sprintf(path, "%s/%s", workingdir, fname);
 }
-
 
 
