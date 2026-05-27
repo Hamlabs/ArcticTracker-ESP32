@@ -186,11 +186,11 @@ static void hdlc_rxdecoder (void* arg)
  * CRC check
  ***********************************************************/
 
-bool crc_match(FBUF* b, uint8_t length, uint16_t *crc)
+bool crc_match(FBUF* b, uint16_t length, uint16_t *crc)
 {
    /* Calculate FCS from frame content */
    *crc = 0xFFFF;
-   uint8_t i;
+   uint16_t i;
    for (i=0; i<length-2; i++)
        *crc = _crc_ccitt_update(*crc, fbuf_getChar(b)); 
        

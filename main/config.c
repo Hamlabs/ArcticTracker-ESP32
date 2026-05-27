@@ -339,8 +339,10 @@ char* param_parseI32(const char* key, char* val, int32_t llimit, int32_t ulimit,
 int param_setting_bool(int argc, char** argv, const char* key, bool dfl)
 {
     char buf[64];
-    if (argc < 2)
+    if (argc < 2) {
         printf("%s\n", param_printBool(key, dfl, buf));
+        return -1;
+    }
     else 
         printf("%s\n", param_parseBool(key, argv[1], buf));
     return 0;

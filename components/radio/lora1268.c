@@ -148,7 +148,7 @@ void lora_on(bool on)
 		int32_t foffset = get_i32_param("FREQ_OFFSET", 0);
 		uint8_t txpo = get_byte_param("TXPOWER", DFL_TXPOWER);
 		/* Offset limit */
-		if (foffset > 30000 || freq < -30000)
+		if (foffset > 30000 || foffset < -30000)
 			foffset = 0;
 		ESP_LOGI(TAG, "Lora on: sf=%d, cr=%d", sf, cr);
 		loraBegin((uint32_t) freq+foffset, power[txpo], 0, USELDO );

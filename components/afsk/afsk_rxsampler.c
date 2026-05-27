@@ -32,8 +32,8 @@ static int8_t* curr;       // Current read position
 static int8_t* curr_put;   // Current write position
 static int8_t* end_frame;  // End of frame
 static int8_t* buf_end;    // End of buffer
-static uint16_t length = 0; 
-static uint16_t wlength = 0; 
+static uint32_t length = 0; 
+static uint32_t wlength = 0; 
 
 
 

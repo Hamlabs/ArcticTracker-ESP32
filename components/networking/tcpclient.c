@@ -92,7 +92,10 @@ int inet_read(char* buf, int size)
     if (len < 0) 
         ESP_LOGE(TAG, "recv failed: errno %d", errno);
     else {
-        // Data received
+        // Data received - don't include cr/lf at the end
+        while (buf[len-1] == '\n' || buf[len-1] == '\r')
+            len--;
+        
         buf[len] = '\0'; // Null-terminate whatever we received and treat like a string
         ESP_LOGI(TAG, "Received %d bytes", len);
     }

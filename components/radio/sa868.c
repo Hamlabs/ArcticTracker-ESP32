@@ -1,3 +1,5 @@
+
+
 #include "defines.h"
 
 
@@ -96,7 +98,7 @@ static cond_t tx_off;
 
 #define RSSI_THRESHOLD 55
 #define SA868_REPLY_SIZE 16
-#define SA868_REPLY_TIMEOUT_MS 1000
+#define SA868_REPLY_TIMEOUT_MS 5000
 #define SA868_READ_POLL_MS 20
 
 
@@ -261,7 +263,7 @@ static bool waitReply(char* reply, uint32_t timeout_ms) {
         return true;
     }
 
-    ESP_LOGE(TAG, "Timeout waiting for SA868 reply (%"PRIu32" ms)", timeout_ms);
+    ESP_LOGE(TAG, "Timeout waiting for SA868 reply (%"PRIu32" ms), %s", timeout_ms, reply);
     return false;
 }
     
@@ -627,7 +629,7 @@ static bool _getVersion()
     ESP_LOGD(TAG, "Request: %s", buf);
     uart_write_bytes(_serial, buf, len);
     ok = waitReply(reply, SA868_REPLY_TIMEOUT_MS);
-    ok = ok && waitReply(reply, SA868_REPLY_TIMEOUT_MS);
+ //   ok = ok && waitReply(reply, SA868_REPLY_TIMEOUT_MS);
     mutex_unlock(radio_mutex);
     return (ok && strlen(reply) > 14 && reply[14] == '0');
 }

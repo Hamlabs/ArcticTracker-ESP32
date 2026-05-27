@@ -166,6 +166,7 @@ FBQ* hdlc_init_encoder(QueueHandle_t oq)
   outqueue = oq;
   enc_idle = xSemaphoreCreateBinary();
   fbq_init(&encoder_queue, HDLC_ENCODER_QUEUE_SIZE);
+  psubtx = fbqsw_create(10);
   xTaskCreatePinnedToCore(&hdlc_txencoder, "HDLC TX Encoder", 
         STACK_HDLC_TXENCODER, NULL, NORMALPRIO, NULL, CORE_HDLC_TXENCODER);
   return &encoder_queue; 
@@ -206,14 +207,13 @@ static void hdlc_encode_frames()
             hdlc_encode_byte(txbyte, false);
         }
             
-// FIXME FIXME
- //       if (fbqsw_publish(psubtx, buffer) == 0)
+        if (fbqsw_publish(psubtx, buffer) == 0)
             fbuf_release(&buffer);
 
         hdlc_encode_byte(crc^0xFF, false);       // Send FCS, LSB first
         hdlc_encode_byte((crc>>8)^0xFF, false);  // MSB
     
-        if (!fbq_eof(&encoder_queue) && i < maxfr) {
+        if (!fbq_eof(&encoder_queue) && (i+1) < maxfr   ) {
             hdlc_encode_byte(HDLC_FLAG, true);
             buffer = fbq_get(&encoder_queue); 
             ESP_LOGI(TAG, "Add frame to transmission..");

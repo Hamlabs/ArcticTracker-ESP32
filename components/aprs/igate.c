@@ -1,3 +1,18 @@
+/* Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - Igate
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
 
 /*
  * interface: 
@@ -122,7 +137,7 @@ static void igate_main(void* arg)
 
         int res = -1, tries = 0;
         wifi_enable(true);
-        sleepMs(1000);
+        sleepMs(2000);
         while (!wifi_isConnected() 
                 || (res = inet_open(host, port) != 0 && tries++ < 3))
             sleepMs(10000);
@@ -152,10 +167,14 @@ static void igate_main(void* arg)
             /* Listen for data from APRS/IS server */
             while (_igate_on) {
                 int len = inet_read(frame, FRAME_LEN); 
-                if (len <= 0) 
+                if (len <= 0) {
+                    ESP_LOGD(TAG, "Empty line from server");
                     break;
+                }
                 if (frame[0] != '#')
                     inet2rf(frame);
+                else
+                    ESP_LOGD(TAG, "%s", frame);
             }
     
             /* Unsubscribe and terminate child thread */
@@ -178,9 +197,9 @@ static void igate_main(void* arg)
 }
 
 
-/**********************
+/************************
  *  igate init
- **********************/
+ ************************/
 
 void igate_init() {
     fbq_init(&rxqueue, HDLC_DECODER_QUEUE_SIZE);
@@ -253,6 +272,7 @@ static void rf2inet(FBUF *frame)
     char type = fbuf_getChar(frame);
     bool own = addrCmp(&mycall, &from); 
   
+    /* Dont igate it if it is igated earlier */
     if (hlist_duplicate(&from, &to, frame, ndigis))
         return;
   
@@ -306,6 +326,8 @@ static void rf2inet(FBUF *frame)
 
 static void inet2rf(char *frame) {
     (void) frame;
+    ESP_LOGD(TAG, "Inet: %s", frame);
+    /* Consider adding it to heard list */
     /* TBD */
 }
 

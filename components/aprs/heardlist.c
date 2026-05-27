@@ -1,7 +1,19 @@
-/*
- * Heard list for digipeater
- */
 
+/* Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - Heard list (for igate and digipeater)
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
 #include "crc16.h"
 #include "defines.h"
 #include <stdlib.h>
@@ -140,7 +152,10 @@
    while (to->callsign[i] != 0)
      crc = _crc_ccitt_update(crc, to->callsign[i++]);
    crc = _crc_ccitt_update(crc, to->ssid);
+   
+   /* Skip digipeater-list */
    fbuf_rseek(f, AX25_HDR_LEN(ndigis)); 
+   /* Rest of packet */
    for (i=AX25_HDR_LEN(ndigis); i<fbuf_length(f); i++)
      crc = _crc_ccitt_update(crc, fbuf_getChar(f)); 
    return crc;
