@@ -213,7 +213,7 @@ static void hdlc_encode_frames()
         hdlc_encode_byte(crc^0xFF, false);       // Send FCS, LSB first
         hdlc_encode_byte((crc>>8)^0xFF, false);  // MSB
     
-        if (!fbq_eof(&encoder_queue) && (i+1) < maxfr   ) {
+        if (!fbq_eof(&encoder_queue) && (i + 1) < maxfr) {
             hdlc_encode_byte(HDLC_FLAG, true);
             buffer = fbq_get(&encoder_queue); 
             ESP_LOGI(TAG, "Add frame to transmission..");
