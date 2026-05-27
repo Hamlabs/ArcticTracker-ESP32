@@ -294,6 +294,12 @@ bool afsk_dcd(int8_t inp) {
 
 
 void afsk_dcd_reset() {
+    flevel = 0;
+    ndcd = 0;
+    prev_dcd = false;
+    prev2_dcd = false;
+    dcd = false;
+    result = false;
 }
 
 
@@ -499,4 +505,3 @@ static void add_bit(bool bit)
 }
 
 #endif
-

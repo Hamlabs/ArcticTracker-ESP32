@@ -138,8 +138,9 @@ void rxSampler_stop() {
 
 
 void rxSampler_put(int8_t sample) {
-    if (curr_put != wstart-1 && 
-        (curr_put != buf_end+1 || wstart != sample_buffer))
+    int8_t* prev_wstart = (wstart == sample_buffer) ? buf_end : (wstart - 1);
+
+    if (curr_put != prev_wstart)
     {
         *curr_put = sample;
         wlength++;
