@@ -57,6 +57,7 @@ Output type:
     
 
 static semaphore_t data_ready; 
+static bool IRAM_ATTR _callback (adcsampler_t handle, const adc_continuous_evt_data_t *edata, void *user_data);
 
 
 
@@ -106,6 +107,10 @@ void adcsampler_init( adcsampler_t *handle, uint8_t ionr)
     
     dig_cfg.adc_pattern = pattern;
     ESP_ERROR_CHECK( adc_continuous_config(myhandle, &dig_cfg) );
+    adc_continuous_evt_cbs_t cbs = {
+        .on_conv_done = _callback,
+    };
+    ESP_ERROR_CHECK( adc_continuous_register_event_callbacks(myhandle, &cbs, NULL) );
     *handle = myhandle;
 }   
 
@@ -131,8 +136,11 @@ static bool IRAM_ATTR _callback (adcsampler_t handle, const adc_continuous_evt_d
 uint32_t adcsampler_read(adcsampler_t handle, uint8_t result[], uint32_t len )
 {
     uint32_t ret_num;
-    sem_down(data_ready);
-    esp_err_t ret = adc_continuous_read(handle, result, len, &ret_num, 0);
+    esp_err_t ret = ESP_OK;
+    do {
+        sem_down(data_ready);
+        ret = adc_continuous_read(handle, result, len, &ret_num, 0);
+    } while (ret == ESP_ERR_TIMEOUT);
 
     if (ret == ESP_OK) 
         return ret_num;
@@ -173,11 +181,6 @@ void adcsampler_calibrate(adcsampler_t handle)
 
 void adcsampler_start(adcsampler_t handle) 
 {
-    /* Register the callback */
-    adc_continuous_evt_cbs_t cbs = {
-        .on_conv_done = _callback,
-    };
-    ESP_ERROR_CHECK( adc_continuous_register_event_callbacks(handle, &cbs, NULL) );
     /* Start the conversion */
     ESP_ERROR_CHECK( adc_continuous_start(handle) );
 }
@@ -193,6 +196,8 @@ void adcsampler_start(adcsampler_t handle)
 void adcsampler_stop(adcsampler_t handle) {
     /* Stop the conversion */
     ESP_ERROR_CHECK( adc_continuous_stop(handle) );
+    while (sem_getCount(data_ready) > 0)
+        xSemaphoreTake(data_ready, 0);
 }
 
 
