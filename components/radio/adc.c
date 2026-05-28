@@ -115,8 +115,9 @@ void adcsampler_init( adcsampler_t *handle, uint8_t ionr)
 static bool IRAM_ATTR _callback (adcsampler_t handle, const adc_continuous_evt_data_t *edata, void *user_data)
 {
     //Notify that ADC continuous driver has done enough number of conversions
-    sem_up(data_ready);
-    return false; 
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(data_ready, &xHigherPriorityTaskWoken);
+    return (xHigherPriorityTaskWoken == pdTRUE);
 }
 
 
