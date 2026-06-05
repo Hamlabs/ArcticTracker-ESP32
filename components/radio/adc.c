@@ -1,4 +1,19 @@
-
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - Sampling, using the ADC
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
 #include "defines.h"
 #if !defined(ARCTIC4_UHF)
 
@@ -11,8 +26,9 @@
 
 
 
-#define BUF_SIZE        2048   // set the maximum size of the pool in bytes
-#define READ_LEN        128    // set the size of the ADC conversion frame, in bytes.
+#define BUF_SIZE       16184   // set the maximum size of the pool in bytes
+#define READ_LEN        1024   // set the size of the ADC conversion frame, in bytes.
+
 #define SAMPLE_FREQ     9600
 
 #if DEVICE == T_TWR
@@ -55,10 +71,11 @@ Output type:
     
 */    
     
-
+static uint32_t overflow = 0;
+uint8_t ionr; 
 static semaphore_t data_ready; 
-
-
+static bool IRAM_ATTR _callback (adcsampler_t handle, const adc_continuous_evt_data_t *edata, void *user_data);
+static bool IRAM_ATTR _ovf_callback (adcsampler_t handle, const adc_continuous_evt_data_t *edata, void *user_data);
 
 
 /**************************************************************************************
@@ -67,8 +84,10 @@ static semaphore_t data_ready;
     - number of channels to initialize
  **************************************************************************************/
 
-void adcsampler_init( adcsampler_t *handle, uint8_t ionr)
+void adcsampler_init( adcsampler_t *handle, uint8_t io)
 {
+    if (io != 0)
+        ionr = io;
     adc_unit_t unit;
     adc_channel_t channel;
     ESP_ERROR_CHECK( adc_continuous_io_to_channel(ionr, &unit, &channel) );
@@ -106,19 +125,41 @@ void adcsampler_init( adcsampler_t *handle, uint8_t ionr)
     
     dig_cfg.adc_pattern = pattern;
     ESP_ERROR_CHECK( adc_continuous_config(myhandle, &dig_cfg) );
+    
+    /* Register the callback */
+    adc_continuous_evt_cbs_t cbs = {
+        .on_conv_done = _callback,
+        .on_pool_ovf  = _ovf_callback,
+    };
+    ESP_ERROR_CHECK( adc_continuous_register_event_callbacks(myhandle, &cbs, NULL) );
     *handle = myhandle;
 }   
 
 
 
 
+
 static bool IRAM_ATTR _callback (adcsampler_t handle, const adc_continuous_evt_data_t *edata, void *user_data)
 {
-    //Notify that ADC continuous driver has done enough number of conversions
-    sem_up(data_ready);
-    return false; 
+    // Notify that ADC continuous driver has done enough number of conversions
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(data_ready, &xHigherPriorityTaskWoken);
+    return (xHigherPriorityTaskWoken == pdTRUE);
 }
 
+
+static bool IRAM_ATTR _ovf_callback (adcsampler_t handle, const adc_continuous_evt_data_t *edata, void *user_data) {
+    overflow++;
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(data_ready, &xHigherPriorityTaskWoken);
+    return (xHigherPriorityTaskWoken == pdTRUE);
+}
+
+
+
+uint32_t adcsampler_overflow() {
+    return overflow;
+}
 
 
 
@@ -130,13 +171,23 @@ static bool IRAM_ATTR _callback (adcsampler_t handle, const adc_continuous_evt_d
 uint32_t adcsampler_read(adcsampler_t handle, uint8_t result[], uint32_t len )
 {
     uint32_t ret_num;
+    esp_err_t ret = ESP_OK;
     sem_down(data_ready);
-    esp_err_t ret = adc_continuous_read(handle, result, len, &ret_num, 0);
-
+    ret = adc_continuous_read(handle, result, len, &ret_num, 5000);
+    
     if (ret == ESP_OK) 
         return ret_num;
+    if (ret == ESP_ERR_TIMEOUT)
+        return -1;
+    if (ret == ESP_ERR_INVALID_STATE) {
+        adcsampler_stop(handle);
+        adcsampler_start(handle);
+        return 0;
+    }
+
     return -1;
 }
+
 
 
 /**************************************************************************************
@@ -154,6 +205,8 @@ void adcsampler_calibrate(adcsampler_t handle)
     
     for (int i = 0; i < len; i += ADC_RESULT_BYTES) {
         adc_digi_output_data_t  *p = ADC_RESULT(buf,i);
+        
+        
         if (ADC_DATA_VALID(p)) { 
             sum += ADC_GET_DATA(p);            
             nresults++;
@@ -172,11 +225,6 @@ void adcsampler_calibrate(adcsampler_t handle)
 
 void adcsampler_start(adcsampler_t handle) 
 {
-    /* Register the callback */
-    adc_continuous_evt_cbs_t cbs = {
-        .on_conv_done = _callback,
-    };
-    ESP_ERROR_CHECK( adc_continuous_register_event_callbacks(handle, &cbs, NULL) );
     /* Start the conversion */
     ESP_ERROR_CHECK( adc_continuous_start(handle) );
 }
@@ -192,6 +240,13 @@ void adcsampler_start(adcsampler_t handle)
 void adcsampler_stop(adcsampler_t handle) {
     /* Stop the conversion */
     ESP_ERROR_CHECK( adc_continuous_stop(handle) );
+    
+    /* Flush the pool */	
+    adc_continuous_flush_pool(handle);
+        
+    /* Clear the semaphore */
+    while (sem_getCount(data_ready) > 0)
+        xSemaphoreTake(data_ready, 0);
 }
 
 

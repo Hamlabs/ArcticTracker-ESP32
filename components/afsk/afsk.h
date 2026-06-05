@@ -52,9 +52,10 @@
  int    rxSampler_length();
  int    rxSampler_getFrame();
  int8_t rxSampler_get();
- void   rxSampler_put(int8_t saample);
+ bool   rxSampler_put(int8_t sample);
  bool   rxSampler_eof();
  void   rxSampler_reset();
+ void   rxSampler_reInit();
  void   rxSampler_nextFrame();
  void   rxSampler_readLast();
  void   rxSampler_isr();

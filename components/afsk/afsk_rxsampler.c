@@ -1,7 +1,19 @@
-/*
- * AFSK Demodulation. 
- * Get samples from the ADC and store them in a buffer
- * 
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - AFSK Demodulation
+ * Get samples from the ADC and store them in a buffer. 
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include "defines.h"
@@ -13,6 +25,7 @@
 #include "fifo.h"
 #include "radio.h"
 #include "system.h"
+#include "esp_timer.h"
 
 #define TAG "afsk-rx"
 
@@ -38,14 +51,17 @@ static uint32_t wlength = 0;
 
 
 static adcsampler_t adc;
+static mutex_t rxsampler_mutex;
+static bool doreset = false; 
+
 
 
 void rxSampler_init() 
 {
     adcsampler_init( &adc, RADIO_INPUT);
-//    adcsampler_calibrate(adc);
     raw_sample_buf = malloc(ADC_FRAGMENT_SIZE);   
     sample_buffer = malloc(RX_SAMPLE_BUF_SIZE);
+    rxsampler_mutex = mutex_create();
     if (raw_sample_buf == NULL || sample_buffer == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for RX sampler buffers");
         if (raw_sample_buf) free(raw_sample_buf);
@@ -79,6 +95,7 @@ void rxSampler_adjNull(int delta) {
  */
 int rxSampler_getFrame()
 {
+    uint32_t total = 0;
     int nresults = 0;
     bool breakout = false; 
     rxSampler_nextFrame();
@@ -87,8 +104,12 @@ int rxSampler_getFrame()
     while (radio_getSquelch() || afsk_isSquelchOff()) {
         /* Get raw fragment from ADC */
         int len = adcsampler_read(adc, raw_sample_buf, ADC_FRAGMENT_SIZE);   
-        if (len == -1) 
+        if (len == 0)
             continue;
+        if (len == -1) 
+            return -1;
+        
+        total += len;
         
         /* Convert its content and add it to frame */
         for (int i = 0; i < len; i += ADC_RESULT_BYTES) {
@@ -96,15 +117,15 @@ int rxSampler_getFrame()
             if (ADC_DATA_VALID(p)) { 
                 int8_t sample = convertSample(ADC_GET_DATA(p));   
                 if (afsk_dcd(sample)) {
-                    rxSampler_put(sample);
-                    nresults++;
+                    if (rxSampler_put(sample))
+                        nresults++;
                 }
                 else if (nresults > 0)
                     breakout = true;
             }
         }    
-
-        /* APRS packets of less than 2000 samples are invalid */
+        
+        /* APRS packets of less than 2700 samples are invalid */
         if (breakout && nresults < 2700) {
             if (nresults > 0) {
                 rxSampler_nextFrame();
@@ -112,8 +133,10 @@ int rxSampler_getFrame()
             }
             breakout = false; 
         }
-        else if (breakout)
+        else if (breakout) 
             break;
+   //     else if (total >= 300000)
+   //         return -1;
         
     }
     return nresults;
@@ -123,21 +146,39 @@ int rxSampler_getFrame()
 
 static bool running = false; 
 
+
 void rxSampler_start() {
+    mutex_lock(rxsampler_mutex);
     if (!running)
         adcsampler_start(adc);
     running = true;
+    mutex_unlock(rxsampler_mutex);
 }
 
 
 void rxSampler_stop() {
+    mutex_lock(rxsampler_mutex);
     if (running)
         adcsampler_stop(adc);
     running = false; 
+    mutex_unlock(rxsampler_mutex);
 }
 
 
-void rxSampler_put(int8_t sample) {
+/* This is brutal, but seems to keep the sampler from stopping */
+void rxSampler_reInit() {
+    mutex_lock(rxsampler_mutex);
+    adcsampler_stop(adc);
+    adcsampler_deinit(adc);
+    adcsampler_init(&adc, 0);
+    adcsampler_start(adc);
+    mutex_unlock(rxsampler_mutex);
+}
+
+
+
+
+bool rxSampler_put(int8_t sample) {
     int8_t* prev_wstart = (wstart == sample_buffer) ? buf_end : (wstart - 1);
 
     if (curr_put != prev_wstart)
@@ -146,7 +187,9 @@ void rxSampler_put(int8_t sample) {
         wlength++;
         if (curr_put++ == buf_end-1)
             curr_put = sample_buffer;
+        return true;
     } 
+    return false;
 }
 
 

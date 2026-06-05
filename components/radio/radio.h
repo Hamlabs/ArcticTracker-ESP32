@@ -71,6 +71,7 @@ void lora_WriteBuffer(uint8_t *txData, int16_t txDataLen);
 typedef adc_continuous_handle_t adcsampler_t; 
 
 void adcsampler_init( adcsampler_t *handle, uint8_t channel);
+uint32_t adcsampler_overflow();
 uint32_t adcsampler_read(adcsampler_t handle, uint8_t result[], uint32_t len );
 void adcsampler_calibrate(adcsampler_t handle);
 void adcsampler_start(adcsampler_t handle);

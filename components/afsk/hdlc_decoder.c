@@ -30,7 +30,7 @@ static uint16_t prev_seq = 0;
 static uint16_t prev_crc = 0;
 
 static uint8_t get_bit (void); 
-static bool crc_match(FBUF*, uint8_t, uint16_t *crc);
+static bool crc_match(FBUF*, uint16_t, uint16_t *crc);
 static bool success = false; 
 
 

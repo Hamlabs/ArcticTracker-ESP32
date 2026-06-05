@@ -1,11 +1,26 @@
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - AFSK Demodulation
+ * Get samples from the ADC and store them in a buffer. 
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
 
 /*
- * AFSK Demodulation. 
- * 
  * Partly based on code from BertOS AFSK decoder. 
  *    Originally by Develer S.r.l. (http://www.develer.com/), GPLv2 licensed.
- * 
  */
+
 #include "defines.h"
 #if !defined(ARCTIC4_UHF)
 
@@ -247,7 +262,7 @@ fifo_t* afsk_rx_init()
   rxSampler_init();
   
   xTaskCreatePinnedToCore(&afsk_rxdecoder, "AFSK RX decoder", 
-        STACK_AFSK_RXDECODER, NULL, NORMALPRIO, NULL, CORE_AFSK_RXDECODER);
+        STACK_AFSK_RXDECODER, NULL, NORMALPRIO+1, NULL, CORE_AFSK_RXDECODER);
 
   softsq = (uint16_t) get_i32_param("SOFTSQ", DFL_SOFTSQ);
   return&iq;
@@ -287,6 +302,11 @@ bool afsk_dcd(int8_t inp) {
     prev2_dcd = prev_dcd;
     prev_dcd = dcd;
     
+    if (result && !dcd)
+      afsk_rx_start(); 
+    if (!reult && dcd)
+      afsk_rx_stop();
+  
     return result; 
 }
 
@@ -322,8 +342,19 @@ static void afsk_rxdecoder(void* arg)
         /* Get the frame from ADC sampler */
         rxSampler_start(); 
         int n = rxSampler_getFrame();
+   
+        if (afsk_isSquelchOff() ) {
+            /* Reset the sampler and start reading the next frame */
+            if (n < 0) {
+              ESP_LOGD(TAG, "RESET SAMPLER");
+              rxSampler_reInit();
+              continue;
+            }
+        }
         if (n==0)
           continue;
+        rxSampler_stop(); 
+        rxSampler_start();
         rxSampler_readLast();
         
         hdlc_next_frame();
@@ -331,20 +362,24 @@ static void afsk_rxdecoder(void* arg)
         
         /* Decode the frame */
         doFrame(FIR_NONE);
-        sleepMs(5);
-        ESP_LOGD(TAG, "Decode attempt 1: %s", (hdlc_isSuccess() ? "YES": "NO"));
-        if (hdlc_isSuccess())
+        sleepMs(6);
+        if (hdlc_isSuccess()) {
+          ESP_LOGD(TAG, "Decode attempt 1: Success");
           continue;
+        }
         
         doFrame(FIR_PREEMP);
-        sleepMs(5);
-        ESP_LOGD(TAG, "Decode attempt 2: %s", (hdlc_isSuccess() ? "YES": "NO"));
-        if (hdlc_isSuccess())
+        sleepMs(6);
+        if (hdlc_isSuccess()) {
+          ESP_LOGD(TAG, "Decode attempt 2: Success");
           continue;
+        }
         
         doFrame(FIR_DEEMP);
-        sleepMs(10);
-        ESP_LOGD(TAG, "Decode attempt 3: %s", (hdlc_isSuccess() ? "YES": "NO"));
+        sleepMs(6);
+        if (hdlc_isSuccess()) 
+          ESP_LOGD(TAG, "Decode attempt 3: Success");
+        sleepMs(6);
     }
 }
 
@@ -387,9 +422,9 @@ static void checkFrame() {
   }
   
   rxSampler_adjNull( msamples>psamples ? -3 : 3);
-  ESP_LOGI(TAG, "samples=%d, pos=%d, neg=%d, top=%d (%d %%), bot=%d (%d %%), ltop=%d (%d %%), lbot=%d (%d %%)",
+  ESP_LOGI(TAG, "samples=%d, pos=%d, neg=%d, top=%d (%d %%), bot=%d (%d %%), ltop=%d (%d %%), lbot=%d (%d %%), ovf=%ld",
       nsamples, psamples, msamples, topsamples, 100*topsamples/nsamples, botsamples, 100*botsamples/nsamples,
-      ltopsamples, 100*ltopsamples/nsamples, lbotsamples, 100*lbotsamples/nsamples);
+      ltopsamples, 100*ltopsamples/nsamples, lbotsamples, 100*lbotsamples/nsamples, adcsampler_overflow());
 }
 
 
