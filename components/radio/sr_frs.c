@@ -122,8 +122,7 @@ void frs_init(uart_port_t uart)
     gpio_intr_enable(RADIO_PIN_SQUELCH);  
     
     sleepMs(500);
-    if (GET_BOOL_PARAM("RADIO.on", DFL_RADIO_ON))
-        frs_require();
+    frs_require();
 }
   
  
@@ -168,13 +167,11 @@ static void IRAM_ATTR squelch_handler(void* arg)
 {
     if (!_sq_on && cond_isSetI(radio_rdy) && !gpio_get_level(RADIO_PIN_SQUELCH)) {
         _sq_on = true;
-//        gpio_set_level(LED_STATUS_PIN, 1);
         afsk_rx_start();
         cond_clearI(chan_rdy);       
     }
     else if (_sq_on) {
         _sq_on = false;
-//        gpio_set_level(LED_STATUS_PIN, 0);
         afsk_rx_stop();
         cond_setI(chan_rdy);
     } 

@@ -301,11 +301,6 @@ bool afsk_dcd(int8_t inp) {
       result = true; 
     prev2_dcd = prev_dcd;
     prev_dcd = dcd;
-    
-    if (result && !dcd)
-      afsk_rx_start(); 
-    if (!reult && dcd)
-      afsk_rx_stop();
   
     return result; 
 }
