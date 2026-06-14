@@ -71,8 +71,17 @@ bool loraprs_last_digied() {
         return false;
 
     for (const char* p = hstart + 1; p < hend; p++) {
-        if (*p == '*')
+        if (*p == '*') {
+            /* Find the start of the current token (delimited by ',' or '>') */
+            const char* tok = p - 1;
+            while (tok > hstart && *tok != ',' && *tok != '>')
+                tok--;
+            tok++;
+            /* Ignore TCPIP*: packet was relayed via internet, not digipeated */
+            if (strncasecmp(tok, "TCPIP", 5) == 0)
+                continue;
             return true;
+        }
     }
     return false;
 }
