@@ -14,6 +14,7 @@ typedef struct lorameta {
 
 char* loraprs_last_packet();
 char* loraprs_last_heard(char* buf);
+bool loraprs_last_digied();
 int8_t loraprs_last_rssi();
 int8_t loraprs_last_snr();
 time_t loraprs_last_time();

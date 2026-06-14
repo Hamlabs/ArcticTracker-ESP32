@@ -206,6 +206,7 @@ static void status_screen1() {
 static void status_screen2() {
     char buf[32];   
     char buf2[10];
+    char buf3[16];
     disp_clear();
     status_heading("RXTX");
     
@@ -236,11 +237,12 @@ static void status_screen2() {
         disp_writeText(0, LINE3, buf);
         
         loraprs_last_heard(buf2);
+        sprintf(buf3, "%s%s", buf2, (loraprs_last_digied() ? " [d]" : ""));
         if (strlen(buf2) > 0) {
             char tbuf[9];
             time2str(tbuf, loraprs_last_time(), true);
             tbuf[5] = '\0';
-            sprintf(buf, "%s: %s", tbuf, buf2);
+            sprintf(buf, "%s: %s", tbuf, buf3);
             disp_writeText(0, LINE4, buf);
             sprintf(buf, "  %d dBm, SNR=%d dB", loraprs_last_rssi(), loraprs_last_snr());
             disp_writeText(0, LINE5, buf);
