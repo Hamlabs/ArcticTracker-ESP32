@@ -62,7 +62,28 @@ char* loraprs_last_heard(char* buf) {
 
 /* Return true if last heard packet was via digipeater. */
 bool loraprs_last_digied() {
-    /* TBD */
+    const char* hstart = strchr(last_packet, '>');
+    if (hstart == NULL)
+        return false;
+
+    const char* hend = strchr(hstart + 1, ':');
+    if (hend == NULL)
+        return false;
+
+    for (const char* p = hstart + 1; p < hend; p++) {
+        if (*p == '*') {
+            /* Find the start of the current token (delimited by ',' or '>') */
+            const char* tok = p - 1;
+            while (tok > hstart && *tok != ',' && *tok != '>')
+                tok--;
+            tok++;
+            /* Ignore TCPIP*: packet was relayed via internet, not digipeated */
+            if (strncasecmp(tok, "TCPIP", 5) == 0)
+                continue;
+            return true;
+        }
+    }
+    return false;
 }
 
    
@@ -278,7 +299,6 @@ FBQ* loraprs_init_encoder()
 }
 
 #endif
-
 
 
 
