@@ -706,10 +706,12 @@ static void send_timestamp(FBUF* packet, posdata_t* pos)
 static void send_timestamp_z(FBUF* packet, posdata_t* pos)
 {
     char ts[13];
-    sprintf(ts, "%02u%02u%02uz%c", 
-       (uint8_t) (pos->timestamp / 86400)+1,
-       (uint8_t) ((pos->timestamp / 3600) % 24), 
-       (uint8_t) ((pos->timestamp / 60) % 60), '\0' ); 
+    struct tm t;
+    gmtime_r(&pos->timestamp, &t);
+    sprintf(ts, "%02u%02u%02uz%c",
+       (uint8_t) t.tm_mday,
+       (uint8_t) t.tm_hour,
+       (uint8_t) t.tm_min, '\0' );
     fbuf_putstr(packet, ts);   
 }
 
