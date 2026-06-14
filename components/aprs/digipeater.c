@@ -40,6 +40,10 @@ static uint8_t subscription;
 static void check_frame(FBUF *f);
 static void send_packet(FBUF *hdr);
 
+#if defined(ARCTIC4_UHF)    
+static void addMeta(FBUF *f); 
+#endif
+
 #define TAG "digi"
 
 /***********************************************
@@ -151,7 +155,8 @@ static void check_frame(FBUF *f)
    uint8_t i, j; 
    int8_t  sar_pos = -1;
    uint8_t ndigis =  ax25_decode_header(f, &from, &to, digis, &ctrl, &pid);
-   
+
+   /* Drop packet if duplicate */   
    if (hlist_duplicate(&from, &to, f, ndigis)) { 
        ESP_LOGI(TAG, "Frame is duplicate. Ignore."); 
        return;
@@ -165,7 +170,7 @@ static void check_frame(FBUF *f)
    for (i=0; i<ndigis && (digis[i].flags & FLAG_DIGI); i++) 
        digis2[i] = digis[i];   
 
-   /* Return if it has been through all digis in path */
+   /* Drop packet if it has been through all digis in path */
    if (i==ndigis)
        return;
 
@@ -182,15 +187,13 @@ static void check_frame(FBUF *f)
        if (strncasecmp("SAR", digis[j].callsign, 3) == 0) 
           { sar_pos = j; break; } 
    
-   /* Return if no SAR preemtion and WIDE1 alias not found first */
+   /* Drop packet if no SAR preemtion and WIDE1 alias not found first */
    if (sar_pos < 0 && !widedigi)
       return;
    
    /* Mark as digipeated through mycall */
    j = i;
    mycall.flags = FLAG_DIGI;
-   
-   
    digis2[j++] = mycall; 
    
    
@@ -209,6 +212,10 @@ static void check_frame(FBUF *f)
        if (sar_pos < 0 || i != sar_pos)
           digis2[j++] = digis[i];
    
+#if defined(ARCTIC4_UHF)    
+   addMeta(f); 
+#endif    
+    
    /* Write a new header -> newHdr */
    fbuf_new(&newHdr, SRC_DIGIPEATER);
    ax25_encode_header(&newHdr, &from, &to, digis2, j, ctrl, pid);
@@ -222,6 +229,24 @@ static void check_frame(FBUF *f)
     send_packet(&newHdr);
 }
 
+
+
+/*******************************************************************
+ * Add info about received packet (rssi, snr) in comment field. 
+ * Only for LoRa. Should be used with care. Not recommended for
+ * transmission on SF12 channels. 
+ *******************************************************************/
+
+#if defined(ARCTIC4_UHF)    
+static void addMeta(FBUF *f) {
+    if (GET_BOOL_PARAM("DIGI.META.on", DFL_DIGI_META_ON)) {
+        lorameta_t *meta = (lorameta_t*) f->meta;
+        char buf[35];
+        sprintf(buf, " [rssi=%d dBm, snr=%d dB]", meta->rssi, meta->snr);
+        fbuf_putstr(f, buf);
+    }
+}
+#endif   
 
 
 /********************************************************

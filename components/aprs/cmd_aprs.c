@@ -207,8 +207,8 @@ void hdl_txpower(uint8_t po) {
 void hdl_squelch(uint8_t sq) {
     radio_setSquelch(sq);
     afsk_setSquelchOff(sq==0 ? true : false);
-    if (sq==0)
-        afsk_rx_nextFrame();
+ //   if (sq==0)
+ //       afsk_rx_nextFrame();
 }
 
 void hdl_softsq(int32_t sq) {
@@ -357,15 +357,15 @@ CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       DFL_RADIO_ON,       hdl_r
 
 
 #if defined(ARCTIC4_UHF)
-CMD_I32_SETTING  (_param_freq,        "FREQ",          DFL_FREQ,           433000000, 436000000, hdl_freq);
-CMD_I32_SETTING  (_param_foffset,     "FREQ_OFFSET",   0,                  -30000, 30000, hdl_foffset);
-CMD_BYTE_SETTING (_param_lora_sf,     "LORA_SF",       DFL_LORA_SF,        5, 12,  hdl_lora_sf);
-CMD_BYTE_SETTING (_param_lora_cr,     "LORA_CR",       DFL_LORA_CR,        5, 8,   hdl_lora_cr);
-CMD_BYTE_SETTING (_param_txpower,     "TXPOWER",       DFL_TXPOWER,        0, 6,   hdl_txpower);
-CMD_BYTE_SETTING (_param_lora_alt_sf, "LORA_ALT_SF",   DFL_LORA_ALT_SF,    5, 12,  hdl_lora_sf);
-CMD_BYTE_SETTING (_param_lora_alt_cr, "LORA_ALT_CR",   DFL_LORA_ALT_CR,    5, 8,   hdl_lora_cr);
-CMD_BOOL_SETTING (_param_lora_alt_on, "LORA_ALT.on",   DFL_LORA_ALT_ON,    NULL);
-
+CMD_I32_SETTING  (_param_freq,        "FREQ",           DFL_FREQ,           433000000, 436000000, hdl_freq);
+CMD_I32_SETTING  (_param_foffset,     "FREQ_OFFSET",    0,                  -30000, 30000, hdl_foffset);
+CMD_BYTE_SETTING (_param_lora_sf,     "LORA_SF",        DFL_LORA_SF,        5, 12,  hdl_lora_sf);
+CMD_BYTE_SETTING (_param_lora_cr,     "LORA_CR",        DFL_LORA_CR,        5, 8,   hdl_lora_cr);
+CMD_BYTE_SETTING (_param_txpower,     "TXPOWER",        DFL_TXPOWER,        0, 6,   hdl_txpower);
+CMD_BYTE_SETTING (_param_lora_alt_sf, "LORA_ALT_SF",    DFL_LORA_ALT_SF,    5, 12,  hdl_lora_sf);
+CMD_BYTE_SETTING (_param_lora_alt_cr, "LORA_ALT_CR",    DFL_LORA_ALT_CR,    5, 8,   hdl_lora_cr);
+CMD_BOOL_SETTING (_param_lora_alt_on, "LORA_ALT.on",    DFL_LORA_ALT_ON,    NULL);
+CMD_BOOL_SETTING (_param_digi_meta,   "DIGI.META.on",   DFL_DIGI_META_ON,   NULL);
 #else
 
 CMD_I32_SETTING  (_param_txfreq,     "TXFREQ",       DFL_TXFREQ,      1440000, 1460000, hdl_txfreq);
@@ -438,12 +438,13 @@ void register_aprs()
     ADD_CMD("teston",     &do_teston,          "HDLC encoder test", "<byte>");    
     ADD_CMD("txdelay",    &_param_txdelay,     "APRS TXDELAY setting", "[<val>]");
     ADD_CMD("txtail",     &_param_txtail,      "APRS TXTAIL setting", "[<val>]");
-    ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",             "[<val>]");
-    ADD_CMD("softsq",     &_param_softsq,      "Soft Squelch setting",              "[<val>]");
-    ADD_CMD("volume",     &_param_volume,      "RX audio level setting (1-8)",      "[<val>]");
+    ADD_CMD("squelch",    &_param_squelch,     "Squelch setting (1-8)",              "[<val>]");
+    ADD_CMD("softsq",     &_param_softsq,      "Soft Squelch setting",               "[<val>]");
+    ADD_CMD("volume",     &_param_volume,      "RX audio level setting (1-8)",       "[<val>]");
     ADD_CMD("txlow",      &_param_txlow_on,    "Tx power low", "[on|off]");
-    ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",       "[<val>]");
-    ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",       "[<val>]");
+    ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",        "[<val>]");
+    ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",        "[<val>]");
+    ADD_CMD("digi-meta"   &_param_digi_meta,   "Add metainfo to digipeated packets (use with care)", "[on|off]"); 
 #else
     ADD_CMD("lora-sf",     &_param_lora_sf,     "LoRa spreading factor (5-12)",            "[<val>]");
     ADD_CMD("lora-cr",     &_param_lora_cr,     "LoRa coding rate (5-8)",                  "[<val>]");
