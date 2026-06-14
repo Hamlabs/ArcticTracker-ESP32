@@ -329,7 +329,7 @@ static void afsk_rxdecoder(void* arg)
 {
     while (true) {
         /* Wait for squelch to be opened */
-        if (!afsk_isSquelchOff() && !radio_getSquelch() ) {
+        if (!afsk_rx_enabled() || (!afsk_isSquelchOff() && !radio_getSquelch())  ) {
             rxSampler_stop(); 
             sem_down(afsk_frames);
         }

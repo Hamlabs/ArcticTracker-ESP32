@@ -91,12 +91,22 @@ void afsk_init()
 
 void afsk_rx_enable() {
     rxEnable++; 
+    if (rxEnable == 1)
+        afsk_rx_nextFrame(); 
+        // Kick the sample-and-decode loop
 }
 
 void afsk_rx_disable() {
     if (rxEnable > 0)
        rxEnable--; 
 }
+
+
+bool afsk_rx_enabled() {
+    return rxEnable > 0;
+}
+
+
 
 
 /**********************************************************

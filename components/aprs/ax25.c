@@ -339,16 +339,30 @@ int ax25_frame2str(char *buf, size_t bufsize, FBUF* b) {
     if ((size_t)(len + 2) > bufsize) { buf[len] = '\0'; return len; }
 
     buf[len++] = '>';
-
     n = addr2str(tmp, &to);
     if ((size_t)(len + n + 1) > bufsize) { buf[len] = '\0'; return len; }
-    memcpy(buf + len, tmp, n); len += n;
+    memcpy(buf + len, tmp, n); 
+    len += n;
+    
+    /* Digipeaters */
     for (int i = 0; i < ndigis; i++) {
-        if ((size_t)(len + 2) > bufsize) { buf[len] = '\0'; return len; }
+        /* Prevent buffer overflow */
+        if ((size_t)(len + 2) > bufsize) { 
+            buf[len] = '\0'; 
+            return len;
+        }
         buf[len++] = ',';
         n = addr2str(tmp, &digis[i]);
-        if ((size_t)(len + n + 1) > bufsize) { buf[len] = '\0'; return len; }
-        memcpy(buf + len, tmp, n); len += n;
+        
+        /* Prevent buffer overflow */
+        if ((size_t)(len + n + 1) > bufsize) { 
+            buf[len] = '\0'; 
+            return len; 
+        }
+        memcpy(buf + len, tmp, n); 
+        len += n;
+        if (digis[i].flags & FLAG_DIGI)
+            buf[len++] = '*';
     }
 
     if (ctrl==FTYPE_UI) {

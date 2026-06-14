@@ -35,6 +35,7 @@
  
  void afsk_rx_enable(void); 
  void afsk_rx_disable(void);
+ bool afsk_rx_enabled();
  void afsk_rx_newFrame(void); 
  void afsk_rx_nextFrame(void);
  void afsk_PTT(bool on);
