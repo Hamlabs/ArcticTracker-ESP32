@@ -58,6 +58,13 @@ char* loraprs_last_heard(char* buf) {
     buf[pos] = '\0';
     return buf;
 }
+
+
+/* Return true if last heard packet was via digipeater. */
+bool loraprs_last_digied() {
+    /* TBD */
+}
+
    
 int8_t loraprs_last_rssi() {
     return last_rssi;

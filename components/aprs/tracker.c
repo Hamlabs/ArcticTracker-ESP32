@@ -415,8 +415,8 @@ static void report_status(posdata_t* pos)
      * Get battery voltage - This should perhaps not be here but in status message or
      * telemetry message instead. 
      */
-    char vbatt[7];
-    sprintf(vbatt, "%.1f%c", ((double) batt_voltage()/1000 ), '\0');
+    char vbatt[16];
+    sprintf(vbatt, "%.1f (%2d%%)%c", ((double) batt_voltage()/1000 ), batt_percent(), '\0');
 
     
     /* Send firmware version and battery voltage in status report */

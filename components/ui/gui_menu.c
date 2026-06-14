@@ -172,18 +172,21 @@ extern void linenoiseHistorySave(char* f);
  
 bool charging = false;
 int gui_pause = 1000;
-
+int paused = 0;
 static void gui_thread (void* arg) 
 {
     int n = 0;
     while (true) {
         sleepMs(gui_pause);
-             
-        if (batt_charge() && !charging && batt_percent() < 95)
-            { beeps("-.-.  "); blipUp(); }
-        if (!batt_charge() && charging && batt_percent() < 95)
-            { beeps("-.-.  "); blipDown(); }
-        charging = batt_charge();
+        paused += gui_pause; 
+        if (paused >= 5000) {
+            paused = 0;
+            if (batt_charge() && !charging && batt_percent() < 90)
+                { beeps("-.-.  "); blipUp(); }
+            if (!batt_charge() && charging && batt_percent() < 90)
+                { beeps("-.-.  "); blipDown(); }
+            charging = batt_charge();
+        }
     
         if (!menu_is_active() && !disp_popupActive())
             status_show();
