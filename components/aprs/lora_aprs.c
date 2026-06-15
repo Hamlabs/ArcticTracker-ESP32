@@ -15,8 +15,13 @@
 #define TAG "lora-aprs"
 
 #define CAD_RETRIES         5
-#define CAD_MIN_DELAY_MS    200
-#define CAD_MAX_DELAY_MS    2000
+
+                 //       5     6    7       8     9     10     11     12
+                 //--------------------------------------------------------
+const uint16_t cad_min_delay[] = {4,    6,   10,    18,   33,    61,   111,   200 };
+const uint16_t cad_max_delay[] = {40,  60,  100,   180,  330,   610,  1110,  2000 };
+
+static uint8_t cur_sf = 12;
 
 FBQ encoder_queue; 
 
@@ -36,7 +41,7 @@ bool txon = false;
 
 
 static void alt_setting(bool on, FBUF *frame);
-
+static void cad_wait();
 
 lorameta_t *loraprs_meta(int8_t rssi, int8_t snr, int32_t ferr) {
     lorameta_t * x = malloc(sizeof(lorameta_t));
@@ -245,23 +250,9 @@ static void txencoder (void* arg)
      int len = ax25_frame2str(txbuf+3, sizeof(txbuf)-3, &frame);
      alt_setting(true, &frame); 
      
-     /* CAD: check the channel is free before transmitting */
-     bool channel_free = false;
-     for (int retry = 0; retry < CAD_RETRIES; retry++) {
-         cond_clear(cad_done);
-         lora_SetCad();
-         cond_wait(cad_done);
-         if (!cad_detected) {
-             channel_free = true;
-             break;
-         }
-         ESP_LOGI(TAG, "CAD: channel busy, retry %d/%d", retry+1, CAD_RETRIES);
-         lora_TxOff();   /* back to RX while waiting */
-         sleepMs(CAD_MIN_DELAY_MS + (rand() % (CAD_MAX_DELAY_MS - CAD_MIN_DELAY_MS + 1)));
-     }
-     if (!channel_free)
-         ESP_LOGW(TAG, "CAD: channel busy after %d retries, transmitting anyway", CAD_RETRIES);
-
+      /* CAD: check the channel is free before transmitting */
+     cad_wait();
+     
      ESP_LOGI(TAG, "TX packet: %d bytes", len);
      tx_led_on();
      txon = true;
@@ -275,6 +266,32 @@ static void txencoder (void* arg)
 }
 
 
+/* CAD: check the channel is free before transmitting */
+// FIXME: Delay should be shorter for shorter SF
+static void cad_wait() {
+    
+    int cad_min = cad_min_delay[cur_sf - 5];
+    int cad_max = cad_max_delay[cur_sf - 5];
+    
+    bool channel_free = false;
+    for (int retry = 0; retry < CAD_RETRIES; retry++) {
+        cond_clear(cad_done);
+        lora_SetCad();
+        cond_wait(cad_done);
+        if (!cad_detected) {
+            channel_free = true;
+            break;
+        }
+        ESP_LOGI(TAG, "CAD: channel busy, retry %d/%d", retry+1, CAD_RETRIES);
+        lora_TxOff();   /* back to RX while waiting */
+        sleepMs(cad_min + (rand() % (cad_max - cad_min + 1)));
+    }
+    if (!channel_free)
+        ESP_LOGW(TAG, "CAD: channel busy after %d retries, transmitting anyway", CAD_RETRIES);
+
+}
+
+
 static void alt_setting(bool on, FBUF *frame) {
     if (!GET_BOOL_PARAM("LORA_ALT.on", DFL_LORA_ALT_ON) 
         || (frame != NULL && frame->tag != SRC_DIGIPEATER))
@@ -285,11 +302,13 @@ static void alt_setting(bool on, FBUF *frame) {
         sf = get_byte_param("LORA_ALT_SF", DFL_LORA_ALT_SF);
         cr = get_byte_param("LORA_ALT_CR", DFL_LORA_ALT_CR);
         ESP_LOGD(TAG, "Switching to alternative setting: sf=%d, cr=%d", sf, cr);
+        cur_sf = sf;
     }
     else {
         sf = get_byte_param("LORA_SF", DFL_LORA_SF);
         cr = get_byte_param("LORA_CR", DFL_LORA_CR);
         ESP_LOGD(TAG, "Switching to normal setting: sf=%d, cr=%d", sf, cr);
+        cur_sf = sf;
     }
     lora_SetModulationParams(sf, SX126X_LORA_BW_125_0, cr-4, (sf>=11 ? 1:0)); 
 }
@@ -302,6 +321,7 @@ static void alt_setting(bool on, FBUF *frame) {
 
 void loraprs_init_decoder() 
 {
+    cur_sf = get_byte_param("LORA_SF", DFL_LORA_SF);
     radio_require();
     packet_rdy = cond_create();
     cond_clear(packet_rdy);
@@ -310,7 +330,7 @@ void loraprs_init_decoder()
     
     psub = fbqsw_create(10);
     lora_SetIrqHandler(intrHandler, SX126X_IRQ_RX_DONE | SX126X_IRQ_TX_DONE | 
-                                    SX126X_IRQ_CAD_DONE | SX126X_IRQ_CAD_DETECTED);
+                                    SX126X_IRQ_CAD_DONE);
     
     /* Start RX thread */
     xTaskCreatePinnedToCore(&rxdecoder, "LoRa APRS RX", 
