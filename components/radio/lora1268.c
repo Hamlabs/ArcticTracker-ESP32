@@ -253,12 +253,11 @@ void lora_config(uint8_t spreadingFactor, uint8_t bandwidth, uint8_t codingRate,
 	
 	setRxGain(RXGAIN); 
 	
-	/* This is actually not used */
 	lora_SetCadParams( 
 	   SX126X_CAD_ON_4_SYMB,
        0x18,      // cadDetPeak: detection sensitivity (increase for more sensitivity)
        0x0A,      // cadDetMin: required quality (10 is a good default)
-       SX126X_CAD_GOTO_RX,
+       SX126X_CAD_GOTO_STDBY,
        0x3FFF     // timeout or channel busy time
     );
 	
@@ -372,6 +371,7 @@ void lora_SetCadParams(uint8_t cadSymbolNum, uint8_t cadDetPeak, uint8_t cadDetM
 void lora_SetCad()
 {
 	mutex_lock(lora_mutex);
+	setStandby(STANDBY_MODE);
 	uint8_t data = 0;
 	writeCommand(SX126X_CMD_SET_CAD, &data, 0); // 0xC5
 	mutex_unlock(lora_mutex);
