@@ -14,10 +14,16 @@
 
 #define TAG "lora-aprs"
 
+#define CAD_RETRIES         5
+#define CAD_MIN_DELAY_MS    200
+#define CAD_MAX_DELAY_MS    2000
+
 FBQ encoder_queue; 
 
 static FBUF frame; 
 static cond_t packet_rdy;
+static cond_t cad_done;
+static volatile bool cad_detected;
 static FBQSW_t *psub, *psubtx;
 
 char  last_packet[256]; 
@@ -164,6 +170,14 @@ static void rxdecoder (void* arg) {
             continue;
         }
         
+        /* CAD done: relay result to txencoder */
+        if (irqRegs & SX126X_IRQ_CAD_DONE) {
+            cad_detected = (irqRegs & SX126X_IRQ_CAD_DETECTED) != 0;
+            lora_ClearIrqStatus(SX126X_IRQ_ALL);
+            cond_set(cad_done);
+            continue;
+        }
+        
         len = lora_ReceivePacket(buf, 200);
         buf[len] = '\0';
         lora_GetPacketStatus(&rssi, &sigrssi, &snr);
@@ -230,6 +244,24 @@ static void txencoder (void* arg)
      txbuf[2]=0x01;
      int len = ax25_frame2str(txbuf+3, sizeof(txbuf)-3, &frame);
      alt_setting(true, &frame); 
+     
+     /* CAD: check the channel is free before transmitting */
+     bool channel_free = false;
+     for (int retry = 0; retry < CAD_RETRIES; retry++) {
+         cond_clear(cad_done);
+         lora_SetCad();
+         cond_wait(cad_done);
+         if (!cad_detected) {
+             channel_free = true;
+             break;
+         }
+         ESP_LOGI(TAG, "CAD: channel busy, retry %d/%d", retry+1, CAD_RETRIES);
+         lora_TxOff();   /* back to RX while waiting */
+         sleepMs(CAD_MIN_DELAY_MS + (rand() % (CAD_MAX_DELAY_MS - CAD_MIN_DELAY_MS + 1)));
+     }
+     if (!channel_free)
+         ESP_LOGW(TAG, "CAD: channel busy after %d retries, transmitting anyway", CAD_RETRIES);
+
      ESP_LOGI(TAG, "TX packet: %d bytes", len);
      tx_led_on();
      txon = true;
@@ -273,9 +305,12 @@ void loraprs_init_decoder()
     radio_require();
     packet_rdy = cond_create();
     cond_clear(packet_rdy);
+    cad_done = cond_create();
+    cond_clear(cad_done);
     
     psub = fbqsw_create(10);
-    lora_SetIrqHandler(intrHandler, SX126X_IRQ_RX_DONE | SX126X_IRQ_TX_DONE);
+    lora_SetIrqHandler(intrHandler, SX126X_IRQ_RX_DONE | SX126X_IRQ_TX_DONE | 
+                                    SX126X_IRQ_CAD_DONE | SX126X_IRQ_CAD_DETECTED);
     
     /* Start RX thread */
     xTaskCreatePinnedToCore(&rxdecoder, "LoRa APRS RX", 
