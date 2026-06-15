@@ -124,6 +124,9 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
 /******************************************************************
  *  PUT handler for setting related to APRS tracking
  ******************************************************************/
+extern void hdl_lora_sfcr(uint8_t sfcr);
+extern void hdl_freq(int32_t f);
+extern void hdl_txpower(uint8_t po);
 
 static esp_err_t aprs_put_handler(httpd_req_t *req) 
 {
@@ -162,9 +165,12 @@ static esp_err_t aprs_put_handler(httpd_req_t *req)
     set_byte_param("LORA_CR",     JSON_BYTE(root, "lora_cr"));  
     set_byte_param("LORA_ALT_SF", JSON_BYTE(root, "lora_alt_sf"));
     set_byte_param("LORA_ALT_CR", JSON_BYTE(root, "lora_alt_cr"));  
-    
     set_byte_param("TXPOWER", JSON_BYTE(root, "txpower")); 
     set_i32_param("FREQ",     JSON_INT(root, "freq"));
+    
+    hdl_lora_sfcr(0);
+    hdl_freq(0);
+    hdl_txpower(0);
 #else
     set_i32_param("TXFREQ",    JSON_INT(root, "txfreq"));
     set_i32_param("RXFREQ",    JSON_INT(root, "rxfreq"));
@@ -208,6 +214,7 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
 
 #if defined(ARCTIC4_UHF)
     cJSON_AddBoolToObject(root, "dualOn", GET_BOOL_PARAM("LORA_ALT.on", DFL_LORA_ALT_ON));
+    cJSON_AddBoolToObject(root, "digimeta", GET_BOOL_PARAM("DIGI.META.on", DFL_DIGI_META_ON));
 #endif
     return rest_JSON_send(req, root);
 }
@@ -235,6 +242,7 @@ static esp_err_t digi_put_handler(httpd_req_t *req)
 #if defined(ARCTIC4_UHF)   
     bool dualOn = JSON_BOOL(root, "dualOn");
     set_byte_param("LORA_ALT.on", dualOn);
+    set_byte_param("DIGI.META.on",  JSON_BOOL(root, "digimeta"));
 #endif
     bool igtrackOn = JSON_BOOL(root, "igtrackOn");
     set_byte_param("IGATE.TRACK.on", igtrackOn);

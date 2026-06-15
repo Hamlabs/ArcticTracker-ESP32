@@ -172,13 +172,9 @@ static int do_trput(int argc, char* argv[])
 
 #if defined(ARCTIC4_UHF)
 
-void hdl_lora_sf(uint8_t sf) {
+
+void hdl_lora_sfcr(uint8_t sfcr) {
     uint8_t cr = get_byte_param("LORA_CR", DFL_LORA_CR);
-    lora_SetModulationParams(sf, SX126X_LORA_BW_125_0, cr-4, (sf>=11 ? 1:0)); 
-}
-
-
-void hdl_lora_cr(uint8_t cr) {
     uint8_t sf = get_byte_param("LORA_SF", DFL_LORA_SF);
     lora_SetModulationParams(sf, SX126X_LORA_BW_125_0, cr-4, (sf>=11 ? 1:0)); 
 }
@@ -187,17 +183,12 @@ void hdl_lora_cr(uint8_t cr) {
 void hdl_freq(int32_t f) {
     int32_t freq = get_i32_param("FREQ", DFL_FREQ); 
     int32_t foffset = get_i32_param("FREQ_OFFSET", 0);
-    lora_SetRfFrequency(f+foffset);
-}
-
-void hdl_foffset(int32_t foff) {
-    int32_t freq = get_i32_param("FREQ", DFL_FREQ); 
-    int32_t foffset = get_i32_param("FREQ_OFFSET", 0);
     lora_SetRfFrequency(freq+foffset);
 }
 
 void hdl_txpower(uint8_t po) {
-    lora_setTxPower(po);
+    uint8_t txpo = get_byte_param("TXPOWER", DFL_TXPOWER);
+    lora_setTxPower(txpo);
 }
 
 
@@ -358,12 +349,12 @@ CMD_BOOL_SETTING (_param_radio_on,   "RADIO.on",       DFL_RADIO_ON,       hdl_r
 
 #if defined(ARCTIC4_UHF)
 CMD_I32_SETTING  (_param_freq,        "FREQ",           DFL_FREQ,           433000000, 436000000, hdl_freq);
-CMD_I32_SETTING  (_param_foffset,     "FREQ_OFFSET",    0,                  -30000, 30000, hdl_foffset);
-CMD_BYTE_SETTING (_param_lora_sf,     "LORA_SF",        DFL_LORA_SF,        5, 12,  hdl_lora_sf);
-CMD_BYTE_SETTING (_param_lora_cr,     "LORA_CR",        DFL_LORA_CR,        5, 8,   hdl_lora_cr);
+CMD_I32_SETTING  (_param_foffset,     "FREQ_OFFSET",    0,                  -30000, 30000, hdl_freq);
+CMD_BYTE_SETTING (_param_lora_sf,     "LORA_SF",        DFL_LORA_SF,        5, 12,  hdl_lora_sfcr);
+CMD_BYTE_SETTING (_param_lora_cr,     "LORA_CR",        DFL_LORA_CR,        5, 8,   hdl_lora_sfcr);
 CMD_BYTE_SETTING (_param_txpower,     "TXPOWER",        DFL_TXPOWER,        0, 6,   hdl_txpower);
-CMD_BYTE_SETTING (_param_lora_alt_sf, "LORA_ALT_SF",    DFL_LORA_ALT_SF,    5, 12,  hdl_lora_sf);
-CMD_BYTE_SETTING (_param_lora_alt_cr, "LORA_ALT_CR",    DFL_LORA_ALT_CR,    5, 8,   hdl_lora_cr);
+CMD_BYTE_SETTING (_param_lora_alt_sf, "LORA_ALT_SF",    DFL_LORA_ALT_SF,    5, 12,  NULL);
+CMD_BYTE_SETTING (_param_lora_alt_cr, "LORA_ALT_CR",    DFL_LORA_ALT_CR,    5, 8,   NULL);
 CMD_BOOL_SETTING (_param_lora_alt_on, "LORA_ALT.on",    DFL_LORA_ALT_ON,    NULL);
 CMD_BOOL_SETTING (_param_digi_meta,   "DIGI.META.on",   DFL_DIGI_META_ON,   NULL);
 #else
@@ -444,7 +435,6 @@ void register_aprs()
     ADD_CMD("txlow",      &_param_txlow_on,    "Tx power low", "[on|off]");
     ADD_CMD("txfreq",     &_param_txfreq,      "TX frequency (100 Hz units)",        "[<val>]");
     ADD_CMD("rxfreq",     &_param_rxfreq,      "RX frequency (100 Hz units)",        "[<val>]");
-    ADD_CMD("digi-meta"   &_param_digi_meta,   "Add metainfo to digipeated packets (use with care)", "[on|off]"); 
 #else
     ADD_CMD("lora-sf",     &_param_lora_sf,     "LoRa spreading factor (5-12)",            "[<val>]");
     ADD_CMD("lora-cr",     &_param_lora_cr,     "LoRa coding rate (5-8)",                  "[<val>]");
@@ -455,6 +445,7 @@ void register_aprs()
     ADD_CMD("freq",        &_param_freq,        "TX/RX frequency (Hz)",                    "[<val>]");
     ADD_CMD("freq-offset", &_param_foffset,     "Frequency offset (error correction)",     "[<val>]");
     ADD_CMD("heard",       &do_heard,           "Last heard packet",                       "");
+    ADD_CMD("digi-meta",   &_param_digi_meta,   "Add metainfo to digipeated packets (use with care)", "[on|off]"); 
 #endif
 }
 
