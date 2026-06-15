@@ -49,7 +49,7 @@ posdata_t*  gps_get_pos(void);
 time_t      gps_get_time(void);
 bool        gps_getstored(); 
 uint32_t    gps_distance(posdata_t*, posdata_t*);
-uint16_t    gps_bearing(posdata_t *from, posdata_t *to);
+int16_t     gps_bearing(posdata_t *from, posdata_t *to);
 void        gps_mon_pos (void);
 void        gps_mon_raw (void);
 void        gps_mon_off (void);

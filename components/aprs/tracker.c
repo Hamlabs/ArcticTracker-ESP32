@@ -706,10 +706,17 @@ static void send_timestamp(FBUF* packet, posdata_t* pos)
 static void send_timestamp_z(FBUF* packet, posdata_t* pos)
 {
     char ts[13];
-    sprintf(ts, "%02u%02u%02uz%c", 
-       (uint8_t) (pos->timestamp / 86400)+1,
-       (uint8_t) ((pos->timestamp / 3600) % 24), 
-       (uint8_t) ((pos->timestamp / 60) % 60), '\0' ); 
+    struct tm t;
+    gmtime_r(&pos->timestamp, &t);
+    sprintf(ts, "%02u%02u%02uz%c",
+       (uint8_t) t.tm_mday,
+       (uint8_t) t.tm_hour,
+       (uint8_t) t.tm_min, '\0' );
+        
+  //  sprintf(ts, "%02u%02u%02uz%c", 
+  //     (uint8_t) (pos->timestamp / 86400)+1,
+  //     (uint8_t) ((pos->timestamp / 3600) % 24), 
+  //     (uint8_t) ((pos->timestamp / 60) % 60), '\0' ); 
     fbuf_putstr(packet, ts);   
 }
 
@@ -742,15 +749,15 @@ void encrypt_packet(FBUF *f) {
     uint8_t hdrlen = AX25_HDR_LEN(ndigis);
     
     /* Read and encrypt packet content (excluding header) */
-    char buf[256];
-    char res[256];
+    char buf[257];
+    char res[257];
     char src[10]; 
     
     addr2str(src, &from);
     fbuf_rseek(f, hdrlen); 
     buf[0]=':';
     int i=1;
-    while(!fbuf_eof(f))
+    while(!fbuf_eof(f) && i <= 256)
         buf[i++]=fbuf_getChar(f);
     int dlen = i;
     size_t rlen = sec_encryptB91(res, 256, buf, (size_t) dlen, src);

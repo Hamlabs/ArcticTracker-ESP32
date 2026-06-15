@@ -161,7 +161,6 @@ void menu_end()
     status_show();
 }
 
-extern void linenoiseHistorySave(char* f);
 
 
 /****************************************************
@@ -190,11 +189,6 @@ static void gui_thread (void* arg)
     
         if (!menu_is_active() && !disp_popupActive())
             status_show();
-        
-        if (n++ > 30) {
-            linenoiseHistorySave("/files/history");
-            n=0;
-        }
     }
 }
 

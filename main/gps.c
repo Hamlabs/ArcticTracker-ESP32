@@ -273,7 +273,7 @@ uint32_t gps_distance(posdata_t *from, posdata_t *to)
 }
 
 
-uint16_t gps_bearing(posdata_t *from, posdata_t *to)
+int16_t gps_bearing(posdata_t *from, posdata_t *to)
 {
     double dLon = (from->longitude - to->longitude) * DEG_TO_RAD;
     double toLat = to->latitude * DEG_TO_RAD;
@@ -282,8 +282,9 @@ uint16_t gps_bearing(posdata_t *from, posdata_t *to)
        return -1;
     double y = sin(dLon) * cos(from->latitude * DEG_TO_RAD);
     double x = cos(toLat) * sin(fromLat) - sin(toLat) * cos(fromLat) * cos(dLon);
-    uint16_t brng = (uint16_t) round(atan2(y, x) / DEG_TO_RAD);
-    return (brng + 180) % 360; 
+    int brng = (int) round(atan2(y, x) / DEG_TO_RAD);
+    return (int16_t)((brng + 360 + 180) % 360);   // +360 to ensure non-negative before %
+
 }
 
 
@@ -460,7 +461,7 @@ static void do_rmc(uint8_t argc, char** argv)
 {
     static uint8_t lock_cnt = 4;    
     char tbuf[9];
-    if (argc < 13 || argc > 14)      /* Ignore if wrong format */
+    if (argc < 13 || argc > 14)      /* Ignore if wrong format or pre NMEA 2.3 */
        return;
     
     /* get timestamp */
@@ -503,7 +504,7 @@ static void do_rmc(uint8_t argc, char** argv)
     if (*argv[8] != '\0') {
        float x;
        sscanf(argv[8], "%f", &x);
-       gps_current_pos.course = (uint16_t) x+0.5;
+       gps_current_pos.course = (uint16_t) (x+0.5);
     }
     else
        gps_current_pos.course = 0;
