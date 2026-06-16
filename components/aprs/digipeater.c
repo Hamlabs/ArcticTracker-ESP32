@@ -201,10 +201,9 @@ static void check_frame(FBUF *f)
    if (sar_pos > -1) 
        str2addr(&digis2[j++], "SAR", true);
  
-   /* Otherwise, use wide digipeat method if requested and allowed */
+   /* Otherwise, consume WIDE1-1 alias (New-N: replaced by MYCALL*, rest of path follows) */
    else if (widedigi) {
        i++;
-       str2addr(&digis2[j++], "WIDE1", true);
    }
 
    /* Copy rest of the path, exept the SAR alias (if used) */
