@@ -212,6 +212,16 @@ static void check_frame(FBUF *f)
    else if (widedigi) 
        i++;
 
+   /* Consume WIDE2-N alias; re-insert WIDE2-(N-1) if N > 1 and there is room */
+   else if (wide2_ssid >= 0) {
+       i++;
+       if (wide2_ssid > 1 && j < 7) {
+           str2addr(&digis2[j], "WIDE2", false);
+           digis2[j].ssid = wide2_ssid - 1;
+           j++;
+       }
+   }
+
    /* Copy rest of the path, exept the SAR alias (if used) */
    for (; i<ndigis; i++) 
        if (sar_pos < 0 || i != sar_pos)
