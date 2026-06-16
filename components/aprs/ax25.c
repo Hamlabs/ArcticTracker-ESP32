@@ -127,8 +127,15 @@ uint8_t args2digis(addr_t* digis, int ndigis, char *argv[])
 {
     if (ndigis > 7) 
         ndigis = 7;
-    for (uint8_t i=0; i<ndigis; i++)
-        str2addr(&digis[i], argv[i], false);
+    for (uint8_t i=0; i<ndigis; i++) {
+        int last = strlen(argv[i])-1;
+        if (argv[i][last] == '*') {
+            argv[i][last] = '\0';
+            str2addr(&digis[i], argv[i], true);
+        }
+        else
+            str2addr(&digis[i], argv[i], false);
+    }
     return ndigis; 
 }
 

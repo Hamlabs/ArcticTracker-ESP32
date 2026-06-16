@@ -208,20 +208,9 @@ static void check_frame(FBUF *f)
    if (sar_pos > -1) 
        str2addr(&digis2[j++], "SAR", true);
  
-   /* Consume WIDE1-1 alias (New-N: replaced by MYCALL*, rest of path follows) */
-   else if (widedigi) {
+   /* Otherwise, consume WIDE1-1 alias (New-N: replaced by MYCALL*, rest of path follows) */
+   else if (widedigi) 
        i++;
-   }
-
-   /* Handle WIDE2-N: consume the alias; if N>1 re-insert WIDE2-(N-1) for next hop */
-   else if (wide2_ssid > 0) {
-       char wide2buf[8];
-       i++;   /* skip original WIDE2-N entry */
-       if (wide2_ssid > 1) {
-           sprintf(wide2buf, "WIDE2-%d", wide2_ssid - 1);
-           str2addr(&digis2[j++], wide2buf, false);
-       }
-   }
 
    /* Copy rest of the path, exept the SAR alias (if used) */
    for (; i<ndigis; i++) 
