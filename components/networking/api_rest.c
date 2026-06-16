@@ -197,6 +197,7 @@ static esp_err_t digi_get_handler(httpd_req_t *req)
     cJSON *root = cJSON_CreateObject();
     cJSON_AddBoolToObject(root, "digiOn", GET_BOOL_PARAM("DIGIPEATER.on", DFL_DIGIPEATER_ON));
     cJSON_AddBoolToObject(root, "wide1", GET_BOOL_PARAM("DIGI.WIDE1.on", DFL_DIGI_WIDE1_ON));
+    cJSON_AddBoolToObject(root, "wide2", GET_BOOL_PARAM("DIGI.WIDE2.on", DFL_DIGI_WIDE2_ON));
     cJSON_AddBoolToObject(root, "sar", GET_BOOL_PARAM("DIGI.SAR.on", DFL_DIGI_SAR_ON));
     cJSON_AddBoolToObject(root, "igateOn", GET_BOOL_PARAM("IGATE.on", DFL_IGATE_ON));
     cJSON_AddBoolToObject(root, "igtrackOn", GET_BOOL_PARAM("IGATE.TRACK.on", DFL_IGATE_TRACK_ON));
@@ -232,6 +233,7 @@ static esp_err_t digi_put_handler(httpd_req_t *req)
     CHECK_JSON_INPUT(req, root);
 
     set_byte_param("DIGI.WIDE1.on", JSON_BOOL(root, "wide1"));
+    set_byte_param("DIGI.WIDE2.on", JSON_BOOL(root, "wide2"));
     set_byte_param("DIGI.SAR.on",   JSON_BOOL(root, "sar"));
     set_u16_param("IGATE.PORT",     JSON_U16(root, "port"));
     set_u16_param("IGATE.PASS",     JSON_U16(root, "passcode"));

@@ -68,6 +68,7 @@
 #define DFL_ALTITUDE_ON    false
 #define DFL_DIGIPEATER_ON  false
 #define DFL_DIGI_WIDE1_ON  true
+#define DFL_DIGI_WIDE2_ON  false
 #define DFL_DIGI_SAR_ON    false
 #define DFL_DIGI_META_ON   false
 #define DFL_IGATE_ON       false
