@@ -4,7 +4,8 @@
  * 
  * Stored parameters used by digipeater (can be changed in command interface)
  *    MYCALL            - my callsign
- *    DIGI_WIDE1.on     - true if wide1/fill-in digipeater mode. Meaning that only WIDE1 alias will be reacted on. 
+ *    DIGI_WIDE1.on     - true if wide1/fill-in digipeater mode. Meaning that only WIDE1-1 alias will be reacted on. 
+ *    DIGI_WIDE2.on     - true if wide2 digipeater mode. React on WIDE2-N (N>=1): decrement N and re-insert if N>1. 
  *    DIGI_SAR.on       - true if SAR preemption mode. If an alias SAR is found anywhere in the path, it will 
  *                        preempt others (moved first) and digipeated upon.  
  * 
@@ -151,6 +152,7 @@ static void check_frame(FBUF *f)
    addr_t mycall, from, to; 
    addr_t digis[7], digis2[7];
    bool widedigi = false;
+   int8_t wide2_ssid = -1;   /* SSID of matched WIDE2-N alias, -1 if not found */
    uint8_t ctrl, pid;
    uint8_t i, j; 
    int8_t  sar_pos = -1;
@@ -178,6 +180,11 @@ static void check_frame(FBUF *f)
    if (GET_BOOL_PARAM("DIGI.WIDE1.on", DFL_DIGI_WIDE1_ON) 
            && strncasecmp("WIDE1", digis[i].callsign, 5) == 0 && digis[i].ssid == 1)
        widedigi = true; 
+
+   /* Check if a WIDE2-N alias (N >= 1) is next in the list */
+   if (GET_BOOL_PARAM("DIGI.WIDE2.on", DFL_DIGI_WIDE2_ON)
+           && strncasecmp("WIDE2", digis[i].callsign, 5) == 0 && digis[i].ssid >= 1)
+       wide2_ssid = digis[i].ssid;
   
    /* Look for SAR alias in the rest of the path 
     * NOTE: Don't use SAR-preemption if packet has been digipeated by others first 
@@ -187,8 +194,8 @@ static void check_frame(FBUF *f)
        if (strncasecmp("SAR", digis[j].callsign, 3) == 0) 
           { sar_pos = j; break; } 
    
-   /* Drop packet if no SAR preemtion and WIDE1 alias not found first */
-   if (sar_pos < 0 && !widedigi)
+   /* Drop packet if no SAR preemtion, WIDE1 alias, or WIDE2 alias found */
+   if (sar_pos < 0 && !widedigi && wide2_ssid < 0)
       return;
    
    /* Mark as digipeated through mycall */
@@ -201,9 +208,19 @@ static void check_frame(FBUF *f)
    if (sar_pos > -1) 
        str2addr(&digis2[j++], "SAR", true);
  
-   /* Otherwise, consume WIDE1-1 alias (New-N: replaced by MYCALL*, rest of path follows) */
+   /* Consume WIDE1-1 alias (New-N: replaced by MYCALL*, rest of path follows) */
    else if (widedigi) {
        i++;
+   }
+
+   /* Handle WIDE2-N: consume the alias; if N>1 re-insert WIDE2-(N-1) for next hop */
+   else if (wide2_ssid > 0) {
+       char wide2buf[8];
+       i++;   /* skip original WIDE2-N entry */
+       if (wide2_ssid > 1) {
+           sprintf(wide2buf, "WIDE2-%d", wide2_ssid - 1);
+           str2addr(&digis2[j++], wide2buf, false);
+       }
    }
 
    /* Copy rest of the path, exept the SAR alias (if used) */

@@ -339,6 +339,7 @@ CMD_BOOL_SETTING (_param_altitude,   "ALTITUDE.on",    DFL_ALTITUDE_ON,    NULL)
 CMD_BOOL_SETTING (_param_digipeater, "DIGIPEATER.on",  DFL_DIGIPEATER_ON,  hdl_digipeater); 
 CMD_BOOL_SETTING (_param_igate,      "IGATE.on",       DFL_IGATE_ON,       hdl_igate);
 CMD_BOOL_SETTING (_param_digi_wide1, "DIGI.WIDE1.on",  DFL_DIGI_WIDE1_ON,  NULL);
+CMD_BOOL_SETTING (_param_digi_wide2, "DIGI.WIDE2.on",  DFL_DIGI_WIDE2_ON,  NULL);
 CMD_BOOL_SETTING (_param_digi_sar,   "DIGI.SAR.on",    DFL_DIGI_SAR_ON,    NULL);
 CMD_BOOL_SETTING (_param_rbeep_on,   "REPORT.BEEP.on", DFL_REPORT_BEEP_ON, NULL);
 CMD_BOOL_SETTING (_param_xturn_on,   "EXTRATURN.on",   DFL_EXTRATURN_ON,   NULL);
@@ -409,6 +410,7 @@ void register_aprs()
     ADD_CMD("digi",       &_param_digipeater,  "Digipeater setting", "[on|off]"); 
     ADD_CMD("igate",      &_param_igate,       "Igate setting", "[on|off]");
     ADD_CMD("digi-wide1", &_param_digi_wide1,  "Digipeater fill-in mode (WIDE1)", "[on|off]"); 
+    ADD_CMD("digi-wide2", &_param_digi_wide2,  "Digipeater wide mode (WIDE2)", "[on|off]"); 
     ADD_CMD("digi-sar",   &_param_digi_sar,    "Digipeater preemption on 'SAR'", "[on|off]");
     ADD_CMD("igate-host", &_param_igate_host,  "Igate server host",  "[<hostname>]");
     ADD_CMD("igate-port", &_param_igate_port,  "Igate server port",  "[<portnr>]");
