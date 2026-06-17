@@ -1,10 +1,26 @@
-
-/*
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - Digipeater
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ *
+ * 
  * Digipeater
+ * ----------
  * 
  * Stored parameters used by digipeater (can be changed in command interface)
  *    MYCALL            - my callsign
- *    DIGI_WIDE1.on     - true if wide1/fill-in digipeater mode. Meaning that only WIDE1-1 alias will be reacted on. 
+ *    DIGI_WIDE1.on     - true if wide1/fill-in digipeater mode. Meaning that WIDE1-1 alias will be reacted on. 
  *    DIGI_WIDE2.on     - true if wide2 digipeater mode. React on WIDE2-N (N>=1): decrement N and re-insert if N>1. 
  *    DIGI_SAR.on       - true if SAR preemption mode. If an alias SAR is found anywhere in the path, it will 
  *                        preempt others (moved first) and digipeated upon.  
@@ -215,7 +231,7 @@ static void check_frame(FBUF *f)
    /* Consume WIDE2-N alias; re-insert WIDE2-(N-1) if N > 1 and there is room */
    else if (wide2_ssid >= 0) {
        i++;
-       if (wide2_ssid > 1 && j < 7) {
+       if (wide2_ssid > 1 && j + 1 + (ndigis - i) <= 7) {
            str2addr(&digis2[j], "WIDE2", false);
            digis2[j].ssid = wide2_ssid - 1;
            j++;
@@ -223,7 +239,7 @@ static void check_frame(FBUF *f)
    }
 
    /* Copy rest of the path, exept the SAR alias (if used) */
-   for (; i<ndigis; i++) 
+   for (; i<ndigis && j<7; i++) 
        if (sar_pos < 0 || i != sar_pos)
           digis2[j++] = digis[i];
    

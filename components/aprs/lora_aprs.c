@@ -14,12 +14,12 @@
 
 #define TAG "lora-aprs"
 
-#define CAD_RETRIES         5
+#define CAD_RETRIES  5
 
-                 //       5     6    7       8     9     10     11     12
-                 //--------------------------------------------------------
-const uint16_t cad_min_delay[] = {4,    6,   10,    18,   33,    61,   111,   200 };
-const uint16_t cad_max_delay[] = {40,  60,  100,   180,  330,   610,  1110,  2000 };
+                         //       5     6     7     8     9     10     11     12
+                         //--------------------------------------------------------
+const uint16_t cad_min_delay[] = {4,    6,   10,   18,   33,    61,   111,   200 };
+const uint16_t cad_max_delay[] = {40,  60,  100,  180,  330,   610,  1110,  2000 };
 
 static uint8_t cur_sf = 12;
 
@@ -265,11 +265,11 @@ static void txencoder (void* arg)
   }
 }
 
+/*******************************************************************************
+ * CAD: check the channel is free before transmitting 
+ *******************************************************************************/
 
-/* CAD: check the channel is free before transmitting */
-// FIXME: Delay should be shorter for shorter SF
 static void cad_wait() {
-    
     int cad_min = cad_min_delay[cur_sf - 5];
     int cad_max = cad_max_delay[cur_sf - 5];
     
@@ -292,6 +292,10 @@ static void cad_wait() {
 }
 
 
+/*******************************************************************************
+ * Switch to/from alternative SF/CR setting
+ *******************************************************************************/
+
 static void alt_setting(bool on, FBUF *frame) {
     if (!GET_BOOL_PARAM("LORA_ALT.on", DFL_LORA_ALT_ON) 
         || (frame != NULL && frame->tag != SRC_DIGIPEATER))
@@ -312,6 +316,7 @@ static void alt_setting(bool on, FBUF *frame) {
     }
     lora_SetModulationParams(sf, SX126X_LORA_BW_125_0, cr-4, (sf>=11 ? 1:0)); 
 }
+
 
 
 
