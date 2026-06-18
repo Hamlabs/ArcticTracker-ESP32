@@ -1,4 +1,5 @@
-/* Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
  *
  * Arctic Tracker - Igate
  *
@@ -12,9 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details: 
  * <https://www.gnu.org/licenses/>.
- */
-
-/*
+ * 
+ * 
  * interface: 
  *  igate_init()
  *  igate_on()
@@ -138,8 +138,9 @@ static void igate_main(void* arg)
         int res = -1, tries = 0;
         wifi_enable(true);
         sleepMs(2000);
+        
         while (!wifi_isConnected() 
-                || (res = inet_open(host, port) != 0 && tries++ < 3))
+                || ((res = inet_open(host, port)) != 0 && tries++ < 3))
             sleepMs(10000);
   
         if (_igate_on && res == 0) {
@@ -275,9 +276,6 @@ static void rf2inet(FBUF *frame)
     /* Dont igate it if it is igated earlier */
     if (hlist_duplicate(&from, &to, frame, ndigis))
         return;
-  
-    static const char* nogate[8] = {"TCP", "NOGATE", "RFONLY", NULL};      
-    if (!own) beeps(". ");
       
     /* Write header in plain text -> newHdr */
     fbuf_new(&newHdr, SRC_IGATE);
@@ -291,7 +289,10 @@ static void rf2inet(FBUF *frame)
         fbuf_putstr(&newHdr, ",");
         fbuf_putstr(&newHdr, digis2str(buf, ndigis, digis, false)); 
     }
-    if (own && strncmp(buf, ",TCPIP", 5) == 0)
+    if (strncmp(buf, "TCP", 3) || strncmp(buf, "NOGATE", 6) || strncmp(buf, "RFONLY", 6))
+        return;
+        
+    if (own && strncmp(buf, ",TCPIP", 6) == 0)
         fbuf_putstr(&newHdr, "*");
     else {
         fbuf_putstr(&newHdr, ",qAR,");
@@ -311,6 +312,7 @@ static void rf2inet(FBUF *frame)
     buf[len+1] = '\n';
     inet_write(buf, len+2);
     buf[len] = '\0';
+    if (!own) beeps(". ");
     ESP_LOGI(TAG, "Frame gated to inet.."); 
     ESP_LOGD(TAG, "%s", buf);
     

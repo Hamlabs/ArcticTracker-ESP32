@@ -14,6 +14,8 @@
  * GNU General Public License for more details: 
  * <https://www.gnu.org/licenses/>.
  */
+
+
 #include "crc16.h"
 #include "defines.h"
 #include <stdlib.h>
@@ -63,7 +65,7 @@
     _time++; 
     int16_t i = hlist_next - hlist_length; 
     if (i<0) 
-        i = HEARDLIST_SIZE-i; 
+        i = HEARDLIST_SIZE+i; 
     
     while (i != hlist_next) {
        if (hlist[i].ts < _time - HEARDLIST_MAX_AGE)
@@ -83,7 +85,7 @@
  {
    int16_t i = hlist_next - hlist_length; 
    if (i<0) 
-     i = HEARDLIST_SIZE-i; 
+     i = HEARDLIST_SIZE+i; 
    
    while (i != hlist_next) {
      if (hlist[i].val == x)
