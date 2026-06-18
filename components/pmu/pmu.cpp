@@ -178,13 +178,14 @@ void pmu_batt_setup()
   /* Set constant current charge current limit
    * ! Please pay attention to add a suitable heat sink above the PMU when setting the charging current to 1A
    */
-  PMU.setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_800MA);
+  pmu_enableCharge();
 
   /* Set stop charging termination current */
-  PMU.setChargerTerminationCurr(XPOWERS_AXP2101_CHG_ITERM_150MA);
+  PMU.setChargerTerminationCurr(XPOWERS_AXP2101_CHG_ITERM_50MA);
 
   /* Set charge cut-off voltage */
   PMU.setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V2);
+  // FIXME: Consider reducing this to 4V1 when using solar panel
   
   /* Shut down if battery is lower than 5% */
   PMU.setLowBatShutdownThreshold(PMU_LOWBAT_SHUTDOWN);
@@ -265,8 +266,21 @@ float pmu_getTemperature() {
 bool pmu_isCharging() {
     return PMU.isCharging();
 }
+
+#define AXP2101_POWER_PATH_REG   0x18 
     
-    
+void pmu_enableCharge() {
+    uint8_t regVal = PMU.readRegister(AXP2101_POWER_PATH_REG);
+    PMU.writeRegister(AXP2101_POWER_PATH_REG, regVal | 0x02);
+    PMU.setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_800MA);
+}
+
+void pmu_disableCharge() {
+    uint8_t regVal = PMU.readRegister(AXP2101_POWER_PATH_REG);
+    PMU.writeRegister(AXP2101_POWER_PATH_REG, regVal & ~0x02);
+}
+
+
 
 /*****************************************************
  * Return voltage on VBUS

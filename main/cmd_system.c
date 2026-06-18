@@ -624,9 +624,10 @@ static int do_reset(int argc, char** argv) {
 }
 
 
+CMD_BYTE_SETTING (_param_maxcharge, "MAXCHARGE", 100, 50, 100, NULL);
+CMD_U16_SETTING  (_param_adcref,  "ADC.REF",     1100, 0, 3300);
+CMD_STR_SETTING  (_param_timezone,"TIMEZONE",    64, DFL_TIMEZONE,   REGEX_TIMEZONE);
 
-CMD_U16_SETTING  (_param_adcref,  "ADC.REF",  1100, 0, 3300);
-CMD_STR_SETTING  (_param_timezone,"TIMEZONE",   64, DFL_TIMEZONE,   REGEX_TIMEZONE);
 
 /* 
  * The format of the timezone is according to POSIX TZ format:
@@ -645,28 +646,29 @@ CMD_STR_SETTING  (_param_timezone,"TIMEZONE",   64, DFL_TIMEZONE,   REGEX_TIMEZO
 
 void register_system()
 {
-    ADD_CMD("trk-reset", &do_reset,       "Reset track storage", NULL);  
-    ADD_CMD("ls",        &do_ls,          "List files", NULL);  
-    ADD_CMD("mkdir",     &do_mkdir,       "Create directory", "<path>");
-    ADD_CMD("rm",        &do_rm,          "Remove file or directory", "<path>");
-    ADD_CMD("cd",        &do_cwd,         "Change working directory", "<path>");
-    ADD_CMD("format",    &do_format,      "Format filesystem", NULL);
-    ADD_CMD("write",     &do_write,       "Write to file", "<path>");
-    ADD_CMD("read",      &do_read,        "Read from file", "<path>");
-    ADD_CMD("free",      &do_free,        "Get the total size of heap memory available", NULL);
-    ADD_CMD("sysinfo",   &do_sysinfo,     "System info", NULL);    
-    ADD_CMD("restart",   &do_restart,     "Restart the system", NULL);
-    ADD_CMD("tasks",     &do_tasks,       "Get information about running tasks", NULL);
-    ADD_CMD("log",       &do_log,         "Set loglevel (for debugging/testing)", "<tag> | * [<level>|delete]") ;
-    ADD_CMD("time",      &do_time,        "Get date and time", NULL);
-    ADD_CMD("timezone",  &_param_timezone,"Set timezone", "<tz-string>");
-    ADD_CMD("nmea",      &do_nmea,        "Monitor GPS NMEA datastream", "[raw]");
-    ADD_CMD("pos",       &do_pos,         "Set own position", "[delete | <lat long>]");
-    ADD_CMD("vbatt",     &do_vbatt,       "Read battery voltage", "");
-    ADD_CMD("shutdown",  &do_shutdown,    "Shut down system", "");
-    ADD_CMD("ioconfig",  &do_ioconfig,    "Show info on GPIO configuration", "<gpio>");
-    ADD_CMD("fw-upgrade",&do_fwupgrade,   "Firmware upgrade (OTA)", "");
-    ADD_CMD("rssi",      &do_rssi,        "Signal strength", "");
+    ADD_CMD("trk-reset", &do_reset,        "Reset track storage", NULL);  
+    ADD_CMD("ls",        &do_ls,           "List files", NULL);  
+    ADD_CMD("mkdir",     &do_mkdir,        "Create directory", "<path>");
+    ADD_CMD("rm",        &do_rm,           "Remove file or directory", "<path>");
+    ADD_CMD("cd",        &do_cwd,          "Change working directory", "<path>");
+    ADD_CMD("format",    &do_format,       "Format filesystem", NULL);
+    ADD_CMD("write",     &do_write,        "Write to file", "<path>");
+    ADD_CMD("read",      &do_read,         "Read from file", "<path>");
+    ADD_CMD("free",      &do_free,         "Get the total size of heap memory available", NULL);
+    ADD_CMD("sysinfo",   &do_sysinfo,      "System info", NULL);    
+    ADD_CMD("restart",   &do_restart,      "Restart the system", NULL);
+    ADD_CMD("tasks",     &do_tasks,        "Get information about running tasks", NULL);
+    ADD_CMD("log",       &do_log,          "Set loglevel (for debugging/testing)", "<tag> | * [<level>|delete]") ;
+    ADD_CMD("time",      &do_time,         "Get date and time", NULL);
+    ADD_CMD("timezone",  &_param_timezone, "Set timezone", "<tz-string>");
+    ADD_CMD("nmea",      &do_nmea,         "Monitor GPS NMEA datastream", "[raw]");
+    ADD_CMD("pos",       &do_pos,          "Set own position", "[delete | <lat long>]");
+    ADD_CMD("vbatt",     &do_vbatt,        "Read battery voltage", "");
+    ADD_CMD("shutdown",  &do_shutdown,     "Shut down system", "");
+    ADD_CMD("ioconfig",  &do_ioconfig,     "Show info on GPIO configuration", "<gpio>");
+    ADD_CMD("fw-upgrade",&do_fwupgrade,    "Firmware upgrade (OTA)", "");
+    ADD_CMD("rssi",      &do_rssi,         "Signal strength", "");
+    ADD_CMD("maxcharge", &_param_maxcharge,"Maximum charge level (percent)", "");
     
 #if !defined(ARCTIC4_UHF)
     ADD_CMD("tone",      &do_tone,        "Tone generator test", "");

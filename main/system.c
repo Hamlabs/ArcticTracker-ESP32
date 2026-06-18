@@ -30,7 +30,7 @@
 
 
 static void initialize_sntp(void);
-
+static void batt_monitor(void* arg);
 
 #define TAG "system"
 
@@ -150,6 +150,8 @@ void batt_init(void)
     pmu_init();
     pmu_power_setup();
     pmu_batt_setup();
+    xTaskCreatePinnedToCore(&batt_monitor, "Battery monitor", 
+        STACK_BATTMON, NULL, NORMALPRIO, NULL, CORE_BATTMON);    
     ESP_LOGI(TAG, "Power/battery management enabled - Arctic-4 or T-TWR board used");
 #else
     ESP_LOGI(TAG, "No power managment. Old board used");
@@ -158,6 +160,9 @@ void batt_init(void)
 #endif
 }
 
+
+
+/* Return true if battery is charging */
 
 bool batt_charge(void)
 {
@@ -242,6 +247,26 @@ int16_t batt_status(char* line1, char* line2)
     } 
     return vbatt;
 }
+
+
+
+static void batt_monitor(void* arg)  {
+    bool chg = batt_charge();
+    while (true) {
+        sleepMs(10000);
+        uint8_t max = get_byte_param("MAXCHARGE", 100); 
+        chg = batt_charge();
+        if (chg && batt_percent() >= max) {
+            pmu_disableCharge();
+            ESP_LOGI(TAG, "Charging reached maximum. Disabled ");
+        }
+        else if (!chg && batt_percent() < max-2) {
+            pmu_enableCharge();
+            ESP_LOGI(TAG, "Charging enabled");
+        }
+    }
+}
+
 
 
 

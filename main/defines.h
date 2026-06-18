@@ -362,7 +362,7 @@
  * Stack sizes and allocation to cores 
  **********************************************/
 
-#define STACK_AUTOCON        4000
+#define STACK_AUTOCON        3500
 #define STACK_HDLC_TEST      1000
 #define STACK_HDLC_TXENCODER 3100
 #define STACK_HDLC_RXDECODER 3100
@@ -383,6 +383,7 @@
 #define STACK_HTTPD          5500
 #define STACK_LORA_RXDECODER 4100
 #define STACK_LORA_TXENCODER 4100
+#define STACK_BATTMON        3000
     
 #define CORE_AUTOCON        0
 #define CORE_NMEALISTENER   1
@@ -403,6 +404,7 @@
 #define CORE_TRACKLOGPOST   1
 #define CORE_LORA_RXDECODER 0
 #define CORE_LORA_TXENCODER 1
+#define CORE_BATTMON        1
 
 
 /* Default task priority */

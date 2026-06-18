@@ -17,6 +17,8 @@ uint16_t  pmu_getVbusVoltage(void);
 uint16_t  pmu_getBattPercent(void);
 float     pmu_getTemperature(void);
 bool      pmu_isCharging();
+void      pmu_enableCharge();
+void      pmu_disableCharge();
 void      pmu_disableShutdown(bool on);
 void      pmu_dc3_on(bool on);
 bool      pmu_dc3_isOn();
