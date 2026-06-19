@@ -13,6 +13,7 @@
 #include "gui.h"
 #include "networking.h"
 #include "system.h"
+#include "pmu.h"
 #include "tracker.h"
 #include "trackstore.h"
 #include "tracklogger.h"
@@ -132,7 +133,7 @@ static void status_heading(char* label) {
     disp_flag(32,0, "i", wifi_isConnected() );
     disp_flag(44,0, "g", wifi_isConnected() && GET_BOOL_PARAM("IGATE.on", DFL_IGATE_ON)); 
     disp_flag(56,0, "d", GET_BOOL_PARAM("DIGIPEATER.on", DFL_DIGIPEATER_ON));
-    disp_flag(68,0, "p", batt_charge());
+    disp_flag(68,0, "p", pmu_isVbusIn() );
     disp_flag(80,0, "F", gps_is_fixed());
     disp_flag(92,0, "c", sec_isEncrypted());
 #endif
@@ -466,7 +467,7 @@ static void status_screen7() {
     disp_writeText(0, LINE2, b1);
     int vbus = pmu_getVbusVoltage();
     
-    if (batt_charge() && vbus > 0) {
+    if (pmu_isVbusIn()) {
         sprintf(buf, "Vbus: %1.02f V", ((float)vbus/1000) );
         disp_writeText(0, LINE3, buf);
     }
@@ -481,7 +482,7 @@ static void status_screen7() {
         disp_writeText(0, LINE4, "Charging...");
         chg_cnt = 50;
     }
-    else if (bp >= 99 && chg_cnt > 0) {
+    else if (batt_chgComplete() && chg_cnt > 0) {
         disp_writeText(0, LINE4, "Charge complete!");
         chg_cnt--; 
     }

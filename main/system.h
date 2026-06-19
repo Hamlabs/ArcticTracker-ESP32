@@ -95,6 +95,7 @@ void     radio_adc_calibrate();
 /* Battery */
 void batt_init(void);
 bool batt_charge(void);
+bool batt_chgComplete();
 int16_t batt_voltage(void);
 int16_t batt_percent(void);
 int16_t batt_status(char* line1, char* line2);

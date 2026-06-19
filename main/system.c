@@ -249,24 +249,39 @@ int16_t batt_status(char* line1, char* line2)
 }
 
 
+static bool chg_complete = false; 
+
+bool batt_chgComplete() {
+    return chg_complete; 
+}
 
 static void batt_monitor(void* arg)  {
     bool chg = batt_charge();
     while (true) {
-        sleepMs(10000);
-        uint8_t max = get_byte_param("MAXCHARGE", 100); 
+        sleepMs(15000);
+        uint8_t max = get_byte_param("MAXCHARGE", 90);
         chg = batt_charge();
-        if (chg && batt_percent() >= max) {
-            pmu_disableCharge();
-            ESP_LOGI(TAG, "Charging reached maximum. Disabled ");
+        if (batt_percent() < MINCHARGE) {
+            ESP_LOGW(TAG, "Charging below minimum. System shutdown");
+            beeps(" -...  ");
+            systemShutdown();
         }
-        else if (!chg && batt_percent() < max-2) {
-            pmu_enableCharge();
+        else if (batt_percent() < (MINCHARGE+1)) {
+            ESP_LOGW(TAG, "Battery low warning");
+            beeps(" -... ");
+        }
+        else if (chg && batt_percent() >= max) {
+            pmu_disableCharge();
+            chg_complete = true;
+            ESP_LOGI(TAG, "Charging reached maximum. Disabled");
+        }
+        else if (!chg && batt_percent() < max-5) {
+            pmu_enableCharge();            
+            chg_complete = false;
             ESP_LOGI(TAG, "Charging enabled");
         }
     }
 }
-
 
 
 
@@ -290,7 +305,6 @@ void systemShutdown(void)
     esp_deep_sleep_start();
 #endif
 }
-
 
 
 
@@ -319,7 +333,6 @@ static void initialize_sntp(void)
 /*******************************************************************************
  * Set the real time clock from GPS or from SNTP (if WIFI is connected)
  *******************************************************************************/
-
 
 static void set_time(time_t t) {
     struct timeval tv; 
