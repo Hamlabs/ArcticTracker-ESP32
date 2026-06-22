@@ -1,3 +1,21 @@
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - Menu on the display.
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
+
+
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -221,12 +239,26 @@ void gui_fwupgrade()
     disp_clear(); 
     disp_frame(60); 
     disp_setBoldFont(true);
+    disp_setHighFont(true, false);
     disp_writeText(10,10, "Firmware");
-    disp_writeText(10,19, "Upgrade...");
+    disp_writeText(10,28, "Upgrade...");
+    disp_setHighFont(false, false);
     disp_setBoldFont(false);
     disp_flush();
 }
-    
+
+void gui_fwsuccess()
+{
+    _popup = true; 
+    disp_clear(); 
+    disp_frame(60); 
+    disp_setBoldFont(true);
+    disp_setHighFont(true, false);
+    disp_writeText(10,10, "Success!");
+    disp_setHighFont(false, false);
+    disp_setBoldFont(false);
+    disp_flush();
+}    
     
 
 /*************************************************

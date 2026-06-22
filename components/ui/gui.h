@@ -71,6 +71,7 @@
  void gui_menu(const char* items[], int sel);
  void gui_welcome(void);
  void gui_fwupgrade();
+ void gui_fwsuccess();
  void gui_setPause(int n);
 
  void menu_init(void);

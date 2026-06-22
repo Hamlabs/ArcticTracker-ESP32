@@ -15,7 +15,7 @@
 #include "esp_sntp.h"
 // #include "esp_ota_ops.h"
 #include "esp_http_client.h"
-// #include "esp_https_ota.h" FIXME
+#include "esp_https_ota.h" 
 #include "esp_sleep.h"
 #include "ui.h"
 #include "gui.h"
@@ -79,7 +79,7 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 esp_err_t firmware_upgrade()
 { 
-    /*
+    
     if (!wifi_isConnected()) {
         ESP_LOGW(TAG, "Wifi not connected - cannot update");
         return ESP_OK; 
@@ -89,7 +89,6 @@ esp_err_t firmware_upgrade()
     afsk_tx_stop();
     radio_on(false);
 #endif
-    disp_backlight();
     gui_fwupgrade();
     sleepMs(500);
     beeps("..-. .--");
@@ -127,12 +126,15 @@ esp_err_t firmware_upgrade()
     esp_err_t ret = esp_https_ota(&ota_config);
     if (ret == ESP_OK) {
         ESP_LOGW(TAG, "Fw upgrade ok. Rebooting..");
+        gui_fwsuccess();
+        sleepMs(500);
+        beeps("--- -.-");
         esp_restart();
     } else {
         ESP_LOGE(TAG, "Fw upgrade failed!");
         return ESP_FAIL;
     }
-    */
+    
     return ESP_OK;
 }             
 
@@ -234,10 +236,10 @@ int16_t batt_status(char* line1, char* line2)
     else if (pbatt > 70) { 
         if (line1) sprintf(line1, "Full.");
     }
-    else if (pbatt > 30) {
+    else if (pbatt > 25) {
         if (line1) sprintf(line1, "Ok.");
     }
-    else if (pbatt > 10) {
+    else if (pbatt > 8) {
         if (line1) sprintf(line1, "Low.");  
         if (line2 && !batt_charge()) sprintf(line2, "Need charging");
     }
@@ -261,12 +263,12 @@ static void batt_monitor(void* arg)  {
         sleepMs(15000);
         uint8_t max = get_byte_param("MAXCHARGE", 90);
         chg = batt_charge();
-        if (batt_percent() < MINCHARGE) {
+        if (batt_percent() < MINCHARGE && !pmu_isCharging()) {
             ESP_LOGW(TAG, "Charging below minimum. System shutdown");
             beeps(" -...  ");
             systemShutdown();
         }
-        else if (batt_percent() < (MINCHARGE+1)) {
+        else if (batt_percent() < (MINCHARGE+1) && !pmu_isCharging()) {
             ESP_LOGW(TAG, "Battery low warning");
             beeps(" -... ");
         }
