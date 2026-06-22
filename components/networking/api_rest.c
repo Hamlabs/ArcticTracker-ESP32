@@ -282,8 +282,11 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     get_str_param("SOFTAP.AUTH", buf, 64, DFL_SOFTAP_PASSWD);
     cJSON_AddStringToObject(root, "appass", buf);
 
-    get_str_param("FW.URL", buf, 64, DFL_TRKLOG_URL);
+    get_str_param("FW.URL", buf, 64, "");
     cJSON_AddStringToObject(root, "fwurl", buf);
+    
+    get_str_param("FW.WEBAPP.URL", buf, 64, "");
+    cJSON_AddStringToObject(root, "fwwurl", buf);
     
     /* Don't send the API key */
     cJSON_AddStringToObject(root, "apikey", "");
@@ -317,9 +320,9 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
     rest_cors_enable(req);
     CHECK_JSON_INPUT(req, root);
  
-    set_str_param("SOFTAP.AUTH", JSON_STR(root, "appass"));
-    set_str_param("FW.URL",      JSON_STR(root, "fwurl"));
-    
+    set_str_param("SOFTAP.AUTH", JSON_STR(root,   "appass"));
+    set_str_param("FW.URL",      JSON_STR(root,   "fwurl"));
+    set_str_param("FW.WEBAPP.URL", JSON_STR(root, "fwwurl"));
     /* API key is updated if it is non-empty */
     if (strlen(JSON_STR(root, "apikey"))>3)
         set_str_param("API.KEY", JSON_STR(root, "apikey"));

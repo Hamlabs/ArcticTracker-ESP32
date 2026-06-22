@@ -13,7 +13,6 @@
 #include "networking.h"
 #include "config.h"
 #include "esp_sntp.h"
-// #include "esp_ota_ops.h"
 #include "esp_http_client.h"
 #include "esp_https_ota.h" 
 #include "esp_partition.h"
