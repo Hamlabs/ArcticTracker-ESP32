@@ -79,6 +79,19 @@ void fatfs_init() {
 
 
 /**************************************************
+ *  Unmount webapp fs (before OTA update)
+ **************************************************/
+
+void fatfs_unmount_webapp() {
+    esp_err_t err = esp_vfs_fat_spiflash_unmount_ro(FATFS_PATH2, FATFS_LABEL2);
+    if (err != ESP_OK)
+        ESP_LOGW(TAG, "Failed to unmount FATFS '%s': %s", FATFS_LABEL2, esp_err_to_name(err));
+    else
+        ESP_LOGI(TAG, "FATFS '%s' unmounted", FATFS_LABEL2);
+}
+
+
+/**************************************************
  *  Reformat main fs
  **************************************************/
 

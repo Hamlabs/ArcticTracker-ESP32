@@ -16,6 +16,8 @@
 // #include "esp_ota_ops.h"
 #include "esp_http_client.h"
 #include "esp_https_ota.h" 
+#include "esp_partition.h"
+#include "esp_vfs_fat.h"
 #include "esp_sleep.h"
 #include "ui.h"
 #include "gui.h"
@@ -74,6 +76,148 @@ static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 }
 
 /******************************************************************************
+ * Download binary from URL and write it to a named flash partition.
+ * Used for webapp OTA update.
+ ******************************************************************************/
+
+#define WEBAPP_PARTITION_LABEL "webapp"
+#define WEBAPP_DL_BUF_SIZE      4096
+
+static esp_err_t _download_to_partition(const char* url, const char* partition_label,
+                                         const char* cert_pem)
+{
+    const esp_partition_t* part = esp_partition_find_first(
+        ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_FAT, partition_label);
+    if (!part) {
+        ESP_LOGE(TAG, "Partition '%s' not found", partition_label);
+        return ESP_FAIL;
+    }
+
+    esp_http_client_config_t config = {
+        .url = url,
+        .event_handler = _http_event_handler,
+        .keep_alive_enable = true,
+        .skip_cert_common_name_check = false,
+    };
+    if (!cert_pem || strlen(cert_pem) < 10) {
+        config.cert_pem = NULL;
+        config.crt_bundle_attach = esp_crt_bundle_attach;
+    } else {
+        config.cert_pem = cert_pem;
+    }
+
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (!client) {
+        ESP_LOGE(TAG, "Webapp upgrade: failed to init HTTP client");
+        return ESP_FAIL;
+    }
+
+    esp_err_t err = esp_http_client_open(client, 0);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Webapp upgrade: HTTP open failed: %s", esp_err_to_name(err));
+        esp_http_client_cleanup(client);
+        return err;
+    }
+
+    int content_length = esp_http_client_fetch_headers(client);
+    ESP_LOGI(TAG, "Webapp upgrade: content-length=%d, partition size=%zu",
+             content_length, part->size);
+
+    if (content_length > 0 && (size_t)content_length > part->size) {
+        ESP_LOGE(TAG, "Webapp upgrade: download size (%d) exceeds partition size (%zu)",
+                 content_length, part->size);
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    char* buf = malloc(WEBAPP_DL_BUF_SIZE);
+    if (!buf) {
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        return ESP_ERR_NO_MEM;
+    }
+
+    ESP_LOGI(TAG, "Webapp upgrade: erasing partition '%s'...", partition_label);
+    err = esp_partition_erase_range(part, 0, part->size);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Webapp upgrade: erase failed: %s", esp_err_to_name(err));
+        free(buf);
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        return err;
+    }
+
+    size_t offset = 0;
+    int read_len;
+    while ((read_len = esp_http_client_read(client, buf, WEBAPP_DL_BUF_SIZE)) > 0) {
+        /* Flash writes must be 4-byte aligned; pad remainder with 0xFF */
+        size_t write_len = (read_len + 3) & ~3u;
+        if (write_len > (size_t)read_len)
+            memset(buf + read_len, 0xFF, write_len - read_len);
+
+        err = esp_partition_write_raw(part, offset, buf, write_len);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Webapp upgrade: write at offset %zu failed: %s",
+                     offset, esp_err_to_name(err));
+            break;
+        }
+        offset += read_len;
+    }
+
+    free(buf);
+    esp_http_client_close(client);
+    esp_http_client_cleanup(client);
+
+    if (err != ESP_OK)
+        return err;
+
+    ESP_LOGI(TAG, "Webapp upgrade: wrote %zu bytes to partition '%s'", offset, partition_label);
+    return ESP_OK;
+}
+
+
+/******************************************************************************
+ * Upgrade webapp over HTTPS.
+ * Only runs if FW.WEBAPP.URL is configured.
+ ******************************************************************************/
+
+esp_err_t webapp_upgrade()
+{
+    char* url = malloc(80);
+    if (!url) return ESP_ERR_NO_MEM;
+
+    get_str_param("FW.WEBAPP.URL", url, 79, DFL_FW_WEBAPP_URL);
+    if (strlen(url) < 8) {
+        ESP_LOGI(TAG, "Webapp upgrade: FW.WEBAPP.URL not set, skipping");
+        free(url);
+        return ESP_OK;
+    }
+
+    char* cert = malloc(BBUF_SIZE + 1);
+    if (!cert) {
+        free(url);
+        return ESP_ERR_NO_MEM;
+    }
+    get_str_param("FW.CERT", cert, BBUF_SIZE, NULL);
+
+    ESP_LOGI(TAG, "Webapp upgrade: URL=%s", url);
+    fatfs_unmount_webapp();
+    esp_err_t ret = _download_to_partition(url, WEBAPP_PARTITION_LABEL, cert);
+
+    free(url);
+    free(cert);
+
+    if (ret == ESP_OK)
+        ESP_LOGI(TAG, "Webapp upgrade: done");
+    else
+        ESP_LOGE(TAG, "Webapp upgrade: failed!");
+
+    return ret;
+}
+
+
+/******************************************************************************
  * Upgrade firmware over HTTPS
  ******************************************************************************/
 
@@ -104,6 +248,9 @@ esp_err_t firmware_upgrade()
     get_str_param("FW.URL", fwurl, 79, DFL_FW_URL);
     get_str_param("FW.CERT", fwcert, BBUF_SIZE, NULL);
     ESP_LOGI(TAG, "Fw upgrade: URL=%s", fwurl);
+
+    /* Upgrade webapp first, if a webapp URL is configured */
+    webapp_upgrade();
     
     esp_http_client_config_t config = {
         .url = fwurl,

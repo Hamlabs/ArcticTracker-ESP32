@@ -321,6 +321,7 @@ CMD_STR_SETTING   (_param_apiorig,    "API.ORIGINS",  64,  DFL_API_ORIGINS, NULL
 CMD_STR_SETTING   (_param_ap_auth,    "SOFTAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
 CMD_STR_SETTING   (_param_ap_ip,      "SOFTAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);
 CMD_STR_SETTING   (_param_fwurl,      "FW.URL",       64,  "", NULL);
+CMD_STR_SETTING   (_param_fwwebappurl,"FW.WEBAPP.URL",64,  DFL_FW_WEBAPP_URL, NULL);
 CMD_STR_SETTING   (_param_fwcert,     "FW.CERT",      BBUF_SIZE, "", NULL);
 CMD_U16_SETTING   (_param_netmon_port,"NETMON.PORT",  DFL_NETMON_PORT, 0, (uint16_t) 65536);
 CMD_BOOL_SETTING  (_param_netmon,     "NETMON.on",    false, &_param_netmon_handler);
@@ -348,8 +349,9 @@ void register_wifi()
     ADD_CMD("softap-sta", &do_apSta,           "WIFI SoftAP Connected stations", NULL);
     ADD_CMD("api-key",    &_param_apikey,      "REST API Key", "[<key>]");    
     ADD_CMD("api-origins",&_param_apiorig,     "Allowed origins for REST API webclients", "[<regex>]");
-    ADD_CMD("fw-url",     &_param_fwurl,       "URL for firmware update", "<url>");
-    ADD_CMD("fw-cert",    &_param_fwcert,      "Certificate for firmware update", "");
+    ADD_CMD("fw-url",        &_param_fwurl,       "URL for firmware update", "<url>");
+    ADD_CMD("fw-webapp-url", &_param_fwwebappurl, "URL for webapp update (OTA)", "<url>");
+    ADD_CMD("fw-cert",       &_param_fwcert,      "Certificate for firmware update", "");
     ADD_CMD("connect",    &do_connect,         "Connect to internet server", "<host> <port>");
     ADD_CMD("netmon",     &_param_netmon,      "Network monitor On/off setting", "[on|off]");
     ADD_CMD("netmon-port",&_param_netmon_port, "Network monitor port number", "<port>");

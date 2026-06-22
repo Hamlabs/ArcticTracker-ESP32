@@ -13,6 +13,7 @@
 #define DFL_IGATE_FILTER  "m/10"
 #define DFL_TIMEZONE      ""
 #define DFL_FW_URL        ""
+#define DFL_FW_WEBAPP_URL ""
 
 
 #define DFL_CRYPTO_KEY     "123456789"
