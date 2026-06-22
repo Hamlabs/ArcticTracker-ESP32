@@ -27,6 +27,7 @@
 
 /* Firmware upgrade and shutdown */
 esp_err_t firmware_upgrade();
+esp_err_t webapp_upgrade();
 void systemShutdown(void);
 
 /* Time */
@@ -53,6 +54,7 @@ void clock_set_interval(gptimer_handle_t clock, uint32_t period);
 
 /* FAT FS */
 void fatfs_init();
+void fatfs_unmount_webapp();
 void fatfs_format();
 size_t fatfs_size();
 size_t fatfs_free();
