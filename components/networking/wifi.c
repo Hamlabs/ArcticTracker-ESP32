@@ -252,7 +252,7 @@ void wifi_enable_softAp(bool en)
         conf.ap.ssid_len = strlen((char*)conf.ap.ssid);
         strncpy((char*) conf.ap.password, passwd, sizeof(conf.ap.password));
         conf.ap.password[sizeof(conf.ap.password) - 1] = '\0';
-        conf.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+        conf.ap.authmode = WIFI_AUTH_WPA2_WPA3_PSK;
         conf.ap.channel = 1;
         
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));

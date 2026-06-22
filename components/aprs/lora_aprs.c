@@ -1,3 +1,20 @@
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - Implement LoRa APRS sending and receiving
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
+
 #include "defines.h"
 
 #if defined(ARCTIC4_UHF)
@@ -16,10 +33,10 @@
 
 #define CAD_RETRIES  5
 
-                         //       5     6     7     8     9     10     11     12
+                         // SF    5     6     7     8     9    10     11     12
                          //--------------------------------------------------------
-const uint16_t cad_min_delay[] = {4,    6,   10,   18,   33,    61,   111,   200 };
-const uint16_t cad_max_delay[] = {40,  60,  100,  180,  330,   610,  1110,  2000 };
+const uint16_t cad_min_delay[] = {4,    6,   10,   18,   33,   61,   111,   200 };
+const uint16_t cad_max_delay[] = {40,  60,  100,  180,  330,  610,  1110,  2000 };
 
 static uint8_t cur_sf = 12;
 
@@ -150,7 +167,10 @@ static void IRAM_ATTR intrHandler(void* x) {
 
 
 
-/* Main receiver thread */
+/************************************************************
+ * Main receiver thread 
+ ************************************************************/
+
 static void rxdecoder (void* arg) {
     uint8_t buf[256];
     int16_t len = 0;

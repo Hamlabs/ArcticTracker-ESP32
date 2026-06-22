@@ -436,7 +436,7 @@ static void do_gsv(uint8_t argc, char** argv)
    char system = argv[0][2];
    
    for (int i=0; i<nsats; i++) {
-      if (argc < 4+4*i+4)
+      if (argc < (4+4*i+4))
          break;
       char sysname[16]; 
       get_sysname(sysname, system); 

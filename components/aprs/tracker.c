@@ -1,8 +1,21 @@
-
-/*
- * This is the APRS tracking code
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - APRS tracking
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
  */
- 
+
+
 #include <string.h>
 #include <stdio.h>
 #include "defines.h"
@@ -712,11 +725,6 @@ static void send_timestamp_z(FBUF* packet, posdata_t* pos)
        (uint8_t) t.tm_mday,
        (uint8_t) t.tm_hour,
        (uint8_t) t.tm_min, '\0' );
-        
-  //  sprintf(ts, "%02u%02u%02uz%c", 
-  //     (uint8_t) (pos->timestamp / 86400)+1,
-  //     (uint8_t) ((pos->timestamp / 3600) % 24), 
-  //     (uint8_t) ((pos->timestamp / 60) % 60), '\0' ); 
     fbuf_putstr(packet, ts);   
 }
 

@@ -1,3 +1,20 @@
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ // * Arctic Tracker - Status screens on the display.
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
+
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -185,7 +202,7 @@ static void status_screen1() {
     char buf[70];
     get_str_param("DIGIPATH", buf, 70, DFL_DIGIPATH);
     uint8_t ndigis = str2digis(digis, buf);
-    digis2str(buf, ndigis, digis, true);
+    digis2str(buf, ndigis, digis, (ndigis>2));
     disp_writeText(0, LINE4, buf);  
     
     /* Number of pos reports */

@@ -211,9 +211,12 @@
 
 
 /*********************************************
- * ADC And battery charget test for Arctic
+ * ADC And battery charge management 
  *********************************************/ 
 
+#define MINCHARGE 5
+
+/* Old arctic device */
 #if DEVICE != T_TWR && DEVICE != ARCTIC4
 
 /* Misc. ADC inputs */
