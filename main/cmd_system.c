@@ -624,7 +624,7 @@ static int do_reset(int argc, char** argv) {
 }
 
 
-CMD_BYTE_SETTING (_param_maxcharge, "MAXCHARGE", 100, 50, 100, NULL);
+CMD_BYTE_SETTING (_param_maxcharge, "MAXCHARGE", DFL_MAXCHARGE, 50, 100, NULL);
 CMD_U16_SETTING  (_param_adcref,  "ADC.REF",     1100, 0, 3300);
 CMD_STR_SETTING  (_param_timezone,"TIMEZONE",    64, DFL_TIMEZONE,   REGEX_TIMEZONE);
 

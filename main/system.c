@@ -407,7 +407,7 @@ static void batt_monitor(void* arg)  {
     bool chg = batt_charge();
     while (true) {
         sleepMs(15000);
-        uint8_t max = get_byte_param("MAXCHARGE", 90);
+        uint8_t max = get_byte_param("MAXCHARGE", DFL_MAXCHARGE);
         chg = batt_charge();
         if (batt_percent() < MINCHARGE && !pmu_isCharging()) {
             ESP_LOGW(TAG, "Charging below minimum. System shutdown");
