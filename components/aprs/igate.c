@@ -274,8 +274,10 @@ static void rf2inet(FBUF *frame)
     bool own = addrCmp(&mycall, &from); 
   
     /* Dont igate it if it is igated earlier */
-    if (hlist_duplicate(&from, &to, frame, ndigis))
+    if (hlist_duplicate(&from, &to, frame, ndigis)) {
+        ESP_LOGD(TAG, "Frame duplicate");
         return;
+    }
       
     /* Write header in plain text -> newHdr */
     fbuf_new(&newHdr, SRC_IGATE);
@@ -286,19 +288,15 @@ static void rf2inet(FBUF *frame)
     fbuf_putstr(&newHdr, buf);
     
     if (ndigis > 0) {
+        if (strncmp(buf, "TCP", 3)==0 || strncmp(buf, "NOGATE", 6)==0 || strncmp(buf, "RFONLY", 6)==0)
+            return;
         fbuf_putstr(&newHdr, ",");
         fbuf_putstr(&newHdr, digis2str(buf, ndigis, digis, false)); 
     }
-    if (strncmp(buf, "TCP", 3) || strncmp(buf, "NOGATE", 6) || strncmp(buf, "RFONLY", 6))
-        return;
-        
-    if (own && strncmp(buf, ",TCPIP", 6) == 0)
-        fbuf_putstr(&newHdr, "*");
-    else {
-        fbuf_putstr(&newHdr, ",qAR,");
-        addr2str(buf, &mycall); 
-        fbuf_putstr(&newHdr, buf);  
-    }
+    
+    fbuf_putstr(&newHdr, ",qAR,");
+    addr2str(buf, &mycall); 
+    fbuf_putstr(&newHdr, buf);  
     fbuf_putstr(&newHdr, ":");
   
     /* Replace header in original packet with new header. 
