@@ -523,12 +523,19 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     if (!no_tx) 
        /* Transmit it on radio */
        fbq_put(outframes, fbuf_newRef(&packet, SRC_TRACKER));
+
+#if defined(ARCTIC4_UHF)  
+    if (!no_tx && GET_BOOL_PARAM("DIGIPEATER.on", DFL_DIGIPEATER_ON) 
+               && GET_BOOL_PARAM("LORA_ALT.on", DFL_LORA_ALT_ON))
+       /* If digipeating on alternative SF, send it there too */
+       fbq_put(outframes, fbuf_newRef(&packet, SRC_DIGIPEATER));
+#endif
+       
     if (!no_tx && gate != NULL && igtrack) 
        /* Also send it through igate if igtrack is on */
        fbq_put(gate, packet);
+    
     else {
-       /* Add report to log if not igated */
-    //   log_put(pos, sym, symtab); 
        fbuf_release(&packet);
     }
     if (!no_tx)
