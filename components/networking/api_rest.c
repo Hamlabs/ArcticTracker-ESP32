@@ -1,3 +1,20 @@
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ * 
+ * Arctic Tracker - REST API implementation
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
+
 
 #include "defines.h"
 #include <string.h>
@@ -18,6 +35,9 @@
 
 
 #define TAG "rest"
+
+static void reboot(void* arg);
+
 
 
 /******************************************************************
@@ -437,12 +457,26 @@ static esp_err_t trackers_handler(httpd_req_t *req) {
  ******************************************************************/
 
 static esp_err_t fwupgrade_put_handler(httpd_req_t *req) {
+    cJSON *root;    
     rest_cors_enable(req); 
-    ESP_ERROR_CHECK(firmware_upgrade());
-    httpd_resp_sendstr(req, "Firmware upgrade failed..");
+    CHECK_JSON_INPUT(req, root);
+    
+    if (firmware_upgrade()==ESP_FAIL) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "FW upgrade failed");
+        return ESP_FAIL;
+    }
+    xTaskCreatePinnedToCore(&reboot, "Reboot", 
+       5096, NULL, NORMALPRIO+1, NULL, 1);
+    httpd_resp_sendstr(req, "FW upgrade success");
     return ESP_OK;
 }
 
+
+/* Reboot after 2 seconds to let response be returned to client */
+static void reboot(void* arg) {
+    sleepMs(2000);
+    esp_restart();
+}
 
 
 extern httpd_handle_t http_server;

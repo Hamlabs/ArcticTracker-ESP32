@@ -564,7 +564,6 @@ static int do_tone(int argc, char** argv)
 
 
 
-
 /********************************************************************************
  * PTT on
  ********************************************************************************/
@@ -582,6 +581,8 @@ static int do_ptt(int argc, char** argv)
 
 #endif
 
+
+
 /********************************************************************************
  * OTA Firmware upgrade
  ********************************************************************************/
@@ -589,7 +590,8 @@ static int do_ptt(int argc, char** argv)
 static int do_fwupgrade(int argc, char** argv)
 {
     printf("*** Attempting firmware upgrade ***\n");
-    ESP_ERROR_CHECK(firmware_upgrade());
+    if (firmware_upgrade()==ESP_OK)
+        esp_restart();
     return 0;
 }
 

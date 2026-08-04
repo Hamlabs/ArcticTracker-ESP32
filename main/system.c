@@ -271,17 +271,16 @@ esp_err_t firmware_upgrade()
     BLINK_FWUPGRADE;    
     esp_err_t ret = esp_https_ota(&ota_config);
     if (ret == ESP_OK) {
-        ESP_LOGW(TAG, "Fw upgrade ok. Rebooting..");
+        ESP_LOGW(TAG, "Fw upgrade ok..");
         gui_fwsuccess();
         sleepMs(500);
         beeps("--- -.-");
-        esp_restart();
     } else {
         ESP_LOGE(TAG, "Fw upgrade failed!");
         return ESP_FAIL;
     }
     
-    return ESP_OK;
+    return ret;
 }             
 
 

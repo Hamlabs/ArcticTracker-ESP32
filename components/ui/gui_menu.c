@@ -354,7 +354,8 @@ static void mhandle_wifi(void* x) {
 
 
 static void mhandle_fwupgrade(void* x) {
-    firmware_upgrade(); 
+    if (firmware_upgrade()==ESP_OK)
+        esp_restart();
 }
 
 static void mhandle_restart(void* x) {
