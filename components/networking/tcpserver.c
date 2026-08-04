@@ -1,6 +1,6 @@
   
 /* 
- * Borrowed/adapted from: 
+ * TCP Server. Borrowed/adapted from: 
  * https://github.com/sankarcheppali/esp_idf_esp32_posts/blob/master/tcp_server/ap_mode/main/esp_ap_tcp_server.c
  * Se also https://github.com/nkolban/esp32-snippets/blob/master/sockets/server/socket_server.c
  */

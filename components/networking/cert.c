@@ -1,6 +1,21 @@
-/*
- * Self-signed TLS certificate generation and management.
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ * 
+ * Arctic Tracker - Self-signed TLS certificate generation and management.
  *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
+ */
+
+/*
  * On first call to cert_init() the module checks NVS for a previously
  * generated certificate.  If none is found it generates a fresh ECDSA P-256
  * self-signed certificate using mbedTLS, stores both the certificate and the
@@ -11,7 +26,6 @@
  * magnitude faster on the ESP32 (milliseconds vs. tens of seconds), and the
  * resulting PEM blobs are much smaller.
  *
- * By LA7ECA, ohanssen@acm.org
  */
 
 #include <string.h>
