@@ -178,10 +178,10 @@ void pmu_batt_setup()
   /* Set constant current charge current limit
    * ! Please pay attention to add a suitable heat sink above the PMU when setting the charging current to 1A
    */
-  pmu_enableCharge();
+  pmu_enableCharge(true);
 
   /* Set stop charging termination current */
-  PMU.setChargerTerminationCurr(XPOWERS_AXP2101_CHG_ITERM_50MA);
+  PMU.setChargerTerminationCurr(XPOWERS_AXP2101_CHG_ITERM_100MA);
 
   /* Set charge cut-off voltage */
   PMU.setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V2);
@@ -242,6 +242,14 @@ uint16_t pmu_getBattVoltage() {
 }
 
 
+
+bool pmu_isThrottling() {
+    uint8_t statusReg = PMU.readRegister(0x01); 
+    // Bit 3 is the VINDPM Status flag (1 = actively throttling)
+    return (statusReg >> 3) & 0x01; 
+}
+
+
 /*****************************************************
  * Return the charging-level of the battery in percent
  *****************************************************/
@@ -269,10 +277,10 @@ bool pmu_isCharging() {
 
 #define AXP2101_POWER_PATH_REG   0x18 
     
-void pmu_enableCharge() {
+void pmu_enableCharge(bool high) {
     uint8_t regVal = PMU.readRegister(AXP2101_POWER_PATH_REG);
     PMU.writeRegister(AXP2101_POWER_PATH_REG, regVal | 0x02);
-    PMU.setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_800MA);
+    PMU.setChargerConstantCurr( (high? XPOWERS_AXP2101_CHG_CUR_800MA : XPOWERS_AXP2101_CHG_CUR_300MA));
 }
 
 void pmu_disableCharge() {
@@ -329,6 +337,7 @@ void pmu_printInfo()
     printf("Standby:         %s\n", (PMU.isStandby() ? "YES" : "NO"));
     printf("Vbus In:         %s\n", (PMU.isVbusIn() ? "YES" : "NO"));
     printf("Vbus Good:       %s\n", (PMU.isVbusGood() ? "YES" : "NO"));
+    printf("Charge throttle: %s\n", (pmu_isThrottling() ? "YES" : "NO"));
     printf("Charger Status:  ");
     uint8_t charge_status = PMU.getChargerStatus();
     if (charge_status == XPOWERS_AXP2101_CHG_TRI_STATE) {

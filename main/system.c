@@ -1,7 +1,18 @@
-
-/*
- * Misc. System related stuff
- * (c) By LA7ECA, ohanssen@acm.org
+/* 
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - Misc. system related stuff. Time, battery, OTA, logging, etc.. 
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
  */
 
 #include <time.h>
@@ -404,10 +415,13 @@ bool batt_chgComplete() {
 
 static void batt_monitor(void* arg)  {
     bool chg = batt_charge();
+    bool lowchg = false; 
+    
     while (true) {
         sleepMs(15000);
         uint8_t max = get_byte_param("MAXCHARGE", DFL_MAXCHARGE);
         chg = batt_charge();
+        
         if (batt_percent() < MINCHARGE && !pmu_isCharging()) {
             ESP_LOGW(TAG, "Charging below minimum. System shutdown");
             beeps(" -...  ");
@@ -423,9 +437,24 @@ static void batt_monitor(void* arg)  {
             ESP_LOGI(TAG, "Charging reached maximum. Disabled");
         }
         else if (!chg && batt_percent() < max-5) {
-            pmu_enableCharge();            
+            pmu_enableCharge(true);            
             chg_complete = false;
             ESP_LOGI(TAG, "Charging enabled");
+        }
+        
+        if (!lowchg && pmu_getVbusVoltage() < 4750) {
+            pmu_disableCharge();
+            sleepMs(1000);
+            pmu_enableCharge(false);
+            lowchg = true;
+            ESP_LOGI(TAG, "Low charge current");
+        }
+        if (lowchg && pmu_getVbusVoltage() > 4750) {
+            pmu_disableCharge();
+            sleepMs(1000);
+            pmu_enableCharge(true);
+            lowchg = false;
+            ESP_LOGI(TAG, "High charge current");
         }
     }
 }
