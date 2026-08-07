@@ -36,7 +36,8 @@
 #include "driver/usb_serial_jtag.h"
 #include "esp_vfs_usb_serial_jtag.h"
 
-
+#include "psa/crypto.h"
+#include "psa/crypto_types.h" 
 
 static const char* TAG = "main";
 
@@ -260,6 +261,11 @@ void app_main()
     register_system();
     register_wifi();
     register_aprs();
+    
+    
+    if (psa_crypto_init() != 0) {
+        ESP_LOGE("APP", "Failed to initialize PSA Crypto subsystem!");
+    }
     
     time_init(); 
     wifi_init();
