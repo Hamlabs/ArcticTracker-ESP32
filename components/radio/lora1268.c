@@ -1,3 +1,9 @@
+/*
+ * Partly based on 
+ * https://github.com/nopnop2002/esp-idf-sx126x/blob/main/components/ra01s/ra01s.c
+ */
+ 
+
 #include "defines.h"
  
 #if defined(ARCTIC4_UHF)

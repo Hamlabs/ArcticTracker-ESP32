@@ -1,11 +1,22 @@
 /* 
- * Graphical user interface using a display. Either a 
- * SSD1306 based 128x64 pix or a SH1106. The old Nokia display isn't supported anymore.
- * Plan to support SH1107 (128x128pixel oled). 
- *   
- * Routines for drawing text, lines and cicles on screen. 
- * By LA7ECA, ohanssen@acm.org
+ * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
+ *
+ * Arctic Tracker - Routines for drawing text, lines and cicles on a display. 
+ * Supports SSD1306 or SH1106 based 128x64 pix oled.
+ * Supports SH1107 based 128x128 pix oled. 
+ *
+ * Arctic Tracker is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details: 
+ * <https://www.gnu.org/licenses/>.
  */
+
 
 #include "defines.h"
 #include "system.h"
