@@ -39,6 +39,7 @@
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/x509_crt.h"
+#include "mbedtls/x509_csr.h"
 #include "mbedtls/error.h"
 #include "mbedtls/version.h"
 #include "mbedtls/asn1write.h"
@@ -48,13 +49,15 @@
 
 #define TAG             "cert"
 
-/* PEM output buffer sizes – ECC P-256 cert is ~500 B, key is ~200 B. */
+/* PEM output buffer sizes – ECC P-256 cert is ~500 B, key is ~200 B, CSR is ~400 B. */
 #define CERT_PEM_BUF_SIZE   1024
 #define KEY_PEM_BUF_SIZE     512
+#define CSR_PEM_BUF_SIZE     768
 
 /* NVS keys (max 15 chars). */
 #define NVS_KEY_CERT    "TLS.CERT"
 #define NVS_KEY_KEY     "TLS.KEY"
+#define NVS_KEY_CSR     "TLS.CSR"
 #define NVS_CERT_VER    "TLS.CERT.VER"
 
 
@@ -221,6 +224,41 @@ static int _generate(void)
     set_bin_param(NVS_KEY_CERT, _cert_pem, _cert_len);
     set_bin_param(NVS_KEY_KEY,  _key_pem,  _key_len);
     set_str_param(NVS_CERT_VER, VERSION_SSTRING);
+
+    /* Generate a CSR for the same key and subject, and store it in NVS. */
+    {
+        mbedtls_x509write_csr *csr = malloc(sizeof(mbedtls_x509write_csr));
+        if (!csr) {
+            ESP_LOGE(TAG, "Out of memory while allocating CSR context");
+        } else {
+            mbedtls_x509write_csr_init(csr);
+            mbedtls_x509write_csr_set_key(csr, key);
+            mbedtls_x509write_csr_set_md_alg(csr, MBEDTLS_MD_SHA256);
+
+            int csr_ret = mbedtls_x509write_csr_set_subject_name(csr, dname);
+            if (csr_ret != 0) {
+                ESP_LOGE(TAG, "csr_set_subject_name failed: -0x%04x", -csr_ret);
+            } else {
+                uint8_t *csr_pem = malloc(CSR_PEM_BUF_SIZE);
+                if (!csr_pem) {
+                    ESP_LOGE(TAG, "Out of memory while allocating CSR PEM buffer");
+                } else {
+                    csr_ret = mbedtls_x509write_csr_pem(csr, csr_pem, CSR_PEM_BUF_SIZE,
+                                                        mbedtls_ctr_drbg_random, ctr_drbg);
+                    if (csr_ret != 0) {
+                        ESP_LOGE(TAG, "x509write_csr_pem failed: -0x%04x", -csr_ret);
+                    } else {
+                        size_t csr_len = strlen((char *)csr_pem) + 1;
+                        set_bin_param(NVS_KEY_CSR, csr_pem, csr_len);
+                        ESP_LOGI(TAG, "CSR generated and stored (csr=%u bytes)", (unsigned)csr_len);
+                    }
+                    free(csr_pem);
+                }
+            }
+            mbedtls_x509write_csr_free(csr);
+            free(csr);
+        }
+    }
 
     /* Write certificate to file */
     FILE *f = fopen("/files/cert.pem", "w");
