@@ -84,6 +84,7 @@ const uint8_t *cert_get_key_pem(size_t *len)
 }
 
 static int add_dns_san(mbedtls_x509write_cert *crt, const char **dns_names, size_t count);
+static int add_dns_san_csr(mbedtls_x509write_csr *csr, const char **dns_names, size_t count);
 static size_t asn1_len_bytes(size_t len);
 static int asn1_write_len_fwd(unsigned char **p, const unsigned char *end, size_t len);
 
@@ -240,6 +241,11 @@ static int _generate(void)
             if (csr_ret != 0) {
                 ESP_LOGE(TAG, "csr_set_subject_name failed: -0x%04x", -csr_ret);
             } else {
+                const char *csr_domains[] = { mydomain };
+                csr_ret = add_dns_san_csr(csr, csr_domains, 1);
+                if (csr_ret != 0)
+                    ESP_LOGE(TAG, "csr add_dns_san failed: -0x%04x", -csr_ret);
+                if (csr_ret == 0) {
                 uint8_t *csr_pem = malloc(CSR_PEM_BUF_SIZE);
                 if (!csr_pem) {
                     ESP_LOGE(TAG, "Out of memory while allocating CSR PEM buffer");
@@ -263,6 +269,7 @@ static int _generate(void)
                     
                     free(csr_pem);
                 }
+                } /* csr_ret == 0 */
             }
             mbedtls_x509write_csr_free(csr);
             free(csr);
@@ -368,6 +375,66 @@ cleanup:
     free(ext);
     return ret;
 }
+
+
+static int add_dns_san_csr(mbedtls_x509write_csr *csr, const char **dns_names, size_t count) {
+    if (!csr || (count > 0 && !dns_names))
+        return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+
+    size_t san_len = 0;
+    for (size_t i = 0; i < count; i++) {
+        if (!dns_names[i] || dns_names[i][0] == '\0')
+            continue;
+        const size_t name_len = strlen(dns_names[i]);
+        san_len += 1 + asn1_len_bytes(name_len) + name_len;
+    }
+
+    if (san_len == 0)
+        return 0;
+
+    const size_t ext_len = 1 + asn1_len_bytes(san_len) + san_len;
+    unsigned char *ext = malloc(ext_len);
+    if (!ext) {
+        ESP_LOGE(TAG, "Out of memory while building SAN extension for CSR");
+        return MBEDTLS_ERR_X509_ALLOC_FAILED;
+    }
+
+    int ret = 0;
+    unsigned char *p = ext;
+    const unsigned char *end = ext + ext_len;
+
+    *p++ = MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE;
+    ret = asn1_write_len_fwd(&p, end, san_len);
+    if (ret != 0)
+        goto cleanup;
+
+    for (size_t i = 0; i < count; i++) {
+        if (!dns_names[i] || dns_names[i][0] == '\0')
+            continue;
+
+        const size_t name_len = strlen(dns_names[i]);
+        *p++ = MBEDTLS_ASN1_CONTEXT_SPECIFIC | 2;
+        ret = asn1_write_len_fwd(&p, end, name_len);
+        if (ret != 0)
+            goto cleanup;
+        memcpy(p, dns_names[i], name_len);
+        p += name_len;
+    }
+
+    ret = mbedtls_x509write_csr_set_extension(
+        csr,
+        MBEDTLS_OID_SUBJECT_ALT_NAME,
+        MBEDTLS_OID_SIZE(MBEDTLS_OID_SUBJECT_ALT_NAME),
+        0,
+        ext,
+        p - ext
+    );
+
+cleanup:
+    free(ext);
+    return ret;
+}
+
 
 
 static size_t asn1_len_bytes(size_t len)
