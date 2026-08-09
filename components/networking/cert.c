@@ -225,6 +225,7 @@ static int _generate(void)
     set_bin_param(NVS_KEY_KEY,  _key_pem,  _key_len);
     set_str_param(NVS_CERT_VER, VERSION_SSTRING);
 
+    
     /* Generate a CSR for the same key and subject, and store it in NVS. */
     {
         mbedtls_x509write_csr *csr = malloc(sizeof(mbedtls_x509write_csr));
@@ -252,6 +253,14 @@ static int _generate(void)
                         set_bin_param(NVS_KEY_CSR, csr_pem, csr_len);
                         ESP_LOGI(TAG, "CSR generated and stored (csr=%u bytes)", (unsigned)csr_len);
                     }
+                    
+                    /* Write certificate to file */
+                    FILE *f = fopen("/files/csr.pem", "w");
+                    if (f != NULL) {
+                        fprintf(f, (char*) csr_pem);
+                        fclose(f);
+                    }
+                    
                     free(csr_pem);
                 }
             }
@@ -267,7 +276,7 @@ static int _generate(void)
         fclose(f);
     }
     
-    ESP_LOGI(TAG, "Self-signed certificate generated and stored "
+    ESP_LOGI(TAG, "Self-signed certificate and CSR generated and stored "
              "(cert=%u bytes, key=%u bytes, %s)",
              (unsigned)_cert_len, (unsigned)_key_len, dname);
 
