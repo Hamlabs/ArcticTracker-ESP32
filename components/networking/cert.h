@@ -14,6 +14,10 @@
 /* Generate a new certificate */
 bool cert_generate(void); 
 
+/* Sign the certificate using a CA REST service */
+int cert_sign(void);
+
+
 
 /*
  * Load the TLS certificate and private key from NVS.  If no certificate is

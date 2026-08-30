@@ -135,16 +135,42 @@ int do_mdns(int argc, char** argv)
 
 
 /********************************************************************************
- * New certificate command handler
+ * Generate new certificate
  ********************************************************************************/
 
 int do_newcert(int argc, char** argv)
 {
-    printf("Generating a new self-signed TLS certifcate\n");
-    if (cert_generate())
+    printf("Generating a new TLS certifcate\n");
+    if (cert_generate()) 
         printf("Ok\n");
     else
         printf("Failed\n");
+    return 0;
+}
+
+
+
+/********************************************************************************
+ * Use a Polaric CA service to sign the certificate
+ ********************************************************************************/
+
+int do_signcert(int argc, char** argv)
+{
+    printf("Contacting CA to sign TLS certifcate\n");
+    int code = cert_sign(); 
+    if (code == 0)
+        printf("Ok\n");
+    
+    else {
+        if (code==-2)
+            printf("Already signed or CSR not available\n");
+        else if (code==-3)
+            printf("CA service URL not set\n");
+        else if (code==-1)
+            printf("Internal error (see log)");
+        else
+            printf("Call to CA service returned code %d\n", code);
+    }
     return 0;
 }
 
@@ -337,6 +363,7 @@ CMD_STR_SETTING_H (_param_apikey,     "API.KEY",      128, DFL_API_KEY, NULL, &_
 CMD_STR_SETTING   (_param_apiorig,    "API.ORIGINS",  64,  DFL_API_ORIGINS, NULL);
 CMD_STR_SETTING   (_param_ap_auth,    "SOFTAP.AUTH",  64,  DFL_SOFTAP_PASSWD, NULL);
 CMD_STR_SETTING   (_param_ap_ip,      "SOFTAP.IP",    17,  DFL_SOFTAP_IP, REGEX_IPADDR);
+CMD_STR_SETTING   (_param_certurl,    "CERT.URL",     64,  "", NULL);
 CMD_STR_SETTING   (_param_fwurl,      "FW.URL",       64,  "", NULL);
 CMD_STR_SETTING   (_param_fwwebappurl,"FW.WEBAPP.URL",64,  "", NULL);
 CMD_STR_SETTING   (_param_fwcert,     "FW.CERT",      BBUF_SIZE, "", NULL);
@@ -355,7 +382,9 @@ CMD_BOOL_SETTING  (_param_logmon,     "LOGMON.on",    false, &_param_logmon_hand
 void register_wifi()
 {
     ADD_CMD("mdns",          &do_mdns,            "Scan for MDNS services", "<type>");  
-    ADD_CMD("newcert",       &do_newcert,         "Generate a new TLS certificate", NULL);
+    ADD_CMD("cert-new",      &do_newcert,         "Generate a new TLS certificate", NULL);
+    ADD_CMD("cert-sign",     &do_signcert,        "Use CA to sign TLS certificate", NULL);
+    ADD_CMD("cert-url",      &_param_certurl,     "URL for certificate signing (CA)", "<url>");
     ADD_CMD("wifi-scan",     &do_scan,            "Scan for wifi access points", NULL);  
     ADD_CMD("wifi-info",     &do_info,            "Info about WIFI connection", NULL);
     ADD_CMD("wifi",          &_param_wifi,        "WIFI On/Off setting", "[on|off]");

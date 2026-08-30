@@ -419,13 +419,12 @@ void rest_stop() {
  *  - URL, service, data, length-of-data, key
  ***************************************************************************/
 
-esp_err_t rest_post(char* uri, char* service, char* data, int dlen, char* key) 
+int rest_post(char* uri, char* service, char* data, int dlen, char* key) 
 {
     esp_http_client_config_t config = {
         .url = uri,
         .method = HTTP_METHOD_POST, 
         .user_agent = "ArcticTracker",
-        /* We may configure this? See OTA */
         .cert_pem = NULL,
         .crt_bundle_attach = esp_crt_bundle_attach
     };
@@ -439,9 +438,9 @@ esp_err_t rest_post(char* uri, char* service, char* data, int dlen, char* key)
     esp_http_client_set_header(client, "Content-Type", "application/json");
     rest_setSecHdrs(client, service, data, dlen, key);
     esp_err_t err = esp_http_client_perform(client);
-
+    
     int status = esp_http_client_get_status_code(client);
-    if (err == ESP_OK) {
+    if (err == ESP_OK && status == 200) {
         long long len = esp_http_client_get_content_length(client);
         ESP_LOGI(TAG, "Status = %d, content_length = %lld", status, len);
     }
@@ -451,4 +450,83 @@ esp_err_t rest_post(char* uri, char* service, char* data, int dlen, char* key)
     esp_http_client_cleanup(client);
     return status;
 }
+
+
+
+/*
+ * POST and get data from response. 
+ * Return status code or -1 if other error. 
+ * Errors are logged.
+ */
+int rest_post_r(const char *url, const char* service, const char *data, size_t dlen, char* key, char *rdata, size_t max_buf_len) {
+
+    esp_http_client_config_t config = {
+        .url = url,
+        .method = HTTP_METHOD_POST, 
+        .user_agent = "ArcticTracker",
+        .cert_pem = NULL,
+        .crt_bundle_attach = esp_crt_bundle_attach
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        return -1;
+    }
+    
+    /* Set the content type */
+    esp_http_client_set_header(client, "Content-Type", "application/x-pem-file");
+    rest_setSecHdrs(client, service, data, dlen, key);
+    
+    /* Open the connection and specify how much data we intendt to send (Content-Length) */
+    esp_err_t err = esp_http_client_open(client, dlen);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Couldn't open connection to server: %s", esp_err_to_name(err));
+        esp_http_client_cleanup(client);
+        return -1;
+    }
+
+    /* Send the POST payload to server */
+    int bytes_written = esp_http_client_write(client, data, dlen);
+    if (bytes_written < 0) {
+        ESP_LOGE(TAG, "Error in writing POST-data");
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+        return -1;
+    }
+
+    /* Get headers from server response */
+    int content_length = esp_http_client_fetch_headers(client);
+    int status_code = esp_http_client_get_status_code(client);
+    ESP_LOGI(TAG, "HTTP Status: %d, Content-Length: %d", status_code, content_length);
+
+    if (status_code != 200) 
+        return status_code;
+
+    int total_read = 0;
+    
+    /* Read as long as data is available and there is room in the buffer. */
+    while (total_read < (max_buf_len - 1)) {
+        int remaining_buf = (max_buf_len - 1) - total_read;
+        
+        int bytes_read = esp_http_client_read(client, rdata + total_read, remaining_buf);
+        
+        if (bytes_read < 0) {
+            ESP_LOGE(TAG, "Error in reading of response data");
+            total_read = -1; 
+            break;
+        } else if (bytes_read == 0) 
+            break;
+        
+        total_read += bytes_read;
+    }
+
+    if (total_read >= 0) 
+        rdata[total_read] = '\0';
+
+    /* Cleanup */
+    esp_http_client_close(client);
+    esp_http_client_cleanup(client);
+    return status_code;
+}
+
 

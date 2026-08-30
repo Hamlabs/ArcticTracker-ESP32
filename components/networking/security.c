@@ -87,7 +87,7 @@ static void nonce_add(char* n) {
  *   - key - storage-key for the key to be used for the hmac
  *******************************************************************************************/
 
-void rest_setSecHdrs(esp_http_client_handle_t client, char* service, char* data, int dlen, char* key)
+void rest_setSecHdrs(esp_http_client_handle_t client, const char* service, const char* data, int dlen, char* key)
 {
     char hmac[HMAC_B64_SIZE+1];
     uint8_t bnonce[NONCE_BIN_SIZE+1];

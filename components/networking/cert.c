@@ -34,6 +34,7 @@
 #include "config.h"
 #include "cert.h"
 #include "networking.h"
+#include "restapi.h"
 #include "mbedtls/pk.h"
 #include "mbedtls/ecp.h"
 #include "mbedtls/entropy.h"
@@ -52,7 +53,7 @@
 /* PEM output buffer sizes – ECC P-256 cert is ~500 B, key is ~200 B, CSR is ~400 B. */
 #define CERT_PEM_BUF_SIZE   1024
 #define KEY_PEM_BUF_SIZE     512
-#define CSR_PEM_BUF_SIZE     768
+#define CSR_PEM_BUF_SIZE     512
 
 /* NVS keys (max 15 chars). */
 #define NVS_KEY_CERT    "TLS.CERT"
@@ -62,7 +63,9 @@
 
 
 static uint8_t _cert_pem[CERT_PEM_BUF_SIZE];
+static uint8_t _cert_csr[CSR_PEM_BUF_SIZE];
 static uint8_t _key_pem[KEY_PEM_BUF_SIZE];
+
 static size_t  _cert_len    = 0;
 static size_t  _key_len     = 0;
 static bool    _initialized = false;
@@ -87,6 +90,8 @@ static int add_dns_san(mbedtls_x509write_cert *crt, const char **dns_names, size
 static int add_dns_san_csr(mbedtls_x509write_csr *csr, const char **dns_names, size_t count);
 static size_t asn1_len_bytes(size_t len);
 static int asn1_write_len_fwd(unsigned char **p, const unsigned char *end, size_t len);
+static void genCsr(mbedtls_pk_context *key, char* dname, char* mydomain, mbedtls_ctr_drbg_context *ctr_drbg);
+static void writeToFile(char* fname, uint8_t* data);
 
 
 
@@ -226,62 +231,11 @@ static int _generate(void)
     set_bin_param(NVS_KEY_KEY,  _key_pem,  _key_len);
     set_str_param(NVS_CERT_VER, VERSION_SSTRING);
 
-    
-    /* Generate a CSR for the same key and subject, and store it in NVS. */
-    {
-        mbedtls_x509write_csr *csr = malloc(sizeof(mbedtls_x509write_csr));
-        if (!csr) {
-            ESP_LOGE(TAG, "Out of memory while allocating CSR context");
-        } else {
-            mbedtls_x509write_csr_init(csr);
-            mbedtls_x509write_csr_set_key(csr, key);
-            mbedtls_x509write_csr_set_md_alg(csr, MBEDTLS_MD_SHA256);
-
-            int csr_ret = mbedtls_x509write_csr_set_subject_name(csr, dname);
-            if (csr_ret != 0) {
-                ESP_LOGE(TAG, "csr_set_subject_name failed: -0x%04x", -csr_ret);
-            } else {
-                const char *csr_domains[] = { mydomain };
-                csr_ret = add_dns_san_csr(csr, csr_domains, 1);
-                if (csr_ret != 0)
-                    ESP_LOGE(TAG, "csr add_dns_san failed: -0x%04x", -csr_ret);
-                if (csr_ret == 0) {
-                uint8_t *csr_pem = malloc(CSR_PEM_BUF_SIZE);
-                if (!csr_pem) {
-                    ESP_LOGE(TAG, "Out of memory while allocating CSR PEM buffer");
-                } else {
-                    csr_ret = mbedtls_x509write_csr_pem(csr, csr_pem, CSR_PEM_BUF_SIZE,
-                                                        mbedtls_ctr_drbg_random, ctr_drbg);
-                    if (csr_ret != 0) {
-                        ESP_LOGE(TAG, "x509write_csr_pem failed: -0x%04x", -csr_ret);
-                    } else {
-                        size_t csr_len = strlen((char *)csr_pem) + 1;
-                        set_bin_param(NVS_KEY_CSR, csr_pem, csr_len);
-                        ESP_LOGI(TAG, "CSR generated and stored (csr=%u bytes)", (unsigned)csr_len);
-                    }
-                    
-                    /* Write certificate to file */
-                    FILE *f = fopen("/files/csr.pem", "w");
-                    if (f != NULL) {
-                        fprintf(f, (char*) csr_pem);
-                        fclose(f);
-                    }
-                    
-                    free(csr_pem);
-                }
-                } /* csr_ret == 0 */
-            }
-            mbedtls_x509write_csr_free(csr);
-            free(csr);
-        }
-    }
+    /* Generate a CSR in case we want a CA to sign the cert */
+    genCsr(key, dname, mydomain, ctr_drbg);
 
     /* Write certificate to file */
-    FILE *f = fopen("/files/cert.pem", "w");
-    if (f != NULL) {
-        fprintf(f, (char*) _cert_pem);
-        fclose(f);
-    }
+    writeToFile("/files/cert.pem", _cert_pem);
     
     ESP_LOGI(TAG, "Self-signed certificate and CSR generated and stored "
              "(cert=%u bytes, key=%u bytes, %s)",
@@ -305,6 +259,71 @@ cleanup:
         free(entropy);
     }
     return ret;
+}
+
+
+
+/************************************************************
+ * Generate a CSR and store it in NVS and on file
+ ************************************************************/
+
+static void genCsr(mbedtls_pk_context *key, char* dname, char* mydomain, mbedtls_ctr_drbg_context *ctr_drbg) 
+ /* Generate a CSR for the same key and subject, and store it in NVS. */
+{
+    mbedtls_x509write_csr *csr = malloc(sizeof(mbedtls_x509write_csr));
+    
+    if (!csr) {
+        ESP_LOGE(TAG, "Out of memory while allocating CSR context");
+    } else {
+        mbedtls_x509write_csr_init(csr);
+        mbedtls_x509write_csr_set_key(csr, key);
+        mbedtls_x509write_csr_set_md_alg(csr, MBEDTLS_MD_SHA256);
+
+        int csr_ret = mbedtls_x509write_csr_set_subject_name(csr, dname);
+        if (csr_ret != 0) {
+            ESP_LOGE(TAG, "csr_set_subject_name failed: -0x%04x", -csr_ret);
+        } else {
+            const char *csr_domains[] = { mydomain };
+            csr_ret = add_dns_san_csr(csr, csr_domains, 1);
+            if (csr_ret != 0)
+                ESP_LOGE(TAG, "csr add_dns_san failed: -0x%04x", -csr_ret);
+            if (csr_ret == 0) {
+            uint8_t *csr_pem = malloc(CSR_PEM_BUF_SIZE);
+            if (!csr_pem) {
+                ESP_LOGE(TAG, "Out of memory while allocating CSR PEM buffer");
+            } else {
+                csr_ret = mbedtls_x509write_csr_pem(csr, csr_pem, CSR_PEM_BUF_SIZE,
+                                                    mbedtls_ctr_drbg_random, ctr_drbg);
+                if (csr_ret != 0) {
+                    ESP_LOGE(TAG, "x509write_csr_pem failed: -0x%04x", -csr_ret);
+                } else {
+                    size_t csr_len = strlen((char *)csr_pem) + 1;
+                    set_bin_param(NVS_KEY_CSR, csr_pem, csr_len);
+                    ESP_LOGI(TAG, "CSR generated and stored (csr=%u bytes)", (unsigned)csr_len);
+                }
+                
+                /* Write certificate to file and free it*/
+                writeToFile("/files/csr.pem", csr_pem); 
+                free(csr_pem);
+            }
+            } /* csr_ret == 0 */
+        }
+        mbedtls_x509write_csr_free(csr);
+        free(csr);
+    }
+}
+
+
+/* 
+ * Write data to file. 
+ * Maybe move to main/system component
+ */
+static void writeToFile(char* fname, uint8_t* data) {
+    FILE *f = fopen(fname, "w");
+    if (f != NULL) {
+        fprintf(f, (char*) data);
+        fclose(f);
+    }
 }
 
 
@@ -375,6 +394,7 @@ cleanup:
     free(ext);
     return ret;
 }
+
 
 
 static int add_dns_san_csr(mbedtls_x509write_csr *csr, const char **dns_names, size_t count) {
@@ -501,10 +521,11 @@ bool cert_init(void)
     if (_initialized)
         return true;
 
-    /* Try to load an existing certificate from NVS. */
+    /* Try to load an existing certificate and private key from NVS. */
     int clen = get_bin_param(NVS_KEY_CERT, _cert_pem, CERT_PEM_BUF_SIZE, NULL);
     int klen = get_bin_param(NVS_KEY_KEY,  _key_pem,  KEY_PEM_BUF_SIZE,  NULL);
-
+    
+    /* Cert loaded from NVS? */
     if (clen > 0 && klen > 0) {
         _cert_len = (size_t)clen;
         _key_len  = (size_t)klen;
@@ -516,12 +537,64 @@ bool cert_init(void)
     }
 
     /* Nothing in NVS – generate a fresh self-signed certificate. */
-    ESP_LOGI(TAG, "No certificate found in NVS, generating self-signed certificate...");
+    ESP_LOGI(TAG, "No certificate found in NVS, generating new CSR and self-signed certificate...");
     if (_generate() != 0) {
-        ESP_LOGE(TAG, "Failed to generate self-signed certificate");
+        ESP_LOGE(TAG, "Failed to generate CSR/certificate");
         return false;
     }
 
     _initialized = true;
     return true;
 }
+
+
+
+
+/***************************************************************************************
+ *  If a CA service is registered use it to sign the certificate 
+ *  Returns
+ *       0 if Successful
+ *      -1 internal error
+ *      -2 Already signed or CSR not available
+ *      -3 CA URL not set. 
+ *      or HTTP status code from calling CA REST service
+ ***************************************************************************************/
+int cert_sign(void) {
+    /* 
+     * Try to load the CSR from the NVS.
+     * If empty, it is either already signed or it is not generated yet.
+     */
+    char url[64];
+    get_str_param("CERT.URL", url, 64, "");
+    if (strlen(url) == 0) {
+        ESP_LOGW(TAG, "CA URL not set");
+        return -3;
+    }
+    int csrlen = get_bin_param(NVS_KEY_CSR, _cert_csr, CERT_PEM_BUF_SIZE, NULL);
+    if (csrlen == 0) {
+        ESP_LOGI(TAG, "Certificate already signed or CSR not available");
+        return -2; 
+    }
+    
+    /* Contact the CA through a REST API */
+    int status = rest_post_r(url, "arctic", (char*) _cert_csr, csrlen, "TRKLOG.KEY", (char*) _cert_pem, CERT_PEM_BUF_SIZE);
+    if (status == 200) {
+        writeToFile("/files/cert.pem", _cert_pem);
+        set_bin_param(NVS_KEY_CERT, _cert_pem, strlen((char*) _cert_pem)+1);
+        delete_param(NVS_KEY_CSR);
+        ESP_LOGI(TAG, "Successful signing of certificate.");
+        return 0;
+    }
+    else if (status==-1) 
+        ESP_LOGE(TAG, "Cert signing failed. Internal error (see log)");
+    else  
+        ESP_LOGW(TAG, "Cert signing failed. Status=%d", status);
+    
+    return status;
+}
+
+
+
+
+
+
