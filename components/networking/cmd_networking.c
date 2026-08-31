@@ -1,15 +1,4 @@
-/*
- * Settings and shell commands related to wifi and internet
- * By LA7ECA, ohanssen@acm.org
- */
 
-#include <stdio.h>
-#include <string.h>
-#include "esp_console.h"
-#include "argtable3/argtable3.h"
-#include "system.h" 
-#include "defines.h"
-#include "config.h"
 /* 
  * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
  * 
@@ -27,6 +16,13 @@
  * <https://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+#include <string.h>
+#include "esp_console.h"
+#include "argtable3/argtable3.h"
+#include "system.h" 
+#include "defines.h"
+#include "config.h"
 #include "commands.h"
 #include "esp_wifi.h"
 #include "networking.h"
@@ -167,7 +163,7 @@ int do_signcert(int argc, char** argv)
         else if (code==-3)
             printf("CA service URL not set\n");
         else if (code==-1)
-            printf("Internal error (see log)");
+            printf("Internal error (see log)\n");
         else
             printf("Call to CA service returned code %d\n", code);
     }
