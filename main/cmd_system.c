@@ -47,7 +47,7 @@
 #include "esp_chip_info.h"
 #include "pmu.h"
 #include "encryption.h"
-
+#include "esp_heap_trace.h"
 
 static int do_sysinfo(int argc, char** argv);
 static int do_restart(int argc, char** argv);
@@ -253,6 +253,9 @@ static int do_restart(int argc, char** argv)
 
 
 
+#define NUM_RECORDS 100
+static heap_trace_record_t trace_records[NUM_RECORDS];
+
 /********************************************************************************
  * Display system info
  ********************************************************************************/
@@ -291,6 +294,11 @@ static int do_sysinfo(int argc, char** argv)
     size_flash /= 1000000;
     
     printf("Free heap:       %ld bytes\n", esp_get_free_heap_size());
+    printf("  -> INT, EXT:   %d / %d bytes\n", heap_caps_get_free_size(MALLOC_CAP_INTERNAL), 
+                                                 heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+    printf("Largest block:   %d bytes\n", heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT));
+    printf("  -> INT, EXT:   %d / %d bytes\n", heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+                                                heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
     printf("FBUF free mem:   %ld bytes\n", fbuf_freeMem());
     printf("FBUF used slots: %d\n", fbuf_usedSlots());
     printf("File system:     %u bytes, %u used, %u free\n", size, size-free, free);
@@ -310,7 +318,25 @@ static int do_sysinfo(int argc, char** argv)
     
     printf("\nPower Management Unit:\n\n");
     pmu_printInfo();
+    printf("\n");
     return 0;
+}
+
+
+
+/*******************************************************************************
+ * Heap allocation tracing - to help finding memory leaks
+ * Tracing should be turned on in menuconfig
+ *******************************************************************************/
+
+static int do_memtrace(int argc, char** argv) {
+    ESP_ERROR_CHECK(heap_trace_init_standalone(trace_records, NUM_RECORDS));
+    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
+    vTaskDelay(pdMS_TO_TICKS(3500)); 
+    ESP_ERROR_CHECK(heap_trace_stop());
+    heap_trace_dump(); 
+    
+
 }
 
 
