@@ -268,12 +268,11 @@ static void txencoder (void* arg)
      txbuf[1]=0xFF;
      txbuf[2]=0x01;
      int len = ax25_frame2str(txbuf+3, sizeof(txbuf)-3, &frame);
+     ESP_LOGI(TAG, "TX packet: %d bytes", len);
      alt_setting(true, &frame); 
      
       /* CAD: check the channel is free before transmitting */
      cad_wait();
-     
-     ESP_LOGI(TAG, "TX packet: %d bytes", len);
      tx_led_on();
      txon = true;
      lora_SendPacket((uint8_t*) txbuf, len+3);

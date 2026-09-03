@@ -95,7 +95,6 @@ static void netmon_worker(void *wParam)
                     fprintf(f,", rssi=%d dBm, snr=%d dB, ferr=%ld Hz", meta->rssi, meta->snr, meta->ferror);
                 }
 #endif
-
                 fprintf(f, "\n");
                 
                 /* Display frame */
@@ -117,6 +116,7 @@ static void netmon_worker(void *wParam)
         }
         /* Close down */
         unsubscribe(&mq, subscr, txsubscr);  
+        fbq_clear(&mq);
     }
     else
         fprintf(f, "# Max 5 clients allowed\n");

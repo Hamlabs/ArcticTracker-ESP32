@@ -499,8 +499,11 @@ int rest_post_r(const char *url, const char* service, const char *data, size_t d
     int status_code = esp_http_client_get_status_code(client);
     ESP_LOGI(TAG, "HTTP Status: %d, Content-Length: %d", status_code, content_length);
 
-    if (status_code != 200) 
+    if (status_code != 200) {
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
         return status_code;
+    }
 
     int total_read = 0;
     

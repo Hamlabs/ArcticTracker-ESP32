@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include "driver/uart.h"
 #include "esp_adc/adc_continuous.h"
-#pragma message("**** INCLUDE RADIO *****")
 
  uint8_t radio_getRssi();
  bool radio_is_on(); 

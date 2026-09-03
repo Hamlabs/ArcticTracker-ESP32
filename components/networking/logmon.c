@@ -129,6 +129,7 @@ static void logmon_worker(void *wParam)
     
     /* Close down */
     unsubscribe(&g_mq, subscr, txsubscr);
+    fbq_clear(&g_mq); 
     g_wrk.mq = NULL;
     
     END:
