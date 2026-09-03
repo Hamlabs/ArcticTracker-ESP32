@@ -422,12 +422,12 @@ static void batt_monitor(void* arg)  {
         uint8_t max = get_byte_param("MAXCHARGE", DFL_MAXCHARGE);
         chg = batt_charge();
         
-        if (batt_percent() < MINCHARGE && !pmu_isCharging()) {
+        if (batt_percent() > 0 && batt_percent() < MINCHARGE && !pmu_isCharging()) {
             ESP_LOGW(TAG, "Charging below minimum. System shutdown");
             beeps(" -...  ");
             systemShutdown();
         }
-        else if (batt_percent() < (MINCHARGE+1) && !pmu_isCharging()) {
+        else if (batt_percent() > 0 && batt_percent() < (MINCHARGE+1) && !pmu_isCharging()) {
             ESP_LOGW(TAG, "Battery low warning");
             beeps(" -... ");
         }
@@ -561,15 +561,28 @@ void time_update()
 time_t timegm(struct tm *tm)
 {
     mutex_lock(time_mutex);
-    setenv("TZ", "GMT0", 1);
-    tzset();
+
+    int year = tm->tm_year + 1900;
+    int month = tm->tm_mon + 1; // tm_mon is 0-11
+    int day = tm->tm_mday;
+
+    // Convert month/year rules to shift leap days to the end of the calculation
+    if (month < 3) {
+        month += 12;
+        year--;
+    }
+
+    // Calculate total elapsed days since the epoch base line
+    long long days = (146097LL * year / 400) + 
+                     (153 * month + 2) / 5 + 
+                     day - 719468LL;
+
+    // Convert everything down to absolute seconds
+    time_t t = (time_t)(days * 86400LL + 
+                             tm->tm_hour * 3600 + 
+                             tm->tm_min * 60 + 
+                             tm->tm_sec);
     
-    time_t t = mktime(tm);
-        
-    char tz[64];
-    get_str_param("TIMEZONE", tz, 64, DFL_TIMEZONE);
-    setenv("TZ", tz, 1);
-    tzset();
     mutex_unlock(time_mutex);
     return t;
 }
