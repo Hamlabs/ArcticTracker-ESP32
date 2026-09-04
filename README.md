@@ -35,15 +35,16 @@ It is work-in-progress but many features are fairly complete now. The following 
 * Interface with GPS for position and time. 
 * OLED display, status screens and menu. Use button to operate.
 * Sending APRS packets. Tracking, smart beaconing.
-* Encryption of APRS packets (from the next version)
+* Encryption of APRS packets
 * Receiving APRS packets. 
 * Add highly compressed earlier position reports to packets. This can improve trails significantly.
   See [how this is done here](http://hamlabs.no/2020/11/02/improving-trails-with-arctic-tracker/). 
 * Digipeater and igate. 
 * Basic information on battery and charging.
 * Track logging. Store positions in flash memory e.g. every 5 seconds and upload to a REST
-  API on a Polaric Server when network is available. 
-* Firmware upgrades over the air (OTA) is still "work in progress"..
+  API on a Polaric Server when network is available.
+* LoRa APRS (on Arctic Tracker hardware)
+* Firmware upgrades over the air (OTA)
 
 ## REST API and security
 A REST API is provided for external apps (typically). It mainly has methods for reading and updating settings. A strong authentication scheme based on SHA256 HMAC is used. A web-browser-based client is under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) that are on the same LAN. This is still somewhat work-in-progress...
