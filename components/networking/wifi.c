@@ -258,7 +258,7 @@ void wifi_enable_softAp(bool en)
             return;
         }
         
-        wifi_config_t conf; 
+        wifi_config_t conf = {0}; 
         strncpy((char*) conf.ap.ssid, ssid, sizeof(conf.ap.ssid)); 
         conf.ap.ssid[sizeof(conf.ap.ssid) - 1] = '\0';
         conf.ap.ssid_len = strlen((char*)conf.ap.ssid);
@@ -266,6 +266,9 @@ void wifi_enable_softAp(bool en)
         conf.ap.password[sizeof(conf.ap.password) - 1] = '\0';
         conf.ap.authmode = WIFI_AUTH_WPA2_WPA3_PSK;
         conf.ap.channel = 1;
+        conf.ap.max_connection = 4;
+        conf.ap.beacon_interval = AP_BEACON_INTERVAL;
+        conf.ap.ssid_hidden = AP_SSID_HIDDEN;
         
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &conf));
@@ -700,4 +703,3 @@ char* mac2str(uint8_t *x) {
     sprintf(buf, "%02x:%02x:%02x:%02x:%02x:%02x",x[0],x[1],x[2],x[3],x[4],x[5]);
     return buf; 
 }
-
