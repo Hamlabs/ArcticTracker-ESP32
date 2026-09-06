@@ -88,6 +88,7 @@ static esp_err_t system_info_handler(httpd_req_t *req)
 }
 
 
+
 /******************************************************************
  *  GET handler for setting related to APRS tracking
  ******************************************************************/
@@ -139,6 +140,7 @@ static esp_err_t aprs_get_handler(httpd_req_t *req)
     
     return rest_JSON_send(req, root);
 }
+
 
 
 /******************************************************************
@@ -301,16 +303,12 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     
     get_str_param("SOFTAP.AUTH", buf, 64, DFL_SOFTAP_PASSWD);
     cJSON_AddStringToObject(root, "appass", buf);
-
-    get_str_param("FW.URL", buf, 64, "");
-    cJSON_AddStringToObject(root, "fwurl", buf);
     
-    get_str_param("FW.WEBAPP.URL", buf, 64, "");
-    cJSON_AddStringToObject(root, "fwwurl", buf);
-    
-    /* Don't send the API key */
+    /* Don't show the server key */
+    cJSON_AddStringToObject(root, "key", "");
+    /* Don't show the API key */
     cJSON_AddStringToObject(root, "apikey", "");
-    /* Don't send the crypto key */
+    /* Don't show the crypto key */
     cJSON_AddStringToObject(root, "cryptokey", "");
     
     for (int i=0; i<6; i++) {
@@ -341,8 +339,10 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
     CHECK_JSON_INPUT(req, root);
  
     set_str_param("SOFTAP.AUTH", JSON_STR(root,   "appass"));
-    set_str_param("FW.URL",      JSON_STR(root,   "fwurl"));
-    set_str_param("FW.WEBAPP.URL", JSON_STR(root, "fwwurl"));
+        
+    if (strlen(JSON_STR(root, "key"))>3)
+        set_str_param ("TRKLOG.KEY", JSON_STR(root, "key"));
+        
     /* API key is updated if it is non-empty */
     if (strlen(JSON_STR(root, "apikey"))>3)
         set_str_param("API.KEY", JSON_STR(root, "apikey"));
@@ -370,11 +370,12 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
 }    
     
     
+    
 /******************************************************************
  *  GET handler for setting related to track logging
  ******************************************************************/
 
-static esp_err_t trklog_get_handler(httpd_req_t *req)
+static esp_err_t misc_get_handler(httpd_req_t *req)
 {
     char buf[128];
     rest_cors_enable(req); 
@@ -390,18 +391,22 @@ static esp_err_t trklog_get_handler(httpd_req_t *req)
     get_str_param("TRKLOG.URL", buf, 64, DFL_TRKLOG_URL);
     cJSON_AddStringToObject(root, "url", buf);
 
-    get_str_param("TRKLOG.KEY", buf, 128, "");
-    cJSON_AddStringToObject(root, "key", buf);
+    get_str_param("FW.URL", buf, 64, "");
+    cJSON_AddStringToObject(root, "fwurl", buf);
+    
+    get_str_param("FW.WEBAPP.URL", buf, 64, "");
+    cJSON_AddStringToObject(root, "fwwurl", buf);
     
     return rest_JSON_send(req, root);
 }
+
 
 
 /******************************************************************
  *   PUT handler for setting related to track logging
  ******************************************************************/
 
-static esp_err_t trklog_put_handler(httpd_req_t *req)
+static esp_err_t misc_put_handler(httpd_req_t *req)
 {
     cJSON *root;    
     rest_cors_enable(req); 
@@ -419,10 +424,13 @@ static esp_err_t trklog_put_handler(httpd_req_t *req)
     set_byte_param("TRKLOG.INT", JSON_BYTE(root, "interv"));
     set_byte_param("TRKLOG.TTL", JSON_BYTE(root, "ttl"));
     set_str_param ("TRKLOG.URL", JSON_STR(root, "url"));
-    set_str_param ("TRKLOG.KEY", JSON_STR(root, "key"));
+
+    
+    set_str_param("FW.URL",      JSON_STR(root,   "fwurl"));
+    set_str_param("FW.WEBAPP.URL", JSON_STR(root, "fwwurl"));
     
     cJSON_Delete(root);
-    httpd_resp_sendstr(req, "PUT WIFI settings successful");
+    httpd_resp_sendstr(req, "PUT misc settings successful");
     return ESP_OK;
 } 
 
@@ -452,8 +460,9 @@ static esp_err_t trackers_handler(httpd_req_t *req) {
 }
 
 
+
 /******************************************************************
- *   GET handler for OTA firmware upgrade
+ *   PUT handler for OTA firmware upgrade
  ******************************************************************/
 
 static esp_err_t fwupgrade_put_handler(httpd_req_t *req) {
@@ -507,9 +516,9 @@ void register_api_rest()
     REGISTER_PUT("/api/wifi",        wifi_put_handler);
     REGISTER_OPTIONS("/api/wifi",    rest_options_handler);
     
-    REGISTER_GET("/api/trklog",      trklog_get_handler);
-    REGISTER_PUT("/api/trklog",      trklog_put_handler);
-    REGISTER_OPTIONS("/api/trklog",  rest_options_handler);
+    REGISTER_GET("/api/misc",        misc_get_handler);
+    REGISTER_PUT("/api/misc",        misc_put_handler);
+    REGISTER_OPTIONS("/api/misc",    rest_options_handler);
     
     REGISTER_PUT("/api/fwupgrade",    fwupgrade_put_handler);
     REGISTER_OPTIONS("/api/fwupgrade",rest_options_handler);
