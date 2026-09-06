@@ -163,7 +163,7 @@ int do_signcert(int argc, char** argv)
         else if (code==-3)
             printf("CA service URL not set\n");
         else if (code==-1)
-            printf("Internal error (see log)\n");
+            printf("Signing failed. Internal error (see log)\n");
         else
             printf("Call to CA service returned code %d\n", code);
     }

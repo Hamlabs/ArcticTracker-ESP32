@@ -38,7 +38,7 @@ void mdns_start(char* ident) {
         return;
     }
     
-    char buffer[32]; 
+    char buffer[64]; 
     
     /* Set hostname */
     sprintf(hostname, "arctic-%s", ident);
@@ -50,7 +50,7 @@ void mdns_start(char* ident) {
     
     /* Announce services */
     mdns_service_add(NULL, "_https", "_tcp", 443, NULL, 0);
-    mdns_service_instance_name_set("_https", "_tcp", "Arctic Tracker HTTP Server");
+    mdns_service_instance_name_set("_https", "_tcp", "Arctic Tracker");
     
     mdns_txt_item_t txtData[1] = {
         {"ident", ident}
