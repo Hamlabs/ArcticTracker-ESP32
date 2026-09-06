@@ -12,7 +12,7 @@
 #define REGISTER_DELETE(uri, handler) rest_register((uri), HTTP_DELETE, (handler))
 #define REGISTER_OPTIONS(uri,handler) rest_register((uri), HTTP_OPTIONS, (handler))
 
-#define JSON_STR(root, id)  JSON_GETITEM(root, id, string, "")
+#define JSON_STR(root, id)  rest_JSON_str((root), (id))
 #define JSON_BYTE(root, id)  (uint8_t) JSON_GETITEM(root, id, int, 0)
 #define JSON_BOOL(root, id)  (bool) JSON_GETITEM(root, id, int, 0)
 #define JSON_U16(root, id)   (uint16_t) JSON_GETITEM(root, id, int, 0)
@@ -33,6 +33,7 @@ void      rest_register(char* uri, httpd_method_t method, esp_err_t (*handler)(h
 esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int* size);
 esp_err_t rest_AUTH(httpd_req_t *req);
 esp_err_t rest_JSON_input(httpd_req_t *req,  cJSON **json);
+const char* rest_JSON_str(cJSON *root, const char *id);
 esp_err_t rest_JSON_send(httpd_req_t *req, cJSON *root);
 void      rest_start(uint16_t port, uint16_t sport, const char *path);
 void      rest_stop(void);

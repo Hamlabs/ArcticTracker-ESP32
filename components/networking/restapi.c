@@ -215,6 +215,27 @@ esp_err_t rest_JSON_send(httpd_req_t *req, cJSON *root) {
 
 
 /*******************************************************************************************
+ * Safely get a JSON string value.
+ *******************************************************************************************/
+
+const char* rest_JSON_str(cJSON *root, const char *id)
+{
+    cJSON *item = cJSON_GetObjectItem(root, id);
+    const char *value;
+    if (item == NULL || cJSON_IsNull(item))
+        return "";
+
+    value = cJSON_GetStringValue(item);
+    if (value == NULL) {
+        ESP_LOGW(TAG, "Ignoring non-string JSON field: %s", id);
+        return "";
+    }
+    return value;
+}
+
+
+
+/*******************************************************************************************
  * Register REST API method with uri and implementation
  * Typically used through macros (see restapi.h). 
  *******************************************************************************************/
@@ -251,7 +272,7 @@ esp_err_t rest_get_input(httpd_req_t *req,  char **buf, int *size)
         return ESP_FAIL;
     }
     while (cur_len < total_len) {
-        received = httpd_req_recv(req, *buf + cur_len, total_len);
+        received = httpd_req_recv(req, *buf + cur_len, total_len - cur_len);
         if (received <= 0) {
             httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive input");
             return ESP_FAIL;
@@ -531,5 +552,4 @@ int rest_post_r(const char *url, const char* service, const char *data, size_t d
     esp_http_client_cleanup(client);
     return status_code;
 }
-
 
