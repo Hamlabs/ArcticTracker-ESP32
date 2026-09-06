@@ -18,6 +18,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "esp_log.h"
+#include <stdlib.h>
 #include <string.h>
 #include "config.h"
 #include "esp_system.h"
@@ -484,6 +485,9 @@ uint32_t get_u32_param(const char* key, const uint32_t dfl) {
  ********************************************************************************/
 
 int get_str_param(const char* key, char* buf, size_t size, const char* dfl) {
+    if (size == 0)
+        return 0;
+
     size_t len = size;
     esp_err_t err = nvs_get_str(nvs, key, buf, &len);
     if (err == ESP_ERR_NVS_NOT_FOUND) {
@@ -492,7 +496,37 @@ int get_str_param(const char* key, char* buf, size_t size, const char* dfl) {
             buf[0] = '\0';
             return 0;
         }
-        strncpy(buf, dfl, (strlen(dfl)+1 > len ? len : strlen(dfl)+1));
+        size_t dlen = strlen(dfl);
+        if (dlen >= size)
+            dlen = size - 1;
+        memcpy(buf, dfl, dlen);
+        buf[dlen] = '\0';
+        return dlen + 1;
+    }
+    else if (err == ESP_ERR_NVS_INVALID_LENGTH) {
+        size_t full_len = 0;
+        err = nvs_get_str(nvs, key, NULL, &full_len);
+        ESP_ERROR_CHECK(err);
+
+        char *tmp = malloc(full_len);
+        if (tmp == NULL) {
+            ESP_LOGE(TAG, "Failed to allocate %u bytes for key '%s'", (unsigned) full_len, key);
+            buf[0] = '\0';
+            return 0;
+        }
+
+        err = nvs_get_str(nvs, key, tmp, &full_len);
+        ESP_ERROR_CHECK(err);
+
+        size_t copy_len = full_len - 1;
+        if (copy_len >= size)
+            copy_len = size - 1;
+        memcpy(buf, tmp, copy_len);
+        buf[copy_len] = '\0';
+        free(tmp);
+
+        ESP_LOGW(TAG, "Value for key '%s' truncated to %u bytes", key, (unsigned) (size - 1));
+        return copy_len + 1;
     }
     else
         ESP_ERROR_CHECK(err);
@@ -514,5 +548,4 @@ int get_bin_param(const char* key, void* buf, size_t size, const void* dfl) {
         ESP_ERROR_CHECK(err);
     return len;
 }
-
 
