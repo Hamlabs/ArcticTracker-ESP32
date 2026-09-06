@@ -33,7 +33,10 @@ void mdns_start(char* ident) {
     
     //initialize mDNS service
     esp_err_t err = mdns_init();
-    if (err) {
+    if (err == ESP_ERR_INVALID_STATE) {
+        ESP_LOGD(TAG, "mDNS already initialized");
+    }
+    else if (err) {
         ESP_LOGW(TAG, "MDNS Init failed: %d\n", err);
         return;
     }
@@ -49,6 +52,7 @@ void mdns_start(char* ident) {
     mdns_instance_name_set(buffer);
     
     /* Announce services */
+    mdns_service_remove_all();
     mdns_service_add(NULL, "_https", "_tcp", 443, NULL, 0);
     mdns_service_instance_name_set("_https", "_tcp", "Arctic Tracker");
     
@@ -126,7 +130,6 @@ void mdns_print_results(mdns_result_t * results)
     }
 
 }
-
 
 
 
