@@ -360,7 +360,7 @@ static void nmea2time( time_t* t, const char* timestr, const char* datestr)
     sscanf(timestr, "%2u%2u%2u", &hour, &min, &sec);
     sscanf(datestr, "%2u%2u%2u", &day, &month, &year);
     
-    struct tm tm; 
+    struct tm tm = {0}; 
     tm.tm_year = year + 2000 - 1900;
     tm.tm_mon = month - 1; 
     tm.tm_mday = day;
