@@ -566,16 +566,19 @@ time_t timegm(struct tm *tm)
     int month = tm->tm_mon + 1; // tm_mon is 0-11
     int day = tm->tm_mday;
 
-    // Convert month/year rules to shift leap days to the end of the calculation
-    if (month < 3) {
-        month += 12;
+    // Shift Jan/Feb to previous year so leap year correction applies correctly
+    if (month <= 2) {
         year--;
+        month += 12;
     }
 
-    // Calculate total elapsed days since the epoch base line
-    long long days = (146097LL * year / 400) + 
-                     (153 * month + 2) / 5 + 
-                     day - 719468LL;
+    // Calculate total elapsed days since Unix epoch (1970-01-01)
+    long long days = 365LL * year +
+                     year / 4 -
+                     year / 100 +
+                     year / 400 +
+                     (153LL * (month - 3) + 2) / 5 +
+                     day - 719469LL;
 
     // Convert everything down to absolute seconds
     time_t t = (time_t)(days * 86400LL + 
