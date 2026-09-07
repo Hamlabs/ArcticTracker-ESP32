@@ -1,4 +1,4 @@
-// Borrowed from:
+// Borrowed and adapted from:
 // https://github.com/nopnop2002/esp-idf-ssd1306
 // MIT License
 
@@ -28,6 +28,10 @@ static bool failed = false;
 
 
 
+/**************************************************************************
+ * Initialize the i2c bus 
+ * NOTE: The PMU also uses the i2c bus and assumes this function is used
+ **************************************************************************/
 
 void i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset)
 {
@@ -70,6 +74,10 @@ void i2c_master_init(SSD1306_t * dev, int16_t sda, int16_t scl, int16_t reset)
 
 
 
+/************************************************************************
+ * Add display i2c device
+ ************************************************************************/
+
 void i2c_device_add(SSD1306_t * dev, i2c_port_t i2c_num, int16_t reset, uint16_t i2c_address)
 {
 	i2c_device_config_t dev_cfg = {
@@ -96,6 +104,11 @@ void i2c_device_add(SSD1306_t * dev, i2c_port_t i2c_num, int16_t reset, uint16_t
 }
 
 
+
+
+/************************************************************************
+ * Initialize display i2c device
+ ************************************************************************/
 
 void i2c_init(SSD1306_t * dev, int width, int height) {
 	dev->_width = width;
@@ -163,6 +176,10 @@ void i2c_init(SSD1306_t * dev, int width, int height) {
 }
 
 
+/************************************************************************
+ * Display an image on i2c device
+ ************************************************************************/
+
 void i2c_display_image(SSD1306_t * dev, int page, int seg, const uint8_t * images, int width) {
 	if (failed) return;
 	if (page >= dev->_pages) return;
@@ -207,6 +224,10 @@ void i2c_display_image(SSD1306_t * dev, int page, int seg, const uint8_t * image
 }
 
 
+/************************************************************************
+ * Set contrast on i2c device (display)
+ ************************************************************************/
+
 void i2c_contrast(SSD1306_t * dev, int contrast) {
 	if (failed) return;
 	uint8_t _contrast = contrast;
@@ -226,6 +247,10 @@ void i2c_contrast(SSD1306_t * dev, int contrast) {
 
 
 
+/************************************************************************
+ * Tell i2c device (display) to go to sleep
+ ************************************************************************/
+
 void i2c_sleep(SSD1306_t * dev, bool sleep) {
 	if (failed) return;
 	uint8_t out_buf[3];
@@ -243,6 +268,9 @@ void i2c_sleep(SSD1306_t * dev, bool sleep) {
 
 
 
+/************************************************************************
+ * Tell i2c device (display) to scroll using hardware
+ ************************************************************************/
 
 void i2c_hardware_scroll(SSD1306_t * dev, ssd1306_scroll_type_t scroll) {
 	if (failed) return;

@@ -27,7 +27,6 @@ static FBQSW_t *psub;
 
 static uint16_t tag_seq = 0;
 static uint16_t prev_seq = 0;
-static uint16_t prev_crc = 0;
 
 static uint8_t get_bit (void); 
 static bool crc_match(FBUF*, uint16_t, uint16_t *crc);

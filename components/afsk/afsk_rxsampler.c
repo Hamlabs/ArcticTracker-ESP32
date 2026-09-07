@@ -52,7 +52,6 @@ static uint32_t wlength = 0;
 
 static adcsampler_t adc;
 static mutex_t rxsampler_mutex;
-static bool doreset = false; 
 
 
 

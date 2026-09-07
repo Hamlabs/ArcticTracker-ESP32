@@ -41,16 +41,37 @@ static int pmu_register_write_byte(uint8_t devAddr, uint8_t regAddr, uint8_t *da
 
 static XPowersPMU PMU;
 
+
+
 /* 
- * I2C bus is initialized in the display_code. 
+ * NOTE: I2C bus is initialized in the display_code. 
  */
 extern i2c_master_bus_handle_t i2c_bus;
 
 
 
+/*******************************************************************************************
+ * i2c master initialization
+ *******************************************************************************************/
+
+esp_err_t pmu_i2c_init(void)
+{
+    /* Note: The i2c bus is shared with the display driver and we assume it is already
+     * initialized there 
+     */
+
+    i2c_device_config_t i2c_dev_conf = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = PMU_SLAVE_ADDRESS,
+        .scl_speed_hz = I2C_MASTER_FREQ_HZ,
+    };
+    return i2c_master_bus_add_device(i2c_bus, &i2c_dev_conf, &pmu_i2c_device);
+
+}
+
+
 /************************************************************
- * Initialize the PMU. We assume that I2C bus is already 
- * initialized  
+ * Initialize the PMU.
  ************************************************************/
 
 esp_err_t pmu_init()
@@ -369,25 +390,6 @@ void pmu_printInfo()
     
 }
 
-
-/*******************************************************************************************
- * i2c master initialization
- *******************************************************************************************/
-
-esp_err_t pmu_i2c_init(void)
-{
-    /* Note: The i2c bus is shared with the display driver and we assume it is already
-     * initialized there 
-     */
-
-    i2c_device_config_t i2c_dev_conf = {
-        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-        .device_address = PMU_SLAVE_ADDRESS,
-        .scl_speed_hz = I2C_MASTER_FREQ_HZ,
-    };
-    return i2c_master_bus_add_device(i2c_bus, &i2c_dev_conf, &pmu_i2c_device);
-
-}
 
 
 /****************************************************************************************
