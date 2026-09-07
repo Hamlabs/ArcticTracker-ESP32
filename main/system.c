@@ -563,19 +563,18 @@ time_t timegm(struct tm *tm)
     mutex_lock(time_mutex);
 
     int year = tm->tm_year + 1900;
-    int month = tm->tm_mon + 1; // tm_mon is 0-11
+    int month = tm->tm_mon + 1; /* tm_mon is 0-11 */
     int day = tm->tm_mday;
+    int mp = month + (month > 2 ? -3 : 9);
 
-    // Convert month/year rules to shift leap days to the end of the calculation
-    if (month < 3) {
-        month += 12;
-        year--;
-    }
+    year -= month <= 2;
 
-    // Calculate total elapsed days since the epoch base line
-    long long days = (146097LL * year / 400) + 
-                     (153 * month + 2) / 5 + 
-                     day - 719468LL;
+    /* Convert civil date to days since 1970-01-01 in UTC. */
+    int era = (year >= 0 ? year : year - 399) / 400;
+    unsigned yoe = year - era * 400;
+    unsigned doy = (153 * mp + 2) / 5 + day - 1;
+    unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    long long days = (long long) era * 146097LL + doe - 719468LL;
 
     // Convert everything down to absolute seconds
     time_t t = (time_t)(days * 86400LL + 
