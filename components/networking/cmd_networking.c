@@ -398,9 +398,9 @@ void register_wifi()
     ADD_CMD("netmon",        &_param_netmon,      "Network monitor On/off setting", "[on|off]");
     ADD_CMD("netmon-port",   &_param_netmon_port, "Network monitor port number", "<port>");
 #if defined(ARCTIC4_UHF)   
-    ADD_CMD("logmon",        &_param_logmon,      "UDP log monitor On/off setting", "[on|off]");
-    ADD_CMD("logmon-host",   &_param_logmon_host, "UDP log monitor host", "<host>");
-    ADD_CMD("logmon-port",   &_param_logmon_port, "UDP log monitor port number", "<port>");
+ /*   ADD_CMD("logmon",        &_param_logmon,      "UDP log monitor On/off setting", "[on|off]");
+      ADD_CMD("logmon-host",   &_param_logmon_host, "UDP log monitor host", "<host>");
+      ADD_CMD("logmon-port",   &_param_logmon_port, "UDP log monitor port number", "<port>"); */
 #endif
 }
 

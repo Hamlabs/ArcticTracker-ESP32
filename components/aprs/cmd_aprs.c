@@ -404,8 +404,9 @@ void register_aprs()
     ADD_CMD("repeat",     &_param_repeat,      "# Times to repeat posreports (0-3)", "[val]");           
     ADD_CMD("trklog-int", &_param_trklogint,   "Interval for track logging (seconds)", "[<val>]");
     ADD_CMD("trklog-ttl", &_param_trklogttl,   "Max time to keep tracklog entries (hours)", "[<val>]");
-    ADD_CMD("trklog-key", &_param_serverkey,   "KEY for authenticating tracklog-messages to Polaric Server", "[<key>]");
+    ADD_CMD("server-key", &_param_serverkey,   "KEY for authenticating server-access to Polaric Server", "[<key>]");
     ADD_CMD("trklog-url", &_param_trklogurl,   "URL for posting tracklog updates to Polaric Server", "[<url>]");
+    ADD_CMD("server-key", &_param_serverkey,   "KEY for authenticating server-access to Polaric Server", "[<key>]");
     ADD_CMD("crypto",     &_param_crypto_on,   "Encrypt APRS reports", "[on|off]");
     ADD_CMD("crypto-key", &_param_cryptkey,    "Key for encrypting APRS packets",   "[<val>]");
     ADD_CMD("maxframe",   &_param_maxframe,    "APRS max frames in a transmission", "[<val>]");

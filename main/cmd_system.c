@@ -402,10 +402,12 @@ static int do_tasks(int argc, char** argv)
 
 static int do_log(int argc, char** argv)
 {
-    if (argc<=1) {
+    if (argc<=1) 
         printf("Log command needs arguments\n");
-        return 0;
-    }
+    
+    else if (argc==2 && strcasecmp(argv[1], "tags")==0)
+        print_logtags();
+    
     else {
         char buf[24];
         if (strlen(argv[1]) > 20 || !logLevel_hasTag(argv[1])) {
@@ -414,11 +416,11 @@ static int do_log(int argc, char** argv)
         }
         sprintf(buf, "%s", (strcmp(argv[1], "*")==0 ? "ALL" : argv[1]) );
         uint8_t lvl = logLevel_get(buf);
-        
+
         if (argc==2) 
             printf("LGLV %s %s\n", argv[1], loglevel2str(lvl));
         else {
-            if (strcasecmp(argv[2], "delete")==0)
+            if (strcasecmp(argv[2], "reset")==0)
                 logLevel_delete(buf); 
             else
                 logLevel_set(buf, (uint8_t) str2loglevel(argv[2])); 
@@ -697,7 +699,7 @@ void register_system()
     ADD_CMD("sysinfo",   &do_sysinfo,      "System info", NULL);    
     ADD_CMD("restart",   &do_restart,      "Restart the system", NULL);
     ADD_CMD("tasks",     &do_tasks,        "Get information about running tasks", NULL);
-    ADD_CMD("log",       &do_log,          "Set loglevel (for debugging/testing)", "<tag> | * [<level>|delete]") ;
+    ADD_CMD("log",       &do_log,          "Set loglevel (for debugging/testing) level", "tags | <tag> | * [<level>|reset]") ;
     ADD_CMD("time",      &do_time,         "Get date and time", NULL);
     ADD_CMD("timezone",  &_param_timezone, "Set timezone", "<tz-string>");
     ADD_CMD("nmea",      &do_nmea,         "Monitor GPS NMEA datastream", "[raw]");
