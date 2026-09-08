@@ -270,7 +270,7 @@ static void rf2inet(FBUF *frame)
   
     fbuf_reset(frame);
     uint8_t ndigis =  ax25_decode_header(frame, &from, &to, digis, &ctrl, &pid);
-    char type = fbuf_getChar(frame);
+    fbuf_getChar(frame); // type
     bool own = addrCmp(&mycall, &from); 
   
     /* Dont igate it if it is igated earlier */

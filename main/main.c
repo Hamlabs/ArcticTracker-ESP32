@@ -227,6 +227,7 @@ void app_main()
 {       
     /* Change function of some pins through IO mux to be GPIO 
      * FIXME: Use macros from defines.h to identify GPIOs
+     * FIXME: These are deprecated. 
      */
 #if DEVICE==T_TWR
     gpio_iomux_in (RADIO_PIN_TXD,    U0RXD_IN_IDX); 
@@ -269,7 +270,7 @@ void app_main()
     
     
     if (psa_crypto_init() != 0) {
-        ESP_LOGE("APP", "Failed to initialize PSA Crypto subsystem!");
+        ESP_LOGE(TAG, "Failed to initialize PSA Crypto subsystem!");
     }
     
     time_init(); 

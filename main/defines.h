@@ -270,7 +270,7 @@
 /* These are for the SSD1306 display on I2C */
 #if DEVICE == T_TWR
 
-#define DISPLAY_TYPE     3
+#define DISPLAY_TYPE     2
 #define DISP_SDA_PIN     8
 #define DISP_SCL_PIN     9
 
@@ -386,7 +386,7 @@
 #define STACK_HTTPD          5800
 #define STACK_LORA_RXDECODER 4100
 #define STACK_LORA_TXENCODER 4200
-#define STACK_BATTMON        3000
+#define STACK_BATTMON        3300
     
 #define CORE_AUTOCON        0
 #define CORE_NMEALISTENER   1
@@ -395,7 +395,7 @@
 #define CORE_UI_SRV         0
 #define CORE_GUI            1
 #define CORE_AFSK_RXDECODER 0
-#define CORE_HDLC_RXDECODER 1
+#define CORE_HDLC_RXDECODER 0
 #define CORE_HDLC_TXENCODER 1
 #define CORE_HDLC_TEST      1
 #define CORE_HLIST          0

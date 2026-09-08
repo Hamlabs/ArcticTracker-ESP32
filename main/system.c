@@ -407,6 +407,7 @@ int16_t batt_status(char* line1, char* line2)
 }
 
 
+
 static bool chg_complete = false; 
 
 bool batt_chgComplete() {
@@ -709,16 +710,16 @@ char* date2str(char* buf, time_t time, bool local)
 static char* logtags[] = {
 #if defined(ARCTIC4_UHF)   
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
-    "esp-tls", "radio", "ui", "gps", "uart", "digi", "igate", "tcp-cli", "trackstore", 
+    "esp-tls", "radio", "ui", "gps", "digi", "igate", "tcp-cli", "trackstore", 
     "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", "httpd_uri", "httpd_parse", "mdns", 
-    "gptimer", "lora", "lora-aprs", "spi", "tcpserver", "monitor", "logmon", "cert"
-#define NLOGTAGS 33
+    "gptimer", "lora", "lora-aprs", "spi", "tcpserver", "monitor", "cert"
+#define NLOGTAGS 31
 #else
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
-    "esp-tls", "radio", "ui", "afsk-rx", "hdlc-enc", "hdlc-dec", "gps", "uart", "digi", "igate",
+    "esp-tls", "radio", "ui", "afsk-rx", "hdlc-enc", "hdlc-dec", "gps", "digi", "igate",
     "tcp-cli", "trackstore", "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", 
     "httpd_uri", "httpd_parse", "mdns", "gptimer", "tcpserver", "monitor", "cert"
-#define NLOGTAGS 32
+#define NLOGTAGS 31
 #endif
 };
 
@@ -732,6 +733,20 @@ static char* paramName(char* buf, char* param, int max) {
     snprintf(buf, max, "LGLV.%s", param);
     buf[max-1] = '\0';
     return buf;
+}
+
+
+void print_logtags() {
+    int nchars = 0; 
+    for (int i=0; i<NLOGTAGS; i++) {
+        nchars += printf("%s", logtags[i]);
+        if (nchars >= 78 || i>=NLOGTAGS-1) {
+            printf("\n"); 
+            nchars=0;
+        }
+        else 
+            nchars += printf(", ");
+    }
 }
 
 

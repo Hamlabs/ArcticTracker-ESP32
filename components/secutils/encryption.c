@@ -223,17 +223,21 @@ char* sec_hmac_sapi(char* res, int hlen, uint8_t* data1, int len1, uint8_t* data
 
 
 /* Use any key that is provided */
-char* sec_hmac(const uint8_t* key, int keylen, char* res, int hlen, uint8_t* data1, int len1, uint8_t* data2, int len2)
+char* sec_hmac(const uint8_t* k, int keylen, char* res, int hlen, uint8_t* data1, int len1, uint8_t* data2, int len2)
 {      
     char b64hash[HMAC_B64_SIZE+1];
     uint8_t hash[HMAC_SHA256_SIZE];
+    const uint8_t * key;
     
     /* IF key length is more than HMAC_KEY_SIZE, use a hash of it instead */
     if (keylen > HMAC_KEY_SIZE) {
-        mbedtls_sha256((unsigned char*) key, keylen, hash, 0);
-        memcpy(key, hash, HMAC_SHA256_SIZE);
+        mbedtls_sha256((unsigned char*) k, keylen, hash, 0);
         keylen = HMAC_SHA256_SIZE;
+        key = hash;
     }
+    else
+        key = k;
+    
     /* Consider if this and the padding can be done once and stored. */
     
    /*

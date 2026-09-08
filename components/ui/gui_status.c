@@ -239,8 +239,6 @@ static void status_screen2() {
     }
     else if (radio_is_on()) {
         gui_setPause(500); 
-        
-        int rssi=radio_getRssi();
         uint8_t sf = get_byte_param("LORA_SF", DFL_LORA_SF);
         uint8_t cr = get_byte_param("LORA_CR", DFL_LORA_CR);
         uint32_t f = get_i32_param("FREQ", DFL_FREQ);

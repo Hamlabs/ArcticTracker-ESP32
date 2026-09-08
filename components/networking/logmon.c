@@ -1,6 +1,7 @@
 /* Copyright (C) 2026 Øyvind Hanssen, LA7ECA
  *
  * Arctic Tracker - Monitor APRS traffic over UDP using syslog protocol
+ * Work in progress. Not ready yet.
  *
  * Arctic Tracker is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -141,8 +142,6 @@ static void logmon_worker(void *wParam)
 
 
 static char* getFromFrame(char* buf, char* frame) {
-    char type = *(strchr(frame, ':')+1);
-    char from[11];
     // TBD
     return buf;
 }

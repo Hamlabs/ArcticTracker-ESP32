@@ -412,27 +412,27 @@ char* param_parseBool(const char* key, char* val, char* buf)
  * Set entry of various types
  ********************************************************************************/
 
-void set_byte_param(const char* key, uint8_t val) {
+void set_byte_param(const char* key, const uint8_t val) {
     ESP_ERROR_CHECK(nvs_set_u8(nvs, key, val));
 }
 
-void set_u16_param(const char* key, uint16_t val) {
+void set_u16_param(const char* key, const uint16_t val) {
     ESP_ERROR_CHECK(nvs_set_u16(nvs, key, val));
 }
 
-void set_i32_param(const char* key, int32_t val) {
+void set_i32_param(const char* key, const int32_t val) {
     ESP_ERROR_CHECK(nvs_set_i32(nvs, key, val));
 }
 
-void set_u32_param(const char* key, uint32_t val) {
+void set_u32_param(const char* key, const uint32_t val) {
     ESP_ERROR_CHECK(nvs_set_u32(nvs, key, val));
 }
 
-void set_str_param(const char* key, char* val) {
+void set_str_param(const char* key, const char* val) {
     ESP_ERROR_CHECK(nvs_set_str(nvs, key, val));
 }
 
-void set_bin_param(const char* key, const void* val, size_t len) {
+void set_bin_param(const char* key, const void* val, const size_t len) {
     ESP_ERROR_CHECK(nvs_set_blob(nvs, key, val, len));
 }
 

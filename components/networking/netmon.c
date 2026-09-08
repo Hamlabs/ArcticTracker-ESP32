@@ -13,7 +13,6 @@
 
 
 
-static const char *TAG="tcpserver";
 static bool mon_ax25 = true; 
 static ServerInfo_t *srv = NULL;
 static int clients = 0; 

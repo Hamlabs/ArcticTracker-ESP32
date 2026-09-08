@@ -192,7 +192,6 @@ int gui_pause = 1000;
 int paused = 0;
 static void gui_thread (void* arg) 
 {
-    int n = 0;
     while (true) {
         sleepMs(gui_pause);
         paused += gui_pause; 

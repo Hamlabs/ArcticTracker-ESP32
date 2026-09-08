@@ -15,7 +15,7 @@
 
 
 
-static const char *TAG="tcpserver";
+static const char* TAG="tcpserver";
 
 void tcp_test_worker(void *wParam);
 
@@ -100,7 +100,7 @@ static void tcp_server(void *pvParam)
 
 
 
-char* sockaddr2ip(struct sockaddr *sa, char *buf) 
+char* sockaddr2ip(sockaddr_t *sa, char *buf) 
 {
     if (sa->sa_family == AF_INET) {
         struct sockaddr_in *ipv4 = (struct sockaddr_in *)sa;

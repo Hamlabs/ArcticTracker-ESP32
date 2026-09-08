@@ -24,6 +24,8 @@ typedef struct {
 extern char default_ssid[];
 
 typedef struct _serverinfo ServerInfo_t;
+typedef struct sockaddr sockaddr_t;
+
 
 /* mdns functions */
 char* mdns_hostname(char*); 
@@ -64,7 +66,7 @@ void   httpd_enable(bool);
 /* Utilities */
 char* mac2str(uint8_t *x);
 void  str2ip(esp_ip4_addr_t *ip, char* str);
-char* sockaddr2ip(struct sockaddr *sa, char *buf);
+char* sockaddr2ip(sockaddr_t *sa, char *buf);
 
 /* TCP server, netmon */
 ServerInfo_t * tcpserver_start(int port, TaskFunction_t worker, int stack, char* name);

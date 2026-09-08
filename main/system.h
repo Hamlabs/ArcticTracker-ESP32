@@ -62,6 +62,7 @@ void getPath(char* path, char* fname, bool allowroot);
 bool changeWD(char* wd);
 
 /* Logging */
+void print_logtags();
 char* loglevel2str(esp_log_level_t lvl);
 esp_log_level_t str2loglevel(char* str);
 
