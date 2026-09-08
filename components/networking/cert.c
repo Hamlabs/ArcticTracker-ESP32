@@ -87,6 +87,8 @@ const uint8_t *cert_get_key_pem(size_t *len)
     return _key_pem;
 }
 
+
+static bool load_certs();
 static int add_dns_san(mbedtls_x509write_cert *crt, const char **dns_names, size_t count);
 static int add_dns_san_csr(mbedtls_x509write_csr *csr, const char **dns_names, size_t count);
 static size_t asn1_len_bytes(size_t len);
@@ -507,7 +509,21 @@ static int asn1_write_len_fwd(unsigned char **p, const unsigned char *end, size_
  ********************************************************************************/
 
 bool cert_generate(void) {
-    return _generate() == 0;
+    int res = _generate();
+    if (res==0) {
+        if (load_certs()) {
+            ESP_LOGI(TAG, "New certificate created");
+            if (load_certs()) {
+                ESP_LOGI(TAG, "New certificate loaded.");
+                rest_stop();
+                rest_start(HTTP_PORT, HTTPS_PORT, "/");
+
+            }
+            else
+                ESP_LOGE(TAG, "Loading of new certificate failed.");
+        }
+    }
+    return (res==0);
 }
 
 
@@ -521,18 +537,10 @@ bool cert_init(void)
 {
     if (_initialized)
         return true;
-
-    /* Try to load an existing certificate and private key from NVS. */
-    int clen = get_bin_param(NVS_KEY_CERT, _cert_pem, CERT_PEM_BUF_SIZE, NULL);
-    int klen = get_bin_param(NVS_KEY_KEY,  _key_pem,  KEY_PEM_BUF_SIZE,  NULL);
     
     /* Cert loaded from NVS? */
-    if (clen > 0 && klen > 0) {
-        _cert_len = (size_t)clen;
-        _key_len  = (size_t)klen;
-        ESP_LOGI(TAG, "Certificate loaded from NVS "
-                 "(cert=%u bytes, key=%u bytes)",
-                 (unsigned)_cert_len, (unsigned)_key_len);
+    if (load_certs()) {
+        ESP_LOGI(TAG, "Certificate loaded from NVS");
         _initialized = true;
         return true;
     }
@@ -546,6 +554,17 @@ bool cert_init(void)
 
     _initialized = true;
     return true;
+}
+
+
+
+static bool load_certs() {
+    /* Try to load an existing certificate and private key from NVS. */
+    int clen = get_bin_param(NVS_KEY_CERT, _cert_pem, CERT_PEM_BUF_SIZE, NULL);
+    int klen = get_bin_param(NVS_KEY_KEY,  _key_pem,  KEY_PEM_BUF_SIZE,  NULL);
+    _cert_len = clen;
+    _key_len = klen;
+    return (clen > 0 && klen > 0);
 }
 
 
@@ -584,6 +603,13 @@ int cert_sign(void) {
         set_bin_param(NVS_KEY_CERT, _cert_pem, strlen((char*) _cert_pem)+1);
         delete_param(NVS_KEY_CSR);
         ESP_LOGI(TAG, "Successful signing of certificate.");
+        if (load_certs()) {
+            ESP_LOGI(TAG, "Signed certificate loaded.");
+            rest_stop();
+            rest_start(HTTP_PORT, HTTPS_PORT, "/");
+        } 
+        else
+            ESP_LOGW(TAG, "Loading of signed certificate failed.");
         return 0;
     }
     else if (status==-1) 
