@@ -38,7 +38,7 @@ It is work-in-progress but many features are fairly complete now. The following 
 * Encryption of APRS packets
 * Receiving APRS packets. 
 * Add highly compressed earlier position reports to packets. This can improve trails significantly.
-  See [how this is done here](http://hamlabs.no/2020/11/02/improving-trails-with-arctic-tracker/). 
+  See [how this is done here](http://idl.iscram.org/files/oyvindhanssen/2021/2350_OyvindHanssen2021.pdf). 
 * Digipeater and igate. 
 * Basic information on battery and charging.
 * Track logging. Store positions in flash memory e.g. every 5 seconds and upload to a REST
