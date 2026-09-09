@@ -26,24 +26,23 @@ The LilyGo radios and the VHF version use the SA868 and the UHF version uses the
 ## Implemented features
 
 This is the firmware. It is implemented in C and based on the ESP-IDF which again is based on FreeRTOS. 
-It is work-in-progress but many features are fairly complete now. The following features are implemented:
+Many features are fairly complete now. The following features are implemented:
 
 * Command shell running on a serial port (USB). This allows settings of various parameters, using persistent storage (flash).
 * Internetworking using WIFI. Automatically connect to access points available. User can set up 
   an ordered list of APs to try. It can also function as its own access point.
-* Webserver/REST API.
+* Webserver/REST API. Secured using TLS and HMAC based authentication.
 * Interface with GPS for position and time. 
 * OLED display, status screens and menu. Use button to operate.
-* Sending APRS packets. Tracking, smart beaconing.
-* Encryption of APRS packets
-* Receiving APRS packets. 
+* Sending and receiving of APRS packets. Tracking, smart beaconing.
+* Encryption of APRS packets.
 * Add highly compressed earlier position reports to packets. This can improve trails significantly.
-  See [how this is done here](http://hamlabs.no/2020/11/02/improving-trails-with-arctic-tracker/). 
+  See [how this is done here](http://idl.iscram.org/files/oyvindhanssen/2021/2350_OyvindHanssen2021.pdf). 
 * Digipeater and igate. 
-* Basic information on battery and charging.
+* Automatic management and information on battery and charging.
 * Track logging. Store positions in flash memory e.g. every 5 seconds and upload to a REST
   API on a Polaric Server when network is available.
-* LoRa APRS (on Arctic Tracker hardware)
+* LoRa APRS (on supported hardware)
 * Firmware upgrades over the air (OTA)
 
 ## REST API and security
