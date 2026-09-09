@@ -1,15 +1,15 @@
 ![Arctic Tracker and LilyGo T-TWR](trackers.jpg)
 # ArcticTracker-ESP32
 
-Arctic Tracker (v.3 and 4) is an APRS tracker platform based on the ESP32S3 MCU module, a GPS, a display and a 
-VHF transceiver module. Hardware prototypes were created mainly as experimental prototypes to show how we can build a 
+*Arctic Tracker* (v.3 and 4) is an APRS tracker platform based on the ESP32S3 MCU module, a GNSS (GPS), a display and a 
+VHF or UHF transceiver module. Hardware prototypes were created initially as experimental prototypes to show how we can build a 
 tracker using affordable modules. The Arctic Tracker is also a IoT device capable of using WIFI and the internet when this 
-is available: For easy configuration, for pushing APRS data, etc. It can also function as a igate. 
+is available: For easy configuration, for pushing APRS data, etc. It can also function as a igate or digipeater. 
 
 It is based on the earlier Arctic Tracker (v.2) prototype which used an ESP32. This was again based on the even earlier 
 Arctic Tracker (v.1) prototype which used a Teensy 3 MCU module and a ESP-8266 module (with NodeMCU). 
 
-See also the [Polaric Server project](https://github.com/PolaricServer).
+See also the [Polaric Server project](https://github.com/PolaricServer). 
 
 [Documentation](https://doc.arctictracker.no) website.  
 
@@ -25,53 +25,46 @@ The LilyGo radios and the VHF version use the SA868 and the UHF version uses the
 
 ## Implemented features
 
-This is the firmware. It is implemented in C and based on the ESP-IDF which again is based on FreeRTOS. 
+This project is about the firmware. It is implemented in C and based on the ESP-IDF which again is based on FreeRTOS. 
 Many features are fairly complete now. The following features are implemented:
 
 * Command shell running on a serial port (USB). This allows settings of various parameters, using persistent storage (flash).
 * Internetworking using WIFI. Automatically connect to access points available. User can set up 
   an ordered list of APs to try. It can also function as its own access point.
-* Webserver/REST API. Secured using TLS and HMAC based authentication.
-* Interface with GPS for position and time. 
-* OLED display, status screens and menu. Use button to operate.
+* Webserver/REST API for web-apps. Secured using TLS and HMAC based authentication. 
+* OLED display, status screens and menu. Use buttons to operate.
 * Sending and receiving of APRS packets. Tracking, smart beaconing.
-* Encryption of APRS packets.
+* Encryption of APRS packets (optional).
 * Add highly compressed earlier position reports to packets. This can improve trails significantly.
   See [how this is done here](http://idl.iscram.org/files/oyvindhanssen/2021/2350_OyvindHanssen2021.pdf). 
 * Digipeater and igate. 
 * Automatic management and information on battery and charging.
 * Track logging. Store positions in flash memory e.g. every 5 seconds and upload to a REST
-  API on a Polaric Server when network is available.
+  API on a *Polaric Server* when network is available. Can improve trails on maps significantly.
 * LoRa APRS (on supported hardware)
 * Firmware upgrades over the air (OTA)
 
 ## REST API and security
-A REST API is provided for external apps (typically). It mainly has methods for reading and updating settings. A strong authentication scheme based on SHA256 HMAC is used. A web-browser-based client is under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) that are on the same LAN. This is still somewhat work-in-progress...
+A REST API is provided for external apps (typically). It mainly has methods for reading and updating settings. A strong authentication scheme based on SHA256 HMAC is used. A web-browser-based client is also under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) that are on the same LAN.
 
-A [web-client is here](https://github.com/Hamlabs/ArcticTracker-Webapp): This is also contained in the tracker itself to allow configuration using the softAP mode. A smartphone app is under way. 
+The [web-client source code is here](https://github.com/Hamlabs/ArcticTracker-Webapp): It is contained in the tracker itself to allow configuration using the softAP mode. A smartphone app is under way. 
 
-The webserver uses HTTPS (SSL/TLS) with a self-signed certificate. This means that you will need to accept an exception for this certificate in the browser the first time you access the tracker. In the current version the certificate is built manually and embedded in the firmware. This means that the private key can be exposed. This doesn't affect the authentication though which is based on a separate shared key and with TLS 1.3 the communication is still secure.
-
-In the upcoming release the certificate is automatically generated by the firmware and based on ECC which is more secure and more efficient. It contains the device's id, callsign and a .local domain name. It is self-signed by default, but it may also be able to use a REST API to have it signed by a CA. See [Polaric-CertAuth](https://github.com/PolaricServer/Polaric-Certauth).
+The webserver uses HTTPS (SSL/TLS) with a self-signed certificate. This means that you will need to accept an exception for this certificate in the browser the first time you access the tracker. The certificate is automatically generated by the firmware and based on elliptic curves which is more secure and more efficient. It contains the device's id, callsign and a **.local** domain name. It is self-signed by default, but the tracker may also be able to use a REST API to have it signed by a CA. This is still a bit experimental. See [Polaric-CertAuth](https://github.com/PolaricServer/Polaric-Certauth).
 
 ## Building the firmware
-It can be built with *esp-idf* (version 5.0.x) and the *idf.py* tool. Follow the instructions to install the *esp-idf* and run the necessary scripts there first to set it up. Download the *Arctic Tracker* repository in another directory. cd to this directory and run the following commands to add external components.: 
+It can be built with *esp-idf* (version 5.5.x) and the *idf.py* tool. Follow the instructions to install the *esp-idf* and run the necessary scripts there first to set it up. Download or clone the *Arctic Tracker* repository in another directory. cd to this directory and run the following commands to add external components.: 
   ```
   idf.py add-dependency "espressif/mdns^1.2.4" 
   idf.py add-dependency "espressif/led_strip^2.5.3" 
   ```
-The *led_strip* component is for the LilyGo T-TWR plus (neopixel LED). For this device you will also need to download *XPowersLib* and edit the EXTRA_COMPONENT_DIRS setting in CMakeLists.txt (in the top level directory) to the location where you installed it.
+The *led_strip* component is for the LilyGo T-TWR plus (neopixel LED). You will also need to download *XPowersLib* and edit the EXTRA_COMPONENT_DIRS setting in CMakeLists.txt (in the top level directory) to the location where you installed it. 
 
-It is a good idea to generate a new SSL certificate now and then. You could also just cd to the directory and run the command inside the gencert.sh script. You should have openssl installed on your computer to do this. 
-  ```
-  cd components/networking/cert; sh gencert.sh
-  ```
 You may start menuconfig and go to the *Arctic Tracker Config* and check if the right target device is selected. More settings are in *main/defines.h*.
   ```
   idf.py menuconfig
   ```
   
-To build the firmware, run
+In the *Arctic Tracker* section select the hardware you want to use. To build the firmware, run
   ```
   idf.py build
   ```
@@ -81,11 +74,11 @@ This will build everything. You may flash the firmware directly from idf.py this
   ```
 
 ## Flashing a binary
-We intend to post pre-compiled binaries with each release and are also available [here](https://arctictracker.no/download/). The complicating factor is that there are more than one way to do it and that the firmware consists of multiple parts: The bootloader, the partition table, the webapp, etc.. The most flexible option is probably to use *esptool* or a similar program, but you will need to know some technical details. It is also possible to convert the binary to the UF2 format using *uf2conv* and use a uf2 bootloader.
+It is my intention to post pre-compiled binaries with each release and are also available [here](https://arctictracker.no/download/). The complicating factor is that there are more than one way to do it and that the firmware consists of multiple parts: The bootloader, the partition table, the webapp, etc.. The most flexible option is probably to use *esptool* or a similar program, but you will need to know some technical details. It is also possible to convert the binary to the UF2 format using *uf2conv* and use a uf2 bootloader.
 
-Download the proper *ArcticTracker_xx.zip* file and unpack it in a directory. Go to that directory and use *esptool* or a similar tool (on Windows, we may use the [*flash download tool*](https://www.espressif.com/en/support/download/other-tools) from Expressif). The *flash_all.sh* script shows how to use *esptool*. The same parameters can be used in the Windows *flash download tool*. On a Linux system you may just run the *flash_all.sh* script to flash everything. 
+Download the proper *ArcticTracker_xx.zip* file and unpack it in a directory. Go to that directory and use *esptool* or a similar tool (on Windows, we may use the [*flash download tool*](https://www.espressif.com/en/support/download/other-tools) from Expressif). The *flash_all.sh* script shows how to use *esptool*. The same parameters can be used in the Windows *flash download tool*. On a Linux system the *flash_all.sh* script may be used to flash everything. 
 
-You may choose to update only the app (ArcticTracker.bin) or the Webapp (webapp.bin) if you want and if the other parts are in place. Use the the addresses provided. 
+It is also my intention to post binaries for OTA installation of the latest releases. 
 
 
 ## Setup of the tracker - the command shell
@@ -98,9 +91,9 @@ The tracker is also able to function as its own access point (menu or *'softap'*
 The api-key and the softap key is '123456789' by default. Please change it at your first convenience.
 
 ## Issues and work in progress
-When working with a version 4 tracker we have also moved on to exploring LoRa APRS (and possibly FSK modes) on 70 cm.  In Norway it is now legal to use up to 200 Khz bandwith from 433.600 to 434 MHz, so an Arctic Tracker 4 UHF PCB (with a LoRa module) is being tested. A version 4 for VHF/plain old APRS is also being tested and it looks promising. I hope to publish some on this soon. 
+When working with a version 4 tracker we have also moved on to exploring LoRa APRS (and possibly FSK modes) on 70 cm. For example HAMs in Norway can use up to 200 Khz bandwith from 433.600 to 434 MHz, so an Arctic Tracker 4 UHF PCB (with a LoRa module) has been tested for a while now and the results are promising. A version 4 for VHF/plain old APRS is still being worked on but more limited maybe since (frankly speaking) LoRa APRS is a more effective mode. Also, security and encryption of packets is being developed. In some countries (including Norway) encryption is allowed for HAM-radio when used for emergency traffic.
 
-Receiving packets is more complicated than transmitting and involve some DSP work and sampling from the ADC. This seems to work reasonably well, though it still somewhat work-in-progress. It can work without the squelch signal now. At least in my setup it seems the SA-868 need a rather strong signal to open the squelch even at the lowest setting (it may be better outside my shack where there is less computer noise).
+Receiving AFSK APRS packets is more complicated than transmitting and involve some DSP work and sampling from the ADC. This seems to work reasonably well, though it still somewhat work-in-progress. It can work without the squelch signal (using a *softsquelch* feature). At least in my setup it seems the SA-868 need a rather strong signal to open the squelch even at the lowest setting (it may be better outside my shack where there is less computer noise). 
 
 The SA868 comes with a programmable version and I wonder if it could used and maybe optimized a bit for APRS? 
 
