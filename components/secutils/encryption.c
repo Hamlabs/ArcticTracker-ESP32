@@ -43,7 +43,10 @@
 #define SALT_SAPIKEY "*E^o2Zse@!_rQp:kL%{4qL.~!v[n&HS)"
 #define SALT_APIKEY  "Qcb_N56Z9e@A1.8),&#++ekwR]?xc<y_"
 
-
+/* 
+ * Salts allows different keys to be derived for different purposes. They do not
+ * have to be secret, but should have some entropy.
+ */
 
 static uint8_t _cryptkey[DERIVED_KEY_LENGTH]; 
 static uint8_t _apikey[DERIVED_KEY_LENGTH]; 

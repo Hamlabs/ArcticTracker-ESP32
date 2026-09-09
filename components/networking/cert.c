@@ -557,6 +557,9 @@ bool cert_init(void)
 }
 
 
+/***********************************************************************
+ * Load certificates from NVS so webserver can use it
+ ***********************************************************************/
 
 static bool load_certs() {
     /* Try to load an existing certificate and private key from NVS. */
@@ -579,6 +582,7 @@ static bool load_certs() {
  *      -3 CA URL not set. 
  *      or HTTP status code from calling CA REST service
  ***************************************************************************************/
+
 int cert_sign(void) {
     /* 
      * Try to load the CSR from the NVS.

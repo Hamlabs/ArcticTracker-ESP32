@@ -10,8 +10,8 @@
 
 
 /* Version of software */
-#define VERSION_SSTRING "4.0"
-#define VERSION_STRING  "v4.0"
+#define VERSION_SSTRING "4.1"
+#define VERSION_STRING  "v4.1"
 
 
 #define FW_NAME "Arctic Tracker"
@@ -74,7 +74,7 @@
 #define AP_MAX_CLIENTS    4
 
 /* Time between connect attempts */
-#define AUTOCONNECT_PERIOD 240
+#define AUTOCONNECT_PERIOD 300
 
 
 /* 
@@ -131,8 +131,7 @@
 #define RADIO_PIN_PTT       41
 #define RADIO_PIN_PD        40
 #define RADIO_PIN_LOWPWR    38
-#define RADIO_PIN_TXSEL     17 
-#define RADIO_PIN_SQUELCH   15
+#define RADIO_PIN_TXSEL     17
 
 /* Radio audio input */
 #define RADIO_INPUT          1  
@@ -145,7 +144,10 @@
 #if T_TWR_VER == 21
 #define RADIO_PIN_SQUELCH    2
 #define RADIO_PIN_MICSEL    17
+#else
+#define RADIO_PIN_SQUELCH   15
 #endif
+
 
 
 #elif defined ARCTIC4_UHF
