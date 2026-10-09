@@ -1,13 +1,10 @@
 ![Arctic Tracker and LilyGo T-TWR](trackers.jpg)
 # ArcticTracker-ESP32
 
-*Arctic Tracker* (v.3 and 4) is an APRS tracker platform based on the ESP32S3 MCU module, a GNSS (GPS), a display and a 
+*Arctic Tracker* is an APRS tracker platform based on the ESP32-S3 microcontroller module, a GNSS (GPS), a display and a 
 VHF or UHF transceiver module. Hardware prototypes were created initially as experimental prototypes to show how we can build a 
 tracker using affordable modules. The Arctic Tracker is also a IoT device capable of using WIFI and the internet when this 
 is available: For easy configuration, for pushing APRS data, etc. It can also function as a igate or digipeater. 
-
-It is based on the earlier Arctic Tracker (v.2) prototype which used an ESP32. This was again based on the even earlier 
-Arctic Tracker (v.1) prototype which used a Teensy 3 MCU module and a ESP-8266 module (with NodeMCU). 
 
 See also the [Polaric Server project](https://github.com/PolaricServer). 
 
@@ -21,7 +18,7 @@ See also the [Polaric Server project](https://github.com/PolaricServer).
 * Arctic Tracker 4 
 * Arctic Tracker 4 UHF (LoRa APRS)
 
-The LilyGo radios and the VHF version use the SA868 and the UHF version uses the Lora1268F30-Mini (from NiceRF). 
+The LilyGo radios and the VHF version use the SA868 and the UHF version currently uses the Lora1268F30-Mini (from NiceRF). 
 
 ## Implemented features
 
@@ -31,10 +28,11 @@ Many features are fairly complete now. The following features are implemented:
 * Command shell running on a serial port (USB). This allows settings of various parameters, using persistent storage (flash).
 * Internetworking using WIFI. Automatically connect to access points available. User can set up 
   an ordered list of APs to try. It can also function as its own access point.
-* Webserver/REST API for web-apps. Secured using TLS and HMAC based authentication. 
+* Webserver/REST API for web-apps. Secured using TLS and HMAC based authentication.
+* Automatic generation of certificate (self-signed and CSR). 
 * OLED display, status screens and menu. Use buttons to operate.
 * Sending and receiving of APRS packets. Tracking, smart beaconing.
-* Encryption of APRS packets (optional).
+* Strong encryption of APRS packets (optional).
 * Add highly compressed earlier position reports to packets. This can improve trails significantly.
   See [how this is done here](http://idl.iscram.org/files/oyvindhanssen/2021/2350_OyvindHanssen2021.pdf). 
 * Digipeater and igate. 
@@ -45,7 +43,7 @@ Many features are fairly complete now. The following features are implemented:
 * Firmware upgrades over the air (OTA)
 
 ## REST API and security
-A REST API is provided for external apps (typically). It mainly has methods for reading and updating settings. A strong authentication scheme based on SHA256 HMAC is used. A web-browser-based client is also under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers (or at least finding their IP addresses) that are on the same LAN.
+A REST API is provided for external apps (typically). It mainly has methods for reading and updating settings. A strong authentication scheme based on SHA256 HMAC is used. A web-browser-based client is also under development and the tracker support CORS to allow clients have origins other than the tracker itself. The tracker supports mDNS which allows discovering trackers that are on the same LAN.
 
 The [web-client source code is here](https://github.com/Hamlabs/ArcticTracker-Webapp): It is contained in the tracker itself to allow configuration using the softAP mode. A smartphone app is under way. 
 
