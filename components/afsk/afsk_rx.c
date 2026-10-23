@@ -119,6 +119,8 @@ static void afsk_process_sample(int8_t curr_sample);
 static void afsk_rxdecoder(void* arg);
 static void doFrame(enum fir_filters f);
 static void checkFrame();
+static void reset_all_fir_filters(void);
+static void reset_decode_state(void);
    
 
 
@@ -231,16 +233,14 @@ static int8_t fir_filter(int8_t s, enum fir_filters f)
   int16_t *Bmem = fir_table[f].mem;
   
   int8_t i;
-  int16_t y;
+  int16_t y = 0;
   
+  for (i = Q; i > 0; i--)
+    Bmem[i] = Bmem[i - 1];
   Bmem[0] = s;
-  y = 0;
   
-  for (i = Q; i >= 0; i--)
-  {
+  for (i = 0; i <= Q; i++)
     y += Bmem[i] * B[i];
-    Bmem[i + 1] = Bmem[i];
-  }
   
   return (int8_t) (y / 128);
 }
@@ -356,6 +356,7 @@ static void afsk_rxdecoder(void* arg)
         checkFrame(); 
         
         /* Decode the frame */
+        reset_decode_state();
         doFrame(FIR_NONE);
         sleepMs(6);
         if (hdlc_isSuccess()) {
@@ -363,6 +364,7 @@ static void afsk_rxdecoder(void* arg)
           continue;
         }
         
+        reset_decode_state();
         doFrame(FIR_PREEMP);
         sleepMs(6);
         if (hdlc_isSuccess()) {
@@ -370,6 +372,7 @@ static void afsk_rxdecoder(void* arg)
           continue;
         }
         
+        reset_decode_state();
         doFrame(FIR_DEEMP);
         sleepMs(6);
         if (hdlc_isSuccess()) 
@@ -517,6 +520,22 @@ static void afsk_process_sample(int8_t sample)
 
 uint8_t octet = 0; 
 int bit_count = 0;
+
+
+static void reset_all_fir_filters(void)
+{
+    for (size_t i = 0; i < sizeof(fir_table) / sizeof(fir_table[0]); i++)
+        memset(fir_table[i].mem, 0, sizeof(fir_table[i].mem));
+}
+
+
+static void reset_decode_state(void)
+{
+    memset(&afsk, 0, sizeof(afsk));
+    octet = 0;
+    bit_count = 0;
+    reset_all_fir_filters();
+}
 
 /*********************************************************
  * Send a single bit to the HDLC decoder
