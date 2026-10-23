@@ -445,6 +445,9 @@ static void doFrame(enum fir_filters filt) {
      */
     for (int i=0; i<16; i++)
         afsk_process_sample(0);
+
+    for (int i=0; i<7; i++)
+        add_bit(false);
 }
 
 
