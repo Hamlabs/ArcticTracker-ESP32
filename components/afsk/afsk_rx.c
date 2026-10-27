@@ -107,6 +107,7 @@ enum fir_filters
   FIR_DEEMP=5,
   FIR_1200_BP2=6,
   FIR_2200_BP2=7,
+  FIR_12_22_BP2=8,
 };
 
 
@@ -125,6 +126,9 @@ static void reset_decode_state(void);
 
 
 // Tool for designing filters: http://t-filter.engineerjs.com/
+// See also http://vlabs.iitkgp.ac.in/rtes/exp1/Filter/FIR%20Filter%20design.html
+// or https://nrtechstudio.com/tools/fir-filter-calculator/
+
 
 static FIR fir_table[] =
 {
@@ -217,7 +221,17 @@ static FIR fir_table[] =
       0,
     },
   },
+    
   
+  [FIR_12_22_BP2] = {
+    .taps = 29,
+    .coef = {
+      1, 0, -2, -5, -1, 6, 4, 0, 16, 28, -16, -84, -65, 54, 127, 54,
+      -65, -84, -16, 28, 16, 0, 4, 6, -1, -5, -2, 0, 1
+   },
+   .mem = { 0, },
+
+  },
 };
 
 
@@ -354,27 +368,27 @@ static void afsk_rxdecoder(void* arg)
         
         hdlc_next_frame();
         checkFrame(); 
-        
+                
         /* Decode the frame */
         reset_decode_state();
-        doFrame(FIR_NONE);
-        sleepMs(6);
+        doFrame(FIR_DEEMP);
+        sleepMs(16);
         if (hdlc_isSuccess()) {
           ESP_LOGD(TAG, "Decode attempt 1: Success");
           continue;
         }
         
         reset_decode_state();
-        doFrame(FIR_PREEMP);
-        sleepMs(6);
+        doFrame(FIR_NONE);
+        sleepMs(16);
         if (hdlc_isSuccess()) {
           ESP_LOGD(TAG, "Decode attempt 2: Success");
           continue;
         }
         
         reset_decode_state();
-        doFrame(FIR_DEEMP);
-        sleepMs(6);
+        doFrame(FIR_PREEMP);
+        sleepMs(16);
         if (hdlc_isSuccess()) 
           ESP_LOGD(TAG, "Decode attempt 3: Success");
         sleepMs(6);
@@ -443,7 +457,7 @@ static void doFrame(enum fir_filters filt) {
     /* 
      * Add 0-samples after the end of the frame to flush filters
      */
-    for (int i=0; i<16; i++)
+    for (int i=0; i<20; i++)
         afsk_process_sample(0);
 
     for (int i=0; i<7; i++)
@@ -539,6 +553,8 @@ static void reset_decode_state(void)
     bit_count = 0;
     reset_all_fir_filters();
 }
+
+
 
 /*********************************************************
  * Send a single bit to the HDLC decoder
