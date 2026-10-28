@@ -57,6 +57,7 @@ static mutex_t rxsampler_mutex;
 
 void rxSampler_init() 
 {
+    dcd_init();
     adcsampler_init( &adc, RADIO_INPUT);
     raw_sample_buf = malloc(ADC_FRAGMENT_SIZE);   
     sample_buffer = malloc(RX_SAMPLE_BUF_SIZE);
@@ -115,7 +116,7 @@ int rxSampler_getFrame()
             adc_digi_output_data_t  *p = ADC_RESULT(raw_sample_buf,i);
             if (ADC_DATA_VALID(p)) { 
                 int8_t sample = convertSample(ADC_GET_DATA(p));   
-                if (afsk_dcd(sample)) {
+                if (dcd_test(sample)) {
                     if (rxSampler_put(sample))
                         nresults++;
                 }
@@ -134,8 +135,6 @@ int rxSampler_getFrame()
         }
         else if (breakout) 
             break;
-   //     else if (total >= 300000)
-   //         return -1;
         
     }
     return nresults;
@@ -184,7 +183,7 @@ bool rxSampler_put(int8_t sample) {
     {
         *curr_put = sample;
         wlength++;
-        if (curr_put++ == buf_end-1)
+        if (curr_put++ == buf_end-1)        
             curr_put = sample_buffer;
         return true;
     } 

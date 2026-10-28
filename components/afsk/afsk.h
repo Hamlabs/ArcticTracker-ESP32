@@ -24,6 +24,9 @@
 
  void afsk_init(void); 
  
+  
+ void dcd_init();
+ bool dcd_test(int8_t sample);
  
  QueueHandle_t afsk_tx_init(void);
  void afsk_tx_start(void);

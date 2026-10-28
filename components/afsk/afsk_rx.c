@@ -284,52 +284,9 @@ fifo_t* afsk_rx_init()
 
 
 
-
-/************************************************
-  DCD 
-  Return true if there is a AFSK signal present
-  FIXME: This still need some work.. 
- ************************************************/
-
-
 void afsk_setSoftSq(uint16_t sq)
 { softsq = sq; }
 
-
-
-static uint16_t flevel = 0, ndcd=0;
-static bool prev_dcd=false, prev2_dcd=false, dcd=false, result=false;
-
-bool afsk_dcd(int8_t inp) {
-
-    /* 
-     * Put the sample through the bandpass filter.
-     */ 
-    int8_t fsample = fir_filter(inp, FIR_12_22_BP);
-    flevel = flevel * 0.5 + (fsample * fsample) * 0.5; 
-
-    dcd = (flevel > softsq);
-    if (!dcd && !prev_dcd && !prev2_dcd)
-      result = false; 
-    else if (dcd && prev_dcd && prev2_dcd)
-      result = true; 
-    prev2_dcd = prev_dcd;
-    prev_dcd = dcd;
-  
-    return result; 
-}
-
-
-
-
-void afsk_dcd_reset() {
-    flevel = 0;
-    ndcd = 0;
-    prev_dcd = false;
-    prev2_dcd = false;
-    dcd = false;
-    result = false;
-}
 
 
 
