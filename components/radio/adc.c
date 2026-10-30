@@ -14,6 +14,7 @@
  * GNU General Public License for more details: 
  * <https://www.gnu.org/licenses/>.
  */
+
 #include "defines.h"
 #if !defined(ARCTIC4_UHF)
 
@@ -26,7 +27,7 @@
 
 
 
-#define BUF_SIZE       16184   // set the maximum size of the pool in bytes
+#define BUF_SIZE       64736   // set the maximum size of the pool in bytes
 #define READ_LEN        1024   // set the size of the ADC conversion frame, in bytes.
 
 #define SAMPLE_FREQ     9600

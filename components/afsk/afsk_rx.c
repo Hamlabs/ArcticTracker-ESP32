@@ -165,23 +165,24 @@ static FIR fir_table[] =
     },
   },
   
-  
-  /* Lowpass filter to 1200 Hz */
+    
+    /* Lowpass filter to 1200 Hz */
   [FIR_1200_LP] = {
-    .taps = 8,
+    .taps = 10,
     .coef = {
-      -9, 3, 26, 47, 47, 26, 3, -9
+      -5, -9, 3, 26, 47, 47, 26, 3, -9, -5
     },
     .mem = {
       0,
     },
   },  
   
+  
   /* Pre-emphasis filter */
   [FIR_PREEMP] = {
     .taps = 5,
     .coef = {
-      -18, -29, 93, -29, -18
+      -18, -29, 99, -29, -18
     },
     .mem = {
       0,
@@ -192,7 +193,7 @@ static FIR fir_table[] =
   [FIR_DEEMP] = {
     .taps = 5,
     .coef = {
-      6, 39, 60, 39, 6
+      12, 39, 73, 39, 12
     },
     .mem = {
       0,
@@ -319,9 +320,10 @@ static void afsk_rxdecoder(void* arg)
         }
         if (n==0)
           continue;
-        rxSampler_stop(); 
-        rxSampler_start();
-        rxSampler_readLast();
+    
+        rxSampler_stop();     /* Stop ADC. Flush buffer */
+        rxSampler_start();    /* Start ADC */
+        rxSampler_readLast(); /* Set read to last frame written */
         
         hdlc_next_frame();
         checkFrame(); 
@@ -329,7 +331,7 @@ static void afsk_rxdecoder(void* arg)
         /* Decode the frame */
         reset_decode_state();
         doFrame(FIR_DEEMP);
-        sleepMs(16);
+        sleepMs(26);
         if (hdlc_isSuccess()) {
           ESP_LOGD(TAG, "Decode attempt 1: Success");
           continue;
@@ -337,7 +339,7 @@ static void afsk_rxdecoder(void* arg)
         
         reset_decode_state();
         doFrame(FIR_NONE);
-        sleepMs(16);
+        sleepMs(26);
         if (hdlc_isSuccess()) {
           ESP_LOGD(TAG, "Decode attempt 2: Success");
           continue;
@@ -345,7 +347,7 @@ static void afsk_rxdecoder(void* arg)
         
         reset_decode_state();
         doFrame(FIR_PREEMP);
-        sleepMs(16);
+        sleepMs(26);
         if (hdlc_isSuccess()) 
           ESP_LOGD(TAG, "Decode attempt 3: Success");
         sleepMs(6);
