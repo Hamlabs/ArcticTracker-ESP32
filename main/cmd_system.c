@@ -48,6 +48,8 @@
 #include "pmu.h"
 #include "encryption.h"
 #include "esp_heap_trace.h"
+#include "networking.h"
+
 
 static int do_sysinfo(int argc, char** argv);
 static int do_restart(int argc, char** argv);
@@ -305,6 +307,13 @@ static int do_sysinfo(int argc, char** argv)
     printf("NVS:             ");nvs_print_stats();
     printf("IDF version:     %s\n\n", esp_get_idf_version());
     printf("Chip info:\n");
+    
+    char snumber[16];
+    uint8_t mac[6];
+    ESP_ERROR_CHECK(esp_wifi_get_mac(WIFI_IF_STA, mac));
+    sprintf(snumber, "%02X%02X%02X", mac[3], mac[4], mac[5]);
+    
+    printf("  S/N:           %s\n", snumber);
     printf("  model:         %s\n", model);
     printf("  cores:         %d\n", info.cores);
     printf("  features:      %s%s%s%s%ld%s\n",
@@ -676,7 +685,7 @@ CMD_STR_SETTING  (_param_timezone,"TIMEZONE",    64, DFL_TIMEZONE,   REGEX_TIMEZ
  *    "[+|-]hh[:mm[:ss]]"
  * 
  * For Norway, use the string: 
- *     "CET-1CEST,M3.5.0/02:00:00,M10.5.0/03:00:00"
+ *     "CET-1CEST,M3.5.0,M10.5.0/3"
  */
 
 

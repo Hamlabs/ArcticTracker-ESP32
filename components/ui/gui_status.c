@@ -421,8 +421,9 @@ static void status_screen5() {
     
     disp_clear();
     status_heading("WIFI");
+    disp_setBoldFont(true);
     disp_writeText(0, LINE1, wifi_getStatus());
-    
+    disp_setBoldFont(false);
     disp_writeText(0, LINE2, wifi_getConnectedAp(buf));
     disp_writeText(0, LINE3, mdns_hostname(buf)); 
 
@@ -448,7 +449,9 @@ static void status_screen6() {
     
     disp_clear();
     status_heading("W-AP");
+    disp_setBoldFont(true);
     disp_writeText(0, LINE1, (wifi_isEnabled() && wifi_softAp_isEnabled() ? "Enabled" : "Disabled"));
+    disp_setBoldFont(false);
     disp_writeText(0, LINE2, wifi_getApSsid(buf));
     disp_writeText(0, LINE3, wifi_getApIp(buf));   
     
@@ -477,8 +480,9 @@ static void status_screen7() {
         bp = 0;
     
     sprintf(buf, "%1.02f V  %d %c%c", ((float)batt)/1000, bp, '%', '\0');
-
+    disp_setBoldFont(true);
     disp_writeText(0, LINE1, buf);
+    disp_setBoldFont(false);
     disp_writeText(0, LINE2, b1);
     int vbus = pmu_getVbusVoltage();
     
@@ -522,6 +526,12 @@ static void status_screen8() {
     disp_writeText(0, LINE2, VERSION_STRING);
     disp_writeText(0, LINE3, FW_DATE);   
     disp_writeText(0, LINE4, DEVICE_STRING);   
+    
+    char buf[16];
+    uint8_t mac[6];
+    ESP_ERROR_CHECK(esp_wifi_get_mac(WIFI_IF_STA, mac));
+    sprintf(buf, "S/N: %02X%02X%02X", mac[3], mac[4], mac[5]);
+    disp_writeText(0, LINE5, buf); 
     disp_flush();
 }
 
@@ -536,7 +546,9 @@ static void status_screen9() {
     char buf[24];
     
     sprintf(buf, "Reports stored: %d", trackstore_nEntries());
+    disp_setBoldFont(true);
     disp_writeText(0, LINE1, (GET_BOOL_PARAM("TRKLOG.on", DFL_TRKLOG_ON) ? "Enabled" : "Disabled"));
+    disp_setBoldFont(false);
     disp_writeText(0, LINE2, buf); 
     disp_writeText(0, LINE3, tracklog_status());
     disp_flush();

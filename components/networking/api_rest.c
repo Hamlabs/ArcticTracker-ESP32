@@ -32,6 +32,7 @@
 #include "digipeater.h"
 #include "igate.h"
 #include "tracklogger.h"
+#include "encryption.h"
 
 
 #define TAG "rest"
@@ -286,6 +287,7 @@ static esp_err_t digi_put_handler(httpd_req_t *req)
 
 
 
+
 /******************************************************************
  *  GET handler for setting related to WIFI 
  ******************************************************************/
@@ -311,6 +313,22 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
     /* Don't show the crypto key */
     cJSON_AddStringToObject(root, "cryptokey", "");
     
+    
+    /* Show if keys are set or not */
+    bool kset = false;
+    get_str_param("TRKLOG.KEY", buf, 64, DFL_TRKLOG_KEY);
+    kset = (strlen(buf) > 3 && strncmp(buf, "12345678", 8) != 0);
+    cJSON_AddBoolToObject(root, "serverkey_set", kset); 
+    
+    get_str_param("API.KEY", buf, 64, DFL_API_KEY);
+    kset = (strlen(buf) > 3 && strncmp(buf, "12345678", 8) != 0);
+    cJSON_AddBoolToObject(root, "apikey_set", kset); 
+        
+    get_str_param("CRYPTO.KEY", buf, 64, DFL_CRYPTO_KEY);
+    kset = (strlen(buf) > 3 && strncmp(buf, "12345678", 8) != 0);
+    cJSON_AddBoolToObject(root, "cryptokey_set", kset); 
+    
+    
     for (int i=0; i<6; i++) {
         wifiAp_t res;
         if (wifi_getApAlt(i, &res)) {
@@ -328,8 +346,9 @@ static esp_err_t wifi_get_handler(httpd_req_t *req)
 
 
 
+
 /******************************************************************
- *  PUT handler for setting related to WIFI
+ *  PUT handler for setting keys or stuff related to WIFI
  ******************************************************************/
 
 static esp_err_t wifi_put_handler(httpd_req_t *req) 
@@ -365,7 +384,8 @@ static esp_err_t wifi_put_handler(httpd_req_t *req)
     }
     
     cJSON_Delete(root);
-    httpd_resp_sendstr(req, "PUT WIFI settings successful");
+    httpd_resp_sendstr(req, "PUT KEY settings successful");
+    sec_init();
     return ESP_OK;
 }    
     

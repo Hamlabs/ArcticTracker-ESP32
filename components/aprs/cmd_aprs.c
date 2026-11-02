@@ -304,7 +304,6 @@ void hdl_crypto(bool on) {
 
 static void hdl_sec() {
     sec_init();
-    printf("NOTE: Certificate changed. Reboot is recommended\n");
 }
 
 
