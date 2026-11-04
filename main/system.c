@@ -48,6 +48,73 @@ static void batt_monitor(void* arg);
 
 
 
+
+/************************************************************************************************
+ * Get the device serial number from eFuse, or from MAC address if eFuse is not set. 
+ ************************************************************************************************/
+
+static bool is_valid_serial_format(const char *str) {
+    if (strncmp(str, "AT-", 3) != 0) 
+        return false;
+    
+    // Check length of the variable part (xxx)
+    size_t len = strlen(str + 3);
+    if (len < 3 || len > 4) 
+        return false;
+    
+    /* Ensure all characters after "AT-" are valid hex digits (0-9, a-f, A-F) */
+    for (size_t i = 3; str[i] != '\0'; i++) {
+        if (!isxdigit((unsigned char) str[i])) 
+            return false;
+    }
+    return true;
+}
+
+
+
+
+void get_device_serial(char *out_serial, size_t max_len) {
+    if (out_serial == NULL) 
+        return; 
+
+    memset(out_serial, 0, max_len);
+    char efuse_buf[33] = {0};
+    
+    /*
+     * Read the maximum possible bits for a user block (256 bits = 32 bytes)
+     * Note: If on original ESP32, you can lower this to 192 bits (24 bytes)
+     */
+    esp_err_t err = esp_efuse_read_field_blob(ESP_EFUSE_USER_DATA, efuse_buf, 256);
+    
+    /* Validate the eFuse data if the read succeeded */
+    if (err == ESP_OK && efuse_buf[0] != '\0' && is_valid_serial_format(efuse_buf)) {
+        strncpy(out_serial, efuse_buf, max_len - 1);
+        ESP_LOGD(TAG, "Successfully loaded from eFuse: %s", out_serial);
+        return;
+    }
+
+    /* Fallback: Generate serial from the last 3 bytes of the Factory MAC address */
+    uint8_t mac[6] = {0};
+    esp_err_t mac_err = esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    
+    if (mac_err == ESP_OK) {
+        /* Formats the last 3 bytes as uppercase Hex */
+        snprintf(out_serial, max_len, "%02X%02X%02X", mac[3], mac[4], mac[5]);
+        ESP_LOGD(TAG, "eFuse invalid/unset. Generated fallback from MAC: %s", out_serial);
+    } else {
+        /* Absolute worst-case safety fallback */
+        strncpy(out_serial, "ERROR", max_len - 1);
+        ESP_LOGE(TAG, "Error: Could not read eFuse or MAC address!");
+    }
+}
+
+
+
+
+/******************************************************************
+ * Event handling
+ ******************************************************************/
+
  BaseType_t _cond_setBitsI(cond_t cond, BaseType_t bits) {
      BaseType_t hptw = pdFALSE;
      return xEventGroupSetBitsFromISR(cond, bits, &hptw);

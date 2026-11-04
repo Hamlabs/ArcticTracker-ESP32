@@ -191,9 +191,11 @@ void wifi_init(void)
     if (initialized)
         return;
     
+    char serialno[11];
+    get_device_serial(serialno, 11);
     get_str_param("MYCALL", ident, 16, DFL_MYCALL);
     if (strcmp(ident, "") == 0 || strcmp(ident, "NOCALL") == 0)
-        sprintf(ident,"%lX", chipId());
+        sprintf(ident,"%s", serialno);
     
     wifi_event_group = xEventGroupCreate();
     xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);        // DO WE NEED THESE? 
@@ -540,7 +542,7 @@ bool wifi_join(const char* ssid, const char* pass, int timeout_ms)
         connected = ((bits & CONNECTED_BIT) != 0);
     }
     if (!connected) 
-        status = "Connection failed";
+        status = "Connection fail";
     return connected;
 }
 

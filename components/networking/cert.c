@@ -161,8 +161,10 @@ static int _generate(void)
     /* Subject name */
     char dname[128];
     char mycall[11]; 
+    char serialno[11];
+    get_device_serial(serialno, 11);
     get_str_param("MYCALL", mycall, 10, DFL_MYCALL);
-    sprintf(dname, "CN=ArcticTracker %lX,OU=%s", chipId(), mycall);
+    sprintf(dname, "CN=ArcticTracker %s,OU=%s", serialno, mycall);
     ret = mbedtls_x509write_crt_set_subject_name(cert, dname);
     
     if (ret != 0) {
@@ -179,7 +181,7 @@ static int _generate(void)
     
     /* Add SAN extensions */
     char mydomain[32];
-    sprintf(mydomain, "arctic-%s.local", mycall);
+    sprintf(mydomain, "arctic-%s.local", (strncmp(mycall, "NOCALL", 6) != 0 ? mycall : serialno));
     const char *domains[] = { mydomain };
     add_dns_san(cert, domains, 1);
     

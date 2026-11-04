@@ -309,9 +309,7 @@ static int do_sysinfo(int argc, char** argv)
     printf("Chip info:\n");
     
     char snumber[16];
-    uint8_t mac[6];
-    ESP_ERROR_CHECK(esp_wifi_get_mac(WIFI_IF_STA, mac));
-    sprintf(snumber, "%02X%02X%02X", mac[3], mac[4], mac[5]);
+    get_device_serial(snumber, 8);
     
     printf("  S/N:           %s\n", snumber);
     printf("  model:         %s\n", model);

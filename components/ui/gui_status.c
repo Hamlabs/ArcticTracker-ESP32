@@ -521,17 +521,21 @@ static void status_screen7() {
 static void status_screen8() {
     disp_clear();
     status_heading("SYST");
- 
-    disp_writeText(0, LINE1, FW_NAME);
-    disp_writeText(0, LINE2, VERSION_STRING);
-    disp_writeText(0, LINE3, FW_DATE);   
-    disp_writeText(0, LINE4, DEVICE_STRING);   
     
     char buf[16];
-    uint8_t mac[6];
-    ESP_ERROR_CHECK(esp_wifi_get_mac(WIFI_IF_STA, mac));
-    sprintf(buf, "S/N: %02X%02X%02X", mac[3], mac[4], mac[5]);
-    disp_writeText(0, LINE5, buf); 
+    char sno[11];
+    get_device_serial(sno, 11);
+    sprintf(buf, "%s", sno);
+    disp_setBoldFont(true);
+    disp_setHighFont(true, false); 
+    disp_writeText(0, LINE1, buf); 
+    disp_setHighFont(false, false);
+    disp_setBoldFont(false);
+    
+    disp_writeText(0, LINE3, DEVICE_STRING);  
+    sprintf(buf, "Firmware %s", VERSION_STRING);
+    disp_writeText(0, LINE4, buf);
+    disp_writeText(0, LINE5, FW_DATE);   
     disp_flush();
 }
 

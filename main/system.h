@@ -15,6 +15,12 @@
 #include "driver/gptimer.h"
 #include "driver/adc.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include "esp_efuse.h"
+#include "esp_efuse_table.h"
+#include "esp_mac.h" 
 
 
 // FIXME: Use continous ADC drivers for receiving frames
@@ -24,6 +30,10 @@
 #define __DEF_SYSTEM_H__
 
 // #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+
+/* Serial number */
+void get_device_serial(char *out_serial, size_t max_len);
+
 
 /* Firmware upgrade and shutdown */
 esp_err_t firmware_upgrade();
