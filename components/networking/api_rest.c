@@ -85,6 +85,10 @@ static esp_err_t system_info_handler(httpd_req_t *req)
     cJSON_AddStringToObject(root, "device", DEVICE_STRING);
     cJSON_AddStringToObject(root, "version", VERSION_STRING);
     
+    char sno[11];
+    get_device_serial(sno, 11);
+    cJSON_AddStringToObject(root, "serialno", sno);
+    
     return rest_JSON_send(req, root);
 }
 
