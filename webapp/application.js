@@ -25,6 +25,8 @@ let selectedWidget = null;
 function show(id) {
     return ()=> {
         var x = pol.widget.get(id);
+        if (x==null)
+            return;
         x.activate( $('#widget')[0] );
         selectedWidget = x;
     }
@@ -91,7 +93,7 @@ menu = {
                 m("span"+isSel("core.wifiSetup"),   {onclick: show("core.wifiSetup")},    "Keys"),   
                 m("span"+isSel("core.aprsSetup"),   {onclick: show("core.aprsSetup")},    "Aprs"),
                 m("span"+isSel("core.digiSetup"),   {onclick: show("core.digiSetup")},    "Digi/Igate"), 
-                m("span"+isSel("core.trklogSetup"), {onclick: show("core.trklogSetup")},  "Misc"), nbsp,
+                m("span"+isSel("core.miscSetup"),   {onclick: show("core.miscSetup")},    "Misc"), nbsp,
                 m("img.spinner", {src:"img/spinner.gif"} ),
             ]),
 
