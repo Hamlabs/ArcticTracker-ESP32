@@ -41,7 +41,7 @@
 #define DFL_MINPAUSE        20
 #define DFL_MINDIST        100
 #define DFL_STATUSTIME      30
-#define DFL_MAXCHARGE       90
+#define DFL_MAXCHARGE       99
 
 #if DEVICE == T_TWR
 #define DFL_TRX_VOLUME       6
