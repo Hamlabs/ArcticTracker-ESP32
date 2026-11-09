@@ -10,8 +10,8 @@
 
 
 /* Version of software */
-#define VERSION_SSTRING "4.1"
-#define VERSION_STRING  "v4.1"
+#define VERSION_SSTRING "4.2"
+#define VERSION_STRING  "v4.2"
 
 
 #define FW_NAME "Arctic Tracker"
@@ -439,4 +439,3 @@
 #define max(x,y) (x>y? x : y)
 
 #endif
-
