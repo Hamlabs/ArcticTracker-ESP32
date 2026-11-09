@@ -350,6 +350,8 @@ static void afsk_rxdecoder(void* arg)
         sleepMs(26);
         if (hdlc_isSuccess()) 
           ESP_LOGD(TAG, "Decode attempt 3: Success");
+        else
+          ESP_LOGD(TAG, "Decode failed");
         sleepMs(6);
     }
 }
@@ -432,14 +434,14 @@ static void doFrame(enum fir_filters filt) {
 
 static void afsk_process_sample(int8_t sample) 
 {
-    afsk.iirY[0] = fir_filter(sample, FIR_1200_BP);
-    afsk.iirY[1] = fir_filter(sample, FIR_2200_BP);
+    afsk.iirX[0] = fir_filter(sample, FIR_1200_BP);
+    afsk.iirX[1] = fir_filter(sample, FIR_2200_BP);
     
-    afsk.iirY[0] = ABS(afsk.iirY[0]);
-    afsk.iirY[1] = ABS(afsk.iirY[1]);
+    afsk.iirX[0] = ABS(afsk.iirX[0]);
+    afsk.iirX[1] = ABS(afsk.iirX[1]);
     
     afsk.sampled_bits <<= 1;
-    afsk.sampled_bits |= (fir_filter(afsk.iirY[1] - afsk.iirY[0], FIR_1200_LP) > 0 ? 1 : 0);
+    afsk.sampled_bits |= (fir_filter(afsk.iirX[1] - afsk.iirX[0], FIR_1200_LP) > 0 ? 1 : 0);
 
     
     /* 
@@ -492,6 +494,7 @@ static void afsk_process_sample(int8_t sample)
         add_bit( !TRANSITION_FOUND(afsk.found_bits) );
     }
 } 
+
 
 
 uint8_t octet = 0; 
