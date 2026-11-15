@@ -332,7 +332,9 @@ static void button_init() {
         return;
     }
     beep(20); 
-    if (menu_is_active()) {
+    if (msg_is_active()) // Move this to push_handler? 
+        msg_deactivate();
+    else if (menu_is_active()) {
         if (up) menu_increment();
         else menu_decrement();
     }

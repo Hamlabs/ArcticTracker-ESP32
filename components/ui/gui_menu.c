@@ -190,6 +190,7 @@ void menu_end()
 bool charging = false;
 int gui_pause = 1000;
 int paused = 0;
+int mcount = 0;
 static void gui_thread (void* arg) 
 {
     while (true) {
@@ -197,14 +198,17 @@ static void gui_thread (void* arg)
         paused += gui_pause; 
         if (paused >= 5000) {
             paused = 0;
+            if (msg_is_active() && mcount >= 6)
+                { beeps(" -- ..."); mcount = 0; }
             if (batt_charge() && !charging && batt_percent() < 90)
-                { beeps("-.-.  "); blipUp(); }
+                { beeps(" -.-.  "); blipUp(); }
             if (!batt_charge() && charging && batt_percent() < 90)
-                { beeps("-.-.  "); blipDown(); }
+                { beeps(" -.-.  "); blipDown(); }
             charging = batt_charge();
+            mcount++;
         }
     
-        if (!menu_is_active() && !disp_popupActive())
+        if (!menu_is_active() && !msg_is_active() && !disp_popupActive())
             status_show();
     }
 }

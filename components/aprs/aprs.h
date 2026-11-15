@@ -47,4 +47,7 @@ void hdlc_unsubscribe_txmon(uint8_t i);
 
 #endif
 
+void msg_init();
+void msg_activate(bool m);
+
 #endif

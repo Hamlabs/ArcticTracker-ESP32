@@ -51,6 +51,7 @@ time_t getTime();
 char*  datetime2str(char*, time_t, bool local);
 char*  datetime2str_iso(char* buf, time_t time);
 char*  time2str (char*, time_t, bool local);
+char*  time2str_hm(char* buf, time_t time, bool local);
 char*  date2str (char*, time_t, bool local);
 
 /* Hardware timer - as periodic clocks */

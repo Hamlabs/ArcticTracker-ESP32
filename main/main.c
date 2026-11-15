@@ -25,6 +25,7 @@
 #include "tracker.h"
 #include "radio.h"
 #include "ax25.h"
+#include "aprs.h"
 #include "digipeater.h"
 #include "igate.h"
 #include "trackstore.h"
@@ -45,7 +46,6 @@ static const char* TAG = "main";
 
 #define MOUNT_PATH "/files"
 #define ESP_INTR_FLAG_DEFAULT 0
-
 
 
 /********************************************************************************
@@ -213,6 +213,7 @@ static void startup(void* arg)
     sleepMs(10000);   
     time_update();   
     sec_init();
+    msg_init();
     sleepMs(1000);
     vTaskDelete(NULL);
 }

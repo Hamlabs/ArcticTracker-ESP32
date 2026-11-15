@@ -81,7 +81,11 @@
  void menu_decrement(void);
  void menu_select(void);
  void menu_end(void);
-
+ 
+ void msg_show(char* from, char* msg); 
+ bool msg_is_active();
+ void msg_deactivate();
+ 
  void status_init();
  void status_show(void);
  void status_next(void);

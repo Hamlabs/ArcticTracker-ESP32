@@ -751,7 +751,18 @@ char* time2str(char* buf, time_t time, bool local)
       (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min, (uint8_t) tm->tm_sec );
     return buf;
 }
- 
+
+
+char* time2str_hm(char* buf, time_t time, bool local)
+{
+    mutex_lock(time_mutex);
+    struct tm *tm = (local? localtime(&time) : gmtime(&time));
+    mutex_unlock(time_mutex);
+    sprintf(buf, "%02u:%02u", 
+      (uint8_t) tm->tm_hour, (uint8_t) tm->tm_min );
+    return buf;
+}
+
  
 char* date2str(char* buf, time_t time, bool local)
 {
@@ -779,14 +790,14 @@ static char* logtags[] = {
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "gps", "digi", "igate", "tcp-cli", "trackstore", 
     "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", "httpd_uri", "httpd_parse", "mdns", 
-    "gptimer", "lora", "lora-aprs", "spi", "tcpserver", "monitor", "cert"
-#define NLOGTAGS 31
+    "gptimer", "lora", "lora-aprs", "spi", "tcpserver", "monitor", "cert", "messaging"
+#define NLOGTAGS 32
 #else
     "system", "main", "wifi", "wifix", "config", "httpd", "shell", "tracker",
     "esp-tls", "radio", "ui", "afsk-rx", "hdlc-enc", "hdlc-dec", "gps", "digi", "igate",
     "tcp-cli", "trackstore", "tracklog", "mbedtls", "rest", "adc", "httpd_txrx", 
-    "httpd_uri", "httpd_parse", "mdns", "gptimer", "tcpserver", "monitor", "cert"
-#define NLOGTAGS 31
+    "httpd_uri", "httpd_parse", "mdns", "gptimer", "tcpserver", "monitor", "cert", "messaging"
+#define NLOGTAGS 32
 #endif
 };
 
