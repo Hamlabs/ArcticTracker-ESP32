@@ -45,6 +45,7 @@
  void disp_toggleBacklight(void);
  void disp_backlight(void);
  void disp_writeText(int x, int y, const char * strp);
+ void disp_writeTextUtf8(int x, int y, const char * strp);
  void disp_flush(void);
  void disp_clear(void);
  void disp_setPixel(int x, int y, bool on);

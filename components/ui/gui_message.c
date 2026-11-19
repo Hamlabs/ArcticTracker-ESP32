@@ -92,7 +92,7 @@ void msg_show(char* from, char* msg)
     int yoffset = (lines[4] == NULL ? 7 : 4);
     
     while (lines[line++] != NULL && line<=MAX_VISIBLE)
-        disp_writeText(1, yoffset+line*10, lines[line-1]);
+        disp_writeTextUtf8(1, yoffset+line*10, lines[line-1]);
     free_split_string(lines);
     
     disp_flush();    

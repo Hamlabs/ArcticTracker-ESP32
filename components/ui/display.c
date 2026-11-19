@@ -155,8 +155,17 @@ const uint8_t  Font8x5 [][5] =
   { 0x44, 0x64, 0x54, 0x4C, 0x44 },   /* z */
   { 0x00, 0x08, 0x36, 0x41, 0x00 },   /* { */
   { 0x00, 0x00, 0x7F, 0x00, 0x00 },   /* | */
-  { 0x00, 0x41, 0x36, 0x08, 0x00 },   /* } */
-  { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }    /* (solid block */
+  { 0x00, 0x41, 0x36, 0x08, 0x00 },   /* 125 } */
+  { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },   /* 126 (solid block) */
+  { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },   /* 127 */
+  
+   /* nordic characters */
+  { 0x78, 0x15, 0x14, 0x15, 0x78 },   /* Æ */
+  { 0x3E, 0x51, 0x49, 0x45, 0x3E },   /* Ø */
+  { 0x78, 0x15, 0x14, 0x15, 0x78 },   /* Å */
+  { 0x20, 0x55, 0x54, 0x55, 0x78 },   /* æ */
+  { 0x38, 0x45, 0x44, 0x45, 0x38 },   /* ø */
+  { 0x20, 0x54, 0x55, 0x54, 0x78 }    /* å */
 };
 
 const uint8_t Font8x7[][7] = {
@@ -253,12 +262,28 @@ const uint8_t Font8x7[][7] = {
     { 0x4C, 0x64, 0x74, 0x5C, 0x4C, 0x64, 0x00 },   // (z)
     { 0x08, 0x08, 0x3E, 0x77, 0x41, 0x41, 0x00 },   // ({)
     { 0x00, 0x00, 0x00, 0x77, 0x77, 0x00, 0x00 },   // (|)
-    { 0x41, 0x41, 0x77, 0x3E, 0x08, 0x08, 0x00 },   // (})
-    { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }    // (solid block)
+    { 0x41, 0x41, 0x77, 0x3E, 0x08, 0x08, 0x00 },   // 125 (})
+    { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },   // 126 (solid block)
+    { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF },   // 127 */
+    
+    /* nordic characters */
+    { 0x78, 0x7D, 0x14, 0x14, 0x7D, 0x78, 0x00 },
+    { 0x5C, 0x3E, 0x73, 0x49, 0x67, 0x3E, 0x1D },
+    { 0x78, 0x7C, 0x15, 0x15, 0x7C, 0x78, 0x00 },
+    { 0x20, 0x75, 0x54, 0x54, 0x3D, 0x78, 0x40 },
+    { 0x38, 0x7D, 0x44, 0x44, 0x7D, 0x38, 0x00 },
+    { 0x20, 0x74, 0x55, 0x55, 0x3C, 0x78, 0x40 },
 };
 
 
 #define CHAR_BLOCK ('}'+1)
+#define NORDIC_AE  ('}'+3)
+#define NORDIC_OE  ('}'+4)
+#define NORDIC_AA  ('}'+5)
+#define NORDIC_ae  ('}'+6)
+#define NORDIC_oe  ('}'+7)
+#define NORDIC_aa  ('}'+8)
+#define MAX_FONT NORDIC_aa
 
 
 
@@ -350,7 +375,7 @@ void disp_writeText(int x, int y, const char * strp)
   /* For each charater in string */
   while (*strp && x < DISPLAY_WIDTH) {
      uint8_t c = (uint8_t) *strp;
-     if (c < 32 || c > 127)
+     if (c < 32 || c > MAX_FONT)
         c = '?';
      int ftindex = (c-32)*font_width; 
       
@@ -382,9 +407,7 @@ void disp_writeText(int x, int y, const char * strp)
             x++; 
          }
      }
-     
-     
-     
+    
      
      if (c == '.'  || c==',' || c==':' || c==';' || c== '1' || c=='l' || c == 'I' || c=='i' || c == 'j' || c == ' ')
          x--;
@@ -392,6 +415,34 @@ void disp_writeText(int x, int y, const char * strp)
      x++;
   }
 }
+
+
+
+void disp_writeTextUtf8(int x, int y, const char * strp) {
+    int len = strlen(strp);
+    char * buf = malloc(len+1);
+    int i=0, j=0;
+    for (i=0;i<len; i++) {
+        if (strp[i] == '\xC3') {
+            if (strp[i+1] == '\x86')      buf[j] = NORDIC_AE;
+            else if (strp[i+1] == '\x98') buf[j] = NORDIC_OE;
+            else if (strp[i+1] == '\x85') buf[j] = NORDIC_AA;
+            else if (strp[i+1] == '\xA6') buf[j] = NORDIC_ae;
+            else if (strp[i+1] == '\xB8') buf[j] = NORDIC_oe;
+            else if (strp[i+1] == '\xA5') buf[j] = NORDIC_aa;
+            else buf[j] = '?';
+            i++;
+        }
+        else buf[j] = strp[i];
+        j++;
+    }
+    buf[j] = '\0';
+    disp_writeText(x, y, buf);
+    free(buf);
+}
+
+
+
 
 
 
