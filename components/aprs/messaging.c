@@ -28,14 +28,16 @@
 #include "fbuf.h"
 #include "gui.h"
 #include "dupcheck.h"
+#include "esp_rom_md5.h"
+#include "mbedtls/base64.h"
 
 
    
 #define TYPE_MSG ':'
 #define TYPE_3RDPARTY '}'
-#define MAX_MSG_LEN 67
+#define MAX_MSG_LEN 239
 
-#define STACK_MSG 3700
+#define STACK_MSG 4200
 #define TAG "messaging"
    
 static FBQ msg;
@@ -116,6 +118,39 @@ void msg_sendack(char* to, char* msgid, bool accept) {
 
 
 
+/***********************************************************************************
+ * MD5 hash based on ROM implementation
+ ***********************************************************************************/
+
+static bool md5_checkmac(const char* mac, const char* sender, const char* recipient, 
+                         const char* content, const char* msgid) 
+{
+    char key[129];
+    get_str_param("CRYPTO.KEY", key, 128, DFL_CRYPTO_KEY);
+    
+    uint8_t digest[16];
+    md5_context_t ctx;
+    esp_rom_md5_init(&ctx);
+    esp_rom_md5_update(&ctx, (const uint8_t *)key, strlen(key));
+    esp_rom_md5_update(&ctx, (const uint8_t *)sender, strlen(sender));
+    esp_rom_md5_update(&ctx, (const uint8_t *)recipient, strlen(recipient));
+    esp_rom_md5_update(&ctx, (const uint8_t *)content, strlen(content));
+    esp_rom_md5_update(&ctx, (const uint8_t *)msgid, strlen(msgid));
+    esp_rom_md5_final(digest, &ctx);
+
+    // Print as a 32-character base64 string
+    char b64dig[33];
+    size_t out_len = 0;
+
+    int ret = mbedtls_base64_encode((unsigned char*) b64dig, 32, &out_len, digest, sizeof(digest));
+    if (ret == 0) 
+        return (strncmp(mac, b64dig, 8) == 0);
+    else 
+        return false;
+}
+
+
+
 /********************************************************************************
  * Read a text from a fbuf that ends with 'end' or 'end2'. 
  * May be moved to fbuf.c 
@@ -155,14 +190,32 @@ static void get_recipient(char* msgto, FBUF* frame) {
  * Handle authenticated message
  ***********************************************************************************/
 
-static bool handle_authenticated(char* from, char* msgid, char* mac, char* content) {
+static bool handle_authenticated(char* from, char* to, char* msgid, char* mac, char* content) {
     /*
      * Generate a MD5 checksum and compare with the mac given
      * Handle the content of message. This can be a command, e.g. "MSG"
      */
+    char buf[MAX_MSG_LEN];
     ESP_LOGI(TAG, "Authenticated msg: %s: %s mac=%s", from, msgid, mac);
-    msg_show(from, content);
-    return true;
+    if (md5_checkmac(mac, from, to, content, msgid)) {
+        ESP_LOGI(TAG, "Msg authentication sucess: %s", msgid);
+        if (strncmp(content, "MSG", 3) == 0) {
+            int ulen = strcspn(content, "@");
+            char* uid = content+4;
+            char* msg = strchr(content+4, (int) ' ');
+            content[ulen]= '\0';
+            sprintf(buf, "%s: %s", uid, msg); 
+                
+            msg_show(from, buf);
+            return true;
+        }
+        else
+            return false;
+    }
+    else {
+        ESP_LOGI(TAG, "Msg authentication failed: %s", msgid);
+        return false;
+    }
 }
 
 
@@ -171,7 +224,7 @@ static bool handle_authenticated(char* from, char* msgid, char* mac, char* conte
  *  Handle acked incoming message
  ******************************************************************************/
 
-static void handle_acked(FBUF* frame, char* from, char* msgid, char* content) {
+static void handle_acked(FBUF* frame, char* from, char* to, char* msgid, char* content) {
     /* Use 2 dupcheckers. One for acked and one for rejected messages */
     if (dupcheck_exists(msgids_acked, msgid)) {
         msg_sendack(from, msgid, true);
@@ -189,7 +242,7 @@ static void handle_acked(FBUF* frame, char* from, char* msgid, char* content) {
         /* MD5 MAC authentication */
         char* mac = content + len - 8;
         content[len-9] = '\0';
-        handle_authenticated(from, msgid, mac, content);
+        handle_authenticated(from, to, msgid, mac, content);
     }
     /* Send and register the ack/rej response */
     msg_sendack(from, msgid, accept);
@@ -219,7 +272,7 @@ static void handle_messsage(FBUF* frame, char* from) {
     readText(frame, '{', 0, MAX_MSG_LEN, content);
     readText(frame, 0, 0, 6, seqno);
     if (strlen(seqno) > 0) 
-        handle_acked(frame, from, seqno, content);
+        handle_acked(frame, from, msgto, seqno, content);
     else {
         ESP_LOGI(TAG, "Message received from: %s: %s", from, content);
         msg_show(from, content);
