@@ -1,3 +1,4 @@
+
 /* 
  * Copyright (C) 2026 Øyvind Hanssen, LA7ECA
  * 
@@ -26,6 +27,9 @@
 #include "aprs.h"
 #include "fbuf.h"
 #include "gui.h"
+#include "dupcheck.h"
+
+
    
 #define TYPE_MSG ':'
 #define TYPE_3RDPARTY '}'
@@ -40,6 +44,7 @@ static uint8_t subscription;
 
 static void msg_receive (void *arg);
 
+static dupcheck_t *msgids_acked, *msgids_rejected; 
 
 
 
@@ -48,6 +53,8 @@ void msg_init()
 {
     fbq_init(&msg, HDLC_DECODER_QUEUE_SIZE);
     msg_activate(true);
+    msgids_acked = dupcheck_create(100);
+    msgids_rejected = dupcheck_create(100);
 }
 
 
@@ -82,6 +89,30 @@ void msg_activate(bool m)
     }
 }
 
+
+
+/******************************************************************************
+ * Send ack or rej message
+ ******************************************************************************/
+
+void msg_sendack(char* to, char* msgid, bool accept) {
+    FBUF packet;    
+    char from[16], dest[16], dbuf[75];
+    fbq_t* outframes = APRS_GET_ENCODER_QUEUE();
+
+    sleepMs(100);
+    get_str_param("MYCALL", from, 10, "NOCALL");
+    get_str_param("DEST", dest, 10, DFL_DEST);       
+    get_str_param("DIGIPATH", dbuf, 70, "");
+
+    fbuf_new(&packet, SRC_USER);
+    ax25_aprs_header(&packet, from, dest, dbuf);
+    char buf[16];
+    sprintf(buf, ":%-9s:%s%s", to, (accept ? "ack" : "rej"), msgid); 
+    fbuf_putstr(&packet, buf );                            
+    fbq_put(outframes, packet); 
+    sleepMs(10);
+}
 
 
 
@@ -120,6 +151,54 @@ static void get_recipient(char* msgto, FBUF* frame) {
 
 
 
+/***********************************************************************************
+ * Handle authenticated message
+ ***********************************************************************************/
+
+static bool handle_authenticated(char* from, char* msgid, char* mac, char* content) {
+    /*
+     * Generate a MD5 checksum and compare with the mac given
+     * Handle the content of message. This can be a command, e.g. "MSG"
+     */
+    ESP_LOGI(TAG, "Authenticated msg: %s: %s mac=%s", from, msgid, mac);
+    msg_show(from, content);
+    return true;
+}
+
+
+
+/******************************************************************************
+ *  Handle acked incoming message
+ ******************************************************************************/
+
+static void handle_acked(FBUF* frame, char* from, char* msgid, char* content) {
+    /* Use 2 dupcheckers. One for acked and one for rejected messages */
+    if (dupcheck_exists(msgids_acked, msgid)) {
+        msg_sendack(from, msgid, true);
+        return;
+    }
+    if (dupcheck_exists(msgids_rejected, msgid)) {
+        msg_sendack(from, msgid, false);
+        return;
+    }
+    
+    int len = strlen(content);
+    bool accept = true;
+    
+    if (content[len-9] == '#') {
+        /* MD5 MAC authentication */
+        char* mac = content + len - 8;
+        content[len-9] = '\0';
+        handle_authenticated(from, msgid, mac, content);
+    }
+    /* Send and register the ack/rej response */
+    msg_sendack(from, msgid, accept);
+    dupcheck_add( (accept? msgids_acked : msgids_rejected), msgid);
+    
+}
+
+
+
 /******************************************************************************
  *  Handle incoming message
  ******************************************************************************/
@@ -139,11 +218,14 @@ static void handle_messsage(FBUF* frame, char* from) {
     fbuf_getChar(frame); 
     readText(frame, '{', 0, MAX_MSG_LEN, content);
     readText(frame, 0, 0, 6, seqno);
-    
-    ESP_LOGI(TAG, "Message received from: %s: %s", from, content);
-    msg_show(from, content);
-    
+    if (strlen(seqno) > 0) 
+        handle_acked(frame, from, seqno, content);
+    else {
+        ESP_LOGI(TAG, "Message received from: %s: %s", from, content);
+        msg_show(from, content);
+    }
 }
+  
 
 
 /******************************************************************************
