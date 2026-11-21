@@ -29,6 +29,7 @@
 #include "mbedtls/platform.h"
 #include "restapi.h"
 #include "encryption.h"
+#include "dupcheck.h"
 
 
 
@@ -47,33 +48,23 @@
 
 
 /*******************************************************************************************
- * Use cuckoo filter to check for duplicate nonces.
+ * Filter to check for duplicate nonces.
  *******************************************************************************************/
 
-static cuckoo_filter_t *nonces1, *nonces2;; 
+static dupcheck_t *nonces; 
 
 
 void nonce_init() {
-    cuckoo_filter_new(&nonces1, 2000, 10, (uint32_t) (time(NULL) & 0xffffffff));
-    nonces2 = NULL;
+    nonces = dupcheck_create(2000);
 }
 
 
 static bool nonce_exists(char* n) {
-    return ( 
-        cuckoo_filter_contains(nonces1, n, strlen(n) ) == CUCKOO_FILTER_OK ||
-        (nonces2 != NULL && cuckoo_filter_contains(nonces2, n, strlen(n) ) == CUCKOO_FILTER_OK)
-    );
+    return dupcheck_exists(nonces, n); 
 }
 
 static void nonce_add(char* n) {
-    if (cuckoo_filter_add(nonces1, n, strlen(n)) == CUCKOO_FILTER_FULL) {
-        if (nonces2 != NULL)
-            cuckoo_filter_free(&nonces2);
-        nonces2 = nonces1;
-        cuckoo_filter_new(&nonces1, 2000, 10, (uint32_t) (time(NULL) & 0xffffffff));
-        cuckoo_filter_add(nonces1, n, strlen(n));
-    }
+    dupcheck_add(nonces, n); 
 }    
 
 
